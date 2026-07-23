@@ -1,0 +1,15 @@
+Taruh binary Real-ESRGAN ncnn-vulkan di folder ini (atau di root project).
+
+Windows : realesrgan.exe
+Linux   : realesrgan-ncnn-vulkan
+macOS   : realesrgan-ncnn-vulkan
+
+Unduh dari rilis resmi:
+  https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan/releases
+
+Isi arsip rilis biasanya sudah berisi binary + folder "models" (file .param/.bin).
+Salin binary-nya ke sini, dan salin file model ke ../models/realesrgan/.
+
+resolv.py mencari binary bernama:
+  realesrgan.exe | realesrgan-ncnn-vulkan | realesrgan-ncnn-vulkan.exe
+di dua lokasi: root project dan folder ./bin ini.
