@@ -12,7 +12,7 @@ dependencies = [
   "Pillow>=11.3.0",
   "psutil>=7.0.0",
   "scikit-learn>=1.7.1",
-  "yt-dlp>=2026.7.14",
+  "yt-dlp>=2026.7.4",
 ]
 
 [project.optional-dependencies]
