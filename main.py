@@ -16,11 +16,13 @@ from pathlib import Path
 from flask import Flask, redirect, render_template, request, send_from_directory
 from werkzeug.utils import secure_filename
 
+from resolv import resolv_bp
 from settings import ALLOWED_EXTENSIONS, IMAGE_EXTENSIONS, UPLOAD_FOLDER, VIDEO_EXTENSIONS
 
 
 app = Flask(__name__, static_url_path="/static")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.register_blueprint(resolv_bp)
 
 connection_port = 8000
 ip = "0.0.0.0"

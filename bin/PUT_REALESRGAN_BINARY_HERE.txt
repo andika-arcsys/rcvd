@@ -1,0 +1,16 @@
+Lokasi binary Real-ESRGAN ncnn-vulkan untuk halaman /resolv.
+
+Mengikuti sistem RESOLV (https://github.com/angslhn/RESOLV), lokasi yang
+disarankan adalah langsung di ROOT project (sejajar dengan main.py / resolv.py).
+Folder "bin/" ini juga tetap diterima sebagai lokasi alternatif.
+
+Nama binary yang dikenali:
+  realesrgan.exe                 (Windows, jika di-rename)
+  realesrgan-ncnn-vulkan.exe     (Windows, nama asli dari rilis)
+  realesrgan-ncnn-vulkan         (Linux/macOS)
+
+Unduh dari rilis resmi:
+  https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan/releases
+
+Isi arsip rilis berisi binary + folder "models" (file .param/.bin). Salin
+binary ke root project, dan salin file model ke folder ../models/.

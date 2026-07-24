@@ -12,9 +12,24 @@ static/user_renders/*
 !static/user_renders/.gitkeep
 !static/user_renders/user_renders_folder.txt
 
+static/resolv_uploads/*
+!static/resolv_uploads/.gitkeep
+
+static/resolv_outputs/*
+!static/resolv_outputs/.gitkeep
+
 models/**
 !models/.gitkeep
 !models/unpack_models_here.txt
+!models/realesrgan/
+!models/realesrgan/PUT_MODELS_HERE.txt
+
+# Real-ESRGAN ncnn-vulkan binary (large, place manually)
+bin/realesrgan*
+!bin/PUT_REALESRGAN_BINARY_HERE.txt
+/realesrgan.exe
+/realesrgan-ncnn-vulkan
+/realesrgan-ncnn-vulkan.exe
 
 input_videos/*
 !input_videos/.gitkeep
