@@ -27,6 +27,9 @@ models/**
 # Real-ESRGAN ncnn-vulkan binary (large, place manually)
 bin/realesrgan*
 !bin/PUT_REALESRGAN_BINARY_HERE.txt
+/realesrgan.exe
+/realesrgan-ncnn-vulkan
+/realesrgan-ncnn-vulkan.exe
 
 input_videos/*
 !input_videos/.gitkeep

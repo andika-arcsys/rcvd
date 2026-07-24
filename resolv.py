@@ -34,10 +34,13 @@ from flask import Blueprint, jsonify, render_template, request, send_from_direct
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "static" / "resolv_uploads"
 OUTPUT_DIR = BASE_DIR / "static" / "resolv_outputs"
-MODELS_DIR = BASE_DIR / "models" / "realesrgan"
+# RESOLV layout: the realesrgan binary sits next to the app and models live in
+# ``models/`` (exactly like https://github.com/angslhn/RESOLV). We also accept a
+# ``models/realesrgan/`` subfolder and a ``bin/`` folder as extra fallbacks.
+MODEL_DIRS = [BASE_DIR / "models", BASE_DIR / "models" / "realesrgan"]
 
-# Candidate binary names, searched in the repo root and ./bin.
-EXE_CANDIDATES = ["realesrgan.exe", "realesrgan-ncnn-vulkan", "realesrgan-ncnn-vulkan.exe"]
+# Candidate binary names (Windows release ships "realesrgan-ncnn-vulkan.exe").
+EXE_CANDIDATES = ["realesrgan.exe", "realesrgan-ncnn-vulkan.exe", "realesrgan-ncnn-vulkan"]
 EXE_SEARCH_DIRS = [BASE_DIR, BASE_DIR / "bin"]
 
 ALLOWED_EXT = {"png", "jpg", "jpeg", "webp", "bmp"}
@@ -84,8 +87,16 @@ def find_exe() -> str | None:
     return None
 
 
+def model_dir_for(model: str) -> Path | None:
+    """Return the first directory that holds both ``<model>.param`` and ``.bin``."""
+    for directory in MODEL_DIRS:
+        if (directory / f"{model}.param").is_file() and (directory / f"{model}.bin").is_file():
+            return directory
+    return None
+
+
 def model_files_present(model: str) -> bool:
-    return (MODELS_DIR / f"{model}.param").is_file() and (MODELS_DIR / f"{model}.bin").is_file()
+    return model_dir_for(model) is not None
 
 
 def check_dimensions(image_path: str) -> tuple[int, int]:
@@ -143,10 +154,11 @@ def run_upscale(input_path: str, output_path: str, model: str, target_scale: flo
             "(Windows) atau 'realesrgan-ncnn-vulkan' (Linux/macOS) di root "
             "project atau folder ./bin."
         )
-    if not model_files_present(model):
+    model_dir = model_dir_for(model)
+    if model_dir is None:
         raise FileNotFoundError(
-            f"File model '{model}.param' / '{model}.bin' tidak ada di {MODELS_DIR}. "
-            "Unduh model Real-ESRGAN ncnn dan taruh di folder itu."
+            f"File model '{model}.param' / '{model}.bin' tidak ditemukan. "
+            "Taruh pasangan file model di folder 'models/' (atau 'models/realesrgan/')."
         )
 
     img_original = cv2.imread(input_path, cv2.IMREAD_UNCHANGED)
@@ -164,7 +176,7 @@ def run_upscale(input_path: str, output_path: str, model: str, target_scale: flo
         "-o", str(temp_output),
         "-n", model,
         "-s", str(NATIVE_SCALE),  # always 4, never target_scale
-        "-m", str(MODELS_DIR),
+        "-m", str(model_dir),
         "-t", str(TILE_SIZE),  # 0 = auto
         "-f", "png",
     ]
