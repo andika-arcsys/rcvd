@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Runtime folders
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+
+# Model files (large, place manually)
+models/*
+!models/.gitkeep
+!models/PUT_MODELS_HERE.txt
+
+# Real-ESRGAN ncnn-vulkan binary (large, place manually)
+realesrgan.exe
+realesrgan-ncnn-vulkan
+realesrgan-ncnn-vulkan.exe
+*.dll
