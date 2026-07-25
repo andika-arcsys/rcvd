@@ -122,6 +122,8 @@ class CudaInspectionEnhancer:
         gamma: float,
         saturation: float,
         detail_gain: float,
+        illumination_strength: float,
+        contrast_strength: float,
         scale: int,
     ) -> None:
         self.device = torch.device(device)
@@ -129,6 +131,8 @@ class CudaInspectionEnhancer:
         self.gamma = gamma
         self.saturation = saturation
         self.detail_gain = detail_gain
+        self.illumination_strength = illumination_strength
+        self.contrast_strength = contrast_strength
         self.scale = scale
         self.small_blur = _gaussian_kernel(5, 1.1, self.device)
         # Illumination blur yang lebih lebar, tetapi gain nantinya dibatasi.
@@ -136,8 +140,11 @@ class CudaInspectionEnhancer:
 
     @staticmethod
     def _conv(image: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
+        """Reflection padding menghindari kotak/halo di pinggir illumination map."""
         pad = kernel.shape[-1] // 2
-        return nnf.conv2d(image, kernel.repeat(3, 1, 1, 1), padding=pad, groups=3)
+        padded = nnf.pad(image, (pad, pad, pad, pad), mode="reflect")
+        channels = image.shape[1]
+        return nnf.conv2d(padded, kernel.repeat(channels, 1, 1, 1), groups=channels)
 
     def enhance_roi(self, roi_bgr: np.ndarray) -> np.ndarray:
         """ROI BGR uint8 → ROI enhanced BGR uint8 pada resolusi asli."""
@@ -155,9 +162,12 @@ class CudaInspectionEnhancer:
             luma = 0.114 * b + 0.587 * g + 0.299 * r
 
             # 1. Hotspot/vignetting normalization; ratio dibatasi keras.
-            illumination = nnf.conv2d(luma, self.light_blur, padding=15)
+            illumination = self._conv(luma, self.light_blur)
             target = torch.median(illumination)
-            light_gain = (target / (illumination + 1e-4)).clamp(0.78, 1.22)
+            raw_light_gain = (target / (illumination + 1e-4)).clamp(0.78, 1.22)
+            # Jangan meratakan cahaya sepenuhnya; pipa yang terang harus tetap
+            # terang. Blending ini juga mengurangi risiko efek abu-abu/kusam.
+            light_gain = 1.0 + self.illumination_strength * (raw_light_gain - 1.0)
             image = (image * light_gain).clamp(0, 1)
 
             # 2. Kompensasi merah adaptif dan ringan, berbasis sinyal lokal G-R.
@@ -171,7 +181,19 @@ class CudaInspectionEnhancer:
             gains = (norms.max() / (norms + 1e-5)).clamp(0.90, 1.12)
             image = (image * gains.view(1, 3, 1, 1)).clamp(0, 1)
 
-            # 4. Luminance correction ringan; tidak ada CLAHE agresif.
+            # 4. Luminance recovery setelah illumination correction. Contrast
+            # dipulihkan pada L saja, bukan per-kanal, agar tidak memicu cast.
+            b, g, r = image[:, 0:1], image[:, 1:2], image[:, 2:3]
+            luma = 0.114 * b + 0.587 * g + 0.299 * r
+            flat_luma = luma.float().reshape(-1)
+            low = torch.quantile(flat_luma, 0.01)
+            high = torch.quantile(flat_luma, 0.99)
+            normalized_luma = ((luma - low) / (high - low).clamp_min(0.15)).clamp(0, 1)
+            target_luma = (
+                luma * (1.0 - self.contrast_strength)
+                + normalized_luma * self.contrast_strength
+            )
+            image = (image * (target_luma / (luma + 1e-4))).clamp(0, 1)
             b, g, r = image[:, 0:1], image[:, 1:2], image[:, 2:3]
             luma = 0.114 * b + 0.587 * g + 0.299 * r
             corrected_luma = luma.pow(self.gamma)
@@ -191,7 +213,7 @@ class CudaInspectionEnhancer:
 
             # 6. Detail hanya pada luminance dan gain rendah (anti marine-snow).
             luma = 0.114 * image[:, 0:1] + 0.587 * image[:, 1:2] + 0.299 * image[:, 2:3]
-            luma_blur = nnf.conv2d(luma, self.small_blur, padding=2)
+            luma_blur = self._conv(luma, self.small_blur)
             luma_detail = (luma + self.detail_gain * (luma - luma_blur)).clamp(0, 1)
             image = (image * (luma_detail / (luma + 1e-4))).clamp(0, 1)
 
@@ -265,12 +287,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--osd-bottom", type=float, default=0.07,
                         help="Fraksi OSD bawah yang dipertahankan (default: 0.07)")
     parser.add_argument("--denoise", type=float, default=0.40)
-    parser.add_argument("--temporal-alpha", type=float, default=0.20,
-                        help="Temporal blend setelah optical flow alignment (default: 0.20)")
-    parser.add_argument("--gamma", type=float, default=0.97)
-    parser.add_argument("--saturation", type=float, default=1.04)
-    parser.add_argument("--detail-gain", type=float, default=0.18,
-                        help="Luminance detail gain konservatif (default: 0.18)")
+    parser.add_argument("--temporal-alpha", type=float, default=0.15,
+                        help="Temporal blend setelah optical flow alignment (default: 0.15)")
+    parser.add_argument("--gamma", type=float, default=0.95)
+    parser.add_argument("--saturation", type=float, default=1.06)
+    parser.add_argument("--detail-gain", type=float, default=0.22,
+                        help="Luminance detail gain konservatif (default: 0.22)")
+    parser.add_argument("--illumination-strength", type=float, default=0.35,
+                        help="Kekuatan koreksi hotspot 0..1 (default: 0.35)")
+    parser.add_argument("--contrast-strength", type=float, default=0.45,
+                        help="Pemulihan contrast luminance 0..1 (default: 0.45)")
     parser.add_argument("--comparison-output",
                         help="Video side-by-side raw upscale vs enhanced upscale")
     parser.add_argument("--metrics-json",
@@ -284,7 +310,10 @@ def build_parser() -> argparse.ArgumentParser:
 def _validate(args: argparse.Namespace) -> str | None:
     if not Path(args.input).is_file():
         return f"Input tidak ditemukan: {args.input!r}"
-    for key in ("osd_top", "osd_bottom", "denoise", "temporal_alpha"):
+    for key in (
+        "osd_top", "osd_bottom", "denoise", "temporal_alpha",
+        "illumination_strength", "contrast_strength",
+    ):
         if not 0 <= getattr(args, key) <= 1:
             return f"--{key.replace('_', '-')} harus berada pada rentang 0..1"
     if args.osd_top + args.osd_bottom >= 0.8:
@@ -309,7 +338,14 @@ def run(args: argparse.Namespace) -> int:
 
     try:
         enhancer = CudaInspectionEnhancer(
-            args.device, args.denoise, args.gamma, args.saturation, args.detail_gain, args.scale
+            args.device,
+            args.denoise,
+            args.gamma,
+            args.saturation,
+            args.detail_gain,
+            args.illumination_strength,
+            args.contrast_strength,
+            args.scale,
         )
     except (RuntimeError, AssertionError) as exc:
         print(f"[ERROR] Tidak dapat memakai {args.device}: {exc}", file=sys.stderr)

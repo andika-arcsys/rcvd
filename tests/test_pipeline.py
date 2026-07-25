@@ -262,6 +262,14 @@ class TestCudaBatchScript:
 
 
 class TestCudaInspectionScript:
+    def test_inspection_defaults_are_conservative(self):
+        from scripts.enhance_video_inspection_cuda import build_parser
+
+        args = build_parser().parse_args(["input.mp4", "output.mp4"])
+        assert args.illumination_strength == 0.35
+        assert args.contrast_strength == 0.45
+        assert args.temporal_alpha == 0.15
+
     def test_content_bounds_excludes_osd(self):
         from scripts.enhance_video_inspection_cuda import _content_bounds
 

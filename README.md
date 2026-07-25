@@ -167,6 +167,7 @@ berjalan pada CUDA.
 python scripts\enhance_video_inspection_cuda.py "D:\arcgiz\video 1.mp4" ^
   "D:\arcgiz\inspection_2x.mp4" ^
   --scale 2 --device cuda:0 ^
+  --illumination-strength 0.35 --contrast-strength 0.45 ^
   --comparison-output "D:\arcgiz\compare_2x.mp4" ^
   --metrics-json "D:\arcgiz\inspection_2x_metrics.json"
 
@@ -183,11 +184,16 @@ dan jangan memakai output upscale generatif sebagai bukti defect.
 Parameter penting:
 - `--osd-top 0.08 --osd-bottom 0.07`: tinggi strip telemetry yang tidak boleh
   diproses.
-- `--temporal-alpha 0.20`: smoothing setelah optical-flow alignment. Turunkan
+- `--temporal-alpha 0.15`: smoothing setelah optical-flow alignment. Turunkan
   ke `0.10` untuk gerakan kamera sangat cepat; naikkan maksimal `0.30` saat
   ROV statis.
-- `--detail-gain 0.18`: penajaman luminance konservatif. Jangan menaikkannya
+- `--detail-gain 0.22`: penajaman luminance konservatif. Jangan menaikkannya
   untuk “mencari” retak karena ia dapat menegaskan partikel lumpur.
+- `--illumination-strength 0.35`: cukup untuk melemahkan hotspot tanpa
+  meratakan pipa yang memang terang. Jangan gunakan `1.0` untuk footage ini.
+- `--contrast-strength 0.45`: memulihkan kontras pada luminance setelah
+  illumination correction tanpa melakukan stretch RGB yang memicu pink/orange
+  cast.
 
 ## Struktur proyek
 
