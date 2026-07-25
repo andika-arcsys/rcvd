@@ -28,6 +28,22 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import torch
+
+
+def _channel_quantiles(image, low_q: float, high_q: float):
+    """Percentile per kanal BGR, kompatibel dengan PyTorch lama dan baru.
+
+    Sebagian versi PyTorch hanya menerima satu ``dim`` pada ``torch.quantile``
+    (bukan tuple ``(batch, height, width)``). Flatten per kanal menghasilkan
+    statistik yang identik tanpa ketergantungan pada fitur versi baru.
+    """
+    # NCHW -> C × (N*H*W), lalu satu dimensi yang didukung semua versi.
+    channels = image.float().permute(1, 0, 2, 3).reshape(image.shape[1], -1)
+    return (
+        torch.quantile(channels, low_q, dim=1),
+        torch.quantile(channels, high_q, dim=1),
+    )
 
 
 def _gaussian_kernel(size: int, sigma: float, device):
@@ -127,8 +143,7 @@ class CudaUnderwaterVideoEnhancer:
             image = (image * gains.view(1, 3, 1, 1)).clamp(0.0, 1.0)
 
             # Percentile stretch ringan: hindari CLAHE agresif penyebab grain.
-            low = torch.quantile(image.float(), 0.01, dim=(0, 2, 3))
-            high = torch.quantile(image.float(), 0.99, dim=(0, 2, 3))
+            low, high = _channel_quantiles(image, 0.01, 0.99)
             span = (high - low).clamp_min(0.12)
             image = ((image - low.view(1, 3, 1, 1)) / span.view(1, 3, 1, 1)).clamp(0, 1)
             image = image.pow(self.gamma)

@@ -246,6 +246,21 @@ class TestYoloIntegration:
         assert "tidak ditemukan" in _validate_model_path("best.pt")
 
 
+class TestCudaBatchScript:
+    def test_channel_quantiles_compatible_per_channel(self):
+        import torch
+
+        from scripts.enhance_video_cuda import _channel_quantiles
+
+        # NCHW: setiap kanal punya distribusi berbeda.
+        image = torch.tensor(
+            [[[[0.0, 0.1], [0.2, 0.3]], [[0.4, 0.5], [0.6, 0.7]], [[0.8, 0.9], [1.0, 1.0]]]]
+        )
+        low, high = _channel_quantiles(image, 0.0, 1.0)
+        assert torch.allclose(low, torch.tensor([0.0, 0.4, 0.8]))
+        assert torch.allclose(high, torch.tensor([0.3, 0.7, 1.0]))
+
+
 class TestCli:
     @pytest.mark.parametrize("text,expected", [
         ("640x480", (640, 480)),
