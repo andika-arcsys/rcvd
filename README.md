@@ -142,6 +142,27 @@ tests/
   test_pipeline.py
 ```
 
+## Integrasi YOLO26 (deteksi / segmentasi)
+
+Untuk model YOLO yang sudah Anda latih (`pip install ultralytics` dahulu):
+
+```bash
+# REKOMENDASI: deteksi pada frame mentah (domain training model Anda),
+# overlay mask digambar pada frame enhanced — akurasi tidak berubah.
+python -m underwater_enhance.yolo_integration "video 1.mp4" \
+    --model best.pt --mode hybrid --preset realtime --display -o hasil.mp4
+
+# A/B test: deteksi raw vs enhanced berdampingan
+python -m underwater_enhance.yolo_integration "video 1.mp4" \
+    --model best.pt --mode compare -o ab_test.mp4
+
+# Siapkan dataset enhanced untuk fine-tuning (label txt tidak berubah)
+python scripts/enhance_dataset.py dataset/images/train dataset_enhanced/images/train
+```
+
+Kajian lengkap (domain shift, pilihan arsitektur, roadmap fine-tuning):
+`docs/kajian_integrasi_yolo26.md`.
+
 ## Eskalasi ke model AI (opsional)
 
 Pipeline ini dirancang sebagai fondasi. Untuk kualitas maksimal dapat
