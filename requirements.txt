@@ -1,0 +1,6 @@
+# Core pipeline (wajib)
+opencv-python>=4.8        # gunakan opencv-python-headless di server tanpa GUI
+numpy>=1.26
+
+# Pengembangan / pengujian
+pytest>=8.0
