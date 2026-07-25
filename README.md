@@ -60,6 +60,9 @@ Catatan Windows:
 # Live preview side-by-side dari file video (loop, tekan 'q' untuk keluar)
 python -m underwater_enhance "video 1.mp4" --display --side-by-side --loop
 
+# Perkecil jendela preview menjadi 640x480 per sisi (file output tidak berubah)
+python -m underwater_enhance "video 1.mp4" --display --side-by-side --view-size 640x480
+
 # Proses ke file output, preset kualitas laporan + metrik kualitas
 python -m underwater_enhance input.mp4 -o hasil.mp4 --preset quality --metrics
 

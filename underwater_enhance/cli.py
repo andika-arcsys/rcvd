@@ -37,6 +37,20 @@ def _open_capture(source: str) -> cv2.VideoCapture:
     return cv2.VideoCapture(source)
 
 
+def _parse_size(text: str) -> tuple[int, int]:
+    """Parse string 'WxH' (mis. '640x480') menjadi tuple (lebar, tinggi)."""
+    try:
+        w_str, h_str = text.lower().split("x")
+        width, height = int(w_str), int(h_str)
+        if width <= 0 or height <= 0:
+            raise ValueError
+        return width, height
+    except ValueError:
+        raise ValueError(
+            f"Format ukuran tidak valid: {text!r}. Gunakan WxH, mis. 640x480."
+        ) from None
+
+
 def _overlay_label(frame: np.ndarray, text: str, color: tuple[int, int, int]) -> None:
     cv2.putText(
         frame, text, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 4, cv2.LINE_AA
@@ -71,6 +85,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Tampilkan jendela preview live (butuh GUI; 'q' untuk keluar)",
     )
     parser.add_argument(
+        "--view-size", metavar="WxH",
+        help="Ukuran tampilan preview per sisi, mis. 640x480. Hanya mengubah "
+        "jendela --display; resolusi file output (-o) tidak berubah",
+    )
+    parser.add_argument(
         "--loop", action="store_true",
         help="Ulangi video dari awal saat selesai (hanya mode --display)",
     )
@@ -93,6 +112,22 @@ def run(args: argparse.Namespace) -> int:
 
     src_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     n_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+
+    view_size: tuple[int, int] | None = None
+    if args.view_size:
+        try:
+            view_size = _parse_size(args.view_size)
+        except ValueError as exc:
+            print(f"[ERROR] {exc}", file=sys.stderr)
+            return 1
+
+    window_title = "Underwater Inspection Enhancement"
+    if args.display:
+        # WINDOW_NORMAL: jendela juga bisa di-resize manual dengan mouse.
+        cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+        if view_size is not None:
+            win_w = view_size[0] * (2 if args.side_by_side else 1)
+            cv2.resizeWindow(window_title, win_w, view_size[1])
 
     enhancer = UnderwaterEnhancer.from_preset(args.preset, upscale_factor=args.scale)
     print(f"[INFO] Preset: {args.preset} | upscale: {args.scale}x | sumber fps: {src_fps:.1f}")
@@ -159,7 +194,14 @@ def run(args: argparse.Namespace) -> int:
                 writer.write(out_frame)
 
             if args.display:
-                cv2.imshow("Underwater Inspection Enhancement", out_frame)
+                view = out_frame
+                if view_size is not None:
+                    target_w = view_size[0] * (2 if args.side_by_side else 1)
+                    view = cv2.resize(
+                        out_frame, (target_w, view_size[1]),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                cv2.imshow(window_title, view)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
 

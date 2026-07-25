@@ -10,6 +10,7 @@ from underwater_enhance import (
     detail,
     metrics,
 )
+from underwater_enhance.cli import _parse_size
 from underwater_enhance.temporal import MotionAdaptiveBlender, ParameterSmoother
 
 RNG = np.random.default_rng(7)
@@ -147,3 +148,17 @@ class TestPipeline:
         enhancer.reset()
         assert enhancer._params._state == {}
         assert enhancer._blender._prev is None
+
+
+class TestCli:
+    @pytest.mark.parametrize("text,expected", [
+        ("640x480", (640, 480)),
+        ("1280X720", (1280, 720)),
+    ])
+    def test_parse_size_valid(self, text, expected):
+        assert _parse_size(text) == expected
+
+    @pytest.mark.parametrize("text", ["640", "0x480", "-640x480", "abcxdef", "640x480x3"])
+    def test_parse_size_invalid(self, text):
+        with pytest.raises(ValueError):
+            _parse_size(text)
