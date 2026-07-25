@@ -126,6 +126,34 @@ python scripts/generate_test_video.py test_underwater.mp4
 python -m underwater_enhance test_underwater.mp4 -o hasil.mp4 --side-by-side --metrics
 ```
 
+## Batch video CUDA tanpa display (1280×720)
+
+Untuk menghasilkan **hanya file video enhanced** tanpa membuka jendela preview,
+gunakan script CUDA berikut. Koreksi warna, edge-aware denoise, smoothing
+temporal, dan resize berjalan di GPU NVIDIA; OpenCV tetap menangani decode dan
+encode video.
+
+```bat
+conda activate pycam
+python scripts/enhance_video_cuda.py "D:\arcgiz\video 1.mp4" "D:\arcgiz\hasil_720p.mp4"
+```
+
+Output selalu 1280×720. Profil default sengaja konservatif agar noise air,
+glare, dan flicker tidak terangkat berlebihan:
+
+```bat
+python scripts/enhance_video_cuda.py input.mp4 hasil_720p.mp4 ^
+  --device cuda:0 --denoise 0.45 --temporal-alpha 0.35 ^
+  --gamma 0.96 --saturation 1.05
+```
+
+Script ini **wajib CUDA** dan akan berhenti dengan pesan error bila PyTorch
+tidak mendeteksi GPU (tidak melakukan fallback CPU). Verifikasi dahulu:
+
+```bat
+python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+```
+
 ## Struktur proyek
 
 ```
