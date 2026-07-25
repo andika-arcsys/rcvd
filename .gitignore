@@ -1,0 +1,11 @@
+# Environment & cache Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Output video hasil uji lokal
+*.mp4
+*.avi
