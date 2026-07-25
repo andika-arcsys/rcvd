@@ -224,6 +224,14 @@ class TestYoloIntegration:
         assert args.preset == "inspection"
         assert args.mask_smooth == 3
 
+    def test_enhanced_input_argument_parses(self):
+        from underwater_enhance.yolo_integration import build_parser
+
+        args = build_parser().parse_args(
+            ["raw.mp4", "--model", "model.pt", "--mode", "hybrid", "--enhanced-input", "inspection.mp4"]
+        )
+        assert args.enhanced_input == "inspection.mp4"
+
     @pytest.mark.parametrize("conf", [0.0, 0.7, 1.0])
     def test_confidence_validation_valid(self, conf):
         from underwater_enhance.yolo_integration import _validate_confidence

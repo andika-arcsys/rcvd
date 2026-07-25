@@ -225,6 +225,23 @@ enhanced frame ke model raw-trained untuk keputusan otomatis tanpa fine-tuning
 raw+enhanced. Generative inpainting/upscaling tidak dipakai sebagai evidence
 retak/kebocoran karena berisiko hallucination.
 
+Untuk memakai hasil **offline inspection** sebagai tampilan operator, tetapi
+tetap mempertahankan inferensi YOLO pada raw, buat hasil inspection 1× lalu
+pasangkan kedua video:
+
+```bat
+python scripts\enhance_video_inspection_cuda.py "video 1.mp4" inspection_1x.mp4 --scale 1
+
+python -m underwater_enhance.yolo_integration "video 1.mp4" ^
+  --model "D:\path\ke\best.pt" --mode hybrid ^
+  --enhanced-input inspection_1x.mp4 ^
+  --device 0 --conf 0.7 --display -o inspection_yolo.mp4
+```
+
+`--enhanced-input` mengharuskan resolusi sama (`--scale 1`) agar mask raw
+sejajar dengan video inspection. Ini tidak menjalankan enhancement internal
+lagi dan tidak mengirimkan frame enhanced ke model raw-trained.
+
 ## Struktur proyek
 
 ```

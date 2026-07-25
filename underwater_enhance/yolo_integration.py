@@ -195,6 +195,27 @@ class YoloUnderwaterInspector:
         )
         return np.hstack((view_raw, view_enh)), raw_stats[0] + enhanced_stats[0]
 
+    def process_with_external_enhanced(
+        self, raw_frame: np.ndarray, enhanced_frame: np.ndarray
+    ) -> tuple[np.ndarray, int]:
+        """Deteksi raw, render hasil pada frame inspection eksternal.
+
+        Dipakai bersama output ``enhance_video_inspection_cuda.py --scale 1``.
+        Model tetap menerima domain raw hasil training, sedangkan operator
+        memperoleh warna/denoise/temporal smoothing dari pipeline offline.
+        """
+        if raw_frame.shape[:2] != enhanced_frame.shape[:2]:
+            raise ValueError(
+                "Dimensi raw dan enhanced harus sama. Buat enhanced input dengan "
+                "`enhance_video_inspection_cuda.py --scale 1`."
+            )
+        result = self._predict(raw_frame)
+        stats = _result_stats(result)
+        self.last_stats = {"raw": stats}
+        rendered = self._render_result(result, enhanced_frame)
+        _label(rendered, _detection_label("RAW YOLO + INSPECTION VIDEO", stats), (0, 255, 0))
+        return rendered, stats[0]
+
     def _render_result(self, result, frame: np.ndarray) -> np.ndarray:
         """Render mask resolusi penuh dengan batas yang lebih halus.
 
@@ -329,6 +350,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--device", default=None,
                         help="Device inferensi: cpu, 0 (GPU pertama), cuda:1, dll. "
                         "Default: otomatis pakai CUDA GPU bila tersedia")
+    parser.add_argument(
+        "--enhanced-input",
+        help="Path video hasil enhance_video_inspection_cuda.py --scale 1. "
+        "Hanya untuk --mode hybrid: YOLO tetap mendeteksi video raw input, "
+        "overlay digambar di video ini.",
+    )
     parser.add_argument("-o", "--output", help="Path video output")
     parser.add_argument("--display", action="store_true",
                         help="Tampilkan jendela preview live ('q' untuk keluar)")
@@ -361,6 +388,20 @@ def run(args: argparse.Namespace) -> int:
               file=sys.stderr)
         return 1
 
+    if args.enhanced_input:
+        if args.mode != "hybrid":
+            print(
+                "[ERROR] --enhanced-input hanya dapat dipakai dengan --mode hybrid.",
+                file=sys.stderr,
+            )
+            return 1
+        if not Path(args.enhanced_input).is_file():
+            print(
+                f"[ERROR] Video inspection tidak ditemukan: {args.enhanced_input!r}",
+                file=sys.stderr,
+            )
+            return 1
+
     view_size: tuple[int, int] | None = None
     if args.view_size:
         try:
@@ -373,6 +414,35 @@ def run(args: argparse.Namespace) -> int:
     if not cap.isOpened():
         print(f"[ERROR] Gagal membuka sumber video: {args.input!r}", file=sys.stderr)
         return 1
+    enhanced_cap: cv2.VideoCapture | None = None
+    if args.enhanced_input:
+        enhanced_cap = cv2.VideoCapture(args.enhanced_input)
+        if not enhanced_cap.isOpened():
+            cap.release()
+            print(
+                f"[ERROR] Gagal membuka video inspection: {args.enhanced_input!r}",
+                file=sys.stderr,
+            )
+            return 1
+        raw_size = (
+            int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+            int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+        )
+        enhanced_size = (
+            int(enhanced_cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
+            int(enhanced_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+        )
+        if raw_size != enhanced_size:
+            cap.release()
+            enhanced_cap.release()
+            print(
+                "[ERROR] Resolusi video raw dan inspection berbeda. Buat video "
+                "inspection dengan `--scale 1` agar mask raw sejajar.\n"
+                f"  raw={raw_size[0]}x{raw_size[1]}, "
+                f"inspection={enhanced_size[0]}x{enhanced_size[1]}",
+                file=sys.stderr,
+            )
+            return 1
 
     try:
         inspector = YoloUnderwaterInspector(
@@ -382,11 +452,15 @@ def run(args: argparse.Namespace) -> int:
         )
     except RuntimeError as exc:
         cap.release()
+        if enhanced_cap is not None:
+            enhanced_cap.release()
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 1
     print(f"[INFO] Model: {args.model} | mode: {args.mode} | preset: {args.preset} "
           f"| conf minimum: {args.conf} | mask smoothing: {inspector.mask_smooth}px")
     print(f"[INFO] Inferensi YOLO: {inspector.device_desc}")
+    if args.enhanced_input:
+        print(f"[INFO] Visual enhanced eksternal: {args.enhanced_input}")
 
     window_title = "YOLO Underwater Inspection"
     if args.display:
@@ -410,9 +484,22 @@ def run(args: argparse.Namespace) -> int:
             ret, frame = cap.read()
             if not ret:
                 break
+            if enhanced_cap is not None:
+                enhanced_ok, external_enhanced = enhanced_cap.read()
+                if not enhanced_ok:
+                    print(
+                        "[WARN] Video inspection selesai lebih dahulu; pemrosesan dihentikan.",
+                        file=sys.stderr,
+                    )
+                    break
 
             t0 = time.perf_counter()
-            annotated, n_det = inspector.process(frame)
+            if enhanced_cap is not None:
+                annotated, n_det = inspector.process_with_external_enhanced(
+                    frame, external_enhanced
+                )
+            else:
+                annotated, n_det = inspector.process(frame)
             proc_time_total += time.perf_counter() - t0
             frame_idx += 1
             det_total += n_det
@@ -463,6 +550,8 @@ def run(args: argparse.Namespace) -> int:
         print("\n[INFO] Dihentikan oleh pengguna (Ctrl+C).")
     finally:
         cap.release()
+        if enhanced_cap is not None:
+            enhanced_cap.release()
         inspector.close()
         if writer is not None:
             writer.release()
