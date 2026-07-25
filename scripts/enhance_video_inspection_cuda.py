@@ -59,7 +59,10 @@ def _gaussian_kernel(size: int, sigma: float, device: torch.device) -> torch.Ten
 
 
 def _warp_previous_to_current(
-    previous: np.ndarray, current_gray: np.ndarray, previous_gray: np.ndarray
+    previous: np.ndarray,
+    current_gray: np.ndarray,
+    previous_gray: np.ndarray,
+    flow_scale: float,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Warp frame sebelumnya ke koordinat frame kini dengan backward optical flow.
 
@@ -67,9 +70,18 @@ def _warp_previous_to_current(
     langsung mengambil piksel sebelumnya yang bersesuaian untuk setiap koordinat
     current. Magnitudo flow dikembalikan untuk diagnostic/temporal confidence.
     """
+    height, width = current_gray.shape
+    if flow_scale < 1.0:
+        flow_width = max(32, round(width * flow_scale))
+        flow_height = max(32, round(height * flow_scale))
+        current_flow = cv2.resize(current_gray, (flow_width, flow_height), interpolation=cv2.INTER_AREA)
+        previous_flow = cv2.resize(previous_gray, (flow_width, flow_height), interpolation=cv2.INTER_AREA)
+    else:
+        current_flow, previous_flow = current_gray, previous_gray
+
     flow = cv2.calcOpticalFlowFarneback(
-        current_gray,
-        previous_gray,
+        current_flow,
+        previous_flow,
         None,
         pyr_scale=0.5,
         levels=3,
@@ -79,7 +91,10 @@ def _warp_previous_to_current(
         poly_sigma=1.2,
         flags=0,
     )
-    height, width = current_gray.shape
+    if flow.shape[:2] != (height, width):
+        # Komponen flow satuannya adalah piksel image kecil; setelah upscale
+        # nilainya harus dikalikan kembali agar warp pada ukuran asli benar.
+        flow = cv2.resize(flow, (width, height), interpolation=cv2.INTER_LINEAR) / flow_scale
     x, y = np.meshgrid(np.arange(width, dtype=np.float32), np.arange(height, dtype=np.float32))
     warped = cv2.remap(
         previous,
@@ -97,12 +112,13 @@ def _temporal_blend_aligned(
     current_gray: np.ndarray,
     previous_gray: np.ndarray | None,
     alpha: float,
+    flow_scale: float,
 ) -> np.ndarray:
     """Temporally smooth only after alignment and only where residual is low."""
     if previous is None or previous_gray is None or alpha <= 0:
         return current
 
-    warped, _ = _warp_previous_to_current(previous, current_gray, previous_gray)
+    warped, _ = _warp_previous_to_current(previous, current_gray, previous_gray, flow_scale)
     residual = cv2.absdiff(current, warped)
     residual_luma = cv2.cvtColor(residual, cv2.COLOR_BGR2GRAY).astype(np.float32) / 255.0
     # Partikel/tepi dinamis mempunyai residual besar -> jangan dicampur (anti ghosting).
@@ -136,7 +152,7 @@ class CudaInspectionEnhancer:
         self.scale = scale
         self.small_blur = _gaussian_kernel(5, 1.1, self.device)
         # Illumination blur yang lebih lebar, tetapi gain nantinya dibatasi.
-        self.light_blur = _gaussian_kernel(31, 9.0, self.device)
+        self.light_blur = _gaussian_kernel(7, 2.0, self.device)
 
     @staticmethod
     def _conv(image: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
@@ -162,7 +178,13 @@ class CudaInspectionEnhancer:
             luma = 0.114 * b + 0.587 * g + 0.299 * r
 
             # 1. Hotspot/vignetting normalization; ratio dibatasi keras.
-            illumination = self._conv(luma, self.light_blur)
+            # Peta illumination adalah komponen frekuensi rendah: estimasi di
+            # 1/8 resolusi jauh lebih cepat daripada Gaussian 31x31 full-res.
+            lowres_luma = nnf.interpolate(luma, scale_factor=0.125, mode="area")
+            illumination = self._conv(lowres_luma, self.light_blur)
+            illumination = nnf.interpolate(
+                illumination, size=luma.shape[-2:], mode="bilinear", align_corners=False
+            )
             target = torch.median(illumination)
             raw_light_gain = (target / (illumination + 1e-4)).clamp(0.78, 1.22)
             # Jangan meratakan cahaya sepenuhnya; pipa yang terang harus tetap
@@ -296,6 +318,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--denoise", type=float, default=0.40)
     parser.add_argument("--temporal-alpha", type=float, default=0.15,
                         help="Temporal blend setelah optical flow alignment (default: 0.15)")
+    parser.add_argument("--flow-scale", type=float, default=0.25,
+                        help="Resolusi optical flow 0.1..1; 0.25 ≈16x piksel lebih sedikit (default: 0.25)")
     parser.add_argument("--gamma", type=float, default=0.95)
     parser.add_argument("--saturation", type=float, default=1.06)
     parser.add_argument("--detail-gain", type=float, default=0.22,
@@ -310,6 +334,8 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Simpan rerata UCIQE/colorfulness/RMS contrast ke JSON")
     parser.add_argument("--metrics-every", type=int, default=20,
                         help="Interval sampling metrik frame (default: 20)")
+    parser.add_argument("--timing", action="store_true",
+                        help="Cetak waktu enhancement, flow, upscale, dan encode tiap 25 frame")
     parser.add_argument("--max-frames", type=int, default=0)
     return parser
 
@@ -319,7 +345,7 @@ def _validate(args: argparse.Namespace) -> str | None:
         return f"Input tidak ditemukan: {args.input!r}"
     for key in (
         "osd_top", "osd_bottom", "denoise", "temporal_alpha",
-        "illumination_strength", "contrast_strength",
+        "illumination_strength", "contrast_strength", "flow_scale",
     ):
         if not 0 <= getattr(args, key) <= 1:
             return f"--{key.replace('_', '-')} harus berada pada rentang 0..1"
@@ -331,6 +357,8 @@ def _validate(args: argparse.Namespace) -> str | None:
         return "--detail-gain harus berada pada rentang 0..0.5"
     if args.metrics_every < 1:
         return "--metrics-every harus minimal 1"
+    if not 0.1 <= args.flow_scale <= 1.0:
+        return "--flow-scale harus berada pada rentang 0.1..1"
     return None
 
 
@@ -393,23 +421,37 @@ def run(args: argparse.Namespace) -> int:
     enhanced_metric_rows: list[dict[str, float]] = []
     count = 0
     started = time.perf_counter()
+    timings = {"enhance_gpu": 0.0, "temporal_flow_cpu": 0.0, "resize_gpu": 0.0, "encode_cpu": 0.0}
     try:
         while True:
             ok, frame = cap.read()
             if not ok:
                 break
             roi = frame[top:bottom, :]
+            t0 = time.perf_counter()
             enhanced_roi = enhancer.enhance_roi(roi)
+            torch.cuda.synchronize(enhancer.device)
+            timings["enhance_gpu"] += time.perf_counter() - t0
+
+            t0 = time.perf_counter()
             current_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
             enhanced_roi = _temporal_blend_aligned(
-                enhanced_roi, previous_enhanced, current_gray, previous_gray, args.temporal_alpha
+                enhanced_roi,
+                previous_enhanced,
+                current_gray,
+                previous_gray,
+                args.temporal_alpha,
+                args.flow_scale,
             )
             previous_enhanced = enhanced_roi
             previous_gray = current_gray
+            timings["temporal_flow_cpu"] += time.perf_counter() - t0
 
+            t0 = time.perf_counter()
             enhanced_roi_resized = enhancer.resize_roi(
                 enhanced_roi, (out_size[0], output_bottom - output_top)
             )
+            torch.cuda.synchronize(enhancer.device)
             output = _recompose_osd(
                 frame,
                 enhanced_roi_resized,
@@ -419,6 +461,9 @@ def run(args: argparse.Namespace) -> int:
                 output_top,
                 output_bottom,
             )
+            timings["resize_gpu"] += time.perf_counter() - t0
+
+            t0 = time.perf_counter()
             writer.write(output)
             count += 1
 
@@ -427,11 +472,18 @@ def run(args: argparse.Namespace) -> int:
                 raw_up = cv2.resize(frame, out_size, interpolation=cv2.INTER_LANCZOS4)
             if comparison_writer is not None:
                 comparison_writer.write(_overlay_comparison_labels(raw_up, output))
+            timings["encode_cpu"] += time.perf_counter() - t0
             if args.metrics_json and count % args.metrics_every == 1:
                 raw_metric_rows.append(metrics.summarize(raw_up))
                 enhanced_metric_rows.append(metrics.summarize(output))
             if count % 25 == 0:
                 print(f"[INFO] {count}/{total or '?'} frame | {count / (time.perf_counter() - started):.2f} FPS")
+                if args.timing:
+                    timing_text = " | ".join(
+                        f"{key}={value / count * 1000:.1f}ms"
+                        for key, value in timings.items()
+                    )
+                    print(f"[TIMING] {timing_text}")
             if args.max_frames and count >= args.max_frames:
                 break
     except KeyboardInterrupt:

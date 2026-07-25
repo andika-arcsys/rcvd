@@ -199,6 +199,31 @@ Parameter penting:
 - `--contrast-strength 0.45`: memulihkan kontras pada luminance setelah
   illumination correction tanpa melakukan stretch RGB yang memicu pink/orange
   cast.
+- `--flow-scale 0.25`: optical flow dihitung pada 1/4 lebar/tinggi (sekitar
+  1/16 piksel), lalu di-upsample untuk alignment. Ini default offline yang
+  jauh lebih cepat; gunakan `1.0` hanya bila throughput bukan prioritas.
+- `--timing`: tampilkan rata-rata waktu GPU enhancement, CPU optical flow,
+  GPU resize, dan CPU encode setiap 25 frame agar bottleneck terlihat nyata.
+
+`enhance_video_inspection_cuda.py` adalah pipeline **offline**: flow alignment
+dan encode output 2×/3× sengaja mengorbankan FPS demi audit visual. Jangan
+gunakan untuk masking/YOLO live.
+
+Untuk masking real-time, gunakan pipeline yang lebih tepat:
+
+```bat
+:: YOLO menerima RAW (sesuai training); enhanced hanya untuk visual operator.
+:: Jangan upscale terlebih dahulu: YOLO tetap resize ke imgsz 640.
+python -m underwater_enhance.yolo_integration "video 1.mp4" ^
+  --model "D:\path\ke\best.pt" --mode hybrid --preset inspection ^
+  --device 0 --conf 0.7 --display -o hybrid.mp4
+```
+
+Mask segmentasi dibuat oleh YOLO terlebih dahulu. Mask itu dapat memandu
+peningkatan visual area pipa pada tahap berikutnya, tetapi jangan mengumpankan
+enhanced frame ke model raw-trained untuk keputusan otomatis tanpa fine-tuning
+raw+enhanced. Generative inpainting/upscaling tidak dipakai sebagai evidence
+retak/kebocoran karena berisiko hallucination.
 
 ## Struktur proyek
 

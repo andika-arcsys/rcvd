@@ -281,7 +281,9 @@ class TestCudaInspectionScript:
 
         frame = np.full((40, 60, 3), 123, dtype=np.uint8)
         gray = np.full((40, 60), 123, dtype=np.uint8)
-        out = _temporal_blend_aligned(frame, frame, gray, gray, alpha=0.3)
+        out = _temporal_blend_aligned(
+            frame, frame, gray, gray, alpha=0.3, flow_scale=0.25
+        )
         assert np.array_equal(out, frame)
 
     def test_osd_recompose_preserves_scaled_osd(self):
