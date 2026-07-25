@@ -124,7 +124,7 @@ class CudaInspectionEnhancer:
         detail_gain: float,
         illumination_strength: float,
         contrast_strength: float,
-        scale: int,
+        scale: float,
     ) -> None:
         self.device = torch.device(device)
         self.denoise = denoise
@@ -224,8 +224,8 @@ class CudaInspectionEnhancer:
             .numpy()
         )
 
-    def upscale_roi(self, roi_bgr: np.ndarray) -> np.ndarray:
-        """Upscale non-generatif pada CUDA; geometri tidak dimodifikasi."""
+    def resize_roi(self, roi_bgr: np.ndarray, target_size: tuple[int, int]) -> np.ndarray:
+        """Resize non-generatif pada CUDA; geometri tidak dimodifikasi."""
         image = (
             torch.from_numpy(np.ascontiguousarray(roi_bgr))
             .to(self.device, non_blocking=True)
@@ -236,32 +236,39 @@ class CudaInspectionEnhancer:
         )
         with torch.amp.autocast("cuda", dtype=torch.float16):
             image = nnf.interpolate(
-                image, scale_factor=self.scale, mode="bicubic", align_corners=False
+                image, size=(target_size[1], target_size[0]), mode="bicubic", align_corners=False
             ).clamp(0, 1)
         return (image[0].permute(1, 2, 0) * 255).byte().cpu().numpy()
 
 
 def _recompose_osd(
-    original: np.ndarray, enhanced_roi: np.ndarray, top: int, bottom: int, scale: int
+    original: np.ndarray,
+    enhanced_roi: np.ndarray,
+    top: int,
+    bottom: int,
+    output_size: tuple[int, int],
+    output_top: int,
+    output_bottom: int,
 ) -> np.ndarray:
     """Upscale original OSD tanpa enhancement lalu tempel enhanced visual ROI."""
-    height, width = original.shape[:2]
+    height = original.shape[0]
+    output_width, output_height = output_size
     output = cv2.resize(
-        original, (width * scale, height * scale), interpolation=cv2.INTER_LANCZOS4
+        original, output_size, interpolation=cv2.INTER_LANCZOS4
     )
     # Rekompilasi strip OSD secara independen. Nearest-neighbor menjaga nilai
     # piksel teks/telemetry asli dan mencegah Lanczos dari visual ROI merembes
     # ke baris OSD di batas crop.
     if top:
-        output[:top * scale] = cv2.resize(
-            original[:top], (width * scale, top * scale), interpolation=cv2.INTER_NEAREST
+        output[:output_top] = cv2.resize(
+            original[:top], (output_width, output_top), interpolation=cv2.INTER_NEAREST
         )
     if bottom < height:
-        osd_height = (height - bottom) * scale
-        output[bottom * scale:] = cv2.resize(
-            original[bottom:], (width * scale, osd_height), interpolation=cv2.INTER_NEAREST
+        osd_height = output_height - output_bottom
+        output[output_bottom:] = cv2.resize(
+            original[bottom:], (output_width, osd_height), interpolation=cv2.INTER_NEAREST
         )
-    output[top * scale:bottom * scale, :] = enhanced_roi
+    output[output_top:output_bottom, :] = enhanced_roi
     return output
 
 
@@ -279,8 +286,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", help="Video input")
     parser.add_argument("output", help="Video enhanced output")
-    parser.add_argument("--scale", type=int, choices=(2, 3), default=2,
-                        help="Faktor upscale non-generatif (default: 2)")
+    parser.add_argument("--scale", type=float, choices=(0.25, 0.5, 1.0, 2.0, 3.0), default=2.0,
+                        help="Skala output: 0.25, 0.5, 1, 2, atau 3 (default: 2)")
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--osd-top", type=float, default=0.08,
                         help="Fraksi OSD atas yang dipertahankan (default: 0.08)")
@@ -360,7 +367,12 @@ def run(args: argparse.Namespace) -> int:
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
     top, bottom = _content_bounds(source_height, args.osd_top, args.osd_bottom)
-    out_size = (source_width * args.scale, source_height * args.scale)
+    out_size = (
+        max(1, round(source_width * args.scale)),
+        max(1, round(source_height * args.scale)),
+    )
+    output_top = round(top * args.scale)
+    output_bottom = round(bottom * args.scale)
     writer = cv2.VideoWriter(args.output, cv2.VideoWriter_fourcc(*"mp4v"), fps, out_size)
     comparison_writer = None
     if args.comparison_output:
@@ -395,8 +407,18 @@ def run(args: argparse.Namespace) -> int:
             previous_enhanced = enhanced_roi
             previous_gray = current_gray
 
-            enhanced_roi_up = enhancer.upscale_roi(enhanced_roi)
-            output = _recompose_osd(frame, enhanced_roi_up, top, bottom, args.scale)
+            enhanced_roi_resized = enhancer.resize_roi(
+                enhanced_roi, (out_size[0], output_bottom - output_top)
+            )
+            output = _recompose_osd(
+                frame,
+                enhanced_roi_resized,
+                top,
+                bottom,
+                out_size,
+                output_top,
+                output_bottom,
+            )
             writer.write(output)
             count += 1
 

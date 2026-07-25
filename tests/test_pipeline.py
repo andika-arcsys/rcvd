@@ -266,6 +266,7 @@ class TestCudaInspectionScript:
         from scripts.enhance_video_inspection_cuda import build_parser
 
         args = build_parser().parse_args(["input.mp4", "output.mp4"])
+        assert args.scale == 2.0
         assert args.illumination_strength == 0.35
         assert args.contrast_strength == 0.45
         assert args.temporal_alpha == 0.15
@@ -289,12 +290,28 @@ class TestCudaInspectionScript:
         original = np.zeros((10, 8, 3), dtype=np.uint8)
         original[:2] = (17, 23, 31)  # OSD top unik
         roi_up = np.full((12, 16, 3), 200, dtype=np.uint8)
-        output = _recompose_osd(original, roi_up, top=2, bottom=8, scale=2)
+        output = _recompose_osd(
+            original, roi_up, top=2, bottom=8,
+            output_size=(16, 20), output_top=4, output_bottom=16,
+        )
         assert output.shape == (20, 16, 3)
         # Lanczos saat scale boleh menginterpolasi batas OSD, tetapi area interior
         # tetap berasal dari OSD asli dan tidak terkena enhancement ROI.
         assert np.all(output[:2] == (17, 23, 31))
         assert np.all(output[4:16] == 200)
+
+    @pytest.mark.parametrize("scale,expected", [
+        ("0.25", 0.25),
+        ("0.5", 0.5),
+        ("1", 1.0),
+        ("2", 2.0),
+        ("3", 3.0),
+    ])
+    def test_parser_accepts_downscale_and_upscale(self, scale, expected):
+        from scripts.enhance_video_inspection_cuda import build_parser
+
+        args = build_parser().parse_args(["input.mp4", "output.mp4", "--scale", scale])
+        assert args.scale == expected
 
 
 class TestCli:

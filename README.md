@@ -173,6 +173,11 @@ python scripts\enhance_video_inspection_cuda.py "D:\arcgiz\video 1.mp4" ^
 
 :: Output 3x, mis. 1280x720 → 3840x2160
 python scripts\enhance_video_inspection_cuda.py input.mp4 inspection_3x.mp4 --scale 3
+
+:: Downscale untuk review/transfer cepat:
+:: 1280x720 → 640x360 (0.5x), atau 320x180 (0.25x)
+python scripts\enhance_video_inspection_cuda.py input.mp4 review_0_5x.mp4 --scale 0.5
+python scripts\enhance_video_inspection_cuda.py input.mp4 review_0_25x.mp4 --scale 0.25
 ```
 
 `comparison-output` menghasilkan video `RAW (Lanczos scale) | INSPECTION
