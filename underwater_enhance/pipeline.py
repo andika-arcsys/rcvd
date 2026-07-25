@@ -42,6 +42,7 @@ class PipelineConfig:
     stretch_low_pct: float = 0.5
     stretch_high_pct: float = 99.5
     gamma: float = 0.85
+    saturation_gain: float = 1.25
 
     # -- kontras & detail --
     clahe_clip: float = 1.8
@@ -57,6 +58,11 @@ class PipelineConfig:
     # -- temporal --
     param_ema_alpha: float = 0.9
     temporal_blend_strength: float = 0.0
+
+    # -- performa --
+    # Statistik global (WB gain, percentile) dihitung pada 1/stats_scale
+    # resolusi; hasilnya identik secara praktis namun jauh lebih cepat.
+    stats_scale: int = 4
 
     # -- upscaling --
     upscale_factor: float = 1.0
@@ -125,19 +131,35 @@ class UnderwaterEnhancer:
         if cfg.enable_red_compensation:
             img = color.red_channel_compensation(img)
 
+        # Statistik global dihitung pada versi kecil frame (hemat komputasi).
+        h, w = img.shape[:2]
+        if cfg.stats_scale > 1:
+            stats_img = cv2.resize(
+                img, (max(w // cfg.stats_scale, 1), max(h // cfg.stats_scale, 1)),
+                interpolation=cv2.INTER_AREA,
+            )
+        else:
+            stats_img = img
+
         if cfg.enable_white_balance:
-            gains = color.shades_of_gray_gains(img, p=cfg.wb_norm_p)
+            gains = color.shades_of_gray_gains(stats_img, p=cfg.wb_norm_p)
             gains = self._params.smooth("wb_gains", gains)
-            img = color.apply_gains(img, gains)
+        else:
+            gains = np.ones(3, dtype=np.float32)
 
-        bounds = color.stretch_bounds(img, cfg.stretch_low_pct, cfg.stretch_high_pct)
+        bounds = color.stretch_bounds(
+            color.apply_gains(stats_img, gains),
+            cfg.stretch_low_pct, cfg.stretch_high_pct,
+        )
         bounds = self._params.smooth("stretch_bounds", bounds)
-        img = color.apply_stretch(img, bounds)
 
-        img = color.gamma_correction(img, cfg.gamma)
+        # WB gain + stretch + gamma dieksekusi sekaligus lewat satu LUT 8-bit.
+        img_u8 = (np.clip(img, 0.0, 1.0) * 255.0).astype(np.uint8)
+        lut = color.build_tone_lut(gains, bounds, cfg.gamma)
+        img_u8 = cv2.LUT(img_u8, lut)
 
-        img_u8 = (img * 255.0).astype(np.uint8)
         img_u8 = color.clahe_lab(img_u8, cfg.clahe_clip, cfg.clahe_grid)
+        img_u8 = color.saturation_boost(img_u8, cfg.saturation_gain)
 
         img_f = img_u8.astype(np.float32) / 255.0
         img_f = detail.multiscale_unsharp_mask(

@@ -73,6 +73,34 @@ def gamma_correction(img: np.ndarray, gamma: float = 0.85) -> np.ndarray:
     return np.power(np.clip(img, 0.0, 1.0), gamma)
 
 
+def build_tone_lut(
+    gains: np.ndarray, bounds: np.ndarray, gamma: float
+) -> np.ndarray:
+    """Gabungkan WB gain + percentile stretch + gamma menjadi satu LUT 8-bit.
+
+    Menghasilkan LUT shape (1, 256, 3) untuk ``cv2.LUT`` — jauh lebih cepat
+    daripada tiga operasi floating-point full-frame terpisah (kunci untuk
+    mempertahankan 30+ FPS pada CPU).
+    """
+    x = np.linspace(0.0, 1.0, 256, dtype=np.float32)[None, :]  # (1, 256)
+    v = x * gains.reshape(3, 1)  # per kanal BGR
+    span = np.maximum(bounds[:, 1] - bounds[:, 0], _EPS).reshape(3, 1)
+    v = np.clip((v - bounds[:, 0].reshape(3, 1)) / span, 0.0, 1.0)
+    v = np.power(v, gamma)
+    lut = (v * 255.0 + 0.5).astype(np.uint8)  # (3, 256)
+    return lut.T[None, ...]  # (1, 256, 3)
+
+
+def saturation_boost(img_u8: np.ndarray, gain: float = 1.15) -> np.ndarray:
+    """Perkuat saturasi di ruang HSV; mengembalikan kekayaan warna material
+    yang hilang akibat atenuasi spektral air, tanpa menggeser hue."""
+    if abs(gain - 1.0) < 1e-3:
+        return img_u8
+    hsv = cv2.cvtColor(img_u8, cv2.COLOR_BGR2HSV).astype(np.float32)
+    hsv[..., 1] = np.clip(hsv[..., 1] * gain, 0.0, 255.0)
+    return cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR)
+
+
 def clahe_lab(img_u8: np.ndarray, clip_limit: float = 1.8, grid: int = 8) -> np.ndarray:
     """Peningkatan kontras lokal pada kanal luminance (ruang warna LAB).
 
