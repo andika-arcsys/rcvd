@@ -158,6 +158,13 @@ python -m underwater_enhance.yolo_integration "video 1.mp4" \
 python -m underwater_enhance.yolo_integration "video 1.mp4" \
     --model best.pt --mode compare -o ab_test.mp4
 
+# Empat panel dalam satu window: raw | raw+YOLO | enhanced | enhanced+YOLO.
+# Setiap panel YOLO menunjukkan jumlah objek dan confidence rata-rata aktual.
+# 640x360 per panel berarti jendela total 1280x720.
+python -m underwater_enhance.yolo_integration "video 1.mp4" \
+    --model best.pt --mode quad --preset realtime --device 0 --conf 0.7 \
+    --display --view-size 640x360 -o quad_comparison.mp4
+
 # Siapkan dataset enhanced untuk fine-tuning (label txt tidak berubah)
 python scripts/enhance_dataset.py dataset/images/train dataset_enhanced/images/train
 ```

@@ -14,6 +14,8 @@ Tiga arsitektur integrasi (lihat docs/kajian_integrasi_yolo26.md):
 
 Mode tambahan ``compare`` menjalankan deteksi pada raw DAN enhanced sekaligus
 lalu menampilkannya berdampingan — untuk A/B testing sebelum memutuskan.
+Mode ``quad`` menampilkan empat panel dalam satu window: RAW, RAW + YOLO,
+ENHANCED, dan ENHANCED + YOLO.
 
 Contoh:
     python -m underwater_enhance.yolo_integration video.mp4 \
@@ -34,7 +36,7 @@ import numpy as np
 
 from underwater_enhance.pipeline import PRESETS, UnderwaterEnhancer
 
-MODES = ("raw", "hybrid", "enhanced", "compare")
+MODES = ("raw", "hybrid", "enhanced", "compare", "quad")
 
 
 def resolve_device(requested: str | None = None) -> tuple[str, bool, str]:
@@ -107,6 +109,8 @@ class YoloUnderwaterInspector:
         # Enhancement (CPU) dijalankan paralel dengan inferensi YOLO (GPU)
         # pada mode hybrid/compare — keduanya independen terhadap frame mentah.
         self._pool = ThreadPoolExecutor(max_workers=1)
+        # Statistik deteksi frame terakhir, dipakai untuk laporan aktual.
+        self.last_stats: dict[str, tuple[int, float]] = {}
 
     def close(self) -> None:
         """Lepaskan worker enhancement setelah video selesai diproses."""
@@ -128,29 +132,59 @@ class YoloUnderwaterInspector:
         """
         if self.mode == "raw":
             result = self._predict(frame)
-            return result.plot(img=frame.copy()), len(result.boxes)
+            self.last_stats = {"raw": _result_stats(result)}
+            return result.plot(img=frame.copy()), self.last_stats["raw"][0]
 
         if self.mode == "enhanced":
             enhanced = self.enhancer.process(frame)
             result = self._predict(enhanced)
-            return result.plot(img=enhanced.copy()), len(result.boxes)
+            self.last_stats = {"enhanced": _result_stats(result)}
+            return result.plot(img=enhanced.copy()), self.last_stats["enhanced"][0]
 
-        # hybrid & compare: enhancement dan inferensi raw berjalan paralel.
+        # hybrid, compare & quad: enhancement dan inferensi raw paralel.
         future = self._pool.submit(self.enhancer.process, frame)
         res_raw = self._predict(frame)
         enhanced = future.result()
 
         if self.mode == "hybrid":
             # Deteksi pada domain training (mentah), visual pada enhanced.
-            return res_raw.plot(img=enhanced.copy()), len(res_raw.boxes)
+            self.last_stats = {"raw": _result_stats(res_raw)}
+            return res_raw.plot(img=enhanced.copy()), self.last_stats["raw"][0]
 
-        # mode == "compare": A/B deteksi raw vs enhanced berdampingan.
+        # compare & quad: A/B deteksi raw dan enhanced.
         res_enh = self._predict(enhanced)
+        raw_stats = _result_stats(res_raw)
+        enhanced_stats = _result_stats(res_enh)
+        self.last_stats = {"raw": raw_stats, "enhanced": enhanced_stats}
+
+        if self.mode == "quad":
+            # Semua panel memiliki piksel/scene yang sama. Hanya panel YOLO
+            # yang diberi mask & box; ini membuat dampak enhancement terukur.
+            raw_plain = frame.copy()
+            enhanced_plain = enhanced.copy()
+            raw_yolo = res_raw.plot(img=frame.copy())
+            enhanced_yolo = res_enh.plot(img=enhanced.copy())
+            _label(raw_plain, "RAW INPUT", (0, 0, 255))
+            _label(raw_yolo, _detection_label("RAW + YOLO", raw_stats), (0, 165, 255))
+            _label(enhanced_plain, "ENHANCED", (255, 255, 0))
+            _label(
+                enhanced_yolo,
+                _detection_label("ENHANCED + YOLO", enhanced_stats),
+                (0, 255, 0),
+            )
+            return _quad_view(raw_plain, raw_yolo, enhanced_plain, enhanced_yolo), (
+                raw_stats[0] + enhanced_stats[0]
+            )
+
         view_raw = res_raw.plot(img=frame.copy())
         view_enh = res_enh.plot(img=enhanced.copy())
-        _label(view_raw, f"DETECT ON RAW ({len(res_raw.boxes)} objek)", (0, 0, 255))
-        _label(view_enh, f"DETECT ON ENHANCED ({len(res_enh.boxes)} objek)", (0, 255, 0))
-        return np.hstack((view_raw, view_enh)), len(res_raw.boxes) + len(res_enh.boxes)
+        _label(view_raw, _detection_label("DETECT ON RAW", raw_stats), (0, 0, 255))
+        _label(
+            view_enh,
+            _detection_label("DETECT ON ENHANCED", enhanced_stats),
+            (0, 255, 0),
+        )
+        return np.hstack((view_raw, view_enh)), raw_stats[0] + enhanced_stats[0]
 
 
 def _label(frame: np.ndarray, text: str, color: tuple[int, int, int]) -> None:
@@ -158,6 +192,30 @@ def _label(frame: np.ndarray, text: str, color: tuple[int, int, int]) -> None:
                 (0, 0, 0), 4, cv2.LINE_AA)
     cv2.putText(frame, text, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                 color, 2, cv2.LINE_AA)
+
+
+def _result_stats(result) -> tuple[int, float]:
+    """Ambil data aktual deteksi: (jumlah objek, rerata confidence)."""
+    count = len(result.boxes)
+    if count == 0:
+        return 0, 0.0
+    return count, float(result.boxes.conf.float().mean().item())
+
+
+def _detection_label(prefix: str, stats: tuple[int, float]) -> str:
+    """Format metadata per-frame yang ditampilkan pada panel YOLO."""
+    count, mean_conf = stats
+    return f"{prefix} | {count} objek | conf avg: {mean_conf:.2f}"
+
+
+def _quad_view(
+    raw: np.ndarray,
+    raw_yolo: np.ndarray,
+    enhanced: np.ndarray,
+    enhanced_yolo: np.ndarray,
+) -> np.ndarray:
+    """Buat grid 2×2: RAW | RAW+YOLO / ENHANCED | ENHANCED+YOLO."""
+    return np.vstack((np.hstack((raw, raw_yolo)), np.hstack((enhanced, enhanced_yolo))))
 
 
 def _is_official_weight(name: str) -> bool:
@@ -214,13 +272,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("-o", "--output", help="Path video output")
     parser.add_argument("--display", action="store_true",
                         help="Tampilkan jendela preview live ('q' untuk keluar)")
+    parser.add_argument(
+        "--view-size", metavar="WxH",
+        help="Ukuran setiap panel preview, mis. 640x360. Pada --mode quad, "
+        "window menjadi 2W x 2H; file output tidak berubah.",
+    )
     parser.add_argument("--max-frames", type=int, default=0,
                         help="Batasi jumlah frame (0 = semua)")
     return parser
 
 
 def run(args: argparse.Namespace) -> int:
-    from underwater_enhance.cli import _open_capture  # hindari duplikasi logika
+    from underwater_enhance.cli import _open_capture, _parse_size
 
     conf_error = _validate_confidence(args.conf)
     if conf_error:
@@ -237,6 +300,14 @@ def run(args: argparse.Namespace) -> int:
               f"  Gunakan path lengkap, mis.: \"D:\\arcgiz\\video 1.mp4\"",
               file=sys.stderr)
         return 1
+
+    view_size: tuple[int, int] | None = None
+    if args.view_size:
+        try:
+            view_size = _parse_size(args.view_size)
+        except ValueError as exc:
+            print(f"[ERROR] {exc}", file=sys.stderr)
+            return 1
 
     cap = _open_capture(args.input)
     if not cap.isOpened():
@@ -256,10 +327,21 @@ def run(args: argparse.Namespace) -> int:
           f"| conf minimum: {args.conf}")
     print(f"[INFO] Inferensi YOLO: {inspector.device_desc}")
 
+    window_title = "YOLO Underwater Inspection"
+    if args.display:
+        cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+        if view_size:
+            multiplier = 2 if args.mode == "quad" else 1
+            cv2.resizeWindow(
+                window_title, view_size[0] * multiplier, view_size[1] * multiplier
+            )
+
     src_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     writer: cv2.VideoWriter | None = None
     frame_idx = 0
     det_total = 0
+    raw_det_total = 0
+    enhanced_det_total = 0
     proc_time_total = 0.0
 
     try:
@@ -273,6 +355,8 @@ def run(args: argparse.Namespace) -> int:
             proc_time_total += time.perf_counter() - t0
             frame_idx += 1
             det_total += n_det
+            raw_det_total += inspector.last_stats.get("raw", (0, 0.0))[0]
+            enhanced_det_total += inspector.last_stats.get("enhanced", (0, 0.0))[0]
 
             if args.output:
                 if writer is None:
@@ -287,14 +371,30 @@ def run(args: argparse.Namespace) -> int:
                 writer.write(annotated)
 
             if args.display:
-                cv2.imshow("YOLO Underwater Inspection", annotated)
+                preview = annotated
+                if view_size:
+                    multiplier = 2 if args.mode == "quad" else 1
+                    preview = cv2.resize(
+                        annotated,
+                        (view_size[0] * multiplier, view_size[1] * multiplier),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                cv2.imshow(window_title, preview)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
 
             if frame_idx % 25 == 0:
-                print(f"[INFO] Frame {frame_idx} | "
-                      f"{frame_idx / proc_time_total:.1f} FPS | "
-                      f"rata-rata {det_total / frame_idx:.1f} deteksi/frame")
+                report = (
+                    f"[INFO] Frame {frame_idx} | {frame_idx / proc_time_total:.1f} FPS"
+                )
+                if args.mode in ("compare", "quad"):
+                    report += (
+                        f" | RAW {raw_det_total / frame_idx:.2f} objek/frame"
+                        f" | ENHANCED {enhanced_det_total / frame_idx:.2f} objek/frame"
+                    )
+                else:
+                    report += f" | rata-rata {det_total / frame_idx:.1f} deteksi/frame"
+                print(report)
 
             if args.max_frames and frame_idx >= args.max_frames:
                 break
@@ -312,9 +412,18 @@ def run(args: argparse.Namespace) -> int:
         print("[ERROR] Tidak ada frame yang terbaca.", file=sys.stderr)
         return 1
 
-    print(f"[INFO] Selesai: {frame_idx} frame | "
-          f"{frame_idx / proc_time_total:.1f} FPS | "
-          f"total {det_total} deteksi ({det_total / frame_idx:.2f}/frame)")
+    summary = (
+        f"[INFO] Selesai: {frame_idx} frame | {frame_idx / proc_time_total:.1f} FPS"
+    )
+    if args.mode in ("compare", "quad"):
+        summary += (
+            f" | RAW total {raw_det_total} ({raw_det_total / frame_idx:.2f}/frame)"
+            f" | ENHANCED total {enhanced_det_total} "
+            f"({enhanced_det_total / frame_idx:.2f}/frame)"
+        )
+    else:
+        summary += f" | total {det_total} deteksi ({det_total / frame_idx:.2f}/frame)"
+    print(summary)
     if args.output:
         print(f"[INFO] Video output tersimpan: {args.output}")
     return 0

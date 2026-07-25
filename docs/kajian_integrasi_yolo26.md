@@ -104,6 +104,21 @@ python -m underwater_enhance.yolo_integration "video 1.mp4" \
     --model best.pt --mode compare --preset realtime -o ab_test.mp4
 ```
 
+Untuk review operator dalam satu layar, gunakan grid empat panel berikut:
+
+```bash
+# Baris atas: RAW | RAW + YOLO
+# Baris bawah: ENHANCED | ENHANCED + YOLO
+# Panel YOLO menampilkan jumlah objek dan mean confidence aktual per frame.
+python -m underwater_enhance.yolo_integration "video 1.mp4" \
+    --model best.pt --mode quad --preset realtime --device 0 --conf 0.7 \
+    --display --view-size 640x360 -o quad_comparison.mp4
+```
+
+`quad` menjalankan YOLO pada raw dan enhanced untuk setiap frame, sehingga
+latensinya lebih tinggi daripada `hybrid`. Gunakan untuk validasi/A-B dan
+laporan; gunakan `hybrid` untuk live inspection produksi.
+
 Uji kuantitatif yang benar (mAP pada validation set berlabel):
 
 ```bash

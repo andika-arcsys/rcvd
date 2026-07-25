@@ -158,7 +158,20 @@ class TestYoloIntegration:
 
     def test_modes_exposed(self):
         from underwater_enhance.yolo_integration import MODES
-        assert set(MODES) == {"raw", "hybrid", "enhanced", "compare"}
+        assert set(MODES) == {"raw", "hybrid", "enhanced", "compare", "quad"}
+
+    def test_quad_view_grid_dimensions(self):
+        from underwater_enhance.yolo_integration import _quad_view
+
+        panels = [np.zeros((30, 40, 3), dtype=np.uint8) for _ in range(4)]
+        out = _quad_view(*panels)
+        assert out.shape == (60, 80, 3)
+
+    def test_detection_label_includes_actual_stats(self):
+        from underwater_enhance.yolo_integration import _detection_label
+        assert _detection_label("RAW + YOLO", (3, 0.756)) == (
+            "RAW + YOLO | 3 objek | conf avg: 0.76"
+        )
 
     @pytest.mark.parametrize("name,official", [
         ("yolo26n-seg.pt", True),
