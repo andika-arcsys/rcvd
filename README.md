@@ -78,7 +78,8 @@ python -m underwater_enhance rtsp://192.168.1.10/stream --display --preset realt
 
 | Preset | Skenario | Tahapan |
 | --- | --- | --- |
-| `realtime` | Live inspection di ROV/kapal (30+ FPS @ 540p CPU) | Color restoration + CLAHE + unsharp 1 skala |
+| `realtime` | Live inspection cepat di ROV/kapal | Color restoration konservatif + temporal blending ringan |
+| `inspection` | Rekomendasi untuk ROV ber-noise / video laporan | Dehaze lembut + denoise edge-preserving + temporal blending anti-flicker |
 | `balanced` | Default umum | + UDCP dehazing (analisis 1/4 resolusi), unsharp 2 skala |
 | `quality` | Post-inspection / laporan akhir | + dehaze 1/2 resolusi, unsharp 3 skala, edge-preserving smoothing, temporal denoising |
 
@@ -152,7 +153,7 @@ Untuk model YOLO yang sudah Anda latih (`pip install ultralytics` dahulu):
 # --device 0 memilih GPU NVIDIA pertama; --conf 0.7 adalah default.
 python -m underwater_enhance.yolo_integration "video 1.mp4" \
     --model "D:\proyek\runs\segment\train\weights\best.pt" \
-    --mode hybrid --preset realtime --device 0 --conf 0.7 --display -o hasil.mp4
+    --mode hybrid --preset inspection --device 0 --conf 0.7 --display -o hasil.mp4
 
 # A/B test: deteksi raw vs enhanced berdampingan
 python -m underwater_enhance.yolo_integration "video 1.mp4" \
@@ -162,8 +163,8 @@ python -m underwater_enhance.yolo_integration "video 1.mp4" \
 # Setiap panel YOLO menunjukkan jumlah objek dan confidence rata-rata aktual.
 # 640x360 per panel berarti jendela total 1280x720.
 python -m underwater_enhance.yolo_integration "video 1.mp4" \
-    --model best.pt --mode quad --preset realtime --device 0 --conf 0.7 \
-    --display --view-size 640x360 -o quad_comparison.mp4
+    --model best.pt --mode quad --preset inspection --device 0 --conf 0.7 \
+    --mask-smooth 3 --display --view-size 640x360 -o quad_comparison.mp4
 
 # Siapkan dataset enhanced untuk fine-tuning (label txt tidak berubah)
 python scripts/enhance_dataset.py dataset/images/train dataset_enhanced/images/train
@@ -177,6 +178,9 @@ Perilaku penting:
   paralel dengan inferensi YOLO (GPU) sehingga tidak saling menunggu.
 - **`--conf`**: minimum confidence deteksi yang ditampilkan, default **0.7**.
   Turunkan (mis. `--conf 0.4`) jika objek yang benar ikut tersaring.
+- **`--mask-smooth`**: perhalus *overlay* mask secara visual (default `3`,
+  nonaktifkan dengan `0`). Hanya tampilan mask yang dipoles; confidence, box,
+  jumlah objek, dan tensor mask asli tetap dari YOLO.
 - Torch versi CPU tidak bisa memakai GPU. Untuk NVIDIA di Windows/conda:
   jalankan `nvidia-smi`, lalu dari environment conda install wheel CUDA yang
   kompatibel dari [PyTorch Start Locally](https://pytorch.org/get-started/locally/).

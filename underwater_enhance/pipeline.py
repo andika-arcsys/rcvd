@@ -70,12 +70,32 @@ class PipelineConfig:
 
 
 PRESETS: dict[str, PipelineConfig] = {
-    # Live inspection di ROV/kapal: semua tahap ringan, target 30+ FPS @720p.
+    # Live inspection cepat: konservatif agar CLAHE/unsharp tidak mengangkat
+    # grain dan glare air menjadi noise yang mengganggu operator.
     "realtime": PipelineConfig(
         enable_dehaze=False,
+        gamma=0.93,
+        saturation_gain=1.08,
+        clahe_clip=1.2,
         detail_sigmas=(1.5,),
-        detail_gains=(0.8,),
-        temporal_blend_strength=0.0,
+        detail_gains=(0.35,),
+        temporal_blend_strength=0.2,
+    ),
+    # Default inspeksi ROV yang stabil: dehaze lembut (bukan agresif),
+    # denoise edge-preserving dan blending temporal sadar-gerakan.
+    "inspection": PipelineConfig(
+        dehaze_omega=0.55,
+        dehaze_t_min=0.35,
+        gamma=0.95,
+        saturation_gain=1.08,
+        clahe_clip=1.2,
+        detail_sigmas=(1.5,),
+        detail_gains=(0.3,),
+        enable_edge_smooth=True,
+        edge_sigma_s=8.0,
+        edge_sigma_r=0.12,
+        param_ema_alpha=0.95,
+        temporal_blend_strength=0.35,
     ),
     # Default: dehazing UDCP pada 1/4 resolusi + detail 2 skala.
     "balanced": PipelineConfig(),

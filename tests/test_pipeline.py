@@ -173,6 +173,16 @@ class TestYoloIntegration:
             "RAW + YOLO | 3 objek | conf avg: 0.76"
         )
 
+    def test_mask_alpha_native_shape_and_smoothing(self):
+        from underwater_enhance.yolo_integration import _mask_alpha
+
+        mask = np.zeros((10, 10), dtype=np.float32)
+        mask[2:8, 2:8] = 1.0
+        alpha = _mask_alpha(mask, (20, 30), kernel_size=3)
+        assert alpha.shape == (20, 30)
+        assert alpha.min() >= 0.0 and alpha.max() <= 0.38
+        assert 0.0 < alpha[10, 15] <= 0.38
+
     @pytest.mark.parametrize("name,official", [
         ("yolo26n-seg.pt", True),
         ("yolo11s.pt", True),
@@ -211,6 +221,8 @@ class TestYoloIntegration:
         from underwater_enhance.yolo_integration import build_parser
         args = build_parser().parse_args(["video.mp4", "--model", "m.pt"])
         assert args.conf == 0.7
+        assert args.preset == "inspection"
+        assert args.mask_smooth == 3
 
     @pytest.mark.parametrize("conf", [0.0, 0.7, 1.0])
     def test_confidence_validation_valid(self, conf):

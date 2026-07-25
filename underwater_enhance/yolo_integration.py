@@ -37,6 +37,13 @@ import numpy as np
 from underwater_enhance.pipeline import PRESETS, UnderwaterEnhancer
 
 MODES = ("raw", "hybrid", "enhanced", "compare", "quad")
+_MASK_COLORS = (
+    (255, 128, 0),    # BGR orange
+    (0, 220, 80),     # green
+    (255, 80, 180),   # purple
+    (0, 210, 255),    # yellow
+    (220, 80, 255),   # pink
+)
 
 
 def resolve_device(requested: str | None = None) -> tuple[str, bool, str]:
@@ -84,10 +91,11 @@ class YoloUnderwaterInspector:
         self,
         model_path: str,
         mode: str = "hybrid",
-        preset: str = "realtime",
+        preset: str = "inspection",
         conf: float = 0.7,
         imgsz: int = 640,
         device: str | None = None,
+        mask_smooth: int = 3,
     ) -> None:
         if mode not in MODES:
             raise ValueError(f"Mode tidak dikenal: {mode!r}. Pilihan: {MODES}")
@@ -103,6 +111,7 @@ class YoloUnderwaterInspector:
         self.conf = conf
         self.imgsz = imgsz
         self.device, self.half, self.device_desc = resolve_device(device)
+        self.mask_smooth = max(0, mask_smooth)
         # Catatan: upscale harus 1.0 agar koordinat mask/box dari frame mentah
         # tetap sejajar dengan frame enhanced pada mode hybrid.
         self.enhancer = UnderwaterEnhancer.from_preset(preset)
@@ -120,7 +129,7 @@ class YoloUnderwaterInspector:
         return self.model.predict(
             frame, conf=self.conf, imgsz=self.imgsz, device=self.device,
             # Ultralytics memakai quantize=16 untuk FP16; `half` sudah deprecated.
-            quantize=16 if self.half else None, verbose=False,
+            quantize=16 if self.half else None, retina_masks=True, verbose=False,
         )[0]
 
     def process(self, frame: np.ndarray) -> tuple[np.ndarray, int]:
@@ -133,13 +142,13 @@ class YoloUnderwaterInspector:
         if self.mode == "raw":
             result = self._predict(frame)
             self.last_stats = {"raw": _result_stats(result)}
-            return result.plot(img=frame.copy()), self.last_stats["raw"][0]
+            return self._render_result(result, frame), self.last_stats["raw"][0]
 
         if self.mode == "enhanced":
             enhanced = self.enhancer.process(frame)
             result = self._predict(enhanced)
             self.last_stats = {"enhanced": _result_stats(result)}
-            return result.plot(img=enhanced.copy()), self.last_stats["enhanced"][0]
+            return self._render_result(result, enhanced), self.last_stats["enhanced"][0]
 
         # hybrid, compare & quad: enhancement dan inferensi raw paralel.
         future = self._pool.submit(self.enhancer.process, frame)
@@ -149,7 +158,7 @@ class YoloUnderwaterInspector:
         if self.mode == "hybrid":
             # Deteksi pada domain training (mentah), visual pada enhanced.
             self.last_stats = {"raw": _result_stats(res_raw)}
-            return res_raw.plot(img=enhanced.copy()), self.last_stats["raw"][0]
+            return self._render_result(res_raw, enhanced), self.last_stats["raw"][0]
 
         # compare & quad: A/B deteksi raw dan enhanced.
         res_enh = self._predict(enhanced)
@@ -162,8 +171,8 @@ class YoloUnderwaterInspector:
             # yang diberi mask & box; ini membuat dampak enhancement terukur.
             raw_plain = frame.copy()
             enhanced_plain = enhanced.copy()
-            raw_yolo = res_raw.plot(img=frame.copy())
-            enhanced_yolo = res_enh.plot(img=enhanced.copy())
+            raw_yolo = self._render_result(res_raw, frame)
+            enhanced_yolo = self._render_result(res_enh, enhanced)
             _label(raw_plain, "RAW INPUT", (0, 0, 255))
             _label(raw_yolo, _detection_label("RAW + YOLO", raw_stats), (0, 165, 255))
             _label(enhanced_plain, "ENHANCED", (255, 255, 0))
@@ -176,8 +185,8 @@ class YoloUnderwaterInspector:
                 raw_stats[0] + enhanced_stats[0]
             )
 
-        view_raw = res_raw.plot(img=frame.copy())
-        view_enh = res_enh.plot(img=enhanced.copy())
+        view_raw = self._render_result(res_raw, frame)
+        view_enh = self._render_result(res_enh, enhanced)
         _label(view_raw, _detection_label("DETECT ON RAW", raw_stats), (0, 0, 255))
         _label(
             view_enh,
@@ -185,6 +194,27 @@ class YoloUnderwaterInspector:
             (0, 255, 0),
         )
         return np.hstack((view_raw, view_enh)), raw_stats[0] + enhanced_stats[0]
+
+    def _render_result(self, result, frame: np.ndarray) -> np.ndarray:
+        """Render mask resolusi penuh dengan batas yang lebih halus.
+
+        Mask hasil model tetap dipakai sebagai sumber kebenaran untuk statistik;
+        open/close + soft edge di sini hanya memoles *overlay* agar mudah dibaca
+        antar frame. Nilai ``--mask-smooth 0`` menonaktifkan pemolesan.
+        """
+        rendered = frame.copy()
+        if result.masks is not None:
+            masks = result.masks.data.detach().float().cpu().numpy()
+            classes = result.boxes.cls.detach().cpu().numpy().astype(int)
+            for index, mask in enumerate(masks):
+                alpha = _mask_alpha(mask, rendered.shape[:2], self.mask_smooth)
+                color = _MASK_COLORS[classes[index] % len(_MASK_COLORS)]
+                rendered = (
+                    rendered.astype(np.float32) * (1.0 - alpha[..., None])
+                    + np.asarray(color, dtype=np.float32) * alpha[..., None]
+                ).astype(np.uint8)
+        # Box/label digambar terakhir supaya tetap tajam di atas alpha mask.
+        return result.plot(img=rendered, masks=False, color_mode="instance")
 
 
 def _label(frame: np.ndarray, text: str, color: tuple[int, int, int]) -> None:
@@ -200,6 +230,31 @@ def _result_stats(result) -> tuple[int, float]:
     if count == 0:
         return 0, 0.0
     return count, float(result.boxes.conf.float().mean().item())
+
+
+def _mask_alpha(mask: np.ndarray, target_shape: tuple[int, int], kernel_size: int) -> np.ndarray:
+    """Buat alpha mask native-resolution dengan tepi visual anti-aliased.
+
+    Operasi morphological membuka noise kecil dan menutup lubang kecil pada
+    overlay. Ini bukan post-processing prediksi: boxes, confidence, jumlah
+    objek, dan mask tensor asli tidak pernah diubah.
+    """
+    height, width = target_shape
+    binary = (mask > 0.5).astype(np.uint8) * 255
+    if binary.shape != (height, width):
+        binary = cv2.resize(binary, (width, height), interpolation=cv2.INTER_NEAREST)
+
+    if kernel_size > 1:
+        kernel_size = kernel_size if kernel_size % 2 else kernel_size + 1
+        kernel = cv2.getStructuringElement(
+            cv2.MORPH_ELLIPSE, (kernel_size, kernel_size)
+        )
+        binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+        binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
+        # Soft edge menghilangkan tampilan bloky, tanpa memindahkan kontur jauh.
+        binary = cv2.GaussianBlur(binary, (0, 0), kernel_size / 3.0)
+
+    return binary.astype(np.float32) / 255.0 * 0.38
 
 
 def _detection_label(prefix: str, stats: tuple[int, float]) -> str:
@@ -259,13 +314,18 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Path bobot YOLO (mis. best.pt hasil training Anda)")
     parser.add_argument("--mode", choices=MODES, default="hybrid",
                         help="Arsitektur integrasi (default: hybrid)")
-    parser.add_argument("--preset", choices=sorted(PRESETS), default="realtime",
-                        help="Preset enhancement (default: realtime)")
+    parser.add_argument("--preset", choices=sorted(PRESETS), default="inspection",
+                        help="Preset enhancement (default: inspection, stabil untuk ROV)")
     parser.add_argument("--conf", type=float, default=0.7,
                         help="Minimum confidence deteksi yang ditampilkan "
                         "(default: 0.7)")
     parser.add_argument("--imgsz", type=int, default=640,
                         help="Ukuran input inferensi YOLO (default: 640)")
+    parser.add_argument(
+        "--mask-smooth", type=int, default=3, metavar="PX",
+        help="Kernel smoothing visual mask (0 = nonaktif, default: 3). "
+        "Tidak mengubah mask/confidence asli model.",
+    )
     parser.add_argument("--device", default=None,
                         help="Device inferensi: cpu, 0 (GPU pertama), cuda:1, dll. "
                         "Default: otomatis pakai CUDA GPU bila tersedia")
@@ -318,13 +378,14 @@ def run(args: argparse.Namespace) -> int:
         inspector = YoloUnderwaterInspector(
             args.model, mode=args.mode, preset=args.preset,
             conf=args.conf, imgsz=args.imgsz, device=args.device,
+            mask_smooth=args.mask_smooth,
         )
     except RuntimeError as exc:
         cap.release()
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 1
     print(f"[INFO] Model: {args.model} | mode: {args.mode} | preset: {args.preset} "
-          f"| conf minimum: {args.conf}")
+          f"| conf minimum: {args.conf} | mask smoothing: {inspector.mask_smooth}px")
     print(f"[INFO] Inferensi YOLO: {inspector.device_desc}")
 
     window_title = "YOLO Underwater Inspection"

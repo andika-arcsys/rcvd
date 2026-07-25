@@ -89,7 +89,7 @@ Video mentah ──> underwater_enhance ──> YOLO26-seg ──> Overlay pada 
 
 ```bash
 python -m underwater_enhance.yolo_integration "video 1.mp4" \
-    --model best.pt --mode hybrid --preset realtime --display -o hasil_hybrid.mp4
+    --model best.pt --mode hybrid --preset inspection --display -o hasil_hybrid.mp4
 ```
 
 `best.pt` = bobot segmentasi hasil training Anda. Akurasi identik dengan
@@ -111,13 +111,32 @@ Untuk review operator dalam satu layar, gunakan grid empat panel berikut:
 # Baris bawah: ENHANCED | ENHANCED + YOLO
 # Panel YOLO menampilkan jumlah objek dan mean confidence aktual per frame.
 python -m underwater_enhance.yolo_integration "video 1.mp4" \
-    --model best.pt --mode quad --preset realtime --device 0 --conf 0.7 \
-    --display --view-size 640x360 -o quad_comparison.mp4
+    --model best.pt --mode quad --preset inspection --device 0 --conf 0.7 \
+    --mask-smooth 3 --display --view-size 640x360 -o quad_comparison.mp4
 ```
 
 `quad` menjalankan YOLO pada raw dan enhanced untuk setiap frame, sehingga
 latensinya lebih tinggi daripada `hybrid`. Gunakan untuk validasi/A-B dan
 laporan; gunakan `hybrid` untuk live inspection produksi.
+
+### Mitigasi noise, glare, dan mask kasar
+
+Screenshot inspeksi yang memiliki noise kuat atau enhancement terlalu putih
+umumnya disebabkan CLAHE, saturasi, dan unsharp mask yang terlalu agresif.
+Gunakan preset `inspection` untuk produksi: dehazing dibatasi, saturation dan
+detail gain lebih rendah, edge-preserving denoise aktif, dan blending temporal
+sadar-gerakan meredam partikel tanpa mengaburkan objek bergerak.
+
+YOLO sekarang meminta `retina_masks=True` agar mask dirender di resolusi frame
+asli. Flag `--mask-smooth 3` menutup lubang/noise kecil dan menghaluskan batas
+**hanya pada overlay visual**; nilai deteksi, confidence, dan mask asli untuk
+analitik tidak diubah. Gunakan `--mask-smooth 0` untuk melihat output mask
+mentah.
+
+Jika klasifikasi pada panel **ENHANCED + YOLO** berubah dari panel raw, itu
+adalah domain shift — bukan alasan untuk memperhalus mask lebih jauh. Untuk
+produksi gunakan `hybrid` (YOLO menerima raw), kemudian fine-tune dengan data
+raw + enhanced berlabel agar model robust pada kedua kondisi.
 
 Uji kuantitatif yang benar (mAP pada validation set berlabel):
 
