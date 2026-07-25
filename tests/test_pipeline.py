@@ -150,6 +150,17 @@ class TestPipeline:
         assert enhancer._blender._prev is None
 
 
+class TestYoloIntegration:
+    def test_invalid_mode_rejected(self):
+        from underwater_enhance.yolo_integration import YoloUnderwaterInspector
+        with pytest.raises(ValueError):
+            YoloUnderwaterInspector("model.pt", mode="does-not-exist")
+
+    def test_modes_exposed(self):
+        from underwater_enhance.yolo_integration import MODES
+        assert set(MODES) == {"raw", "hybrid", "enhanced", "compare"}
+
+
 class TestCli:
     @pytest.mark.parametrize("text,expected", [
         ("640x480", (640, 480)),
