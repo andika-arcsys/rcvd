@@ -171,6 +171,44 @@ class TestYoloIntegration:
         from underwater_enhance.yolo_integration import _is_official_weight
         assert _is_official_weight(name) is official
 
+    def test_resolve_device_override(self):
+        import torch
+
+        from underwater_enhance.yolo_integration import resolve_device
+        device, half, _ = resolve_device("cpu")
+        assert device == "cpu" and half is False
+        if not torch.cuda.is_available():
+            with pytest.raises(RuntimeError, match="tidak mendeteksi CUDA"):
+                resolve_device("0")
+            return
+        device, half, _ = resolve_device("0")
+        assert device == "0" and half is True
+
+    def test_resolve_device_auto_no_gpu(self):
+        import torch
+
+        from underwater_enhance.yolo_integration import resolve_device
+        if torch.cuda.is_available():
+            pytest.skip("Mesin uji punya GPU; kasus fallback CPU tidak berlaku")
+        device, half, desc = resolve_device()
+        assert device == "cpu" and half is False
+        assert "CUDA tidak terdeteksi" in desc
+
+    def test_conf_default_displayed(self):
+        from underwater_enhance.yolo_integration import build_parser
+        args = build_parser().parse_args(["video.mp4", "--model", "m.pt"])
+        assert args.conf == 0.7
+
+    @pytest.mark.parametrize("conf", [0.0, 0.7, 1.0])
+    def test_confidence_validation_valid(self, conf):
+        from underwater_enhance.yolo_integration import _validate_confidence
+        assert _validate_confidence(conf) is None
+
+    @pytest.mark.parametrize("conf", [-0.1, 1.1])
+    def test_confidence_validation_invalid(self, conf):
+        from underwater_enhance.yolo_integration import _validate_confidence
+        assert "antara 0.0 dan 1.0" in _validate_confidence(conf)
+
     def test_validate_model_path_messages(self, tmp_path):
         from underwater_enhance.yolo_integration import _validate_model_path
         # Nama resmi -> valid meskipun belum ada di disk (auto-download).

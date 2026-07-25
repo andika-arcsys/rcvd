@@ -26,6 +26,7 @@ import argparse
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import cv2
@@ -36,6 +37,44 @@ from underwater_enhance.pipeline import PRESETS, UnderwaterEnhancer
 MODES = ("raw", "hybrid", "enhanced", "compare")
 
 
+def resolve_device(requested: str | None = None) -> tuple[str, bool, str]:
+    """Pilih device inferensi terbaik yang tersedia.
+
+    Returns:
+        (device, use_half, deskripsi) — CUDA GPU dipakai otomatis bila ada,
+        dengan FP16 (half precision) untuk throughput ~2x tanpa penurunan
+        akurasi yang berarti. ``requested`` (mis. "cpu", "0", "cuda:1")
+        meng-override auto-deteksi.
+    """
+    import torch
+
+    if requested is not None:
+        device = str(requested).lower()
+        if device in ("cpu", "mps"):
+            return device, False, f"device sesuai permintaan: {device}"
+        if not torch.cuda.is_available():
+            raise RuntimeError(
+                f"CUDA GPU diminta (--device {requested}), tetapi PyTorch tidak "
+                "mendeteksi CUDA. Jalankan `nvidia-smi` lalu instal PyTorch CUDA "
+                "yang cocok dengan driver NVIDIA Anda."
+            )
+        if device in ("cuda", "cuda:0"):
+            device = "0"
+        name = torch.cuda.get_device_name(int(device.split(":")[-1]))
+        return device, True, f"CUDA GPU ({name}), FP16 aktif"
+
+    if torch.cuda.is_available():
+        name = torch.cuda.get_device_name(0)
+        return "0", True, f"CUDA GPU ({name}), FP16 aktif"
+
+    return "cpu", False, (
+        "CPU — CUDA tidak terdeteksi. Untuk GPU NVIDIA di Windows/conda:\n"
+        "       pip install torch torchvision --index-url "
+        "https://download.pytorch.org/whl/cu126\n"
+        "       (sesuaikan cu126/cu130 dengan versi driver NVIDIA Anda)"
+    )
+
+
 class YoloUnderwaterInspector:
     """Gabungan enhancer + model segmentasi/deteksi Ultralytics YOLO."""
 
@@ -44,7 +83,7 @@ class YoloUnderwaterInspector:
         model_path: str,
         mode: str = "hybrid",
         preset: str = "realtime",
-        conf: float = 0.25,
+        conf: float = 0.7,
         imgsz: int = 640,
         device: str | None = None,
     ) -> None:
@@ -61,15 +100,23 @@ class YoloUnderwaterInspector:
         self.mode = mode
         self.conf = conf
         self.imgsz = imgsz
-        self.device = device
+        self.device, self.half, self.device_desc = resolve_device(device)
         # Catatan: upscale harus 1.0 agar koordinat mask/box dari frame mentah
         # tetap sejajar dengan frame enhanced pada mode hybrid.
         self.enhancer = UnderwaterEnhancer.from_preset(preset)
+        # Enhancement (CPU) dijalankan paralel dengan inferensi YOLO (GPU)
+        # pada mode hybrid/compare — keduanya independen terhadap frame mentah.
+        self._pool = ThreadPoolExecutor(max_workers=1)
+
+    def close(self) -> None:
+        """Lepaskan worker enhancement setelah video selesai diproses."""
+        self._pool.shutdown(wait=True)
 
     def _predict(self, frame: np.ndarray):
         return self.model.predict(
             frame, conf=self.conf, imgsz=self.imgsz, device=self.device,
-            verbose=False,
+            # Ultralytics memakai quantize=16 untuk FP16; `half` sudah deprecated.
+            quantize=16 if self.half else None, verbose=False,
         )[0]
 
     def process(self, frame: np.ndarray) -> tuple[np.ndarray, int]:
@@ -83,19 +130,21 @@ class YoloUnderwaterInspector:
             result = self._predict(frame)
             return result.plot(img=frame.copy()), len(result.boxes)
 
-        enhanced = self.enhancer.process(frame)
-
         if self.mode == "enhanced":
+            enhanced = self.enhancer.process(frame)
             result = self._predict(enhanced)
             return result.plot(img=enhanced.copy()), len(result.boxes)
 
+        # hybrid & compare: enhancement dan inferensi raw berjalan paralel.
+        future = self._pool.submit(self.enhancer.process, frame)
+        res_raw = self._predict(frame)
+        enhanced = future.result()
+
         if self.mode == "hybrid":
             # Deteksi pada domain training (mentah), visual pada enhanced.
-            result = self._predict(frame)
-            return result.plot(img=enhanced.copy()), len(result.boxes)
+            return res_raw.plot(img=enhanced.copy()), len(res_raw.boxes)
 
         # mode == "compare": A/B deteksi raw vs enhanced berdampingan.
-        res_raw = self._predict(frame)
         res_enh = self._predict(enhanced)
         view_raw = res_raw.plot(img=frame.copy())
         view_enh = res_enh.plot(img=enhanced.copy())
@@ -132,6 +181,16 @@ def _validate_model_path(model: str) -> str | None:
     )
 
 
+def _validate_confidence(conf: float) -> str | None:
+    """Confidence YOLO harus berada pada rentang probabilitas [0, 1]."""
+    if 0.0 <= conf <= 1.0:
+        return None
+    return (
+        f"Nilai --conf harus antara 0.0 dan 1.0, bukan {conf}. "
+        "Contoh yang disarankan: --conf 0.7"
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="underwater_enhance.yolo_integration",
@@ -144,12 +203,14 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Arsitektur integrasi (default: hybrid)")
     parser.add_argument("--preset", choices=sorted(PRESETS), default="realtime",
                         help="Preset enhancement (default: realtime)")
-    parser.add_argument("--conf", type=float, default=0.25,
-                        help="Ambang confidence deteksi (default: 0.25)")
+    parser.add_argument("--conf", type=float, default=0.7,
+                        help="Minimum confidence deteksi yang ditampilkan "
+                        "(default: 0.7)")
     parser.add_argument("--imgsz", type=int, default=640,
                         help="Ukuran input inferensi YOLO (default: 640)")
     parser.add_argument("--device", default=None,
-                        help="Device inferensi: cpu, 0 (GPU), dll (default: auto)")
+                        help="Device inferensi: cpu, 0 (GPU pertama), cuda:1, dll. "
+                        "Default: otomatis pakai CUDA GPU bila tersedia")
     parser.add_argument("-o", "--output", help="Path video output")
     parser.add_argument("--display", action="store_true",
                         help="Tampilkan jendela preview live ('q' untuk keluar)")
@@ -160,6 +221,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run(args: argparse.Namespace) -> int:
     from underwater_enhance.cli import _open_capture  # hindari duplikasi logika
+
+    conf_error = _validate_confidence(args.conf)
+    if conf_error:
+        print(f"[ERROR] {conf_error}", file=sys.stderr)
+        return 1
 
     model_error = _validate_model_path(args.model)
     if model_error:
@@ -177,11 +243,18 @@ def run(args: argparse.Namespace) -> int:
         print(f"[ERROR] Gagal membuka sumber video: {args.input!r}", file=sys.stderr)
         return 1
 
-    inspector = YoloUnderwaterInspector(
-        args.model, mode=args.mode, preset=args.preset,
-        conf=args.conf, imgsz=args.imgsz, device=args.device,
-    )
-    print(f"[INFO] Model: {args.model} | mode: {args.mode} | preset: {args.preset}")
+    try:
+        inspector = YoloUnderwaterInspector(
+            args.model, mode=args.mode, preset=args.preset,
+            conf=args.conf, imgsz=args.imgsz, device=args.device,
+        )
+    except RuntimeError as exc:
+        cap.release()
+        print(f"[ERROR] {exc}", file=sys.stderr)
+        return 1
+    print(f"[INFO] Model: {args.model} | mode: {args.mode} | preset: {args.preset} "
+          f"| conf minimum: {args.conf}")
+    print(f"[INFO] Inferensi YOLO: {inspector.device_desc}")
 
     src_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     writer: cv2.VideoWriter | None = None
@@ -229,6 +302,7 @@ def run(args: argparse.Namespace) -> int:
         print("\n[INFO] Dihentikan oleh pengguna (Ctrl+C).")
     finally:
         cap.release()
+        inspector.close()
         if writer is not None:
             writer.release()
         if args.display:

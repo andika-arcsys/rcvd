@@ -149,8 +149,10 @@ Untuk model YOLO yang sudah Anda latih (`pip install ultralytics` dahulu):
 ```bash
 # REKOMENDASI: deteksi pada frame mentah (domain training model Anda),
 # overlay mask digambar pada frame enhanced — akurasi tidak berubah.
+# --device 0 memilih GPU NVIDIA pertama; --conf 0.7 adalah default.
 python -m underwater_enhance.yolo_integration "video 1.mp4" \
-    --model best.pt --mode hybrid --preset realtime --display -o hasil.mp4
+    --model "D:\proyek\runs\segment\train\weights\best.pt" \
+    --mode hybrid --preset realtime --device 0 --conf 0.7 --display -o hasil.mp4
 
 # A/B test: deteksi raw vs enhanced berdampingan
 python -m underwater_enhance.yolo_integration "video 1.mp4" \
@@ -159,6 +161,30 @@ python -m underwater_enhance.yolo_integration "video 1.mp4" \
 # Siapkan dataset enhanced untuk fine-tuning (label txt tidak berubah)
 python scripts/enhance_dataset.py dataset/images/train dataset_enhanced/images/train
 ```
+
+Perilaku penting:
+
+- **CUDA GPU otomatis**: inferensi YOLO memakai GPU + FP16 bila CUDA tersedia
+  (cek log `[INFO] Inferensi YOLO: ...` saat start). Paksa dengan `--device 0`
+  atau `--device cpu`. Pada mode `hybrid`/`compare`, enhancement (CPU) berjalan
+  paralel dengan inferensi YOLO (GPU) sehingga tidak saling menunggu.
+- **`--conf`**: minimum confidence deteksi yang ditampilkan, default **0.7**.
+  Turunkan (mis. `--conf 0.4`) jika objek yang benar ikut tersaring.
+- Torch versi CPU tidak bisa memakai GPU. Untuk NVIDIA di Windows/conda:
+  jalankan `nvidia-smi`, lalu dari environment conda install wheel CUDA yang
+  kompatibel dari [PyTorch Start Locally](https://pytorch.org/get-started/locally/).
+  Contoh untuk wheel CUDA 12.6:
+
+  ```bat
+  pip uninstall -y torch torchvision torchaudio
+  pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+  python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+  ```
+
+  Bila output terakhir tidak menampilkan `True` dan nama GPU, perbaiki driver
+  NVIDIA / wheel PyTorch terlebih dahulu. OpenCV enhancement tetap CPU pada
+  wheel Windows standar; CUDA mempercepat **YOLO inferensi**. Mode `hybrid`
+  menjalankan enhancement CPU dan YOLO GPU secara paralel.
 
 Kajian lengkap (domain shift, pilihan arsitektur, roadmap fine-tuning):
 `docs/kajian_integrasi_yolo26.md`.

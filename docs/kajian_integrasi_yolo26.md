@@ -164,10 +164,13 @@ memberi sebagian besar manfaatnya.
 5. **Ukuran input (`imgsz`)** — samakan dengan training Anda (umumnya 640).
    Enhancement dilakukan pada resolusi penuh SEBELUM YOLO me-resize internal,
    sehingga detail hasil sharpening tetap terbawa.
-6. **Latensi (CPU, 720p, per frame)** — preset `realtime` ±15–20 ms; YOLO26n-seg
-   ONNX CPU ±53 ms. Total hybrid ±70 ms (≈14 FPS CPU). Dengan GPU (TensorRT
-   ±2 ms) enhancement CPU menjadi bottleneck — jalankan enhancement di thread
-   terpisah atau turunkan `stats_scale`/preset bila perlu.
+6. **Latensi & GPU** — CUDA GPU + FP16 dipakai otomatis bila tersedia
+   (override: `--device`). Pada mode `hybrid`/`compare`, enhancement (CPU)
+   sudah dijalankan paralel dengan inferensi YOLO (GPU) dalam thread terpisah,
+   sehingga latensi total ≈ max(enhancement, inferensi), bukan penjumlahannya.
+   Perkiraan per frame 720p: preset `realtime` ±15–20 ms (CPU); YOLO26n-seg
+   ±53 ms (ONNX CPU) atau ±2 ms (TensorRT GPU). Artinya dengan GPU, bottleneck
+   adalah enhancement CPU (≈50 FPS); tanpa GPU, bottleneck adalah YOLO.
 7. **YOLO26 end-to-end (NMS-free)** — tidak ada tuning IoU/NMS; fokuskan
    kalibrasi hanya pada `conf`.
 
