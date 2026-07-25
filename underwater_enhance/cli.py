@@ -29,6 +29,10 @@ from underwater_enhance.pipeline import PRESETS, UnderwaterEnhancer
 def _open_capture(source: str) -> cv2.VideoCapture:
     # Sumber berupa indeks kamera ("0") atau path file / URL stream.
     if source.isdigit():
+        # Di Windows backend default (MSMF) sering hang saat membuka webcam;
+        # DirectShow jauh lebih stabil.
+        if sys.platform == "win32":
+            return cv2.VideoCapture(int(source), cv2.CAP_DSHOW)
         return cv2.VideoCapture(int(source))
     return cv2.VideoCapture(source)
 
@@ -166,6 +170,9 @@ def run(args: argparse.Namespace) -> int:
 
             if args.max_frames and frame_idx >= args.max_frames:
                 break
+    except KeyboardInterrupt:
+        # Ctrl+C = berhenti rapi: video output tetap tersimpan & metrik dicetak.
+        print("\n[INFO] Dihentikan oleh pengguna (Ctrl+C).")
     finally:
         cap.release()
         if writer is not None:

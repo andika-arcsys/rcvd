@@ -28,6 +28,32 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Windows + conda (mis. environment `pycam`)
+
+```bat
+conda activate pycam
+
+:: clone repo lalu masuk ke foldernya
+git clone https://github.com/andika-arcsys/rcvd.git
+cd rcvd
+
+:: WAJIB paket GUI (bukan headless) agar jendela preview --display bisa tampil.
+:: Jika sebelumnya pernah menginstal varian headless, hapus dulu:
+pip uninstall -y opencv-python-headless
+pip install opencv-python numpy
+
+:: jalankan dari root folder repo
+python -m underwater_enhance "video 1.mp4" --display --side-by-side --loop
+```
+
+Catatan Windows:
+
+- Path video yang mengandung spasi harus diapit tanda kutip: `"D:\arcgiz\video 1.mp4"`.
+- Webcam dibuka otomatis dengan backend DirectShow (`CAP_DSHOW`) — backend
+  default MSMF sering hang di `cap.read()`.
+- `Ctrl+C` menghentikan proses dengan rapi: video output tetap tersimpan dan
+  ringkasan metrik tetap dicetak.
+
 ## Pemakaian
 
 ```bash
