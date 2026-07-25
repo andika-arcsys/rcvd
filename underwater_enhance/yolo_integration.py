@@ -23,8 +23,10 @@ Contoh:
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import time
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -109,6 +111,27 @@ def _label(frame: np.ndarray, text: str, color: tuple[int, int, int]) -> None:
                 color, 2, cv2.LINE_AA)
 
 
+def _is_official_weight(name: str) -> bool:
+    """True jika nama seperti 'yolo26n-seg.pt' — akan diunduh otomatis oleh
+    ultralytics, jadi tidak perlu ada di disk."""
+    return re.fullmatch(
+        r"yolo(v)?\d+[a-z]?\d*(-(seg|sem|pose|cls|obb))?\.pt", name.lower()
+    ) is not None
+
+
+def _validate_model_path(model: str) -> str | None:
+    """Kembalikan pesan error yang ramah jika path bobot model tidak valid."""
+    if Path(model).exists() or _is_official_weight(model):
+        return None
+    return (
+        f"File bobot model tidak ditemukan: {model!r}\n"
+        f"  - Gunakan path lengkap ke bobot hasil training Anda, mis.:\n"
+        f"      --model \"D:\\proyek\\runs\\segment\\train\\weights\\best.pt\"\n"
+        f"  - Atau nama model resmi Ultralytics (diunduh otomatis), mis.:\n"
+        f"      --model yolo26n-seg.pt"
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="underwater_enhance.yolo_integration",
@@ -137,6 +160,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run(args: argparse.Namespace) -> int:
     from underwater_enhance.cli import _open_capture  # hindari duplikasi logika
+
+    model_error = _validate_model_path(args.model)
+    if model_error:
+        print(f"[ERROR] {model_error}", file=sys.stderr)
+        return 1
+
+    if not args.input.isdigit() and "://" not in args.input and not Path(args.input).exists():
+        print(f"[ERROR] File video tidak ditemukan: {args.input!r}\n"
+              f"  Gunakan path lengkap, mis.: \"D:\\arcgiz\\video 1.mp4\"",
+              file=sys.stderr)
+        return 1
 
     cap = _open_capture(args.input)
     if not cap.isOpened():

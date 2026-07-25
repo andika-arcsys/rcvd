@@ -160,6 +160,28 @@ class TestYoloIntegration:
         from underwater_enhance.yolo_integration import MODES
         assert set(MODES) == {"raw", "hybrid", "enhanced", "compare"}
 
+    @pytest.mark.parametrize("name,official", [
+        ("yolo26n-seg.pt", True),
+        ("yolo11s.pt", True),
+        ("yolov8m-pose.pt", True),
+        ("best.pt", False),
+        ("runs/segment/train/weights/best.pt", False),
+    ])
+    def test_official_weight_detection(self, name, official):
+        from underwater_enhance.yolo_integration import _is_official_weight
+        assert _is_official_weight(name) is official
+
+    def test_validate_model_path_messages(self, tmp_path):
+        from underwater_enhance.yolo_integration import _validate_model_path
+        # Nama resmi -> valid meskipun belum ada di disk (auto-download).
+        assert _validate_model_path("yolo26n-seg.pt") is None
+        # File lokal yang ada -> valid.
+        weight = tmp_path / "best.pt"
+        weight.write_bytes(b"x")
+        assert _validate_model_path(str(weight)) is None
+        # File lokal yang tidak ada -> pesan error ramah.
+        assert "tidak ditemukan" in _validate_model_path("best.pt")
+
 
 class TestCli:
     @pytest.mark.parametrize("text,expected", [
