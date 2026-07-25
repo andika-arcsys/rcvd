@@ -77,6 +77,14 @@ Flag `--metrics` menghitung metrik no-reference standar citra bawah air:
 - **Colorfulness** (Hasler & Suesstrunk 2003) — kekayaan warna
 - **RMS contrast** — kontras luminance global
 
+Hasil terukur pada video uji sintetis air keruh 960x540 (CPU-only, tanpa GPU):
+
+| Preset | FPS proses | UCIQE (raw → enhanced) | RMS contrast (raw → enhanced) |
+| --- | --- | --- | --- |
+| `realtime` | ~51 | 0.220 → 0.361 | 0.037 → 0.247 |
+| `balanced` | ~35 | 0.220 → 0.391 | 0.037 → 0.273 |
+| `quality` | ~9 | 0.220 → 0.398 | 0.037 → 0.297 |
+
 ## Pengujian
 
 ```bash
