@@ -154,6 +154,41 @@ tidak mendeteksi GPU (tidak melakukan fallback CPU). Verifikasi dahulu:
 python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 ```
 
+## Offline inspection CUDA: OSD-safe, temporal, upscale 2×/3×
+
+Untuk footage ROV yang mengandung telemetry, hotspot lampu, marine snow, dan
+kamera bergerak, gunakan pipeline inspeksi offline ini. Tidak membuka window.
+OSD atas/bawah direkomposit dari frame asli; optical flow menyelaraskan frame
+sebelumnya sebelum smoothing temporal; operasi warna/denoise/detail/upscale
+berjalan pada CUDA.
+
+```bat
+:: Jika input 1280x720, output menjadi 2560x1440 (2x)
+python scripts\enhance_video_inspection_cuda.py "D:\arcgiz\video 1.mp4" ^
+  "D:\arcgiz\inspection_2x.mp4" ^
+  --scale 2 --device cuda:0 ^
+  --comparison-output "D:\arcgiz\compare_2x.mp4" ^
+  --metrics-json "D:\arcgiz\inspection_2x_metrics.json"
+
+:: Output 3x, mis. 1280x720 → 3840x2160
+python scripts\enhance_video_inspection_cuda.py input.mp4 inspection_3x.mp4 --scale 3
+```
+
+`comparison-output` menghasilkan video `RAW (Lanczos scale) | INSPECTION
+ENHANCED` tanpa display. JSON berisi rerata UCIQE, colorfulness, dan RMS
+contrast untuk membantu membandingkan hasil; metrik ini bukan bukti detail
+retak/korosi benar. Untuk pemeriksaan teknis, selalu bandingkan dengan raw
+dan jangan memakai output upscale generatif sebagai bukti defect.
+
+Parameter penting:
+- `--osd-top 0.08 --osd-bottom 0.07`: tinggi strip telemetry yang tidak boleh
+  diproses.
+- `--temporal-alpha 0.20`: smoothing setelah optical-flow alignment. Turunkan
+  ke `0.10` untuk gerakan kamera sangat cepat; naikkan maksimal `0.30` saat
+  ROV statis.
+- `--detail-gain 0.18`: penajaman luminance konservatif. Jangan menaikkannya
+  untuk “mencari” retak karena ia dapat menegaskan partikel lumpur.
+
 ## Struktur proyek
 
 ```

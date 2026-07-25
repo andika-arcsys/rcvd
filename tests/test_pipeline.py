@@ -261,6 +261,34 @@ class TestCudaBatchScript:
         assert torch.allclose(high, torch.tensor([0.3, 0.7, 1.0]))
 
 
+class TestCudaInspectionScript:
+    def test_content_bounds_excludes_osd(self):
+        from scripts.enhance_video_inspection_cuda import _content_bounds
+
+        assert _content_bounds(720, 0.08, 0.07) == (58, 670)
+
+    def test_aligned_temporal_blend_identical_frames_unchanged(self):
+        from scripts.enhance_video_inspection_cuda import _temporal_blend_aligned
+
+        frame = np.full((40, 60, 3), 123, dtype=np.uint8)
+        gray = np.full((40, 60), 123, dtype=np.uint8)
+        out = _temporal_blend_aligned(frame, frame, gray, gray, alpha=0.3)
+        assert np.array_equal(out, frame)
+
+    def test_osd_recompose_preserves_scaled_osd(self):
+        from scripts.enhance_video_inspection_cuda import _recompose_osd
+
+        original = np.zeros((10, 8, 3), dtype=np.uint8)
+        original[:2] = (17, 23, 31)  # OSD top unik
+        roi_up = np.full((12, 16, 3), 200, dtype=np.uint8)
+        output = _recompose_osd(original, roi_up, top=2, bottom=8, scale=2)
+        assert output.shape == (20, 16, 3)
+        # Lanczos saat scale boleh menginterpolasi batas OSD, tetapi area interior
+        # tetap berasal dari OSD asli dan tidak terkena enhancement ROI.
+        assert np.all(output[:2] == (17, 23, 31))
+        assert np.all(output[4:16] == 200)
+
+
 class TestCli:
     @pytest.mark.parametrize("text,expected", [
         ("640x480", (640, 480)),
