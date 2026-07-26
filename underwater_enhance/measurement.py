@@ -343,11 +343,14 @@ def calculate_surface_area(
 def metric_depth_color_map(
     depth_m: np.ndarray, calibration: ScaleCalibration
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Map raw depth × scale ke zone warna fixed-meter untuk tampilan UI.
+    """Optional fixed-meter zone LUT (bukan preview dashboard).
+
+    Depth feed UI memakai gradasi Turbo relatif dari Depth Anything, bukan
+    fungsi ini. Disimpan untuk eksperimen proximity alert; jangan dibaca balik
+    ke angka pengukuran.
 
     Returns:
-        ``(bgr_visual, metric_depth_m)``. Warna adalah LUT satu arah; backend
-        tetap memakai ``metric_depth_m`` untuk seluruh kalkulasi.
+        ``(bgr_visual, metric_depth_m)``.
     """
     metric = depth_m.astype(np.float32) * calibration.scale
     visual = np.zeros((*metric.shape, 3), dtype=np.uint8)

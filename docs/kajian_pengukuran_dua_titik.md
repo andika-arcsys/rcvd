@@ -170,20 +170,31 @@ Area berskala kuadrat terhadap reference scale. Karena itu uncertainty area
 minimal dua kali uncertainty relatif calibration path. Hasil area dari DA3
 tanpa K underwater tetap diberi `ESTIMATE_ONLY_SAME_FRAME`.
 
-## 9. Zona warna fixed-meter
+## 9. Preview depth = gradasi relatif (bukan zona meter)
 
-Setelah calibration selesai, dashboard membuat `Z_metric = Z_raw × scale` dan
-baru memetakan nilai tersebut ke LUT satu arah:
+Depth feed memakai colormap **Turbo relatif** dari tensor Depth Anything:
 
-| Zona | Rentang |
-| --- | --- |
-| Merah | 0–1 m |
-| Kuning | 1–2 m |
-| Hijau | 2–3 m |
-| Biru | 3–4 m |
-| Abu-abu | >4 m |
+- dekat kamera → warna hangat/merah;
+- jauh → warna dingin/biru;
+- normalisasi dari percentile frame (bukan ambang 1 m / 2 m / …).
 
-Statistik panel preview (`pixel_count`, `projected_area_m2`) dihitung dari
-tensor `Z_metric`, bukan membaca RGB. `projected_area_m2` adalah luas proyeksi;
-untuk luas permukaan gunakan hasil mesh 3D polygon. Warna tidak pernah
-di-invert kembali menjadi angka pengukuran.
+Pemetaan warna fixed-meter (merah = 0–1 m, dst.) **tidak dipakai** pada preview.
+Angka meter hanya dari `Z_raw` Float32 pada piksel klik + kalibrasi referensi
+(diameter pipa / laser), bukan dari membaca RGB colormap.
+
+## 10. Pelajaran dari pipeline Labellerr (jalan raya) vs inspeksi pipa
+
+Video Labellerr menggabungkan deteksi objek + Depth Anything untuk *proximity
+alert* kualitatif (bounding box RED / ORANGE / GREEN). Itu relevan sebagai pola
+industri, tetapi beda tujuan dengan konsol ini:
+
+| Aspek | Labellerr / jalan raya | Konsol inspeksi pipa |
+| --- | --- | --- |
+| Tujuan | Peringatan dekat/sedang/jauh | Metrologi (free span, diameter, luas cacat) |
+| Depth di UI | Heuristik warna proximity | Gradasi relatif DA + angka dari kalibrasi |
+| Sampling | ROI seluruh bounding box | Titik / polyline / polygon pada frame beku |
+| Eksekusi | Stream real-time | Freeze on-demand (hemat VRAM, kurangi blur) |
+
+Yang bisa diadopsi nanti tanpa mengubah preview gradasi: sampling depth di dalam
+mask/box YOLO untuk alert operator (mis. free span kasar), tetap dengan angka
+metrik dari kalibrasi pipa, bukan dari warna.

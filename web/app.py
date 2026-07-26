@@ -47,9 +47,7 @@ from underwater_enhance.measurement import (
     calculate_surface_area,
     calibration_from_reference,
     default_intrinsics,
-    depth_zone_statistics,
     measure_distance,
-    metric_depth_color_map,
 )
 
 
@@ -215,13 +213,11 @@ class InspectionEngine:
         calibration: ScaleCalibration | None = None,
         intrinsics: CameraIntrinsics | None = None,
     ) -> None:
-        if calibration is not None and calibration.source == "REFERENCE_SCALED" and intrinsics:
-            visual, metric_depth = metric_depth_color_map(depth_m, calibration)
-            self.depth_zone_stats = depth_zone_statistics(metric_depth, intrinsics)
-            label = f"METRIC DEPTH ZONES | frame {frame_id} | ESTIMATE ONLY"
-        else:
-            visual = _colorize_depth(depth_m)
-            label = f"DEPTH PREVIEW | frame {frame_id} | visual only"
+        # Preview selalu gradasi relatif Depth Anything (Turbo: near hangat → far dingin).
+        # Warna bukan skala meter; angka metrik hanya dari raw Float32 + kalibrasi titik.
+        del calibration, intrinsics
+        visual = _colorize_depth(depth_m)
+        label = f"DEPTH PREVIEW | frame {frame_id} | relative DA gradient"
         cv2.putText(
             visual,
             label,
@@ -657,11 +653,6 @@ class InspectionEngine:
         else:
             result = calculate_surface_area(
                 points, self.depth_map, self.intrinsics, self.calibration, frame_id=frame_id
-            )
-            self.geometry_zone_stats = depth_zone_statistics(
-                self.depth_map * self.calibration.scale,
-                self.intrinsics,
-                polygon=points,
             )
         self.geometry_measurement = result
         self.log(

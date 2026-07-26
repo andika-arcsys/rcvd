@@ -31,10 +31,9 @@
       <p><small>Measurement: pilih mode, klik dua titik pada frame. Frame akan dibekukan agar depth dan titik berasal dari frame identik.</small></p>
       <div id="measurement" class="metric">Belum ada pengukuran.</div>
       <div id="depthPanel" class="panel">
-        <strong>Depth Mask Preview</strong>
+        <strong>Depth Mask Preview (relatif)</strong>
         <img id="depthPreview" src="/depth_feed" alt="Depth preview">
-        <small>Preview keyframe depth. Warna depth tidak menggantikan evidence video raw.</small>
-        <pre id="depthZones" style="white-space:pre-wrap;color:#c9d1d9"></pre>
+        <small>Gradasi Depth Anything: dekat = hangat/merah, jauh = dingin/biru. Warna bukan meter — angka metrik hanya dari titik kalibrasi + raw depth Float32.</small>
       </div>
     </section>
     <aside class="controls">
@@ -48,7 +47,7 @@
         <strong>Vision Features</strong>
         <button id="yoloBtn" onclick="toggle('yolo')">YOLO segmentation: OFF</button>
         <button id="depthBtn" onclick="toggle('depth')">Depth: OFF</button>
-        <small>Depth dimuat hanya saat diperlukan. Pada frame beku, inference dipicu saat measurement atau calibration disimpan.</small>
+        <small>ON = muat model + preview gradasi relatif. OFF = hemat VRAM. Pengukuran metrik: Freeze → kalibrasi biru (mis. 76.2 cm) → titik kuning/magenta/oranye; depth ikut diinfer saat Save/Calculate pada frame beku.</small>
       </section>
       <section class="panel">
         <strong>Measurement Mode</strong>
@@ -123,12 +122,6 @@
       document.getElementById('intrinsicsStatus').textContent =
         `UNDERWATER INTRINSICS: ${state.intrinsics_underwater_status} — ${state.intrinsics_underwater_message}`;
       document.getElementById('depthPanel').style.display = features.depth ? 'block' : 'none';
-      const zones = Object.keys(state.geometry_zone_stats || {}).length
-        ? state.geometry_zone_stats
-        : (state.depth_zone_stats || {});
-      document.getElementById('depthZones').textContent = Object.entries(zones).map(
-        ([name, value]) => `${name}: ${value.pixel_count} px | projected ${value.projected_area_m2.toFixed(3)} m²`
-      ).join('\n');
       document.getElementById('error').textContent = state.error || '';
       document.getElementById('logs').textContent = state.logs.join('\n');
       const m = state.measurement;
