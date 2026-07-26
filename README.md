@@ -271,11 +271,12 @@ Buka `http://127.0.0.1:5000`. Dashboard menampilkan **4 panel adaptif**
 
 | Layar 1 | Layar 2 |
 | --- | --- |
-| Raw + canvas pengukuran | Masking YOLO |
-| Enhanced (realtime) | Depth Anything 3 |
+| Optical Native View | HydroDetect Engine |
+| AquaClear | SpatialSight |
 
 Stream MJPEG di-downscale (`--stream-max-side`, default 640). Klik titik
-pengukuran hanya di **Layar 1** (koordinat dinormalisasi ke frame penuh).
+pengukuran hanya di **Optical Native View**. ROI Gallery menampilkan
+thumbnail snapshot + kolom keterangan aktual inspector.
 
 Workflow calibration:
 
