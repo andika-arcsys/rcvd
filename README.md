@@ -264,13 +264,19 @@ python web\app.py --source "D:\arcgiz\video 1.mp4" ^
   --depth-model-id "depth-anything/DA3METRIC-LARGE"
 ```
 
-Buka `http://127.0.0.1:5000`. Pilih salah satu:
+Buka `http://127.0.0.1:5000`. Workflow calibration:
 
-1. **Measure two points**: hasil diberi status `UNCALIBRATED` sampai ada
-   reference scale.
-2. **Calibrate from reference**: masukkan diameter pipa atau jarak dua laser
-   dalam meter, pilih mode ini, lalu klik dua endpoint referensi pada frame
-   yang sama. Status berubah menjadi `REFERENCE_SCALED`.
+1. Klik **Freeze frame**.
+2. Klik **Start blue calibration points**, lalu pilih dua titik biru pada
+   diameter pipa atau dua laser marker.
+3. Isi nilai referensi dalam **cm**, misalnya diameter pipa 30 inci =
+   `76.2 cm`.
+4. Klik **Save calibration (cm)**. Event log menulis `76.20 cm (0.7620 m)`
+   dan depth inference dijalankan pada frame beku yang sama.
+5. Klik **Measure yellow points** untuk melakukan pengukuran berikutnya.
+
+Hasil awal diberi status `UNCALIBRATED` sampai reference scale tersimpan;
+sesudah calibration status berubah menjadi `REFERENCE_SCALED`.
 
 Depth Anything 3 metric menghasilkan depth yang lebih konsisten untuk
 single/multi-view, tetapi untuk underwater hasil tetap **estimasi** karena

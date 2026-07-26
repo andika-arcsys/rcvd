@@ -41,15 +41,16 @@
         <strong>Vision Features</strong>
         <button id="yoloBtn" onclick="toggle('yolo')">YOLO segmentation: OFF</button>
         <button id="depthBtn" onclick="toggle('depth')">Depth: OFF</button>
-        <small>Depth Pro dimuat hanya saat diperlukan. Pada frame beku, inference dipicu setelah dua klik.</small>
+        <small>Depth dimuat hanya saat diperlukan. Pada frame beku, inference dipicu saat measurement atau calibration disimpan.</small>
       </section>
       <section class="panel">
         <strong>Measurement Mode</strong>
-        <button onclick="setMode('measurement')">Measure two points</button>
-        <label>Known reference (meter; pipe diameter / laser separation)
-          <input id="knownLength" type="number" min="0.001" step="0.001" placeholder="contoh: 0.500">
+        <button onclick="setMode('calibration')">1. Start blue calibration points</button>
+        <label>Pipe diameter / laser separation (cm)
+          <input id="knownLengthCm" type="number" min="0.1" step="0.1" placeholder="contoh: 76.2">
         </label>
-        <button onclick="setMode('calibration')">Calibrate from reference</button>
+        <button onclick="saveCalibration()">2. Save calibration (cm)</button>
+        <button onclick="setMode('measurement')">3. Measure yellow points</button>
         <button onclick="saveSnapshot()">Save snapshot to gallery</button>
       </section>
       <section class="panel">
@@ -71,9 +72,10 @@
       return data;
     }
     async function toggle(name) { try { await post('/api/feature', {name, enabled:!features[name]}); } catch(e) { alert(e.message); } }
-    async function setMode(mode) {
-      const known = Number(document.getElementById('knownLength').value);
-      try { await post('/api/mode', {mode, known_length_m: mode === 'calibration' ? known : null}); } catch(e) { alert(e.message); }
+    async function setMode(mode) { try { await post('/api/mode', {mode}); } catch(e) { alert(e.message); } }
+    async function saveCalibration() {
+      const lengthCm = Number(document.getElementById('knownLengthCm').value);
+      try { await post('/api/calibration', {length_cm:lengthCm}); } catch(e) { alert(e.message); }
     }
     async function freeze() { try { await post('/api/freeze'); } catch(e) { alert(e.message); } }
     async function resume() { await post('/api/resume'); }
@@ -103,7 +105,7 @@
       const m = state.measurement;
       document.getElementById('measurement').textContent = m
         ? `${m.distance_m.toFixed(3)} m ± ${m.uncertainty_m.toFixed(3)} m [${m.status}]`
-        : `Mode: ${state.mode}; selected points: ${state.points.length}/2`;
+        : `Mode: ${state.mode}; blue calibration: ${state.calibration_points.length}/2; yellow measurement: ${state.measurement_points.length}/2`;
     }
     window.addEventListener('keydown', (event) => {
       if (event.code === 'Space' && event.target.tagName !== 'INPUT') {

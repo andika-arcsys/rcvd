@@ -385,6 +385,25 @@ class TestWebDashboard:
         with pytest.raises(ValueError, match="tidak dikenal"):
             create_depth_estimator("unknown", "cpu")
 
+    def test_calibration_points_are_blue_state_and_use_centimeters(self):
+        from web.app import InspectionEngine
+
+        engine = InspectionEngine("0", None, "0", depth_every=15)
+        engine.raw_frame = np.zeros((100, 120, 3), dtype=np.uint8)
+        engine.freeze()
+        engine.configure_mode("calibration")
+        engine.add_point(0.2, 0.5)
+        engine.add_point(0.8, 0.5)
+        state = engine.state()
+        assert len(state["calibration_points"]) == 2
+        assert state["measurement_points"] == []
+        assert not engine.pending_depth  # menunggu tombol Save calibration
+
+        engine.save_calibration_cm(76.2)
+        assert engine.pending_depth
+        assert engine.pending_action == "calibration"
+        assert np.isclose(engine._pending_known_length_m, 0.762)
+
 
 class TestCli:
     @pytest.mark.parametrize("text,expected", [

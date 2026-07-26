@@ -83,9 +83,11 @@ class InspectionEngine:
         self.latest_jpeg: bytes | None = None
         self.frame_id = 0
         self.features = {"yolo": False, "depth": False}
-        self.points: list[tuple[int, int]] = []
+        self.calibration_points: list[tuple[int, int]] = []
+        self.measurement_points: list[tuple[int, int]] = []
         self.point_mode = "measurement"
         self.pending_depth = False
+        self.pending_action: str | None = None
         self.depth_map: np.ndarray | None = None
         self.intrinsics: CameraIntrinsics | None = None
         self.calibration = ScaleCalibration()
@@ -94,7 +96,7 @@ class InspectionEngine:
         self.depth_model: object | None = None
         self.logs: deque[str] = deque(maxlen=40)
         self.error: str | None = None
-        self._pending_known_length: float | None = None
+        self._pending_known_length_m: float | None = None
         self._thread: threading.Thread | None = None
 
     def log(self, text: str) -> None:
@@ -162,7 +164,24 @@ class InspectionEngine:
     def _run_depth_for_frozen(self) -> None:
         with self.lock:
             frame = None if self.frozen_frame is None else self.frozen_frame.copy()
-        if frame is None or not self._ensure_depth():
+            action = self.pending_action
+            points = (
+                list(self.calibration_points)
+                if action == "calibration"
+                else list(self.measurement_points)
+            )
+            known_length_m = self._pending_known_length_m
+        if frame is None:
+            with self.lock:
+                self.pending_depth = False
+                self.pending_action = None
+            return
+        if not self._ensure_depth():
+            # Jangan retry pada setiap iterasi paused; error backend dan log
+            # calibration harus tetap terbaca sampai operator mencoba lagi.
+            with self.lock:
+                self.pending_depth = False
+                self.pending_action = None
             return
         started = time.perf_counter()
         try:
@@ -173,13 +192,14 @@ class InspectionEngine:
             with self.lock:
                 self.depth_map = prediction.depth_m
                 self.intrinsics = intrinsics
-                if len(self.points) == 2:
-                    if self.point_mode == "calibration":
-                        known = self._pending_known_length
+                if len(points) == 2:
+                    if action == "calibration":
+                        if known_length_m is None:
+                            raise ValueError("Panjang calibration belum disimpan.")
                         self.calibration = calibration_from_reference(
-                            self.points[0],
-                            self.points[1],
-                            known,
+                            points[0],
+                            points[1],
+                            known_length_m,
                             self.depth_map,
                             self.intrinsics,
                             source="REFERENCE_SCALED",
@@ -187,12 +207,13 @@ class InspectionEngine:
                         self.measurement = None
                         self.log(
                             f"Reference calibrated: scale={self.calibration.scale:.4f}, "
-                            f"reference={known:.3f}m"
+                            f"reference={known_length_m * 100:.2f} cm "
+                            f"({known_length_m:.4f} m)"
                         )
-                    else:
+                    elif action == "measurement":
                         self.measurement = measure_distance(
-                            self.points[0],
-                            self.points[1],
+                            points[0],
+                            points[1],
                             self.depth_map,
                             self.intrinsics,
                             self.calibration,
@@ -208,13 +229,15 @@ class InspectionEngine:
         finally:
             with self.lock:
                 self.pending_depth = False
+                self.pending_action = None
             self.log(f"Depth inference {time.perf_counter() - started:.2f}s")
 
     def _annotate(self, frame: np.ndarray) -> np.ndarray:
         canvas = frame.copy()
         with self.lock:
             yolo_enabled = self.features["yolo"]
-            points = list(self.points)
+            calibration_points = list(self.calibration_points)
+            measurement_points = list(self.measurement_points)
             measurement = self.measurement
             mode = self.point_mode
         if yolo_enabled and self._ensure_yolo():
@@ -226,12 +249,32 @@ class InspectionEngine:
             except Exception as exc:  # noqa: BLE001 - keep stream alive on model failure
                 self.error = f"YOLO inference error: {exc}"
 
-        for point in points:
+        # Biru: titik khusus calibration diameter pipa/laser.
+        for point in calibration_points:
+            cv2.circle(canvas, point, 7, (255, 120, 0), -1, cv2.LINE_AA)
+        if len(calibration_points) == 2:
+            cv2.line(
+                canvas, calibration_points[0], calibration_points[1],
+                (255, 120, 0), 2, cv2.LINE_AA,
+            )
+            cv2.putText(
+                canvas, "CALIBRATION REFERENCE (BLUE)", (20, 65),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 120, 0), 2,
+            )
+
+        # Kuning: titik pengukuran setelah calibration tersimpan.
+        for point in measurement_points:
             cv2.circle(canvas, point, 7, (0, 255, 255), -1, cv2.LINE_AA)
-        if len(points) == 2:
-            cv2.line(canvas, points[0], points[1], (0, 255, 255), 2, cv2.LINE_AA)
-        if measurement is not None and len(points) == 2:
-            midpoint = ((points[0][0] + points[1][0]) // 2, (points[0][1] + points[1][1]) // 2)
+        if len(measurement_points) == 2:
+            cv2.line(
+                canvas, measurement_points[0], measurement_points[1],
+                (0, 255, 255), 2, cv2.LINE_AA,
+            )
+        if measurement is not None and len(measurement_points) == 2:
+            midpoint = (
+                (measurement_points[0][0] + measurement_points[1][0]) // 2,
+                (measurement_points[0][1] + measurement_points[1][1]) // 2,
+            )
             text = (
                 f"{measurement.distance_m:.3f} m +/- {measurement.uncertainty_m:.3f} m "
                 f"[{measurement.status}]"
@@ -239,7 +282,11 @@ class InspectionEngine:
             cv2.putText(canvas, text, midpoint, cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 4)
             cv2.putText(canvas, text, midpoint, cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2)
         else:
-            label = "CALIBRATION: click 2 reference points" if mode == "calibration" else "MEASUREMENT: click 2 points"
+            label = (
+                "CALIBRATION: click 2 BLUE reference points, then Save calibration"
+                if mode == "calibration"
+                else "MEASUREMENT: click 2 YELLOW points"
+            )
             cv2.putText(canvas, label, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 4)
             cv2.putText(canvas, label, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
         return canvas
@@ -313,13 +360,20 @@ class InspectionEngine:
                 int(np.clip(x_norm, 0, 1) * (width - 1)),
                 int(np.clip(y_norm, 0, 1) * (height - 1)),
             )
-            if len(self.points) >= 2:
-                self.points = []
+            points = (
+                self.calibration_points
+                if self.point_mode == "calibration"
+                else self.measurement_points
+            )
+            if len(points) >= 2:
+                points.clear()
                 self.measurement = None
-            self.points.append(point)
-            if len(self.points) == 2:
+            points.append(point)
+            if self.point_mode == "measurement" and len(points) == 2:
+                self.pending_action = "measurement"
                 self.pending_depth = True
-            self.log(f"Point {len(self.points)}: {point}")
+            color = "BLUE calibration" if self.point_mode == "calibration" else "YELLOW measurement"
+            self.log(f"{color} point {len(points)}: {point}")
 
     def _freeze_locked(self, *, clear_points: bool) -> None:
         if self.raw_frame is None:
@@ -327,9 +381,11 @@ class InspectionEngine:
         self.frozen_frame = self.raw_frame.copy()
         self.paused = True
         self.pending_depth = False
+        self.pending_action = None
         self.measurement = None
         if clear_points:
-            self.points = []
+            self.calibration_points = []
+            self.measurement_points = []
         self.log("Frame frozen.")
 
     def freeze(self) -> None:
@@ -339,29 +395,50 @@ class InspectionEngine:
 
     def clear_points(self) -> None:
         with self.lock:
-            self.points = []
+            self.calibration_points = []
+            self.measurement_points = []
             self.measurement = None
             self.pending_depth = False
+            self.pending_action = None
         self.log("Points cleared.")
 
-    def configure_mode(self, mode: str, known_length_m: float | None = None) -> None:
+    def configure_mode(self, mode: str) -> None:
         if mode not in ("measurement", "calibration"):
             raise ValueError("Mode harus measurement atau calibration.")
-        if mode == "calibration" and (known_length_m is None or known_length_m <= 0):
-            raise ValueError("Calibration membutuhkan panjang referensi meter > 0.")
         with self.lock:
             self.point_mode = mode
-            self._pending_known_length = known_length_m
-            self.points = []
+            if mode == "calibration":
+                self.calibration_points = []
+            else:
+                self.measurement_points = []
             self.measurement = None
         self.log(f"Mode: {mode}")
+
+    def save_calibration_cm(self, length_cm: float) -> None:
+        """Simpan diameter pipa/jarak laser setelah dua titik biru dipilih."""
+        if length_cm <= 0:
+            raise ValueError("Nilai calibration harus lebih besar dari 0 cm.")
+        with self.lock:
+            if not self.paused:
+                raise ValueError("Freeze frame dahulu sebelum menyimpan calibration.")
+            if len(self.calibration_points) != 2:
+                raise ValueError("Pilih tepat dua titik biru calibration terlebih dahulu.")
+            self._pending_known_length_m = length_cm / 100.0
+            self.pending_action = "calibration"
+            self.pending_depth = True
+        self.log(
+            f"Calibration saved: reference {length_cm:.2f} cm "
+            f"({length_cm / 100.0:.4f} m); depth inference queued."
+        )
 
     def resume(self) -> None:
         with self.lock:
             self.paused = False
-            self.points = []
+            self.calibration_points = []
+            self.measurement_points = []
             self.measurement = None
             self.pending_depth = False
+            self.pending_action = None
             self.frozen_frame = None
         self.log("Stream resumed.")
 
@@ -428,7 +505,8 @@ class InspectionEngine:
                 "features": self.features,
                 "depth_backend": self.depth_backend,
                 "paused": self.paused,
-                "points": self.points,
+                "calibration_points": self.calibration_points,
+                "measurement_points": self.measurement_points,
                 "mode": self.point_mode,
                 "calibration": {
                     "scale": self.calibration.scale,
@@ -490,7 +568,7 @@ def create_app(engine: InspectionEngine) -> Flask:
     def mode():
         data = request.get_json(force=True)
         try:
-            engine.configure_mode(data["mode"], data.get("known_length_m"))
+            engine.configure_mode(data["mode"])
             return jsonify(engine.state())
         except (KeyError, ValueError) as exc:
             return jsonify({"error": str(exc)}), 400
@@ -500,6 +578,15 @@ def create_app(engine: InspectionEngine) -> Flask:
         data = request.get_json(force=True)
         try:
             engine.add_point(float(data["x_norm"]), float(data["y_norm"]))
+            return jsonify(engine.state())
+        except (KeyError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+
+    @app.post("/api/calibration")
+    def calibration():
+        data = request.get_json(force=True)
+        try:
+            engine.save_calibration_cm(float(data["length_cm"]))
             return jsonify(engine.state())
         except (KeyError, ValueError) as exc:
             return jsonify({"error": str(exc)}), 400
