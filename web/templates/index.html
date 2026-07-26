@@ -81,7 +81,7 @@
   <header>
     <strong>UNDERWATER VISION MEASUREMENT CONSOLE</strong>
     <span>
-      <a href="/gallery" style="color:#26e48a;margin-right:16px">ROI Gallery / Enhancement</a>
+      <a href="/gallery" style="color:#26e48a;margin-right:16px">ROI Gallery</a>
       <span id="status">CONNECTING</span>
     </span>
   </header>
@@ -89,25 +89,25 @@
     <section class="workspace">
       <div class="quad" aria-label="Four panel video workspace">
         <article class="cell">
-          <header class="cell-title">Layar 1 — Raw Video + Canvas (klik di sini untuk titik)</header>
-          <div class="view"><img id="streamRaw" src="/feed/raw" alt="Raw + canvas"></div>
+          <header class="cell-title">Layar 1 — Optical Native View (klik di sini untuk titik)</header>
+          <div class="view"><img id="streamRaw" src="/feed/raw" alt="Optical Native View"></div>
         </article>
         <article class="cell">
-          <header class="cell-title">Layar 2 — Masking YOLO</header>
-          <div class="view"><img id="streamYolo" src="/feed/yolo" alt="YOLO masking"></div>
+          <header class="cell-title">Layar 2 — HydroDetect Engine</header>
+          <div class="view"><img id="streamYolo" src="/feed/yolo" alt="HydroDetect Engine"></div>
         </article>
         <article class="cell">
-          <header class="cell-title">Layar 3 — Enhanced Video</header>
-          <div class="view"><img id="streamEnhanced" src="/feed/enhanced" alt="Enhanced video"></div>
+          <header class="cell-title">Layar 3 — AquaClear</header>
+          <div class="view"><img id="streamEnhanced" src="/feed/enhanced" alt="AquaClear"></div>
         </article>
         <article class="cell">
-          <header class="cell-title">Layar 4 — Masking Depth Anything 3</header>
-          <div class="view"><img id="streamDepth" src="/feed/depth" alt="Depth Anything"></div>
+          <header class="cell-title">Layar 4 — SpatialSight</header>
+          <div class="view"><img id="streamDepth" src="/feed/depth" alt="SpatialSight"></div>
         </article>
       </div>
       <div class="meta panel">
         <div id="measurement" class="metric">Belum ada pengukuran.</div>
-        <p><small>Stream MJPEG di-downscale agar ringan; ukuran panel mengikuti window browser (`object-fit: contain`). Pengukuran memakai koordinat normalisasi ke frame penuh. Klik titik hanya di Layar 1.</small></p>
+        <p><small>Stream MJPEG di-downscale agar ringan; panel mengikuti ukuran window. Pengukuran memakai koordinat normalisasi ke frame penuh. Klik titik hanya di Optical Native View.</small></p>
       </div>
     </section>
     <aside class="controls">
@@ -119,9 +119,9 @@
       </section>
       <section class="panel">
         <strong>Vision Features</strong>
-        <button id="yoloBtn" onclick="toggle('yolo')">YOLO segmentation: OFF</button>
-        <button id="depthBtn" onclick="toggle('depth')">Depth: OFF</button>
-        <small>YOLO → Layar 2. Depth → Layar 4. Enhanced (Layar 3) selalu aktif (preset realtime). Measurement: Freeze → kalibrasi biru (cm) → titik kuning/magenta/oranye.</small>
+        <button id="yoloBtn" onclick="toggle('yolo')">HydroDetect Engine: OFF</button>
+        <button id="depthBtn" onclick="toggle('depth')">SpatialSight: OFF</button>
+        <small>HydroDetect → Layar 2. SpatialSight → Layar 4. AquaClear (Layar 3) selalu aktif. Measurement: Freeze → kalibrasi biru (cm) → titik kuning/magenta/oranye.</small>
       </section>
       <section class="panel">
         <strong>Measurement Mode</strong>
@@ -132,12 +132,12 @@
         <button onclick="saveCalibration()">2. Save calibration (cm)</button>
         <button onclick="setMode('measurement')">3. Measure yellow points</button>
         <hr style="border-color:var(--line);width:100%">
-        <strong>Distance / Area from Raw Depth</strong>
+        <strong>Distance / Area (SpatialSight raw depth)</strong>
         <button onclick="setMode('distance')">Start magenta distance (2 points)</button>
         <button onclick="calculateGeometry('distance')">Calculate distance</button>
         <button onclick="setMode('area')">Start orange area polygon</button>
         <button onclick="calculateGeometry('area')">Calculate 3D surface area</button>
-        <button onclick="saveSnapshot()">Save snapshot to gallery</button>
+        <button onclick="saveSnapshot()">Save snapshot to ROI Gallery</button>
       </section>
       <section class="panel">
         <strong>System</strong>
@@ -172,7 +172,7 @@
     async function resume() { await post('/api/resume'); }
     async function clearPoints() { await post('/api/clear-points'); }
     async function saveSnapshot() {
-      try { const item = await post('/api/snapshot'); alert(`Snapshot saved: ${item.image}`); }
+      try { const item = await post('/api/snapshot'); alert(`Snapshot saved to ROI Gallery: ${item.image}`); }
       catch(e) { alert(e.message); }
     }
     document.getElementById('streamRaw').addEventListener('click', async (event) => {
@@ -196,7 +196,8 @@
       features = state.features;
       for (const name of ['yolo','depth']) {
         const button = document.getElementById(name+'Btn');
-        button.textContent = `${name === 'yolo' ? 'YOLO segmentation' : `Depth (${state.depth_backend})`}: ${features[name] ? 'ON' : 'OFF'}`;
+        const label = name === 'yolo' ? 'HydroDetect Engine' : 'SpatialSight';
+        button.textContent = `${label}: ${features[name] ? 'ON' : 'OFF'}`;
         button.classList.toggle('active', features[name]);
       }
       document.getElementById('status').textContent = state.paused ? 'FRAME FROZEN' : 'LIVE';

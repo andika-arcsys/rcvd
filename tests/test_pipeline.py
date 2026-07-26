@@ -426,12 +426,45 @@ class TestWebDashboard:
             "/api/resume",
             "/api/snapshot",
             "/api/geometry",
+            "/api/gallery/<entry_id>/notes",
         } <= routes
         preview = _colorize_depth(np.linspace(1, 3, 100, dtype=np.float32).reshape(10, 10))
         assert preview.shape == (10, 10, 3)
         large = np.zeros((1080, 1920, 3), dtype=np.uint8)
         stream = _downscale_for_stream(large, 640)
         assert max(stream.shape[:2]) == 640
+
+    def test_gallery_snapshot_image_and_inspector_notes(self, tmp_path):
+        from web.app import InspectionEngine, create_app
+
+        engine = InspectionEngine(
+            "0", None, "0", depth_every=15, gallery_dir=str(tmp_path / "gallery")
+        )
+        engine.raw_frame = np.full((80, 120, 3), 90, dtype=np.uint8)
+        engine.freeze()
+        engine.configure_mode("calibration")
+        engine.add_point(0.2, 0.5)
+        engine.add_point(0.8, 0.5)
+        saved = engine.save_snapshot()
+        assert (engine.gallery_dir / saved["image"]).is_file()
+        entries = engine.gallery_entries()
+        assert entries[0]["has_image"] is True
+        assert entries[0]["inspector_notes"] == ""
+
+        updated = engine.update_gallery_notes(saved["id"], "Free span terlihat di sisi kanan.")
+        assert updated["inspector_notes"] == "Free span terlihat di sisi kanan."
+
+        app = create_app(engine)
+        client = app.test_client()
+        image_response = client.get(f"/api/gallery/{saved['id']}/image")
+        assert image_response.status_code == 200
+        assert image_response.mimetype == "image/jpeg"
+        note_response = client.post(
+            f"/api/gallery/{saved['id']}/notes",
+            json={"notes": "Anoda korosi ringan"},
+        )
+        assert note_response.status_code == 200
+        assert note_response.get_json()["inspector_notes"] == "Anoda korosi ringan"
 
     def test_depth_factory_rejects_unknown_backend(self):
         from underwater_enhance.depth_estimator import create_depth_estimator

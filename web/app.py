@@ -126,7 +126,10 @@ class InspectionEngine:
         self.depth_model_id = depth_model_id
         self.depth_process_res = depth_process_res
         self.stream_max_side = max(160, int(stream_max_side))
-        self.gallery_dir = Path(gallery_dir)
+        gallery_path = Path(gallery_dir)
+        self.gallery_dir = (
+            gallery_path if gallery_path.is_absolute() else (REPO_ROOT / gallery_path).resolve()
+        )
         self.gallery_dir.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
         self.frame_ready = threading.Condition(self.lock)
@@ -215,7 +218,7 @@ class InspectionEngine:
         if not self.model_path or not Path(self.model_path).is_file():
             expected = self.model_path or r"D:\rcvd\exp-5.pt"
             self.error = (
-                f"YOLO model path tidak tersedia: {expected}. "
+                f"HydroDetect model path tidak tersedia: {expected}. "
                 f"Jalankan dengan --model \"D:\\rcvd\\exp-5.pt\"."
             )
             return False
@@ -223,10 +226,10 @@ class InspectionEngine:
             from ultralytics import YOLO
 
             self.yolo_model = YOLO(self.model_path)
-            self.log("YOLO model loaded.")
+            self.log("HydroDetect Engine loaded.")
             return True
         except Exception as exc:  # noqa: BLE001 - expose model loading diagnostics in UI
-            self.error = f"YOLO load error: {exc}"
+            self.error = f"HydroDetect load error: {exc}"
             return False
 
     def _ensure_depth(self) -> bool:
@@ -241,13 +244,13 @@ class InspectionEngine:
                 process_res=self.depth_process_res,
             )
             self.error = None
-            self.log(f"Depth backend loaded: {self.depth_backend}.")
+            self.log(f"SpatialSight backend loaded: {self.depth_backend}.")
             return True
         except DepthProUnavailableError as exc:
             self.error = str(exc)
             with self.lock:
                 self.features["depth"] = False
-            self.log(f"Depth Pro unavailable: {exc}")
+            self.log(f"SpatialSight unavailable: {exc}")
             return False
 
     def _infer_depth(self, frame: np.ndarray):
@@ -264,7 +267,7 @@ class InspectionEngine:
         calibration: ScaleCalibration | None = None,
         intrinsics: CameraIntrinsics | None = None,
     ) -> None:
-        # Preview selalu gradasi relatif Depth Anything (Turbo: near hangat → far dingin).
+        # Preview SpatialSight: gradasi relatif Turbo (dekat hangat → jauh dingin).
         # Warna bukan skala meter; angka metrik hanya dari raw Float32 + kalibrasi titik.
         del calibration, intrinsics
         visual = _colorize_depth(depth_m)
@@ -280,7 +283,7 @@ class InspectionEngine:
             cv2.LINE_AA,
         )
         stream = _downscale_for_stream(visual, self.stream_max_side)
-        stream = _label_panel(stream, "LAYAR 4: DEPTH ANYTHING", (255, 200, 80))
+        stream = _label_panel(stream, "SpatialSight", (255, 200, 80))
         encoded = _encode_jpeg(stream)
         if encoded is None:
             return
@@ -306,9 +309,9 @@ class InspectionEngine:
                 prediction = self._infer_depth(frame)
                 if prediction is not None:
                     self._publish_depth_preview(prediction.depth_m, frame_id)
-                    self.log(f"Depth preview ready: frame={frame_id}")
+                    self.log(f"SpatialSight preview ready: frame={frame_id}")
             except Exception as exc:  # noqa: BLE001 - keep live video running
-                self.error = f"Depth preview error: {exc}"
+                self.error = f"SpatialSight preview error: {exc}"
                 self.log(self.error)
 
     def _run_depth_for_frozen(self) -> None:
@@ -420,7 +423,7 @@ class InspectionEngine:
             self.log(f"Depth inference {time.perf_counter() - started:.2f}s")
 
     def _draw_measurement_overlays(self, frame: np.ndarray) -> np.ndarray:
-        """Layar 1: raw evidence + canvas titik pengukuran (tanpa YOLO/depth)."""
+        """Optical Native View: raw evidence + canvas titik pengukuran."""
         canvas = frame.copy()
         with self.lock:
             calibration_points = list(self.calibration_points)
@@ -524,10 +527,10 @@ class InspectionEngine:
         with self.lock:
             enabled = self.features["yolo"]
         if not enabled:
-            return _placeholder_panel(height, width, "LAYAR 2: YOLO MASKING", "Toggle YOLO ON")
+            return _placeholder_panel(height, width, "HydroDetect Engine", "Toggle HydroDetect ON")
         if not self._ensure_yolo():
             return _placeholder_panel(
-                height, width, "LAYAR 2: YOLO MASKING", self.error or "Model path unavailable"
+                height, width, "HydroDetect Engine", self.error or "Model path unavailable"
             )
         try:
             result = self.yolo_model.predict(
@@ -537,20 +540,20 @@ class InspectionEngine:
                 verbose=False,
                 retina_masks=True,
             )[0]
-            return _label_panel(result.plot(img=stream.copy()), "LAYAR 2: YOLO MASKING", (0, 200, 255))
+            return _label_panel(result.plot(img=stream.copy()), "HydroDetect Engine", (0, 200, 255))
         except Exception as exc:  # noqa: BLE001 - keep stream alive on model failure
-            self.error = f"YOLO inference error: {exc}"
-            return _placeholder_panel(height, width, "LAYAR 2: YOLO MASKING", str(exc)[:70])
+            self.error = f"HydroDetect inference error: {exc}"
+            return _placeholder_panel(height, width, "HydroDetect Engine", str(exc)[:70])
 
     def _build_enhanced_panel(self, frame: np.ndarray) -> np.ndarray:
         stream = _downscale_for_stream(frame, self.stream_max_side)
         try:
             enhanced = self.enhancer.process(stream)
-            return _label_panel(enhanced, "LAYAR 3: ENHANCED", (80, 255, 160))
+            return _label_panel(enhanced, "AquaClear", (80, 255, 160))
         except Exception as exc:  # noqa: BLE001 - keep stream alive
-            self.error = f"Enhance error: {exc}"
+            self.error = f"AquaClear error: {exc}"
             height, width = stream.shape[:2]
-            return _placeholder_panel(height, width, "LAYAR 3: ENHANCED", str(exc)[:70])
+            return _placeholder_panel(height, width, "AquaClear", str(exc)[:70])
 
     def _build_depth_panel(self, frame: np.ndarray) -> np.ndarray:
         height, width = self._stream_size_for(frame)
@@ -559,20 +562,20 @@ class InspectionEngine:
             preview = None if self.depth_preview_image is None else self.depth_preview_image.copy()
         if not enabled:
             return _placeholder_panel(
-                height, width, "LAYAR 4: DEPTH ANYTHING", "Toggle Depth ON"
+                height, width, "SpatialSight", "Toggle SpatialSight ON"
             )
         if preview is None:
             return _placeholder_panel(
-                height, width, "LAYAR 4: DEPTH ANYTHING", "Menunggu keyframe depth..."
+                height, width, "SpatialSight", "Menunggu keyframe SpatialSight..."
             )
         resized = cv2.resize(preview, (width, height), interpolation=cv2.INTER_AREA)
-        return _label_panel(resized, "LAYAR 4: DEPTH ANYTHING", (255, 200, 80))
+        return _label_panel(resized, "SpatialSight", (255, 200, 80))
 
     def _publish_quad_panels(self, frame: np.ndarray) -> None:
         """Encode 4 panel MJPEG downscaled; klik measurement tetap x_norm/y_norm penuh."""
         raw_view = _label_panel(
             _downscale_for_stream(self._draw_measurement_overlays(frame), self.stream_max_side),
-            "LAYAR 1: RAW + CANVAS",
+            "Optical Native View",
             (120, 220, 255),
         )
         panels = {
@@ -655,7 +658,8 @@ class InspectionEngine:
                     self.depth_model = None
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-        self.log(f"{name.upper()} {'ON' if enabled else 'OFF'}")
+        label = {"yolo": "HydroDetect", "depth": "SpatialSight"}.get(name, name.upper())
+        self.log(f"{label} {'ON' if enabled else 'OFF'}")
 
     def add_point(self, x_norm: float, y_norm: float) -> None:
         with self.lock:
@@ -833,12 +837,12 @@ class InspectionEngine:
             self.log("Reference calibration invalidated after resume; recalibrate on next frozen frame.")
 
     def save_snapshot(self) -> dict:
-        """Persist frozen/current high-resolution frame beserta measurement JSON."""
+        """Persist Optical Native View (raw + canvas) beserta measurement JSON."""
         with self.lock:
             frame = self.frozen_frame if self.paused else self.raw_frame
             if frame is None:
                 raise ValueError("Belum ada frame untuk disimpan.")
-            snapshot = frame.copy()
+            source = frame.copy()
             measurement = None if self.measurement is None else {
                 "distance_m": self.measurement.distance_m,
                 "uncertainty_m": self.measurement.uncertainty_m,
@@ -846,11 +850,21 @@ class InspectionEngine:
                 "validity": self.measurement.validity,
                 "warnings": self.measurement.warnings,
             }
+            geometry = None if self.geometry_measurement is None else {
+                "kind": self.geometry_measurement.kind,
+                "value": self.geometry_measurement.value,
+                "unit": self.geometry_measurement.unit,
+                "uncertainty": self.geometry_measurement.uncertainty,
+                "validity": self.geometry_measurement.validity,
+            }
             metadata = {
                 "id": uuid.uuid4().hex,
                 "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
                 "frame_id": self.frame_id,
+                "view": "Optical Native View",
+                "inspector_notes": "",
                 "measurement": measurement,
+                "geometry_measurement": geometry,
                 "calibration": {
                     "scale": self.calibration.scale,
                     "source": self.calibration.source,
@@ -863,9 +877,13 @@ class InspectionEngine:
                     "inference_message": self.calibration_inference_message,
                 },
             }
+        # Simpan dengan overlay canvas agar thumbnail gallery terbaca jelas.
+        snapshot = self._draw_measurement_overlays(source)
         image_name = f"{metadata['id']}.jpg"
         metadata["image"] = image_name
-        cv2.imwrite(str(self.gallery_dir / image_name), snapshot)
+        image_path = self.gallery_dir / image_name
+        if not cv2.imwrite(str(image_path), snapshot):
+            raise ValueError(f"Gagal menulis snapshot ke {image_path}")
         (self.gallery_dir / f"{metadata['id']}.json").write_text(
             json.dumps(metadata, indent=2), encoding="utf-8"
         )
@@ -876,10 +894,35 @@ class InspectionEngine:
         entries = []
         for path in sorted(self.gallery_dir.glob("*.json"), reverse=True):
             try:
-                entries.append(json.loads(path.read_text(encoding="utf-8")))
+                entry = json.loads(path.read_text(encoding="utf-8"))
             except json.JSONDecodeError:
                 continue
+            entry.setdefault("inspector_notes", "")
+            entry.setdefault("view", "Optical Native View")
+            image_name = entry.get("image") or f"{entry.get('id', path.stem)}.jpg"
+            image_path = self.gallery_dir / image_name
+            entry["image"] = image_name
+            entry["has_image"] = image_path.is_file()
+            if entry["has_image"]:
+                entry["image_mtime"] = int(image_path.stat().st_mtime)
+            entries.append(entry)
         return entries
+
+    def update_gallery_notes(self, entry_id: str, notes: str) -> dict:
+        """Simpan keterangan aktual inspector untuk satu ROI snapshot."""
+        safe_id = Path(entry_id).name
+        meta_path = self.gallery_dir / f"{safe_id}.json"
+        if not meta_path.is_file():
+            raise ValueError("Snapshot gallery tidak ditemukan.")
+        try:
+            entry = json.loads(meta_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError("Metadata snapshot rusak.") from exc
+        entry["inspector_notes"] = str(notes)
+        entry["notes_updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+        meta_path.write_text(json.dumps(entry, indent=2), encoding="utf-8")
+        self.log(f"Inspector notes updated: {safe_id}")
+        return entry
 
     def set_context(self, context: str) -> None:
         """Gallery membebaskan model live agar RTX 3070 tidak OOM."""
@@ -1088,7 +1131,26 @@ def create_app(engine: InspectionEngine) -> Flask:
 
     @app.get("/api/gallery/<entry_id>/image")
     def gallery_image(entry_id: str):
-        return send_from_directory(engine.gallery_dir, f"{entry_id}.jpg")
+        safe_id = Path(entry_id).name
+        filename = f"{safe_id}.jpg"
+        image_path = engine.gallery_dir / filename
+        if not image_path.is_file():
+            return jsonify({"error": "Gambar snapshot tidak ditemukan."}), 404
+        return send_from_directory(
+            str(engine.gallery_dir),
+            filename,
+            mimetype="image/jpeg",
+            max_age=0,
+        )
+
+    @app.post("/api/gallery/<entry_id>/notes")
+    def gallery_notes(entry_id: str):
+        data = request.get_json(force=True) or {}
+        try:
+            entry = engine.update_gallery_notes(entry_id, data.get("notes", ""))
+            return jsonify(entry)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
 
     @app.post("/api/context")
     def context():
@@ -1108,9 +1170,11 @@ def main() -> None:
     parser.add_argument(
         "--model",
         default=r"D:\rcvd\exp-5.pt",
-        help=r"Path bobot YOLO (default: D:\rcvd\exp-5.pt)",
+        help=r"Path bobot HydroDetect (default: D:\rcvd\exp-5.pt)",
     )
-    parser.add_argument("--device", default="0", help="YOLO/Depth device, default GPU 0")
+    parser.add_argument(
+        "--device", default="0", help="HydroDetect/SpatialSight device, default GPU 0"
+    )
     parser.add_argument("--depth-every", type=int, default=15)
     parser.add_argument(
         "--depth-checkpoint",
