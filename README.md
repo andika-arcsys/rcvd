@@ -287,6 +287,24 @@ Status `CALIBRATED` hanya boleh digunakan setelah intrinsics kamera dikalibrasi
 di bawah air serta reference scale tersedia. UI selalu menampilkan uncertainty;
 hasil ini bukan sertifikat metrologi.
 
+### Cara memakai tombol Depth
+
+`Depth (depth_anything3): ON` tidak mengganti video raw dengan video sintetis.
+Saat ON, worker kedua mengambil keyframe setiap `--depth-every` frame, menjalankan
+DA3 secara asinkron, lalu menampilkan **Depth Mask Preview** berwarna. Playback
+video utama tetap mengikuti FPS sumber dan tidak menunggu inference depth.
+
+Pada **frame beku**, depth preview yang berasal dari frame identik di-blend
+sebagai overlay transparan pada canvas. Overlay itu membantu memilih titik,
+tetapi raw frame tetap evidence inspeksi. Panel kanan selalu menampilkan:
+
+```text
+UNDERWATER INTRINSICS: NOT CALIBRATED
+```
+
+hingga matriks K dan distorsi kamera dikalibrasi di bawah air dengan
+housing/port yang sama.
+
 Backend Apple Depth Pro tetap tersedia: gunakan `--depth-backend depth_pro` dan
 `--depth-checkpoint checkpoints\depth_pro.pt` setelah mengikuti instalasi resmi
 Apple. Jangan mengaktifkan DA3/Depth Pro bersamaan dengan upscaler berat pada

@@ -49,6 +49,18 @@ from underwater_enhance.measurement import (
 )
 
 
+def _colorize_depth(depth_m: np.ndarray) -> np.ndarray:
+    """Buat visualisasi depth robust tanpa mengubah frame evidence asli."""
+    valid = depth_m[np.isfinite(depth_m) & (depth_m > 0)]
+    if valid.size < 16:
+        return np.zeros((*depth_m.shape, 3), dtype=np.uint8)
+    near, far = np.percentile(valid, (2, 98))
+    normalized = np.clip((depth_m - near) / max(far - near, 1e-6), 0, 1)
+    # Near = hangat/terang; far = dingin/gelap pada colormap Turbo.
+    image = ((1.0 - normalized) * 255).astype(np.uint8)
+    return cv2.applyColorMap(image, cv2.COLORMAP_TURBO)
+
+
 class InspectionEngine:
     """Single-worker video pipeline; mencegah model dimuat per browser client."""
 
@@ -82,7 +94,9 @@ class InspectionEngine:
         self.frozen_frame: np.ndarray | None = None
         self.frozen_frame_id: int | None = None
         self.latest_jpeg: bytes | None = None
+        self.latest_depth_jpeg: bytes | None = None
         self.frame_id = 0
+        self.source_fps = 30.0
         self.features = {"yolo": False, "depth": False}
         self.calibration_points: list[tuple[int, int]] = []
         self.measurement_points: list[tuple[int, int]] = []
@@ -97,6 +111,11 @@ class InspectionEngine:
         self.measurement = None
         self.yolo_model = None
         self.depth_model: object | None = None
+        self.depth_inference_lock = threading.Lock()
+        self.depth_preview_request: tuple[np.ndarray, int] | None = None
+        self.depth_preview_frame_id: int | None = None
+        self.depth_preview_image: np.ndarray | None = None
+        self._depth_thread: threading.Thread | None = None
         self.logs: deque[str] = deque(maxlen=40)
         self.error: str | None = None
         self._pending_known_length_m: float | None = None
@@ -112,20 +131,27 @@ class InspectionEngine:
         self.running = True
         self._thread = threading.Thread(target=self._run, name="vision-worker", daemon=True)
         self._thread.start()
+        self._depth_thread = threading.Thread(
+            target=self._run_depth_preview, name="depth-preview-worker", daemon=True
+        )
+        self._depth_thread.start()
         self.log("Video worker started.")
 
     def stop(self) -> None:
         self.running = False
         if self._thread:
             self._thread.join(timeout=3)
+        if self._depth_thread:
+            self._depth_thread.join(timeout=3)
         self._unload_models()
 
     def _unload_models(self) -> None:
         with self.lock:
             self.yolo_model = None
             if self.depth_model is not None:
-                self.depth_model.close()
-                self.depth_model = None
+                with self.depth_inference_lock:
+                    self.depth_model.close()
+                    self.depth_model = None
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
@@ -161,8 +187,58 @@ class InspectionEngine:
             return True
         except DepthProUnavailableError as exc:
             self.error = str(exc)
+            with self.lock:
+                self.features["depth"] = False
             self.log(f"Depth Pro unavailable: {exc}")
             return False
+
+    def _infer_depth(self, frame: np.ndarray):
+        """Serialisasi satu model depth untuk preview dan measurement."""
+        with self.depth_inference_lock:
+            if not self._ensure_depth():
+                return None
+            return self.depth_model.infer(frame)
+
+    def _publish_depth_preview(self, depth_m: np.ndarray, frame_id: int) -> None:
+        visual = _colorize_depth(depth_m)
+        cv2.putText(
+            visual,
+            f"DEPTH PREVIEW | frame {frame_id} | visual only",
+            (15, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.65,
+            (255, 255, 255),
+            2,
+            cv2.LINE_AA,
+        )
+        ok, encoded = cv2.imencode(".jpg", visual, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        if not ok:
+            return
+        with self.frame_ready:
+            self.depth_preview_frame_id = frame_id
+            self.depth_preview_image = visual
+            self.latest_depth_jpeg = encoded.tobytes()
+            self.frame_ready.notify_all()
+
+    def _run_depth_preview(self) -> None:
+        """Keyframe depth asinkron; tidak pernah menahan playback video utama."""
+        while self.running:
+            with self.lock:
+                request = self.depth_preview_request
+                self.depth_preview_request = None
+                enabled = self.features["depth"]
+            if request is None or not enabled:
+                time.sleep(0.02)
+                continue
+            frame, frame_id = request
+            try:
+                prediction = self._infer_depth(frame)
+                if prediction is not None:
+                    self._publish_depth_preview(prediction.depth_m, frame_id)
+                    self.log(f"Depth preview ready: frame={frame_id}")
+            except Exception as exc:  # noqa: BLE001 - keep live video running
+                self.error = f"Depth preview error: {exc}"
+                self.log(self.error)
 
     def _run_depth_for_frozen(self) -> None:
         with self.lock:
@@ -196,13 +272,16 @@ class InspectionEngine:
                 with self.lock:
                     self.calibration_inference_state = "RUNNING"
                     self.calibration_inference_message = "Depth inference sedang berjalan pada frame beku."
-            prediction = self.depth_model.infer(frame)
+            prediction = self._infer_depth(frame)
+            if prediction is None:
+                return
             intrinsics = default_intrinsics(
                 frame.shape[1], frame.shape[0], prediction.focal_length_px
             )
             with self.lock:
                 self.depth_map = prediction.depth_m
                 self.intrinsics = intrinsics
+                self._publish_depth_preview(prediction.depth_m, frozen_frame_id or -1)
                 if len(points) == 2:
                     if action == "calibration":
                         if known_length_m is None:
@@ -265,6 +344,20 @@ class InspectionEngine:
             measurement_points = list(self.measurement_points)
             measurement = self.measurement
             mode = self.point_mode
+            paused = self.paused
+            frozen_id = self.frozen_frame_id
+            depth_preview_id = self.depth_preview_frame_id
+            depth_preview = (
+                None if self.depth_preview_image is None else self.depth_preview_image.copy()
+            )
+        if paused and depth_preview is not None and depth_preview_id == frozen_id:
+            # Warna depth hanya ditampilkan pada frozen frame yang persis sama.
+            # Live stream tetap raw agar tidak menampilkan map depth stale.
+            canvas = cv2.addWeighted(canvas, 0.62, depth_preview, 0.38, 0)
+            cv2.putText(
+                canvas, "DEPTH MASK OVERLAY (visual only)", (20, 115),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.52, (255, 255, 255), 2,
+            )
         if yolo_enabled and self._ensure_yolo():
             try:
                 result = self.yolo_model.predict(
@@ -345,6 +438,9 @@ class InspectionEngine:
         if not cap.isOpened():
             self.error = f"Cannot open source: {self.source}"
             return
+        self.source_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+        frame_interval = 1.0 / self.source_fps
+        next_deadline = time.perf_counter()
         try:
             while self.running:
                 with self.lock:
@@ -359,6 +455,13 @@ class InspectionEngine:
                     time.sleep(0.03)
                     continue
 
+                # File video diputar dengan pacing FPS sumber, bukan diproses
+                # secepat loop CPU agar timestamp/telemetry tidak drift.
+                now = time.perf_counter()
+                if now < next_deadline:
+                    time.sleep(next_deadline - now)
+                next_deadline = max(next_deadline + frame_interval, time.perf_counter())
+
                 ok, frame = cap.read()
                 if not ok:
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
@@ -367,10 +470,10 @@ class InspectionEngine:
                     self.raw_frame = frame.copy()
                     self.frame_id += 1
                     depth_enabled = self.features["depth"]
-                # Depth keyframe preview is intentionally not run continuously;
-                # it will run when a user freezes/clicks a measurement frame.
-                if depth_enabled and self.frame_id % self.depth_every == 0:
-                    self.log("Depth waiting for point selection (keyframe policy).")
+                    if depth_enabled and self.frame_id % self.depth_every == 0:
+                        # Timpa hanya request lama yang belum diambil; preview
+                        # boleh skip keyframe, playback utama tidak boleh tertahan.
+                        self.depth_preview_request = (frame.copy(), self.frame_id)
                 self._publish(self._annotate(frame))
         finally:
             cap.release()
@@ -384,8 +487,9 @@ class InspectionEngine:
             if name == "yolo":
                 self.yolo_model = None
             if name == "depth" and self.depth_model is not None:
-                self.depth_model.close()
-                self.depth_model = None
+                with self.depth_inference_lock:
+                    self.depth_model.close()
+                    self.depth_model = None
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         self.log(f"{name.upper()} {'ON' if enabled else 'OFF'}")
@@ -567,6 +671,13 @@ class InspectionEngine:
             return {
                 "features": self.features,
                 "depth_backend": self.depth_backend,
+                "source_fps": self.source_fps,
+                "depth_preview_frame_id": self.depth_preview_frame_id,
+                "intrinsics_underwater_status": "NOT CALIBRATED",
+                "intrinsics_underwater_message": (
+                    "Model/assumed intrinsics only; lakukan calibration camera underwater "
+                    "untuk measurement metrik tervalidasi."
+                ),
                 "paused": self.paused,
                 "calibration_points": self.calibration_points,
                 "measurement_points": self.measurement_points,
@@ -620,6 +731,19 @@ def create_app(engine: InspectionEngine) -> Flask:
                 with engine.frame_ready:
                     engine.frame_ready.wait_for(lambda: engine.latest_jpeg is not None, timeout=1)
                     frame = engine.latest_jpeg
+                if frame:
+                    yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+        return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
+    @app.get("/depth_feed")
+    def depth_feed():
+        def generate():
+            while engine.running:
+                with engine.frame_ready:
+                    engine.frame_ready.wait_for(
+                        lambda: engine.latest_depth_jpeg is not None, timeout=1
+                    )
+                    frame = engine.latest_depth_jpeg
                 if frame:
                     yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
         return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
