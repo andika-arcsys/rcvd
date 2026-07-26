@@ -5,35 +5,109 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Underwater Vision Measurement Console</title>
   <style>
-    :root { --bg:#0b1220; --panel:#111c2e; --line:#263650; --text:#dbeafe; --muted:#8da2c0; --green:#26e48a; --yellow:#facc15; --red:#fb7185; }
-    * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--text); font:14px Inter,system-ui,sans-serif; }
-    header { padding:14px 20px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; }
-    main { display:grid; grid-template-columns:minmax(0,3fr) minmax(280px,1fr); gap:16px; padding:16px; }
-    .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; }
-    #stream { width:100%; display:block; background:#000; cursor:crosshair; border-radius:7px; }
-    .controls { display:grid; gap:10px; } button,input { background:#17243a; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:9px; }
-    button { cursor:pointer; text-align:left; } button.active { border-color:var(--green); color:var(--green); } label { color:var(--muted); display:grid; gap:4px; }
-    .metric { font-family:ui-monospace,Consolas,monospace; color:var(--green); padding:9px; background:#0b1424; border-radius:6px; }
-    #depthPanel { display:none; margin-top:12px; } #depthPreview { width:100%; display:block; border-radius:7px; background:#000; }
-    #logs { height:180px; overflow:auto; font:12px ui-monospace,Consolas,monospace; color:var(--muted); white-space:pre-wrap; }
-    .warn { color:var(--yellow); } .error { color:var(--red); } small { color:var(--muted); }
-    @media(max-width:900px) { main { grid-template-columns:1fr; } }
+    :root {
+      --bg:#0b1220; --panel:#111c2e; --line:#263650; --text:#dbeafe;
+      --muted:#8da2c0; --green:#26e48a; --yellow:#facc15; --red:#fb7185;
+    }
+    * { box-sizing:border-box; }
+    html, body { height:100%; margin:0; }
+    body {
+      background:var(--bg); color:var(--text);
+      font:14px "Segoe UI",system-ui,sans-serif;
+      display:flex; flex-direction:column; overflow:hidden;
+    }
+    header {
+      flex:0 0 auto; padding:10px 16px; border-bottom:1px solid var(--line);
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+    }
+    main {
+      flex:1; min-height:0; display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(260px,320px);
+      gap:12px; padding:12px;
+    }
+    .workspace { min-height:0; display:flex; flex-direction:column; gap:8px; }
+    .quad {
+      flex:1; min-height:0;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:1fr 1fr;
+      gap:8px;
+    }
+    .cell {
+      min-height:0; min-width:0;
+      background:var(--panel); border:1px solid var(--line); border-radius:10px;
+      display:flex; flex-direction:column; overflow:hidden;
+    }
+    .cell header.cell-title {
+      flex:0 0 auto; padding:6px 10px; border:0; border-bottom:1px solid var(--line);
+      font-size:12px; color:var(--muted); letter-spacing:0.02em;
+    }
+    .cell .view { flex:1; min-height:0; position:relative; background:#000; }
+    .cell img {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:contain; display:block; background:#000;
+    }
+    #streamRaw { cursor:crosshair; }
+    .meta { flex:0 0 auto; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; }
+    .controls {
+      min-height:0; overflow:auto; display:grid; gap:10px; align-content:start;
+    }
+    button,input {
+      background:#17243a; color:var(--text); border:1px solid var(--line);
+      border-radius:6px; padding:9px; width:100%;
+    }
+    button { cursor:pointer; text-align:left; }
+    button.active { border-color:var(--green); color:var(--green); }
+    label { color:var(--muted); display:grid; gap:4px; }
+    .metric {
+      font-family:ui-monospace,Consolas,monospace; color:var(--green);
+      padding:9px; background:#0b1424; border-radius:6px;
+    }
+    #logs {
+      height:140px; overflow:auto; font:12px ui-monospace,Consolas,monospace;
+      color:var(--muted); white-space:pre-wrap;
+    }
+    .error { color:var(--red); } small { color:var(--muted); }
+    @media (max-width:1000px) {
+      body { overflow:auto; }
+      main { grid-template-columns:1fr; height:auto; }
+      .quad { min-height:70vh; }
+      .controls { overflow:visible; }
+    }
   </style>
 </head>
 <body>
   <header>
     <strong>UNDERWATER VISION MEASUREMENT CONSOLE</strong>
-    <span><a href="/gallery" style="color:#26e48a;margin-right:16px">ROI Gallery / Enhancement</a><span id="status">CONNECTING</span></span>
+    <span>
+      <a href="/gallery" style="color:#26e48a;margin-right:16px">ROI Gallery / Enhancement</a>
+      <span id="status">CONNECTING</span>
+    </span>
   </header>
   <main>
-    <section class="panel">
-      <img id="stream" src="/video_feed" alt="Video stream">
-      <p><small>Measurement: pilih mode, klik dua titik pada frame. Frame akan dibekukan agar depth dan titik berasal dari frame identik.</small></p>
-      <div id="measurement" class="metric">Belum ada pengukuran.</div>
-      <div id="depthPanel" class="panel">
-        <strong>Depth Mask Preview (relatif)</strong>
-        <img id="depthPreview" src="/depth_feed" alt="Depth preview">
-        <small>Gradasi Depth Anything: dekat = hangat/merah, jauh = dingin/biru. Warna bukan meter — angka metrik hanya dari titik kalibrasi + raw depth Float32.</small>
+    <section class="workspace">
+      <div class="quad" aria-label="Four panel video workspace">
+        <article class="cell">
+          <header class="cell-title">Layar 1 — Raw Video + Canvas (klik di sini untuk titik)</header>
+          <div class="view"><img id="streamRaw" src="/feed/raw" alt="Raw + canvas"></div>
+        </article>
+        <article class="cell">
+          <header class="cell-title">Layar 2 — Masking YOLO</header>
+          <div class="view"><img id="streamYolo" src="/feed/yolo" alt="YOLO masking"></div>
+        </article>
+        <article class="cell">
+          <header class="cell-title">Layar 3 — Enhanced Video</header>
+          <div class="view"><img id="streamEnhanced" src="/feed/enhanced" alt="Enhanced video"></div>
+        </article>
+        <article class="cell">
+          <header class="cell-title">Layar 4 — Masking Depth Anything 3</header>
+          <div class="view"><img id="streamDepth" src="/feed/depth" alt="Depth Anything"></div>
+        </article>
+      </div>
+      <div class="meta panel">
+        <div id="measurement" class="metric">Belum ada pengukuran.</div>
+        <p><small>Stream MJPEG di-downscale agar ringan; ukuran panel mengikuti window browser (`object-fit: contain`). Pengukuran memakai koordinat normalisasi ke frame penuh. Klik titik hanya di Layar 1.</small></p>
       </div>
     </section>
     <aside class="controls">
@@ -47,7 +121,7 @@
         <strong>Vision Features</strong>
         <button id="yoloBtn" onclick="toggle('yolo')">YOLO segmentation: OFF</button>
         <button id="depthBtn" onclick="toggle('depth')">Depth: OFF</button>
-        <small>ON = muat model + preview gradasi relatif. OFF = hemat VRAM. Pengukuran metrik: Freeze → kalibrasi biru (mis. 76.2 cm) → titik kuning/magenta/oranye; depth ikut diinfer saat Save/Calculate pada frame beku.</small>
+        <small>YOLO → Layar 2. Depth → Layar 4. Enhanced (Layar 3) selalu aktif (preset realtime). Measurement: Freeze → kalibrasi biru (cm) → titik kuning/magenta/oranye.</small>
       </section>
       <section class="panel">
         <strong>Measurement Mode</strong>
@@ -101,10 +175,21 @@
       try { const item = await post('/api/snapshot'); alert(`Snapshot saved: ${item.image}`); }
       catch(e) { alert(e.message); }
     }
-    document.getElementById('stream').addEventListener('click', async (event) => {
+    document.getElementById('streamRaw').addEventListener('click', async (event) => {
       const image = event.currentTarget, rect = image.getBoundingClientRect();
-      try { await post('/api/point', {x_norm:(event.clientX-rect.left)/rect.width, y_norm:(event.clientY-rect.top)/rect.height}); }
-      catch(e) { alert(e.message); }
+      const naturalW = image.naturalWidth || rect.width;
+      const naturalH = image.naturalHeight || rect.height;
+      const scale = Math.min(rect.width / naturalW, rect.height / naturalH);
+      const contentW = naturalW * scale;
+      const contentH = naturalH * scale;
+      const offsetX = (rect.width - contentW) / 2;
+      const offsetY = (rect.height - contentH) / 2;
+      const x = event.clientX - rect.left - offsetX;
+      const y = event.clientY - rect.top - offsetY;
+      if (x < 0 || y < 0 || x > contentW || y > contentH) return;
+      try {
+        await post('/api/point', {x_norm: x / contentW, y_norm: y / contentH});
+      } catch(e) { alert(e.message); }
     });
     function render(state) {
       if (!state || !state.features) return;
@@ -121,13 +206,12 @@
         `Calibration inference [${state.calibration.inference_state}]: ${state.calibration.inference_message}`;
       document.getElementById('intrinsicsStatus').textContent =
         `UNDERWATER INTRINSICS: ${state.intrinsics_underwater_status} — ${state.intrinsics_underwater_message}`;
-      document.getElementById('depthPanel').style.display = features.depth ? 'block' : 'none';
       document.getElementById('error').textContent = state.error || '';
       document.getElementById('logs').textContent = state.logs.join('\n');
       const m = state.measurement;
       const g = state.geometry_measurement;
       document.getElementById('measurement').textContent = g
-        ? `${g.kind}: ${g.value.toFixed(3)} ${g.unit} ± ${g.uncertainty.toFixed(3)} ${g.unit} [${g.validity}]`
+        ? `${g.kind}: ${g.value.toFixed(2)} ${g.unit} ± ${g.uncertainty.toFixed(2)} ${g.unit} [${g.validity}]`
         : m
         ? `${m.validity === 'VALID_SAME_FRAME' ? 'MEASUREMENT' : 'ESTIMATE ONLY'}: ${(m.distance_m * 100).toFixed(2)} cm ± ${(m.uncertainty_m * 100).toFixed(2)} cm [${m.validity}]${m.warnings.length ? ' — '+m.warnings[0] : ''}`
         : `Mode: ${state.mode}; blue calibration: ${state.calibration_points.length}/2; yellow measurement: ${state.measurement_points.length}/2; geometry: ${state.geometry_points.length}`;

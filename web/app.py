@@ -49,6 +49,7 @@ from underwater_enhance.measurement import (
     default_intrinsics,
     measure_distance,
 )
+from underwater_enhance.pipeline import UnderwaterEnhancer
 
 
 def _colorize_depth(depth_m: np.ndarray) -> np.ndarray:
@@ -61,6 +62,43 @@ def _colorize_depth(depth_m: np.ndarray) -> np.ndarray:
     # Near = hangat/terang; far = dingin/gelap pada colormap Turbo.
     image = ((1.0 - normalized) * 255).astype(np.uint8)
     return cv2.applyColorMap(image, cv2.COLORMAP_TURBO)
+
+
+def _downscale_for_stream(frame: np.ndarray, max_side: int) -> np.ndarray:
+    """Downscale untuk MJPEG browser; pengukuran tetap memakai resolusi penuh."""
+    height, width = frame.shape[:2]
+    longest = max(height, width)
+    if longest <= max_side or max_side < 64:
+        return frame
+    scale = max_side / float(longest)
+    return cv2.resize(
+        frame,
+        (max(1, int(width * scale)), max(1, int(height * scale))),
+        interpolation=cv2.INTER_AREA,
+    )
+
+
+def _encode_jpeg(frame: np.ndarray, quality: int = 78) -> bytes | None:
+    ok, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, quality])
+    return encoded.tobytes() if ok else None
+
+
+def _placeholder_panel(height: int, width: int, title: str, detail: str) -> np.ndarray:
+    image = np.full((max(120, height), max(160, width), 3), (18, 24, 36), dtype=np.uint8)
+    cv2.putText(
+        image, title, (16, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (120, 200, 255), 2, cv2.LINE_AA
+    )
+    cv2.putText(
+        image, detail[:70], (16, 78), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (180, 190, 210), 1, cv2.LINE_AA
+    )
+    return image
+
+
+def _label_panel(frame: np.ndarray, text: str, color: tuple[int, int, int]) -> np.ndarray:
+    labeled = frame.copy()
+    cv2.putText(labeled, text, (12, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 4, cv2.LINE_AA)
+    cv2.putText(labeled, text, (12, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.65, color, 2, cv2.LINE_AA)
+    return labeled
 
 
 class InspectionEngine:
@@ -77,6 +115,7 @@ class InspectionEngine:
         depth_model_id: str | None = None,
         depth_process_res: int = 504,
         gallery_dir: str = "web/data/gallery",
+        stream_max_side: int = 640,
     ) -> None:
         self.source = source
         self.model_path = model_path
@@ -86,6 +125,7 @@ class InspectionEngine:
         self.depth_backend = depth_backend
         self.depth_model_id = depth_model_id
         self.depth_process_res = depth_process_res
+        self.stream_max_side = max(160, int(stream_max_side))
         self.gallery_dir = Path(gallery_dir)
         self.gallery_dir.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
@@ -97,9 +137,16 @@ class InspectionEngine:
         self.frozen_frame_id: int | None = None
         self.latest_jpeg: bytes | None = None
         self.latest_depth_jpeg: bytes | None = None
+        self.latest_feeds: dict[str, bytes | None] = {
+            "raw": None,
+            "yolo": None,
+            "enhanced": None,
+            "depth": None,
+        }
         self.frame_id = 0
         self.source_fps = 30.0
         self.features = {"yolo": False, "depth": False}
+        self.enhancer = UnderwaterEnhancer.from_preset("realtime")
         self.calibration_points: list[tuple[int, int]] = []
         self.measurement_points: list[tuple[int, int]] = []
         self.geometry_points: list[tuple[int, int]] = []
@@ -232,13 +279,16 @@ class InspectionEngine:
             2,
             cv2.LINE_AA,
         )
-        ok, encoded = cv2.imencode(".jpg", visual, [cv2.IMWRITE_JPEG_QUALITY, 85])
-        if not ok:
+        stream = _downscale_for_stream(visual, self.stream_max_side)
+        stream = _label_panel(stream, "LAYAR 4: DEPTH ANYTHING", (255, 200, 80))
+        encoded = _encode_jpeg(stream)
+        if encoded is None:
             return
         with self.frame_ready:
             self.depth_preview_frame_id = frame_id
             self.depth_preview_image = visual
-            self.latest_depth_jpeg = encoded.tobytes()
+            self.latest_depth_jpeg = encoded
+            self.latest_feeds["depth"] = encoded
             self.frame_ready.notify_all()
 
     def _run_depth_preview(self) -> None:
@@ -369,10 +419,10 @@ class InspectionEngine:
                 self.pending_action = None
             self.log(f"Depth inference {time.perf_counter() - started:.2f}s")
 
-    def _annotate(self, frame: np.ndarray) -> np.ndarray:
+    def _draw_measurement_overlays(self, frame: np.ndarray) -> np.ndarray:
+        """Layar 1: raw evidence + canvas titik pengukuran (tanpa YOLO/depth)."""
         canvas = frame.copy()
         with self.lock:
-            yolo_enabled = self.features["yolo"]
             calibration_points = list(self.calibration_points)
             measurement_points = list(self.measurement_points)
             geometry_points = list(self.geometry_points)
@@ -380,30 +430,7 @@ class InspectionEngine:
             geometry_measurement = self.geometry_measurement
             mode = self.point_mode
             geometry_mode = self.geometry_mode
-            paused = self.paused
-            frozen_id = self.frozen_frame_id
-            depth_preview_id = self.depth_preview_frame_id
-            depth_preview = (
-                None if self.depth_preview_image is None else self.depth_preview_image.copy()
-            )
-        if paused and depth_preview is not None and depth_preview_id == frozen_id:
-            # Warna depth hanya ditampilkan pada frozen frame yang persis sama.
-            # Live stream tetap raw agar tidak menampilkan map depth stale.
-            canvas = cv2.addWeighted(canvas, 0.62, depth_preview, 0.38, 0)
-            cv2.putText(
-                canvas, "DEPTH MASK OVERLAY (visual only)", (20, 115),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.52, (255, 255, 255), 2,
-            )
-        if yolo_enabled and self._ensure_yolo():
-            try:
-                result = self.yolo_model.predict(
-                    canvas, conf=0.7, device=self.device, verbose=False
-                )[0]
-                canvas = result.plot(img=canvas)
-            except Exception as exc:  # noqa: BLE001 - keep stream alive on model failure
-                self.error = f"YOLO inference error: {exc}"
 
-        # Biru: titik khusus calibration diameter pipa/laser.
         for point in calibration_points:
             cv2.circle(canvas, point, 7, (255, 120, 0), -1, cv2.LINE_AA)
         if len(calibration_points) == 2:
@@ -426,7 +453,6 @@ class InspectionEngine:
                     0.52, (0, 255, 0), 2,
                 )
 
-        # Kuning: titik pengukuran setelah calibration tersimpan.
         for point in measurement_points:
             cv2.circle(canvas, point, 7, (0, 255, 255), -1, cv2.LINE_AA)
         if len(measurement_points) == 2:
@@ -478,8 +504,8 @@ class InspectionEngine:
                 )
         if geometry_measurement is not None:
             geometry_text = (
-                f"{geometry_measurement.kind}: {geometry_measurement.value:.3f} "
-                f"{geometry_measurement.unit} +/- {geometry_measurement.uncertainty:.3f} "
+                f"{geometry_measurement.kind}: {geometry_measurement.value:.2f} "
+                f"{geometry_measurement.unit} +/- {geometry_measurement.uncertainty:.2f} "
                 f"{geometry_measurement.unit} [{geometry_measurement.validity}]"
             )
             cv2.putText(
@@ -488,12 +514,86 @@ class InspectionEngine:
             )
         return canvas
 
-    def _publish(self, frame: np.ndarray) -> None:
-        ok, encoded = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
-        if not ok:
+    def _stream_size_for(self, frame: np.ndarray) -> tuple[int, int]:
+        sample = _downscale_for_stream(frame, self.stream_max_side)
+        return sample.shape[0], sample.shape[1]
+
+    def _build_yolo_panel(self, frame: np.ndarray) -> np.ndarray:
+        height, width = self._stream_size_for(frame)
+        stream = _downscale_for_stream(frame, self.stream_max_side)
+        with self.lock:
+            enabled = self.features["yolo"]
+        if not enabled:
+            return _placeholder_panel(height, width, "LAYAR 2: YOLO MASKING", "Toggle YOLO ON")
+        if not self._ensure_yolo():
+            return _placeholder_panel(
+                height, width, "LAYAR 2: YOLO MASKING", self.error or "Model path unavailable"
+            )
+        try:
+            result = self.yolo_model.predict(
+                stream,
+                conf=0.7,
+                device=self.device,
+                verbose=False,
+                retina_masks=True,
+            )[0]
+            return _label_panel(result.plot(img=stream.copy()), "LAYAR 2: YOLO MASKING", (0, 200, 255))
+        except Exception as exc:  # noqa: BLE001 - keep stream alive on model failure
+            self.error = f"YOLO inference error: {exc}"
+            return _placeholder_panel(height, width, "LAYAR 2: YOLO MASKING", str(exc)[:70])
+
+    def _build_enhanced_panel(self, frame: np.ndarray) -> np.ndarray:
+        stream = _downscale_for_stream(frame, self.stream_max_side)
+        try:
+            enhanced = self.enhancer.process(stream)
+            return _label_panel(enhanced, "LAYAR 3: ENHANCED", (80, 255, 160))
+        except Exception as exc:  # noqa: BLE001 - keep stream alive
+            self.error = f"Enhance error: {exc}"
+            height, width = stream.shape[:2]
+            return _placeholder_panel(height, width, "LAYAR 3: ENHANCED", str(exc)[:70])
+
+    def _build_depth_panel(self, frame: np.ndarray) -> np.ndarray:
+        height, width = self._stream_size_for(frame)
+        with self.lock:
+            enabled = self.features["depth"]
+            preview = None if self.depth_preview_image is None else self.depth_preview_image.copy()
+        if not enabled:
+            return _placeholder_panel(
+                height, width, "LAYAR 4: DEPTH ANYTHING", "Toggle Depth ON"
+            )
+        if preview is None:
+            return _placeholder_panel(
+                height, width, "LAYAR 4: DEPTH ANYTHING", "Menunggu keyframe depth..."
+            )
+        resized = cv2.resize(preview, (width, height), interpolation=cv2.INTER_AREA)
+        return _label_panel(resized, "LAYAR 4: DEPTH ANYTHING", (255, 200, 80))
+
+    def _publish_quad_panels(self, frame: np.ndarray) -> None:
+        """Encode 4 panel MJPEG downscaled; klik measurement tetap x_norm/y_norm penuh."""
+        raw_view = _label_panel(
+            _downscale_for_stream(self._draw_measurement_overlays(frame), self.stream_max_side),
+            "LAYAR 1: RAW + CANVAS",
+            (120, 220, 255),
+        )
+        panels = {
+            "raw": raw_view,
+            "yolo": self._build_yolo_panel(frame),
+            "enhanced": self._build_enhanced_panel(frame),
+            "depth": self._build_depth_panel(frame),
+        }
+        encoded_feeds: dict[str, bytes] = {}
+        for name, image in panels.items():
+            payload = _encode_jpeg(image)
+            if payload is not None:
+                encoded_feeds[name] = payload
+        if not encoded_feeds:
             return
         with self.frame_ready:
-            self.latest_jpeg = encoded.tobytes()
+            self.latest_feeds.update(encoded_feeds)
+            if "raw" in encoded_feeds:
+                self.latest_jpeg = encoded_feeds["raw"]
+            if "depth" in encoded_feeds:
+                self.latest_depth_jpeg = encoded_feeds["depth"]
             self.frame_ready.notify_all()
 
     def _run(self) -> None:
@@ -514,7 +614,7 @@ class InspectionEngine:
                     if pending:
                         self._run_depth_for_frozen()
                     if frozen is not None:
-                        self._publish(self._annotate(frozen))
+                        self._publish_quad_panels(frozen)
                     time.sleep(0.03)
                     continue
 
@@ -537,7 +637,7 @@ class InspectionEngine:
                         # Timpa hanya request lama yang belum diambil; preview
                         # boleh skip keyframe, playback utama tidak boleh tertahan.
                         self.depth_preview_request = (frame.copy(), self.frame_id)
-                self._publish(self._annotate(frame))
+                self._publish_quad_panels(frame)
         finally:
             cap.release()
 
@@ -855,6 +955,32 @@ class InspectionEngine:
 def create_app(engine: InspectionEngine) -> Flask:
     app = Flask(__name__, template_folder="templates")
 
+    def _mjpeg_stream(feed_name: str):
+        def generate():
+            while engine.running:
+                with engine.frame_ready:
+                    engine.frame_ready.wait_for(
+                        lambda n=feed_name: engine.latest_feeds.get(n) is not None
+                        or (
+                            n == "raw"
+                            and engine.latest_jpeg is not None
+                        )
+                        or (
+                            n == "depth"
+                            and engine.latest_depth_jpeg is not None
+                        ),
+                        timeout=1,
+                    )
+                    frame = engine.latest_feeds.get(feed_name)
+                    if frame is None and feed_name == "raw":
+                        frame = engine.latest_jpeg
+                    if frame is None and feed_name == "depth":
+                        frame = engine.latest_depth_jpeg
+                if frame:
+                    yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+
+        return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
     @app.get("/")
     def index():
         return render_template("index.html")
@@ -870,27 +996,17 @@ def create_app(engine: InspectionEngine) -> Flask:
 
     @app.get("/video_feed")
     def video_feed():
-        def generate():
-            while engine.running:
-                with engine.frame_ready:
-                    engine.frame_ready.wait_for(lambda: engine.latest_jpeg is not None, timeout=1)
-                    frame = engine.latest_jpeg
-                if frame:
-                    yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
-        return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
+        return _mjpeg_stream("raw")
 
     @app.get("/depth_feed")
     def depth_feed():
-        def generate():
-            while engine.running:
-                with engine.frame_ready:
-                    engine.frame_ready.wait_for(
-                        lambda: engine.latest_depth_jpeg is not None, timeout=1
-                    )
-                    frame = engine.latest_depth_jpeg
-                if frame:
-                    yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
-        return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
+        return _mjpeg_stream("depth")
+
+    @app.get("/feed/<name>")
+    def named_feed(name: str):
+        if name not in ("raw", "yolo", "enhanced", "depth"):
+            return jsonify({"error": "Feed tidak dikenal."}), 404
+        return _mjpeg_stream(name)
 
     @app.get("/api/state")
     def state():
@@ -1019,6 +1135,12 @@ def main() -> None:
         help="Resolusi inference DA3 pada frozen frame (default: 504)",
     )
     parser.add_argument("--port", type=int, default=5000)
+    parser.add_argument(
+        "--stream-max-side",
+        type=int,
+        default=640,
+        help="Downscale sisi terpanjang MJPEG ke browser (default: 640)",
+    )
     args = parser.parse_args()
 
     engine = InspectionEngine(
@@ -1030,6 +1152,7 @@ def main() -> None:
         args.depth_backend,
         args.depth_model_id,
         args.depth_process_res,
+        stream_max_side=args.stream_max_side,
     )
     engine.start()
     app = create_app(engine)

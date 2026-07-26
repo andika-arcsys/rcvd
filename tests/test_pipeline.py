@@ -407,7 +407,7 @@ class TestMeasurement:
 
 class TestWebDashboard:
     def test_flask_dashboard_routes_exist_without_loading_models(self):
-        from web.app import InspectionEngine, _colorize_depth, create_app
+        from web.app import InspectionEngine, _colorize_depth, _downscale_for_stream, create_app
 
         engine = InspectionEngine("0", None, "0", depth_every=15)
         app = create_app(engine)
@@ -418,6 +418,7 @@ class TestWebDashboard:
             "/gallery",
             "/video_feed",
             "/depth_feed",
+            "/feed/<name>",
             "/api/state",
             "/api/point",
             "/api/mode",
@@ -428,6 +429,9 @@ class TestWebDashboard:
         } <= routes
         preview = _colorize_depth(np.linspace(1, 3, 100, dtype=np.float32).reshape(10, 10))
         assert preview.shape == (10, 10, 3)
+        large = np.zeros((1080, 1920, 3), dtype=np.uint8)
+        stream = _downscale_for_stream(large, 640)
+        assert max(stream.shape[:2]) == 640
 
     def test_depth_factory_rejects_unknown_backend(self):
         from underwater_enhance.depth_estimator import create_depth_estimator

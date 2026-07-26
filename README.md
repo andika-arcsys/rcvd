@@ -266,7 +266,18 @@ python web\app.py --source "D:\arcgiz\video 1.mp4" ^
 
 Default `--model` adalah `D:\rcvd\exp-5.pt` bila argumen tidak diisi.
 
-Buka `http://127.0.0.1:5000`. Workflow calibration:
+Buka `http://127.0.0.1:5000`. Dashboard menampilkan **4 panel adaptif**
+(2×2) yang mengikuti ukuran window browser:
+
+| Layar 1 | Layar 2 |
+| --- | --- |
+| Raw + canvas pengukuran | Masking YOLO |
+| Enhanced (realtime) | Depth Anything 3 |
+
+Stream MJPEG di-downscale (`--stream-max-side`, default 640). Klik titik
+pengukuran hanya di **Layar 1** (koordinat dinormalisasi ke frame penuh).
+
+Workflow calibration:
 
 1. Klik **Freeze frame**.
 2. Klik **Start blue calibration points**, lalu pilih dua titik biru pada
