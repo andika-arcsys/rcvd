@@ -366,7 +366,24 @@ class TestWebDashboard:
         engine = InspectionEngine("0", None, "0", depth_every=15)
         app = create_app(engine)
         routes = {rule.rule for rule in app.url_map.iter_rules()}
-        assert {"/", "/video_feed", "/api/state", "/api/point", "/api/mode"} <= routes
+        assert {
+            "/",
+            "/live",
+            "/gallery",
+            "/video_feed",
+            "/api/state",
+            "/api/point",
+            "/api/mode",
+            "/api/freeze",
+            "/api/resume",
+            "/api/snapshot",
+        } <= routes
+
+    def test_depth_factory_rejects_unknown_backend(self):
+        from underwater_enhance.depth_estimator import create_depth_estimator
+
+        with pytest.raises(ValueError, match="tidak dikenal"):
+            create_depth_estimator("unknown", "cpu")
 
 
 class TestCli:

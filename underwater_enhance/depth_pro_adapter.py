@@ -23,7 +23,7 @@ class DepthProUnavailableError(RuntimeError):
 @dataclass(frozen=True)
 class DepthPrediction:
     depth_m: np.ndarray
-    focal_length_px: float
+    focal_length_px: float | None
 
 
 class DepthProEstimator:

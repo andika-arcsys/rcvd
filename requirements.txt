@@ -11,6 +11,7 @@ pytest>=8.0
 # Opsional: Dashboard Flask lokal (web/app.py)
 Flask>=3.1
 
-# Opsional: Depth Pro dipasang dari repository resmi Apple, bukan PyPI:
-# git clone https://github.com/apple/ml-depth-pro.git
-# pip install -e ./ml-depth-pro
+# Opsional: depth backend dipasang dari repository resmi, bukan PyPI:
+# git clone https://github.com/ByteDance-Seed/Depth-Anything-3.git
+# pip install -e ./Depth-Anything-3
+# Alternatif: https://github.com/apple/ml-depth-pro

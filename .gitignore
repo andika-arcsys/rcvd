@@ -9,3 +9,6 @@ __pycache__/
 # Output video hasil uji lokal
 *.mp4
 *.avi
+
+# Snapshot runtime dari Flask ROI Gallery
+web/data/gallery/

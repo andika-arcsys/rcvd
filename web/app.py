@@ -12,26 +12,34 @@ laser dengan jarak diketahui; mode measurement memakai scale tersebut.
 from __future__ import annotations
 
 import argparse
+import gc
+import json
 import sys
 import threading
 import time
+import uuid
 from collections import deque
 from pathlib import Path
 
 import cv2
 import numpy as np
 import torch
-from flask import Flask, Response, jsonify, render_template, request
+from flask import (
+    Flask,
+    Response,
+    jsonify,
+    render_template,
+    request,
+    send_from_directory,
+)
 
 # `python web/app.py` menempatkan folder web di sys.path, bukan root repo.
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from underwater_enhance.depth_pro_adapter import (
-    DepthProEstimator,
-    DepthProUnavailableError,
-)
+from underwater_enhance.depth_estimator import DEPTH_BACKENDS, create_depth_estimator
+from underwater_enhance.depth_pro_adapter import DepthProUnavailableError
 from underwater_enhance.measurement import (
     CameraIntrinsics,
     ScaleCalibration,
@@ -51,12 +59,21 @@ class InspectionEngine:
         device: str,
         depth_every: int,
         depth_checkpoint: str | None = None,
+        depth_backend: str = "depth_anything3",
+        depth_model_id: str | None = None,
+        depth_process_res: int = 504,
+        gallery_dir: str = "web/data/gallery",
     ) -> None:
         self.source = source
         self.model_path = model_path
         self.device = device
         self.depth_every = max(1, depth_every)
         self.depth_checkpoint = depth_checkpoint
+        self.depth_backend = depth_backend
+        self.depth_model_id = depth_model_id
+        self.depth_process_res = depth_process_res
+        self.gallery_dir = Path(gallery_dir)
+        self.gallery_dir.mkdir(parents=True, exist_ok=True)
         self.lock = threading.RLock()
         self.frame_ready = threading.Condition(self.lock)
         self.running = False
@@ -74,9 +91,10 @@ class InspectionEngine:
         self.calibration = ScaleCalibration()
         self.measurement = None
         self.yolo_model = None
-        self.depth_model: DepthProEstimator | None = None
+        self.depth_model: object | None = None
         self.logs: deque[str] = deque(maxlen=40)
         self.error: str | None = None
+        self._pending_known_length: float | None = None
         self._thread: threading.Thread | None = None
 
     def log(self, text: str) -> None:
@@ -126,8 +144,15 @@ class InspectionEngine:
         if self.depth_model is not None:
             return True
         try:
-            self.depth_model = DepthProEstimator(self.device, self.depth_checkpoint)
-            self.log("Depth Pro model loaded.")
+            self.depth_model = create_depth_estimator(
+                self.depth_backend,
+                self.device,
+                checkpoint=self.depth_checkpoint,
+                model_id=self.depth_model_id,
+                process_res=self.depth_process_res,
+            )
+            self.error = None
+            self.log(f"Depth backend loaded: {self.depth_backend}.")
             return True
         except DepthProUnavailableError as exc:
             self.error = str(exc)
@@ -282,10 +307,7 @@ class InspectionEngine:
             if self.raw_frame is None:
                 raise ValueError("Belum ada frame video.")
             if not self.paused:
-                self.frozen_frame = self.raw_frame.copy()
-                self.paused = True
-                self.points = []
-                self.measurement = None
+                self._freeze_locked(clear_points=True)
             height, width = self.frozen_frame.shape[:2]
             point = (
                 int(np.clip(x_norm, 0, 1) * (width - 1)),
@@ -299,6 +321,29 @@ class InspectionEngine:
                 self.pending_depth = True
             self.log(f"Point {len(self.points)}: {point}")
 
+    def _freeze_locked(self, *, clear_points: bool) -> None:
+        if self.raw_frame is None:
+            raise ValueError("Belum ada frame video.")
+        self.frozen_frame = self.raw_frame.copy()
+        self.paused = True
+        self.pending_depth = False
+        self.measurement = None
+        if clear_points:
+            self.points = []
+        self.log("Frame frozen.")
+
+    def freeze(self) -> None:
+        """Pause eksplisit tanpa menempatkan titik pengukuran."""
+        with self.lock:
+            self._freeze_locked(clear_points=True)
+
+    def clear_points(self) -> None:
+        with self.lock:
+            self.points = []
+            self.measurement = None
+            self.pending_depth = False
+        self.log("Points cleared.")
+
     def configure_mode(self, mode: str, known_length_m: float | None = None) -> None:
         if mode not in ("measurement", "calibration"):
             raise ValueError("Mode harus measurement atau calibration.")
@@ -309,7 +354,6 @@ class InspectionEngine:
             self._pending_known_length = known_length_m
             self.points = []
             self.measurement = None
-            self.paused = False
         self.log(f"Mode: {mode}")
 
     def resume(self) -> None:
@@ -318,7 +362,62 @@ class InspectionEngine:
             self.points = []
             self.measurement = None
             self.pending_depth = False
+            self.frozen_frame = None
         self.log("Stream resumed.")
+
+    def save_snapshot(self) -> dict:
+        """Persist frozen/current high-resolution frame beserta measurement JSON."""
+        with self.lock:
+            frame = self.frozen_frame if self.paused else self.raw_frame
+            if frame is None:
+                raise ValueError("Belum ada frame untuk disimpan.")
+            snapshot = frame.copy()
+            measurement = None if self.measurement is None else {
+                "distance_m": self.measurement.distance_m,
+                "uncertainty_m": self.measurement.uncertainty_m,
+                "status": self.measurement.status,
+            }
+            metadata = {
+                "id": uuid.uuid4().hex,
+                "created_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "frame_id": self.frame_id,
+                "measurement": measurement,
+                "calibration": {
+                    "scale": self.calibration.scale,
+                    "source": self.calibration.source,
+                    "known_length_m": self.calibration.known_length_m,
+                },
+            }
+        image_name = f"{metadata['id']}.jpg"
+        metadata["image"] = image_name
+        cv2.imwrite(str(self.gallery_dir / image_name), snapshot)
+        (self.gallery_dir / f"{metadata['id']}.json").write_text(
+            json.dumps(metadata, indent=2), encoding="utf-8"
+        )
+        self.log(f"Snapshot saved: {image_name}")
+        return metadata
+
+    def gallery_entries(self) -> list[dict]:
+        entries = []
+        for path in sorted(self.gallery_dir.glob("*.json"), reverse=True):
+            try:
+                entries.append(json.loads(path.read_text(encoding="utf-8")))
+            except json.JSONDecodeError:
+                continue
+        return entries
+
+    def set_context(self, context: str) -> None:
+        """Gallery membebaskan model live agar RTX 3070 tidak OOM."""
+        if context not in ("live", "gallery"):
+            raise ValueError("Context harus live atau gallery.")
+        if context == "gallery":
+            self.set_feature("yolo", False)
+            self.set_feature("depth", False)
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
+            self.log("Gallery context active; live models unloaded.")
 
     def state(self) -> dict:
         with self.lock:
@@ -327,6 +426,7 @@ class InspectionEngine:
                 vram = torch.cuda.memory_allocated() / 1024**2
             return {
                 "features": self.features,
+                "depth_backend": self.depth_backend,
                 "paused": self.paused,
                 "points": self.points,
                 "mode": self.point_mode,
@@ -352,6 +452,15 @@ def create_app(engine: InspectionEngine) -> Flask:
     @app.get("/")
     def index():
         return render_template("index.html")
+
+    @app.get("/live")
+    def live():
+        return render_template("index.html")
+
+    @app.get("/gallery")
+    def gallery():
+        engine.set_context("gallery")
+        return render_template("gallery.html")
 
     @app.get("/video_feed")
     def video_feed():
@@ -400,6 +509,43 @@ def create_app(engine: InspectionEngine) -> Flask:
         engine.resume()
         return jsonify(engine.state())
 
+    @app.post("/api/freeze")
+    def freeze():
+        try:
+            engine.freeze()
+            return jsonify(engine.state())
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+
+    @app.post("/api/clear-points")
+    def clear_points():
+        engine.clear_points()
+        return jsonify(engine.state())
+
+    @app.post("/api/snapshot")
+    def snapshot():
+        try:
+            return jsonify(engine.save_snapshot())
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+
+    @app.get("/api/gallery")
+    def gallery_api():
+        return jsonify(engine.gallery_entries())
+
+    @app.get("/api/gallery/<entry_id>/image")
+    def gallery_image(entry_id: str):
+        return send_from_directory(engine.gallery_dir, f"{entry_id}.jpg")
+
+    @app.post("/api/context")
+    def context():
+        data = request.get_json(force=True)
+        try:
+            engine.set_context(data["context"])
+            return jsonify(engine.state())
+        except (KeyError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+
     return app
 
 
@@ -414,6 +560,23 @@ def main() -> None:
         default="checkpoints/depth_pro.pt",
         help="Path depth_pro.pt hasil download resmi Apple",
     )
+    parser.add_argument(
+        "--depth-backend",
+        choices=DEPTH_BACKENDS,
+        default="depth_anything3",
+        help="Backend depth (default: depth_anything3)",
+    )
+    parser.add_argument(
+        "--depth-model-id",
+        default="depth-anything/DA3METRIC-LARGE",
+        help="Hugging Face model id untuk DA3 metric",
+    )
+    parser.add_argument(
+        "--depth-process-res",
+        type=int,
+        default=504,
+        help="Resolusi inference DA3 pada frozen frame (default: 504)",
+    )
     parser.add_argument("--port", type=int, default=5000)
     args = parser.parse_args()
 
@@ -423,6 +586,9 @@ def main() -> None:
         args.device,
         args.depth_every,
         args.depth_checkpoint,
+        args.depth_backend,
+        args.depth_model_id,
+        args.depth_process_res,
     )
     engine.start()
     app = create_app(engine)

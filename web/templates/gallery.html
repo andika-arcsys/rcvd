@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ROI Inspection Gallery</title>
+  <style>
+    :root { --bg:#0b1220; --panel:#111c2e; --line:#263650; --text:#dbeafe; --green:#26e48a; --muted:#8da2c0; }
+    * { box-sizing:border-box; } body { margin:0; background:var(--bg); color:var(--text); font:14px Inter,system-ui,sans-serif; }
+    header { padding:14px 20px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; }
+    a { color:var(--green); } main { padding:20px; } #grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+    article { background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; } article img { width:100%; display:block; }
+    .meta { padding:12px; color:var(--muted); line-height:1.6; } .empty { color:var(--muted); padding:40px; text-align:center; }
+  </style>
+</head>
+<body>
+  <header><strong>ROI GALLERY / OFFLINE ENHANCEMENT REVIEW</strong><a href="/live">← Live Inspection Console</a></header>
+  <main><div id="grid"><div class="empty">Loading snapshots…</div></div></main>
+  <script>
+    async function load() {
+      const entries = await fetch('/api/gallery').then(r => r.json());
+      const grid = document.getElementById('grid');
+      if (!entries.length) { grid.innerHTML = '<div class="empty">Belum ada snapshot. Simpan frame dari Live Console.</div>'; return; }
+      grid.innerHTML = entries.map(item => {
+        const m = item.measurement;
+        const value = m ? `${m.distance_m.toFixed(3)} m ± ${m.uncertainty_m.toFixed(3)} m [${m.status}]` : 'No measurement';
+        return `<article><img src="/api/gallery/${item.id}/image" alt="ROI snapshot"><div class="meta">
+          <strong>${item.created_at}</strong><br>Frame: ${item.frame_id}<br>
+          Measurement: ${value}<br>Scale: ${item.calibration.source} (${item.calibration.scale.toFixed(4)}x)
+        </div></article>`;
+      }).join('');
+    }
+    fetch('/api/context', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({context:'gallery'})}).finally(load);
+  </script>
+</body>
+</html>

@@ -252,15 +252,14 @@ dari frame identik.
 ```bat
 pip install -r requirements.txt
 
-:: Depth Pro dipasang dari repository Apple di environment pycam
-git clone https://github.com/apple/ml-depth-pro.git
-pip install -e .\ml-depth-pro
-mkdir checkpoints
-curl -L "https://ml-site.cdn-apple.com/models/depth-pro/depth_pro.pt" -o checkpoints\depth_pro.pt
+:: Rekomendasi: Depth Anything 3 metric (model diunduh dari Hugging Face saat pertama dipakai)
+git clone https://github.com/ByteDance-Seed/Depth-Anything-3.git
+pip install -e .\Depth-Anything-3
 
 python web\app.py --source "D:\arcgiz\video 1.mp4" ^
   --model "D:\path\ke\best.pt" --device 0 ^
-  --depth-checkpoint "checkpoints\depth_pro.pt"
+  --depth-backend depth_anything3 ^
+  --depth-model-id "depth-anything/DA3METRIC-LARGE"
 ```
 
 Buka `http://127.0.0.1:5000`. Pilih salah satu:
@@ -271,11 +270,17 @@ Buka `http://127.0.0.1:5000`. Pilih salah satu:
    dalam meter, pilih mode ini, lalu klik dua endpoint referensi pada frame
    yang sama. Status berubah menjadi `REFERENCE_SCALED`.
 
-Depth Pro menghasilkan depth meter dan focal estimate, tetapi untuk underwater
-hasil tetap **estimasi** karena refraksi air/port kamera dan domain turbid.
+Depth Anything 3 metric menghasilkan depth yang lebih konsisten untuk
+single/multi-view, tetapi untuk underwater hasil tetap **estimasi** karena
+refraksi air/port kamera dan domain turbid.
 Status `CALIBRATED` hanya boleh digunakan setelah intrinsics kamera dikalibrasi
 di bawah air serta reference scale tersedia. UI selalu menampilkan uncertainty;
 hasil ini bukan sertifikat metrologi.
+
+Backend Apple Depth Pro tetap tersedia: gunakan `--depth-backend depth_pro` dan
+`--depth-checkpoint checkpoints\depth_pro.pt` setelah mengikuti instalasi resmi
+Apple. Jangan mengaktifkan DA3/Depth Pro bersamaan dengan upscaler berat pada
+RTX 3070 8 GB.
 
 ## Struktur proyek
 

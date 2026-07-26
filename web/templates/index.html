@@ -20,7 +20,10 @@
   </style>
 </head>
 <body>
-  <header><strong>UNDERWATER VISION MEASUREMENT CONSOLE</strong><span id="status">CONNECTING</span></header>
+  <header>
+    <strong>UNDERWATER VISION MEASUREMENT CONSOLE</strong>
+    <span><a href="/gallery" style="color:#26e48a;margin-right:16px">ROI Gallery / Enhancement</a><span id="status">CONNECTING</span></span>
+  </header>
   <main>
     <section class="panel">
       <img id="stream" src="/video_feed" alt="Video stream">
@@ -29,9 +32,15 @@
     </section>
     <aside class="controls">
       <section class="panel">
+        <strong>Video Transport</strong>
+        <button onclick="freeze()">Freeze frame</button>
+        <button onclick="resume()">Resume live</button>
+        <button onclick="clearPoints()">Clear points</button>
+      </section>
+      <section class="panel">
         <strong>Vision Features</strong>
         <button id="yoloBtn" onclick="toggle('yolo')">YOLO segmentation: OFF</button>
-        <button id="depthBtn" onclick="toggle('depth')">Depth Pro: OFF</button>
+        <button id="depthBtn" onclick="toggle('depth')">Depth: OFF</button>
         <small>Depth Pro dimuat hanya saat diperlukan. Pada frame beku, inference dipicu setelah dua klik.</small>
       </section>
       <section class="panel">
@@ -41,7 +50,7 @@
           <input id="knownLength" type="number" min="0.001" step="0.001" placeholder="contoh: 0.500">
         </label>
         <button onclick="setMode('calibration')">Calibrate from reference</button>
-        <button onclick="resume()">Resume / reset points</button>
+        <button onclick="saveSnapshot()">Save snapshot to gallery</button>
       </section>
       <section class="panel">
         <strong>System</strong>
@@ -58,24 +67,32 @@
       const response = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Request failed');
-      render(data); return data;
+      if (data.features) render(data);
+      return data;
     }
     async function toggle(name) { try { await post('/api/feature', {name, enabled:!features[name]}); } catch(e) { alert(e.message); } }
     async function setMode(mode) {
       const known = Number(document.getElementById('knownLength').value);
       try { await post('/api/mode', {mode, known_length_m: mode === 'calibration' ? known : null}); } catch(e) { alert(e.message); }
     }
+    async function freeze() { try { await post('/api/freeze'); } catch(e) { alert(e.message); } }
     async function resume() { await post('/api/resume'); }
+    async function clearPoints() { await post('/api/clear-points'); }
+    async function saveSnapshot() {
+      try { const item = await post('/api/snapshot'); alert(`Snapshot saved: ${item.image}`); }
+      catch(e) { alert(e.message); }
+    }
     document.getElementById('stream').addEventListener('click', async (event) => {
       const image = event.currentTarget, rect = image.getBoundingClientRect();
       try { await post('/api/point', {x_norm:(event.clientX-rect.left)/rect.width, y_norm:(event.clientY-rect.top)/rect.height}); }
       catch(e) { alert(e.message); }
     });
     function render(state) {
+      if (!state || !state.features) return;
       features = state.features;
       for (const name of ['yolo','depth']) {
         const button = document.getElementById(name+'Btn');
-        button.textContent = `${name === 'yolo' ? 'YOLO segmentation' : 'Depth Pro'}: ${features[name] ? 'ON' : 'OFF'}`;
+        button.textContent = `${name === 'yolo' ? 'YOLO segmentation' : `Depth (${state.depth_backend})`}: ${features[name] ? 'ON' : 'OFF'}`;
         button.classList.toggle('active', features[name]);
       }
       document.getElementById('status').textContent = state.paused ? 'FRAME FROZEN' : 'LIVE';
@@ -88,6 +105,11 @@
         ? `${m.distance_m.toFixed(3)} m ± ${m.uncertainty_m.toFixed(3)} m [${m.status}]`
         : `Mode: ${state.mode}; selected points: ${state.points.length}/2`;
     }
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'Space' && event.target.tagName !== 'INPUT') {
+        event.preventDefault(); document.getElementById('status').textContent.includes('FROZEN') ? resume() : freeze();
+      }
+    });
     setInterval(() => fetch('/api/state').then(r=>r.json()).then(render).catch(()=>{}), 800);
   </script>
 </body>
