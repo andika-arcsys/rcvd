@@ -242,6 +242,41 @@ python -m underwater_enhance.yolo_integration "video 1.mp4" ^
 sejajar dengan video inspection. Ini tidak menjalankan enhancement internal
 lagi dan tidak mengirimkan frame enhanced ke model raw-trained.
 
+## Dashboard Flask: YOLO, Depth Pro, dan estimasi jarak 3D
+
+Dashboard lokal tersedia di `web/app.py`. Model YOLO dan Depth Pro memakai
+lazy-loading: VRAM tidak dialokasikan untuk model sampai toggle fitur
+dinyalakan. Klik dua titik membekukan frame sehingga titik dan depth berasal
+dari frame identik.
+
+```bat
+pip install -r requirements.txt
+
+:: Depth Pro dipasang dari repository Apple di environment pycam
+git clone https://github.com/apple/ml-depth-pro.git
+pip install -e .\ml-depth-pro
+mkdir checkpoints
+curl -L "https://ml-site.cdn-apple.com/models/depth-pro/depth_pro.pt" -o checkpoints\depth_pro.pt
+
+python web\app.py --source "D:\arcgiz\video 1.mp4" ^
+  --model "D:\path\ke\best.pt" --device 0 ^
+  --depth-checkpoint "checkpoints\depth_pro.pt"
+```
+
+Buka `http://127.0.0.1:5000`. Pilih salah satu:
+
+1. **Measure two points**: hasil diberi status `UNCALIBRATED` sampai ada
+   reference scale.
+2. **Calibrate from reference**: masukkan diameter pipa atau jarak dua laser
+   dalam meter, pilih mode ini, lalu klik dua endpoint referensi pada frame
+   yang sama. Status berubah menjadi `REFERENCE_SCALED`.
+
+Depth Pro menghasilkan depth meter dan focal estimate, tetapi untuk underwater
+hasil tetap **estimasi** karena refraksi air/port kamera dan domain turbid.
+Status `CALIBRATED` hanya boleh digunakan setelah intrinsics kamera dikalibrasi
+di bawah air serta reference scale tersedia. UI selalu menampilkan uncertainty;
+hasil ini bukan sertifikat metrologi.
+
 ## Struktur proyek
 
 ```

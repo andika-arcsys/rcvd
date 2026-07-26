@@ -324,6 +324,51 @@ class TestCudaInspectionScript:
         assert args.scale == expected
 
 
+class TestMeasurement:
+    def test_back_projection_and_reference_scale(self):
+        from underwater_enhance.measurement import (
+            calibration_from_reference,
+            default_intrinsics,
+            measure_distance,
+        )
+
+        depth = np.full((100, 100), 2.0, dtype=np.float32)
+        intrinsics = default_intrinsics(100, 100, focal_px=100.0)
+        # Pada Z=2m dan fx=100, 10 pixel = 0.2m.
+        calibration = calibration_from_reference(
+            (40, 50), (50, 50), 0.5, depth, intrinsics, source="REFERENCE_SCALED"
+        )
+        result = measure_distance((40, 50), (50, 50), depth, intrinsics, calibration)
+        assert np.isclose(result.distance_m, 0.5, atol=1e-4)
+        assert result.status == "REFERENCE_SCALED"
+        assert result.uncertainty_m > 0
+
+    def test_underwater_intrinsics_upgrades_status(self):
+        from underwater_enhance.measurement import (
+            CameraIntrinsics,
+            ScaleCalibration,
+            measure_distance,
+        )
+
+        depth = np.full((20, 20), 1.0, dtype=np.float32)
+        intrinsics = CameraIntrinsics(20, 20, 10, 10, calibrated_underwater=True)
+        result = measure_distance(
+            (8, 10), (12, 10), depth, intrinsics,
+            ScaleCalibration(scale=1, source="REFERENCE_SCALED", relative_uncertainty=0.1),
+        )
+        assert result.status == "CALIBRATED"
+
+
+class TestWebDashboard:
+    def test_flask_dashboard_routes_exist_without_loading_models(self):
+        from web.app import InspectionEngine, create_app
+
+        engine = InspectionEngine("0", None, "0", depth_every=15)
+        app = create_app(engine)
+        routes = {rule.rule for rule in app.url_map.iter_rules()}
+        assert {"/", "/video_feed", "/api/state", "/api/point", "/api/mode"} <= routes
+
+
 class TestCli:
     @pytest.mark.parametrize("text,expected", [
         ("640x480", (640, 480)),

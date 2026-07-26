@@ -7,3 +7,10 @@ pytest>=8.0
 
 # Opsional: integrasi deteksi/segmentasi YOLO (underwater_enhance.yolo_integration)
 # ultralytics>=8.4
+
+# Opsional: Dashboard Flask lokal (web/app.py)
+Flask>=3.1
+
+# Opsional: Depth Pro dipasang dari repository resmi Apple, bukan PyPI:
+# git clone https://github.com/apple/ml-depth-pro.git
+# pip install -e ./ml-depth-pro
