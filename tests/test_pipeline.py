@@ -358,6 +358,35 @@ class TestMeasurement:
         )
         assert result.validity == "VALID_SAME_FRAME"
 
+    def test_path_and_surface_area_use_raw_depth_not_colormap(self):
+        from underwater_enhance.measurement import (
+            CameraIntrinsics,
+            ScaleCalibration,
+            calculate_accumulated_path_distance,
+            calculate_surface_area,
+        )
+
+        depth = np.full((40, 40), 2.0, dtype=np.float32)
+        intrinsics = CameraIntrinsics(100, 100, 20, 20, calibrated_underwater=True)
+        calibration = ScaleCalibration(
+            scale=1.0, source="REFERENCE_SCALED", frame_id=7, relative_uncertainty=0.08
+        )
+        path = calculate_accumulated_path_distance(
+            [(10, 20), (20, 20)], depth, intrinsics, calibration, frame_id=7
+        )
+        assert np.isclose(path.value, 0.2, atol=0.01)
+        assert path.unit == "m"
+
+        area = calculate_surface_area(
+            [(10, 10), (20, 10), (20, 20), (10, 20)],
+            depth,
+            intrinsics,
+            calibration,
+            frame_id=7,
+        )
+        assert np.isclose(area.value, 0.04, atol=0.01)
+        assert area.unit == "m²"
+
 
 class TestWebDashboard:
     def test_flask_dashboard_routes_exist_without_loading_models(self):
@@ -378,6 +407,7 @@ class TestWebDashboard:
             "/api/freeze",
             "/api/resume",
             "/api/snapshot",
+            "/api/geometry",
         } <= routes
         preview = _colorize_depth(np.linspace(1, 3, 100, dtype=np.float32).reshape(10, 10))
         assert preview.shape == (10, 10, 3)

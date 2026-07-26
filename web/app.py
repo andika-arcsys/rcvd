@@ -43,6 +43,8 @@ from underwater_enhance.depth_pro_adapter import DepthProUnavailableError
 from underwater_enhance.measurement import (
     CameraIntrinsics,
     ScaleCalibration,
+    calculate_accumulated_path_distance,
+    calculate_surface_area,
     calibration_from_reference,
     default_intrinsics,
     measure_distance,
@@ -100,7 +102,9 @@ class InspectionEngine:
         self.features = {"yolo": False, "depth": False}
         self.calibration_points: list[tuple[int, int]] = []
         self.measurement_points: list[tuple[int, int]] = []
+        self.geometry_points: list[tuple[int, int]] = []
         self.point_mode = "measurement"
+        self.geometry_mode: str | None = None
         self.pending_depth = False
         self.pending_action: str | None = None
         self.depth_map: np.ndarray | None = None
@@ -109,6 +113,7 @@ class InspectionEngine:
         self.calibration_inference_state = "IDLE"
         self.calibration_inference_message = "Belum ada calibration inference."
         self.measurement = None
+        self.geometry_measurement = None
         self.yolo_model = None
         self.depth_model: object | None = None
         self.depth_inference_lock = threading.Lock()
@@ -247,7 +252,11 @@ class InspectionEngine:
             points = (
                 list(self.calibration_points)
                 if action == "calibration"
-                else list(self.measurement_points)
+                else (
+                    list(self.measurement_points)
+                    if action == "measurement"
+                    else list(self.geometry_points)
+                )
             )
             known_length_m = self._pending_known_length_m
             frozen_frame_id = self.frozen_frame_id
@@ -324,6 +333,32 @@ class InspectionEngine:
                             f"{self.measurement.uncertainty_m:.3f}m "
                             f"[{self.measurement.validity}]"
                         )
+                    elif action == "geometry_path":
+                        self.geometry_measurement = calculate_accumulated_path_distance(
+                            points,
+                            self.depth_map,
+                            self.intrinsics,
+                            self.calibration,
+                            frame_id=frozen_frame_id,
+                        )
+                        self.log(
+                            f"Path inference {self.geometry_measurement.value:.3f}m ± "
+                            f"{self.geometry_measurement.uncertainty:.3f}m "
+                            f"[{self.geometry_measurement.validity}]"
+                        )
+                    elif action == "geometry_area":
+                        self.geometry_measurement = calculate_surface_area(
+                            points,
+                            self.depth_map,
+                            self.intrinsics,
+                            self.calibration,
+                            frame_id=frozen_frame_id,
+                        )
+                        self.log(
+                            f"Area inference {self.geometry_measurement.value:.3f}m² ± "
+                            f"{self.geometry_measurement.uncertainty:.3f}m² "
+                            f"[{self.geometry_measurement.validity}]"
+                        )
         except Exception as exc:  # noqa: BLE001 - keep worker alive on model failure
             self.error = f"Depth inference error: {exc}"
             if action == "calibration":
@@ -342,8 +377,11 @@ class InspectionEngine:
             yolo_enabled = self.features["yolo"]
             calibration_points = list(self.calibration_points)
             measurement_points = list(self.measurement_points)
+            geometry_points = list(self.geometry_points)
             measurement = self.measurement
+            geometry_measurement = self.geometry_measurement
             mode = self.point_mode
+            geometry_mode = self.geometry_mode
             paused = self.paused
             frozen_id = self.frozen_frame_id
             depth_preview_id = self.depth_preview_frame_id
@@ -416,13 +454,39 @@ class InspectionEngine:
                     0.52, (0, 165, 255), 2,
                 )
         else:
-            label = (
-                "CALIBRATION: click 2 BLUE reference points, then Save calibration"
-                if mode == "calibration"
-                else "MEASUREMENT: click 2 YELLOW points"
-            )
+            labels = {
+                "calibration": "CALIBRATION: click 2 BLUE reference points, then Save calibration",
+                "measurement": "MEASUREMENT: click 2 YELLOW points",
+                "path": "DISTANCE PATH: click MAGENTA points, then Calculate accumulated path",
+                "area": "AREA POLYGON: click ORANGE points, then Calculate 3D surface area",
+            }
+            label = labels[mode]
             cv2.putText(canvas, label, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 4)
             cv2.putText(canvas, label, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
+
+        if geometry_points:
+            path_color = (255, 0, 255) if geometry_mode == "path" else (0, 140, 255)
+            for point in geometry_points:
+                cv2.circle(canvas, point, 5, path_color, -1, cv2.LINE_AA)
+            if len(geometry_points) > 1:
+                cv2.polylines(
+                    canvas,
+                    [np.asarray(geometry_points, dtype=np.int32)],
+                    geometry_mode == "area",
+                    path_color,
+                    2,
+                    cv2.LINE_AA,
+                )
+        if geometry_measurement is not None:
+            geometry_text = (
+                f"{geometry_measurement.kind}: {geometry_measurement.value:.3f} "
+                f"{geometry_measurement.unit} +/- {geometry_measurement.uncertainty:.3f} "
+                f"{geometry_measurement.unit} [{geometry_measurement.validity}]"
+            )
+            cv2.putText(
+                canvas, geometry_text, (20, 145), cv2.FONT_HERSHEY_SIMPLEX,
+                0.52, (255, 0, 255), 2,
+            )
         return canvas
 
     def _publish(self, frame: np.ndarray) -> None:
@@ -508,16 +572,25 @@ class InspectionEngine:
             points = (
                 self.calibration_points
                 if self.point_mode == "calibration"
-                else self.measurement_points
+                else (
+                    self.measurement_points
+                    if self.point_mode == "measurement"
+                    else self.geometry_points
+                )
             )
-            if len(points) >= 2:
+            if self.point_mode in ("calibration", "measurement") and len(points) >= 2:
                 points.clear()
                 self.measurement = None
             points.append(point)
             if self.point_mode == "measurement" and len(points) == 2:
                 self.pending_action = "measurement"
                 self.pending_depth = True
-            color = "BLUE calibration" if self.point_mode == "calibration" else "YELLOW measurement"
+            color = {
+                "calibration": "BLUE calibration",
+                "measurement": "YELLOW measurement",
+                "path": "MAGENTA distance path",
+                "area": "ORANGE area polygon",
+            }[self.point_mode]
             self.log(f"{color} point {len(points)}: {point}")
 
     def _freeze_locked(self, *, clear_points: bool) -> None:
@@ -532,6 +605,8 @@ class InspectionEngine:
         if clear_points:
             self.calibration_points = []
             self.measurement_points = []
+            self.geometry_points = []
+            self.geometry_measurement = None
         self.log("Frame frozen.")
 
     def freeze(self) -> None:
@@ -543,22 +618,48 @@ class InspectionEngine:
         with self.lock:
             self.calibration_points = []
             self.measurement_points = []
+            self.geometry_points = []
+            self.geometry_measurement = None
             self.measurement = None
             self.pending_depth = False
             self.pending_action = None
         self.log("Points cleared.")
 
     def configure_mode(self, mode: str) -> None:
-        if mode not in ("measurement", "calibration"):
-            raise ValueError("Mode harus measurement atau calibration.")
+        if mode not in ("measurement", "calibration", "path", "area"):
+            raise ValueError("Mode harus measurement, calibration, path, atau area.")
         with self.lock:
             self.point_mode = mode
             if mode == "calibration":
                 self.calibration_points = []
-            else:
+            elif mode == "measurement":
                 self.measurement_points = []
+            else:
+                self.geometry_mode = mode
+                self.geometry_points = []
+                self.geometry_measurement = None
             self.measurement = None
         self.log(f"Mode: {mode}")
+
+    def calculate_geometry(self, mode: str) -> None:
+        if mode not in ("path", "area"):
+            raise ValueError("Geometry mode harus path atau area.")
+        minimum_points = 2 if mode == "path" else 3
+        with self.lock:
+            if not self.paused or self.frozen_frame is None:
+                raise ValueError("Freeze frame dahulu sebelum menghitung geometry.")
+            if len(self.geometry_points) < minimum_points:
+                raise ValueError(f"Mode {mode} membutuhkan minimal {minimum_points} titik.")
+            action = f"geometry_{mode}"
+            if self.depth_map is not None and self.intrinsics is not None:
+                # Raw depth berasal dari calibration/measurement frozen frame yang sama.
+                self.pending_action = action
+                self.pending_depth = True
+            else:
+                self.pending_action = action
+                self.pending_depth = True
+            self.geometry_mode = mode
+        self.log(f"{mode.upper()} inference queued dengan {len(self.geometry_points)} titik.")
 
     def save_calibration_cm(self, length_cm: float) -> None:
         """Simpan diameter pipa/jarak laser setelah dua titik biru dipilih."""
@@ -587,6 +688,8 @@ class InspectionEngine:
             self.paused = False
             self.calibration_points = []
             self.measurement_points = []
+            self.geometry_points = []
+            self.geometry_measurement = None
             self.measurement = None
             self.pending_depth = False
             self.pending_action = None
@@ -681,7 +784,9 @@ class InspectionEngine:
                 "paused": self.paused,
                 "calibration_points": self.calibration_points,
                 "measurement_points": self.measurement_points,
+                "geometry_points": self.geometry_points,
                 "mode": self.point_mode,
+                "geometry_mode": self.geometry_mode,
                 "calibration": {
                     "scale": self.calibration.scale,
                     "source": self.calibration.source,
@@ -701,6 +806,15 @@ class InspectionEngine:
                     "warnings": self.measurement.warnings,
                     "depth_a_m": self.measurement.depth_a_m,
                     "depth_b_m": self.measurement.depth_b_m,
+                },
+                "geometry_measurement": None if self.geometry_measurement is None else {
+                    "kind": self.geometry_measurement.kind,
+                    "value": self.geometry_measurement.value,
+                    "unit": self.geometry_measurement.unit,
+                    "uncertainty": self.geometry_measurement.uncertainty,
+                    "validity": self.geometry_measurement.validity,
+                    "warnings": self.geometry_measurement.warnings,
+                    "sample_count": self.geometry_measurement.sample_count,
                 },
                 "vram_mb": round(vram, 1),
                 "error": self.error,
@@ -784,6 +898,15 @@ def create_app(engine: InspectionEngine) -> Flask:
         data = request.get_json(force=True)
         try:
             engine.save_calibration_cm(float(data["length_cm"]))
+            return jsonify(engine.state())
+        except (KeyError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+
+    @app.post("/api/geometry")
+    def geometry():
+        data = request.get_json(force=True)
+        try:
+            engine.calculate_geometry(data["mode"])
             return jsonify(engine.state())
         except (KeyError, ValueError) as exc:
             return jsonify({"error": str(exc)}), 400

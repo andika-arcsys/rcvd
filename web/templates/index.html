@@ -57,6 +57,12 @@
         </label>
         <button onclick="saveCalibration()">2. Save calibration (cm)</button>
         <button onclick="setMode('measurement')">3. Measure yellow points</button>
+        <hr style="border-color:var(--line);width:100%">
+        <strong>Distance / Area from Raw Depth</strong>
+        <button onclick="setMode('path')">Start magenta distance path</button>
+        <button onclick="calculateGeometry('path')">Calculate accumulated path</button>
+        <button onclick="setMode('area')">Start orange area polygon</button>
+        <button onclick="calculateGeometry('area')">Calculate 3D surface area</button>
         <button onclick="saveSnapshot()">Save snapshot to gallery</button>
       </section>
       <section class="panel">
@@ -84,6 +90,9 @@
     async function saveCalibration() {
       const lengthCm = Number(document.getElementById('knownLengthCm').value);
       try { await post('/api/calibration', {length_cm:lengthCm}); } catch(e) { alert(e.message); }
+    }
+    async function calculateGeometry(mode) {
+      try { await post('/api/geometry', {mode}); } catch(e) { alert(e.message); }
     }
     async function freeze() { try { await post('/api/freeze'); } catch(e) { alert(e.message); } }
     async function resume() { await post('/api/resume'); }
@@ -116,9 +125,12 @@
       document.getElementById('error').textContent = state.error || '';
       document.getElementById('logs').textContent = state.logs.join('\n');
       const m = state.measurement;
-      document.getElementById('measurement').textContent = m
+      const g = state.geometry_measurement;
+      document.getElementById('measurement').textContent = g
+        ? `${g.kind}: ${g.value.toFixed(3)} ${g.unit} ± ${g.uncertainty.toFixed(3)} ${g.unit} [${g.validity}]`
+        : m
         ? `${m.validity === 'VALID_SAME_FRAME' ? 'MEASUREMENT' : 'ESTIMATE ONLY'}: ${m.distance_m.toFixed(3)} m ± ${m.uncertainty_m.toFixed(3)} m [${m.validity}]${m.warnings.length ? ' — '+m.warnings[0] : ''}`
-        : `Mode: ${state.mode}; blue calibration: ${state.calibration_points.length}/2; yellow measurement: ${state.measurement_points.length}/2`;
+        : `Mode: ${state.mode}; blue calibration: ${state.calibration_points.length}/2; yellow measurement: ${state.measurement_points.length}/2; geometry: ${state.geometry_points.length}`;
     }
     window.addEventListener('keydown', (event) => {
       if (event.code === 'Space' && event.target.tagName !== 'INPUT') {

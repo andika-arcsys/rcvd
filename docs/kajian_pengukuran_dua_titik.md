@@ -131,3 +131,37 @@ Untuk menuju pengukuran free-span yang lebih kuat:
 Upscaling/generative AI tidak menjadi sumber ukuran. Ia hanya membantu operator
 memilih titik visual; semua measurement harus tetap memakai raw/frozen frame
 dan provenance yang tersimpan.
+
+## 8. Mode Distance Path dan Area Polygon
+
+Dashboard menyediakan dua mode tambahan yang selalu memakai raw depth tensor
+Float32, **bukan warna Turbo/RGB**:
+
+### Distance Path
+
+Operator memilih beberapa titik magenta mengikuti kontur pipa, retak, atau
+profil seabed. Path di-resample setiap sekitar dua piksel agar hasil tidak
+berubah hanya karena operator mengklik lebih rapat. Setiap sampel diproyeksikan
+ke 3D, lalu panjang segmen Euclidean dijumlahkan:
+
+```text
+L = Σ ||P(i) - P(i-1)||
+```
+
+Mode ini cocok untuk panjang lintasan visual pada satu frozen frame. Ia bukan
+jarak perjalanan kamera antar frame.
+
+### 3D Surface Area
+
+Operator memilih polygon oranye pada ROI. Sistem membuat mesh dari point cloud
+di dalam polygon: setiap cell grid valid dibagi menjadi dua segitiga 3D, lalu
+luas kedua segitiga dijumlahkan. Pendekatan triangulasi ini lebih benar daripada
+menghitung dari warna colormap atau area pixel 2D.
+
+```text
+Area = Σ (area_triangle_1 + area_triangle_2)
+```
+
+Area berskala kuadrat terhadap reference scale. Karena itu uncertainty area
+minimal dua kali uncertainty relatif calibration path. Hasil area dari DA3
+tanpa K underwater tetap diberi `ESTIMATE_ONLY_SAME_FRAME`.

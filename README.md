@@ -313,6 +313,16 @@ RTX 3070 8 GB.
 Kajian rumus, reference scale, intrinsic camera, uncertainty, dan status
 validitas pengukuran tersedia di `docs/kajian_pengukuran_dua_titik.md`.
 
+Dashboard juga menyediakan geometry dari raw depth tensor:
+
+- **Start magenta distance path** → klik polyline sepanjang pipa/retak → 
+  **Calculate accumulated path** menghasilkan panjang 3D terakumulasi.
+- **Start orange area polygon** → klik polygon tertutup pada ROI → 
+  **Calculate 3D surface area** menjumlahkan mesh segitiga 3D di area tersebut.
+
+Warna depth preview hanya visual. Kalkulasi path/area memakai matriks depth
+Float32 dan intrinsics/reference scale dari frozen frame yang sama.
+
 > Jangan jalankan `pip install .[gs]`, `pip install .[all]`, atau memasang
 > `gsplat` untuk dashboard ini. `gsplat` hanya dependency optional untuk
 > Gaussian Splatting/3D rendering dan tidak dipakai oleh frozen-frame metric

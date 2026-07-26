@@ -15,7 +15,9 @@ sertifikat metrologi.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import pairwise
 
+import cv2
 import numpy as np
 
 
@@ -52,6 +54,19 @@ class Measurement:
     depth_a_m: float | None = None
     depth_b_m: float | None = None
     local_depth_relative_mad: tuple[float, float] | None = None
+
+
+@dataclass(frozen=True)
+class GeometryMeasurement:
+    """Hasil path length atau 3D surface area dari raw depth tensor."""
+
+    kind: str
+    value: float
+    unit: str
+    uncertainty: float
+    validity: str
+    warnings: tuple[str, ...] = ()
+    sample_count: int = 0
 
 
 def default_intrinsics(width: int, height: int, focal_px: float | None) -> CameraIntrinsics:
@@ -183,4 +198,134 @@ def calibration_from_reference(
         backend_signature=backend_signature,
         intrinsics_source=intrinsics_source,
         raw_reference_distance_m=raw.distance_m,
+    )
+
+
+def _geometry_validity(
+    calibration: ScaleCalibration, intrinsics: CameraIntrinsics, frame_id: int | None
+) -> tuple[str, list[str]]:
+    warnings: list[str] = []
+    if calibration.source != "REFERENCE_SCALED":
+        return "UNCALIBRATED", ["Tidak ada reference scale pada frozen frame."]
+    if calibration.frame_id is not None and calibration.frame_id != frame_id:
+        return "INVALID_CROSS_FRAME", ["Calibration berasal dari frame lain."]
+    if not intrinsics.calibrated_underwater:
+        warnings.append("Intrinsics underwater belum dikalibrasi.")
+        return "ESTIMATE_ONLY_SAME_FRAME", warnings
+    return "VALID_SAME_FRAME", warnings
+
+
+def _resample_polyline(
+    points: list[tuple[int, int]], spacing_px: float = 2.0
+) -> list[tuple[int, int]]:
+    """Resample path agar hasil tidak bergantung pada kepadatan klik operator."""
+    if len(points) < 2:
+        raise ValueError("Path membutuhkan minimal dua titik.")
+    sampled = [points[0]]
+    for start, end in pairwise(points):
+        x0, y0 = start
+        x1, y1 = end
+        length = float(np.hypot(x1 - x0, y1 - y0))
+        steps = max(1, int(np.ceil(length / spacing_px)))
+        for index in range(1, steps + 1):
+            ratio = index / steps
+            sampled.append((round(x0 + (x1 - x0) * ratio), round(y0 + (y1 - y0) * ratio)))
+    return sampled
+
+
+def calculate_accumulated_path_distance(
+    points: list[tuple[int, int]],
+    depth_m: np.ndarray,
+    intrinsics: CameraIntrinsics,
+    calibration: ScaleCalibration,
+    *,
+    frame_id: int | None,
+) -> GeometryMeasurement:
+    """Akumulasikan segmen Euclidean 3D pada polyline resampled."""
+    validity, warnings = _geometry_validity(calibration, intrinsics, frame_id)
+    sampled = _resample_polyline(points)
+    coordinates = []
+    local_mads = []
+    for point in sampled:
+        depth, mad = local_depth(depth_m, point, radius=1)
+        coordinates.append(pixel_to_3d(point, depth * calibration.scale, intrinsics))
+        local_mads.append(mad)
+    path = np.asarray(coordinates)
+    distance = float(np.linalg.norm(np.diff(path, axis=0), axis=1).sum())
+    if max(local_mads) > 0.10:
+        warnings.append("DEPTH_EDGE_RISK pada sebagian path.")
+    relative_error = float(
+        np.sqrt(calibration.relative_uncertainty**2 + max(local_mads) ** 2 + 0.02**2)
+    )
+    if validity != "VALID_SAME_FRAME":
+        relative_error = max(relative_error, 0.20)
+    return GeometryMeasurement(
+        kind="PATH_DISTANCE",
+        value=distance,
+        unit="m",
+        uncertainty=distance * relative_error,
+        validity=validity,
+        warnings=tuple(warnings),
+        sample_count=len(sampled),
+    )
+
+
+def calculate_surface_area(
+    polygon: list[tuple[int, int]],
+    depth_m: np.ndarray,
+    intrinsics: CameraIntrinsics,
+    calibration: ScaleCalibration,
+    *,
+    frame_id: int | None,
+    stride: int = 2,
+) -> GeometryMeasurement:
+    """Hitung area permukaan dengan menjumlahkan dua segitiga 3D per grid cell.
+
+    Metode mesh lebih stabil daripada mengubah gradien depth pixel menjadi
+    formula luas secara langsung. Hanya cell yang empat vertex-nya berada di
+    dalam polygon dan memiliki depth valid yang diakumulasikan.
+    """
+    if len(polygon) < 3:
+        raise ValueError("Area ROI membutuhkan minimal tiga titik polygon.")
+    validity, warnings = _geometry_validity(calibration, intrinsics, frame_id)
+    height, width = depth_m.shape[:2]
+    mask = np.zeros((height, width), dtype=np.uint8)
+    cv2.fillPoly(mask, [np.asarray(polygon, dtype=np.int32)], 1)
+
+    y = np.arange(0, height, stride, dtype=np.float64)
+    x = np.arange(0, width, stride, dtype=np.float64)
+    grid_x, grid_y = np.meshgrid(x, y)
+    z = depth_m[::stride, ::stride].astype(np.float64) * calibration.scale
+    roi = mask[::stride, ::stride].astype(bool)
+    points = np.stack(
+        (
+            (grid_x - intrinsics.cx) * z / intrinsics.fx,
+            (grid_y - intrinsics.cy) * z / intrinsics.fy,
+            z,
+        ),
+        axis=-1,
+    )
+    valid = roi & np.isfinite(z) & (z > 0)
+    cells = valid[:-1, :-1] & valid[1:, :-1] & valid[:-1, 1:] & valid[1:, 1:]
+    if not np.any(cells):
+        raise ValueError("ROI tidak memiliki cukup depth valid untuk menghitung area.")
+
+    p00, p10 = points[:-1, :-1], points[1:, :-1]
+    p01, p11 = points[:-1, 1:], points[1:, 1:]
+    triangle_a = 0.5 * np.linalg.norm(np.cross(p10 - p00, p01 - p00), axis=-1)
+    triangle_b = 0.5 * np.linalg.norm(np.cross(p11 - p10, p01 - p10), axis=-1)
+    area = float((triangle_a[cells] + triangle_b[cells]).sum())
+    # Luas berbanding s², sehingga uncertainty scale kira-kira dua kali path.
+    relative_error = max(0.10, 2.0 * calibration.relative_uncertainty)
+    if validity != "VALID_SAME_FRAME":
+        relative_error = max(relative_error, 0.35)
+    warnings.append("Area dihitung dari mesh depth; bukan pengganti survey 3D terkalibrasi.")
+    return GeometryMeasurement(
+        kind="SURFACE_AREA",
+        value=area,
+        unit="m²",
+        uncertainty=area * relative_error,
+        validity=validity,
+        warnings=tuple(warnings),
+        sample_count=int(cells.sum()),
     )
