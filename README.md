@@ -315,8 +315,8 @@ validitas pengukuran tersedia di `docs/kajian_pengukuran_dua_titik.md`.
 
 Dashboard juga menyediakan geometry dari raw depth tensor:
 
-- **Start magenta distance path** → klik polyline sepanjang pipa/retak → 
-  **Calculate accumulated path** menghasilkan panjang 3D terakumulasi.
+- **Start magenta distance (2 points)** → klik tepat dua titik → 
+  **Calculate distance** menghasilkan jarak lurus 3D.
 - **Start orange area polygon** → klik polygon tertutup pada ROI → 
   **Calculate 3D surface area** menjumlahkan mesh segitiga 3D di area tersebut.
 

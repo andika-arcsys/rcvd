@@ -47,7 +47,9 @@ from underwater_enhance.measurement import (
     calculate_surface_area,
     calibration_from_reference,
     default_intrinsics,
+    depth_zone_statistics,
     measure_distance,
+    metric_depth_color_map,
 )
 
 
@@ -114,12 +116,14 @@ class InspectionEngine:
         self.calibration_inference_message = "Belum ada calibration inference."
         self.measurement = None
         self.geometry_measurement = None
+        self.geometry_zone_stats: dict = {}
         self.yolo_model = None
         self.depth_model: object | None = None
         self.depth_inference_lock = threading.Lock()
         self.depth_preview_request: tuple[np.ndarray, int] | None = None
         self.depth_preview_frame_id: int | None = None
         self.depth_preview_image: np.ndarray | None = None
+        self.depth_zone_stats: dict = {}
         self._depth_thread: threading.Thread | None = None
         self.logs: deque[str] = deque(maxlen=40)
         self.error: str | None = None
@@ -204,11 +208,23 @@ class InspectionEngine:
                 return None
             return self.depth_model.infer(frame)
 
-    def _publish_depth_preview(self, depth_m: np.ndarray, frame_id: int) -> None:
-        visual = _colorize_depth(depth_m)
+    def _publish_depth_preview(
+        self,
+        depth_m: np.ndarray,
+        frame_id: int,
+        calibration: ScaleCalibration | None = None,
+        intrinsics: CameraIntrinsics | None = None,
+    ) -> None:
+        if calibration is not None and calibration.source == "REFERENCE_SCALED" and intrinsics:
+            visual, metric_depth = metric_depth_color_map(depth_m, calibration)
+            self.depth_zone_stats = depth_zone_statistics(metric_depth, intrinsics)
+            label = f"METRIC DEPTH ZONES | frame {frame_id} | ESTIMATE ONLY"
+        else:
+            visual = _colorize_depth(depth_m)
+            label = f"DEPTH PREVIEW | frame {frame_id} | visual only"
         cv2.putText(
             visual,
-            f"DEPTH PREVIEW | frame {frame_id} | visual only",
+            label,
             (15, 30),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.65,
@@ -290,7 +306,6 @@ class InspectionEngine:
             with self.lock:
                 self.depth_map = prediction.depth_m
                 self.intrinsics = intrinsics
-                self._publish_depth_preview(prediction.depth_m, frozen_frame_id or -1)
                 if len(points) == 2:
                     if action == "calibration":
                         if known_length_m is None:
@@ -333,32 +348,14 @@ class InspectionEngine:
                             f"{self.measurement.uncertainty_m:.3f}m "
                             f"[{self.measurement.validity}]"
                         )
-                    elif action == "geometry_path":
-                        self.geometry_measurement = calculate_accumulated_path_distance(
-                            points,
-                            self.depth_map,
-                            self.intrinsics,
-                            self.calibration,
-                            frame_id=frozen_frame_id,
-                        )
-                        self.log(
-                            f"Path inference {self.geometry_measurement.value:.3f}m ± "
-                            f"{self.geometry_measurement.uncertainty:.3f}m "
-                            f"[{self.geometry_measurement.validity}]"
-                        )
-                    elif action == "geometry_area":
-                        self.geometry_measurement = calculate_surface_area(
-                            points,
-                            self.depth_map,
-                            self.intrinsics,
-                            self.calibration,
-                            frame_id=frozen_frame_id,
-                        )
-                        self.log(
-                            f"Area inference {self.geometry_measurement.value:.3f}m² ± "
-                            f"{self.geometry_measurement.uncertainty:.3f}m² "
-                            f"[{self.geometry_measurement.validity}]"
-                        )
+                    elif action in ("geometry_distance", "geometry_area"):
+                        self._calculate_geometry_locked(action, points, frozen_frame_id)
+                self._publish_depth_preview(
+                    prediction.depth_m,
+                    frozen_frame_id or -1,
+                    self.calibration,
+                    self.intrinsics,
+                )
         except Exception as exc:  # noqa: BLE001 - keep worker alive on model failure
             self.error = f"Depth inference error: {exc}"
             if action == "calibration":
@@ -457,7 +454,7 @@ class InspectionEngine:
             labels = {
                 "calibration": "CALIBRATION: click 2 BLUE reference points, then Save calibration",
                 "measurement": "MEASUREMENT: click 2 YELLOW points",
-                "path": "DISTANCE PATH: click MAGENTA points, then Calculate accumulated path",
+                "distance": "DISTANCE: click exactly 2 MAGENTA points, then Calculate distance",
                 "area": "AREA POLYGON: click ORANGE points, then Calculate 3D surface area",
             }
             label = labels[mode]
@@ -465,7 +462,7 @@ class InspectionEngine:
             cv2.putText(canvas, label, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 0), 2)
 
         if geometry_points:
-            path_color = (255, 0, 255) if geometry_mode == "path" else (0, 140, 255)
+            path_color = (255, 0, 255) if geometry_mode == "distance" else (0, 140, 255)
             for point in geometry_points:
                 cv2.circle(canvas, point, 5, path_color, -1, cv2.LINE_AA)
             if len(geometry_points) > 1:
@@ -581,6 +578,11 @@ class InspectionEngine:
             if self.point_mode in ("calibration", "measurement") and len(points) >= 2:
                 points.clear()
                 self.measurement = None
+            if self.point_mode == "distance" and len(points) >= 2:
+                raise ValueError(
+                    "Distance mode sudah memiliki dua titik. Klik Calculate distance "
+                    "atau Clear points sebelum memilih titik baru."
+                )
             points.append(point)
             if self.point_mode == "measurement" and len(points) == 2:
                 self.pending_action = "measurement"
@@ -588,7 +590,7 @@ class InspectionEngine:
             color = {
                 "calibration": "BLUE calibration",
                 "measurement": "YELLOW measurement",
-                "path": "MAGENTA distance path",
+                "distance": "MAGENTA straight distance",
                 "area": "ORANGE area polygon",
             }[self.point_mode]
             self.log(f"{color} point {len(points)}: {point}")
@@ -607,6 +609,7 @@ class InspectionEngine:
             self.measurement_points = []
             self.geometry_points = []
             self.geometry_measurement = None
+            self.geometry_zone_stats = {}
         self.log("Frame frozen.")
 
     def freeze(self) -> None:
@@ -620,14 +623,15 @@ class InspectionEngine:
             self.measurement_points = []
             self.geometry_points = []
             self.geometry_measurement = None
+            self.geometry_zone_stats = {}
             self.measurement = None
             self.pending_depth = False
             self.pending_action = None
         self.log("Points cleared.")
 
     def configure_mode(self, mode: str) -> None:
-        if mode not in ("measurement", "calibration", "path", "area"):
-            raise ValueError("Mode harus measurement, calibration, path, atau area.")
+        if mode not in ("measurement", "calibration", "distance", "area"):
+            raise ValueError("Mode harus measurement, calibration, distance, atau area.")
         with self.lock:
             self.point_mode = mode
             if mode == "calibration":
@@ -638,13 +642,37 @@ class InspectionEngine:
                 self.geometry_mode = mode
                 self.geometry_points = []
                 self.geometry_measurement = None
+                self.geometry_zone_stats = {}
             self.measurement = None
         self.log(f"Mode: {mode}")
 
+    def _calculate_geometry_locked(
+        self, action: str, points: list[tuple[int, int]], frame_id: int | None
+    ) -> None:
+        if action == "geometry_distance":
+            # Distance mode sengaja hanya dua titik; bukan polyline accumulation.
+            result = calculate_accumulated_path_distance(
+                points, self.depth_map, self.intrinsics, self.calibration, frame_id=frame_id
+            )
+        else:
+            result = calculate_surface_area(
+                points, self.depth_map, self.intrinsics, self.calibration, frame_id=frame_id
+            )
+            self.geometry_zone_stats = depth_zone_statistics(
+                self.depth_map * self.calibration.scale,
+                self.intrinsics,
+                polygon=points,
+            )
+        self.geometry_measurement = result
+        self.log(
+            f"{result.kind} {result.value:.3f}{result.unit} ± "
+            f"{result.uncertainty:.3f}{result.unit} [{result.validity}]"
+        )
+
     def calculate_geometry(self, mode: str) -> None:
-        if mode not in ("path", "area"):
-            raise ValueError("Geometry mode harus path atau area.")
-        minimum_points = 2 if mode == "path" else 3
+        if mode not in ("distance", "area"):
+            raise ValueError("Geometry mode harus distance atau area.")
+        minimum_points = 2 if mode == "distance" else 3
         with self.lock:
             if not self.paused or self.frozen_frame is None:
                 raise ValueError("Freeze frame dahulu sebelum menghitung geometry.")
@@ -652,14 +680,16 @@ class InspectionEngine:
                 raise ValueError(f"Mode {mode} membutuhkan minimal {minimum_points} titik.")
             action = f"geometry_{mode}"
             if self.depth_map is not None and self.intrinsics is not None:
-                # Raw depth berasal dari calibration/measurement frozen frame yang sama.
-                self.pending_action = action
-                self.pending_depth = True
+                # Gunakan raw depth frozen yang sama, tanpa inference ulang.
+                self._calculate_geometry_locked(
+                    action, list(self.geometry_points), self.frozen_frame_id
+                )
             else:
                 self.pending_action = action
                 self.pending_depth = True
             self.geometry_mode = mode
-        self.log(f"{mode.upper()} inference queued dengan {len(self.geometry_points)} titik.")
+        if self.depth_map is None:
+            self.log(f"{mode.upper()} depth inference queued dengan {len(self.geometry_points)} titik.")
 
     def save_calibration_cm(self, length_cm: float) -> None:
         """Simpan diameter pipa/jarak laser setelah dua titik biru dipilih."""
@@ -690,6 +720,7 @@ class InspectionEngine:
             self.measurement_points = []
             self.geometry_points = []
             self.geometry_measurement = None
+            self.geometry_zone_stats = {}
             self.measurement = None
             self.pending_depth = False
             self.pending_action = None
@@ -776,6 +807,7 @@ class InspectionEngine:
                 "depth_backend": self.depth_backend,
                 "source_fps": self.source_fps,
                 "depth_preview_frame_id": self.depth_preview_frame_id,
+                "depth_zone_stats": self.depth_zone_stats,
                 "intrinsics_underwater_status": "NOT CALIBRATED",
                 "intrinsics_underwater_message": (
                     "Model/assumed intrinsics only; lakukan calibration camera underwater "
@@ -816,6 +848,7 @@ class InspectionEngine:
                     "warnings": self.geometry_measurement.warnings,
                     "sample_count": self.geometry_measurement.sample_count,
                 },
+                "geometry_zone_stats": self.geometry_zone_stats,
                 "vram_mb": round(vram, 1),
                 "error": self.error,
                 "logs": list(self.logs),

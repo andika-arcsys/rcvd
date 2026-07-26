@@ -69,6 +69,15 @@ class GeometryMeasurement:
     sample_count: int = 0
 
 
+DEPTH_ZONES = (
+    ("RED 0-1m", 0.0, 1.0, (0, 0, 255)),
+    ("YELLOW 1-2m", 1.0, 2.0, (0, 255, 255)),
+    ("GREEN 2-3m", 2.0, 3.0, (0, 255, 0)),
+    ("BLUE 3-4m", 3.0, 4.0, (255, 0, 0)),
+    ("FAR >4m", 4.0, float("inf"), (70, 70, 70)),
+)
+
+
 def default_intrinsics(width: int, height: int, focal_px: float | None) -> CameraIntrinsics:
     """Buat intrinsics estimasi dari focal model; beri status uncalibrated."""
     focal = float(focal_px or max(width, height))
@@ -329,3 +338,51 @@ def calculate_surface_area(
         warnings=tuple(warnings),
         sample_count=int(cells.sum()),
     )
+
+
+def metric_depth_color_map(
+    depth_m: np.ndarray, calibration: ScaleCalibration
+) -> tuple[np.ndarray, np.ndarray]:
+    """Map raw depth × scale ke zone warna fixed-meter untuk tampilan UI.
+
+    Returns:
+        ``(bgr_visual, metric_depth_m)``. Warna adalah LUT satu arah; backend
+        tetap memakai ``metric_depth_m`` untuk seluruh kalkulasi.
+    """
+    metric = depth_m.astype(np.float32) * calibration.scale
+    visual = np.zeros((*metric.shape, 3), dtype=np.uint8)
+    valid = np.isfinite(metric) & (metric > 0)
+    for _, low, high, color in DEPTH_ZONES:
+        mask = valid & (metric >= low) & (metric < high)
+        visual[mask] = color
+    return visual, metric
+
+
+def depth_zone_statistics(
+    metric_depth_m: np.ndarray,
+    intrinsics: CameraIntrinsics,
+    polygon: list[tuple[int, int]] | None = None,
+) -> dict[str, dict[str, float | int]]:
+    """Hitung pixel count dan *projected* area per zona depth.
+
+    ``projected_area_m2`` adalah estimasi bidang proyeksi, bukan surface area
+    nyata. Untuk area permukaan gunakan ``calculate_surface_area``.
+    """
+    height, width = metric_depth_m.shape[:2]
+    roi = np.ones((height, width), dtype=bool)
+    if polygon is not None:
+        mask = np.zeros((height, width), dtype=np.uint8)
+        cv2.fillPoly(mask, [np.asarray(polygon, dtype=np.int32)], 1)
+        roi = mask.astype(bool)
+    valid = roi & np.isfinite(metric_depth_m) & (metric_depth_m > 0)
+    projected_pixel_area = (metric_depth_m / intrinsics.fx) * (
+        metric_depth_m / intrinsics.fy
+    )
+    stats: dict[str, dict[str, float | int]] = {}
+    for name, low, high, _ in DEPTH_ZONES:
+        zone = valid & (metric_depth_m >= low) & (metric_depth_m < high)
+        stats[name] = {
+            "pixel_count": int(zone.sum()),
+            "projected_area_m2": float(projected_pixel_area[zone].sum()),
+        }
+    return stats

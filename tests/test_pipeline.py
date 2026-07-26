@@ -387,6 +387,23 @@ class TestMeasurement:
         assert np.isclose(area.value, 0.04, atol=0.01)
         assert area.unit == "m²"
 
+    def test_metric_depth_zones_use_tensor_not_rgb(self):
+        from underwater_enhance.measurement import (
+            CameraIntrinsics,
+            ScaleCalibration,
+            depth_zone_statistics,
+            metric_depth_color_map,
+        )
+
+        depth = np.array([[0.5, 1.5], [2.5, 3.5]], dtype=np.float32)
+        calibration = ScaleCalibration(scale=1.0, source="REFERENCE_SCALED")
+        visual, metric = metric_depth_color_map(depth, calibration)
+        stats = depth_zone_statistics(metric, CameraIntrinsics(100, 100, 0, 0))
+        assert tuple(visual[0, 0]) == (0, 0, 255)  # red 0-1m
+        assert tuple(visual[1, 1]) == (255, 0, 0)  # blue 3-4m
+        assert stats["RED 0-1m"]["pixel_count"] == 1
+        assert stats["BLUE 3-4m"]["pixel_count"] == 1
+
 
 class TestWebDashboard:
     def test_flask_dashboard_routes_exist_without_loading_models(self):

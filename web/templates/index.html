@@ -34,6 +34,7 @@
         <strong>Depth Mask Preview</strong>
         <img id="depthPreview" src="/depth_feed" alt="Depth preview">
         <small>Preview keyframe depth. Warna depth tidak menggantikan evidence video raw.</small>
+        <pre id="depthZones" style="white-space:pre-wrap;color:#c9d1d9"></pre>
       </div>
     </section>
     <aside class="controls">
@@ -59,8 +60,8 @@
         <button onclick="setMode('measurement')">3. Measure yellow points</button>
         <hr style="border-color:var(--line);width:100%">
         <strong>Distance / Area from Raw Depth</strong>
-        <button onclick="setMode('path')">Start magenta distance path</button>
-        <button onclick="calculateGeometry('path')">Calculate accumulated path</button>
+        <button onclick="setMode('distance')">Start magenta distance (2 points)</button>
+        <button onclick="calculateGeometry('distance')">Calculate distance</button>
         <button onclick="setMode('area')">Start orange area polygon</button>
         <button onclick="calculateGeometry('area')">Calculate 3D surface area</button>
         <button onclick="saveSnapshot()">Save snapshot to gallery</button>
@@ -122,6 +123,12 @@
       document.getElementById('intrinsicsStatus').textContent =
         `UNDERWATER INTRINSICS: ${state.intrinsics_underwater_status} — ${state.intrinsics_underwater_message}`;
       document.getElementById('depthPanel').style.display = features.depth ? 'block' : 'none';
+      const zones = Object.keys(state.geometry_zone_stats || {}).length
+        ? state.geometry_zone_stats
+        : (state.depth_zone_stats || {});
+      document.getElementById('depthZones').textContent = Object.entries(zones).map(
+        ([name, value]) => `${name}: ${value.pixel_count} px | projected ${value.projected_area_m2.toFixed(3)} m²`
+      ).join('\n');
       document.getElementById('error').textContent = state.error || '';
       document.getElementById('logs').textContent = state.logs.join('\n');
       const m = state.measurement;

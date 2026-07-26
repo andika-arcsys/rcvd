@@ -139,10 +139,14 @@ Float32, **bukan warna Turbo/RGB**:
 
 ### Distance Path
 
-Operator memilih beberapa titik magenta mengikuti kontur pipa, retak, atau
-profil seabed. Path di-resample setiap sekitar dua piksel agar hasil tidak
+Dashboard default memakai **Distance dua titik magenta**. Titik ketiga ditolak
+agar operator tidak tanpa sengaja mengubah jarak lurus menjadi akumulasi
+polyline. Setiap titik diproyeksikan ke 3D dan jarak Euclidean dihitung.
+
+Akumulasi path multi-titik adalah tool berbeda untuk masa depan; bila
+diaktifkan, path harus di-resample setiap sekitar dua piksel agar hasil tidak
 berubah hanya karena operator mengklik lebih rapat. Setiap sampel diproyeksikan
-ke 3D, lalu panjang segmen Euclidean dijumlahkan:
+ke 3D, lalu panjang segmen Euclidean dijumlah:
 
 ```text
 L = Σ ||P(i) - P(i-1)||
@@ -165,3 +169,21 @@ Area = Σ (area_triangle_1 + area_triangle_2)
 Area berskala kuadrat terhadap reference scale. Karena itu uncertainty area
 minimal dua kali uncertainty relatif calibration path. Hasil area dari DA3
 tanpa K underwater tetap diberi `ESTIMATE_ONLY_SAME_FRAME`.
+
+## 9. Zona warna fixed-meter
+
+Setelah calibration selesai, dashboard membuat `Z_metric = Z_raw × scale` dan
+baru memetakan nilai tersebut ke LUT satu arah:
+
+| Zona | Rentang |
+| --- | --- |
+| Merah | 0–1 m |
+| Kuning | 1–2 m |
+| Hijau | 2–3 m |
+| Biru | 3–4 m |
+| Abu-abu | >4 m |
+
+Statistik panel preview (`pixel_count`, `projected_area_m2`) dihitung dari
+tensor `Z_metric`, bukan membaca RGB. `projected_area_m2` adalah luas proyeksi;
+untuk luas permukaan gunakan hasil mesh 3D polygon. Warna tidak pernah
+di-invert kembali menjadi angka pengukuran.
