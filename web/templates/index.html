@@ -104,7 +104,7 @@
       document.getElementById('logs').textContent = state.logs.join('\n');
       const m = state.measurement;
       document.getElementById('measurement').textContent = m
-        ? `${m.distance_m.toFixed(3)} m ± ${m.uncertainty_m.toFixed(3)} m [${m.status}]`
+        ? `${m.validity === 'VALID_SAME_FRAME' ? 'MEASUREMENT' : 'ESTIMATE ONLY'}: ${m.distance_m.toFixed(3)} m ± ${m.uncertainty_m.toFixed(3)} m [${m.validity}]${m.warnings.length ? ' — '+m.warnings[0] : ''}`
         : `Mode: ${state.mode}; blue calibration: ${state.calibration_points.length}/2; yellow measurement: ${state.measurement_points.length}/2`;
     }
     window.addEventListener('keydown', (event) => {

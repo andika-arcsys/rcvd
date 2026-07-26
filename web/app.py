@@ -80,6 +80,7 @@ class InspectionEngine:
         self.paused = False
         self.raw_frame: np.ndarray | None = None
         self.frozen_frame: np.ndarray | None = None
+        self.frozen_frame_id: int | None = None
         self.latest_jpeg: bytes | None = None
         self.frame_id = 0
         self.features = {"yolo": False, "depth": False}
@@ -171,6 +172,7 @@ class InspectionEngine:
                 else list(self.measurement_points)
             )
             known_length_m = self._pending_known_length_m
+            frozen_frame_id = self.frozen_frame_id
         if frame is None:
             with self.lock:
                 self.pending_depth = False
@@ -203,12 +205,15 @@ class InspectionEngine:
                             self.depth_map,
                             self.intrinsics,
                             source="REFERENCE_SCALED",
+                            frame_id=frozen_frame_id,
+                            backend_signature=prediction.model_id,
+                            intrinsics_source=prediction.intrinsics_source,
                         )
                         self.measurement = None
                         self.log(
                             f"Reference calibrated: scale={self.calibration.scale:.4f}, "
                             f"reference={known_length_m * 100:.2f} cm "
-                            f"({known_length_m:.4f} m)"
+                            f"({known_length_m:.4f} m), frame={frozen_frame_id}"
                         )
                     elif action == "measurement":
                         self.measurement = measure_distance(
@@ -217,11 +222,12 @@ class InspectionEngine:
                             self.depth_map,
                             self.intrinsics,
                             self.calibration,
+                            frame_id=frozen_frame_id,
                         )
                         self.log(
                             f"Measurement {self.measurement.distance_m:.3f}m ± "
                             f"{self.measurement.uncertainty_m:.3f}m "
-                            f"[{self.measurement.status}]"
+                            f"[{self.measurement.validity}]"
                         )
         except Exception as exc:  # noqa: BLE001 - keep worker alive on model failure
             self.error = f"Depth inference error: {exc}"
@@ -277,10 +283,16 @@ class InspectionEngine:
             )
             text = (
                 f"{measurement.distance_m:.3f} m +/- {measurement.uncertainty_m:.3f} m "
-                f"[{measurement.status}]"
+                f"[{measurement.validity}]"
             )
             cv2.putText(canvas, text, midpoint, cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 4)
             cv2.putText(canvas, text, midpoint, cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2)
+            if measurement.warnings:
+                warning = measurement.warnings[0]
+                cv2.putText(
+                    canvas, warning, (20, 90), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.52, (0, 165, 255), 2,
+                )
         else:
             label = (
                 "CALIBRATION: click 2 BLUE reference points, then Save calibration"
@@ -379,6 +391,7 @@ class InspectionEngine:
         if self.raw_frame is None:
             raise ValueError("Belum ada frame video.")
         self.frozen_frame = self.raw_frame.copy()
+        self.frozen_frame_id = self.frame_id
         self.paused = True
         self.pending_depth = False
         self.pending_action = None
@@ -433,6 +446,7 @@ class InspectionEngine:
 
     def resume(self) -> None:
         with self.lock:
+            had_calibration = self.calibration.source == "REFERENCE_SCALED"
             self.paused = False
             self.calibration_points = []
             self.measurement_points = []
@@ -440,7 +454,13 @@ class InspectionEngine:
             self.pending_depth = False
             self.pending_action = None
             self.frozen_frame = None
+            self.frozen_frame_id = None
+            # Monocular reference scaling berubah dengan scene/focal/depth.
+            # Jangan biarkan hasil calibration lama dipakai lintas frame.
+            self.calibration = ScaleCalibration()
         self.log("Stream resumed.")
+        if had_calibration:
+            self.log("Reference calibration invalidated after resume; recalibrate on next frozen frame.")
 
     def save_snapshot(self) -> dict:
         """Persist frozen/current high-resolution frame beserta measurement JSON."""
@@ -453,6 +473,8 @@ class InspectionEngine:
                 "distance_m": self.measurement.distance_m,
                 "uncertainty_m": self.measurement.uncertainty_m,
                 "status": self.measurement.status,
+                "validity": self.measurement.validity,
+                "warnings": self.measurement.warnings,
             }
             metadata = {
                 "id": uuid.uuid4().hex,
@@ -463,6 +485,9 @@ class InspectionEngine:
                     "scale": self.calibration.scale,
                     "source": self.calibration.source,
                     "known_length_m": self.calibration.known_length_m,
+                    "frame_id": self.calibration.frame_id,
+                    "backend_signature": self.calibration.backend_signature,
+                    "intrinsics_source": self.calibration.intrinsics_source,
                 },
             }
         image_name = f"{metadata['id']}.jpg"
@@ -517,6 +542,10 @@ class InspectionEngine:
                     "distance_m": self.measurement.distance_m,
                     "uncertainty_m": self.measurement.uncertainty_m,
                     "status": self.measurement.status,
+                    "validity": self.measurement.validity,
+                    "warnings": self.measurement.warnings,
+                    "depth_a_m": self.measurement.depth_a_m,
+                    "depth_b_m": self.measurement.depth_b_m,
                 },
                 "vram_mb": round(vram, 1),
                 "error": self.error,

@@ -290,6 +290,9 @@ Backend Apple Depth Pro tetap tersedia: gunakan `--depth-backend depth_pro` dan
 Apple. Jangan mengaktifkan DA3/Depth Pro bersamaan dengan upscaler berat pada
 RTX 3070 8 GB.
 
+Kajian rumus, reference scale, intrinsic camera, uncertainty, dan status
+validitas pengukuran tersedia di `docs/kajian_pengukuran_dua_titik.md`.
+
 > Jangan jalankan `pip install .[gs]`, `pip install .[all]`, atau memasang
 > `gsplat` untuk dashboard ini. `gsplat` hanya dependency optional untuk
 > Gaussian Splatting/3D rendering dan tidak dipakai oleh frozen-frame metric

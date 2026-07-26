@@ -24,6 +24,10 @@ class DepthProUnavailableError(RuntimeError):
 class DepthPrediction:
     depth_m: np.ndarray
     focal_length_px: float | None
+    intrinsics_source: str = "UNKNOWN"
+    depth_units: str = "UNKNOWN"
+    model_id: str = "UNKNOWN"
+    warnings: tuple[str, ...] = ()
 
 
 class DepthProEstimator:
@@ -82,7 +86,16 @@ class DepthProEstimator:
             depth = cv2.resize(depth, (rgb.shape[1], rgb.shape[0]), interpolation=cv2.INTER_LINEAR)
         focal = prediction.get("focallength_px")
         focal_value = float(focal.detach().cpu().item() if hasattr(focal, "detach") else focal)
-        return DepthPrediction(depth_m=depth.astype(np.float32), focal_length_px=focal_value)
+        return DepthPrediction(
+            depth_m=depth.astype(np.float32),
+            focal_length_px=focal_value,
+            intrinsics_source="MODEL_PREDICTED",
+            depth_units="METERS",
+            model_id="Apple Depth Pro",
+            warnings=(
+                "Model focal/depth belum divalidasi untuk housing/port underwater.",
+            ),
+        )
 
     def close(self) -> None:
         """Lepaskan referensi model; pemanggil boleh menjalankan empty_cache."""

@@ -65,13 +65,21 @@ class DepthAnything3Estimator:
         if depth.shape != rgb.shape[:2]:
             depth = cv2.resize(depth, (rgb.shape[1], rgb.shape[0]), interpolation=cv2.INTER_LINEAR)
 
-        focal_px = None
-        if prediction.intrinsics is not None:
-            candidate = float(prediction.intrinsics[0, 0, 0])
-            # Validasi kasar: intrinsik harus bermakna dalam unit pixel.
-            if candidate > 1.0:
-                focal_px = candidate
-        return DepthPrediction(depth_m=depth, focal_length_px=focal_px)
+        # DA3 dapat mengembalikan intrinsics pada koordinat processed image.
+        # Dashboard tidak memakai K ini sebagai kamera fisik sampai ada
+        # calibration bawah air; menggunakan nilai tersebut langsung pada
+        # klik original-frame dapat menghasilkan lateral distance keliru.
+        return DepthPrediction(
+            depth_m=depth,
+            focal_length_px=None,
+            intrinsics_source="MODEL_PREDICTED_UNVERIFIED",
+            depth_units="FOCAL_NORMALIZED",
+            model_id=self.config.model_id,
+            warnings=(
+                "DA3 K/depth belum dikalibrasi untuk koordinat kamera underwater.",
+                "Reference scale hanya valid pada frozen frame yang sama.",
+            ),
+        )
 
     def close(self) -> None:
         del self.model

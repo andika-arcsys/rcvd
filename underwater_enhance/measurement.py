@@ -34,6 +34,9 @@ class ScaleCalibration:
     known_length_m: float | None = None
     source: str = "UNCALIBRATED"
     relative_uncertainty: float = 0.25
+    frame_id: int | None = None
+    backend_signature: str = "UNKNOWN"
+    intrinsics_source: str = "ASSUMED"
 
 
 @dataclass(frozen=True)
@@ -43,6 +46,11 @@ class Measurement:
     status: str
     point_a_3d: tuple[float, float, float]
     point_b_3d: tuple[float, float, float]
+    validity: str = "ESTIMATE_ONLY"
+    warnings: tuple[str, ...] = ()
+    depth_a_m: float | None = None
+    depth_b_m: float | None = None
+    local_depth_relative_mad: tuple[float, float] | None = None
 
 
 def default_intrinsics(width: int, height: int, focal_px: float | None) -> CameraIntrinsics:
@@ -87,6 +95,8 @@ def measure_distance(
     depth_m: np.ndarray,
     intrinsics: CameraIntrinsics,
     calibration: ScaleCalibration,
+    *,
+    frame_id: int | None = None,
 ) -> Measurement:
     """Hitung jarak Euclidean 3D dan uncertainty konservatif."""
     z_a, rel_a = local_depth(depth_m, point_a)
@@ -95,18 +105,40 @@ def measure_distance(
     p_b = pixel_to_3d(point_b, z_b * calibration.scale, intrinsics)
     distance = float(np.linalg.norm(p_a - p_b))
 
-    local_relative = max(rel_a, rel_b)
-    relative_error = max(calibration.relative_uncertainty, local_relative)
+    warnings = []
+    if max(rel_a, rel_b) > 0.10:
+        warnings.append("DEPTH_EDGE_RISK: titik berada dekat diskontinuitas depth")
+    if calibration.frame_id is not None and frame_id != calibration.frame_id:
+        validity = "INVALID_CROSS_FRAME"
+        warnings.append("Calibration berasal dari frame berbeda")
+    elif calibration.source != "REFERENCE_SCALED":
+        validity = "UNCALIBRATED"
+        warnings.append("Tidak ada scale reference pada frame ini")
+    elif intrinsics.calibrated_underwater:
+        validity = "VALID_SAME_FRAME"
+    else:
+        validity = "ESTIMATE_ONLY_SAME_FRAME"
+        warnings.append("Intrinsics underwater belum dikalibrasi")
+
+    # RSS: uncertainty reference + local depth variation + click placement.
+    # Tidak ada angka yang dapat mengubah estimate menjadi metrologi valid.
+    relative_error = float(
+        np.sqrt(calibration.relative_uncertainty**2 + rel_a**2 + rel_b**2 + 0.02**2)
+    )
+    if validity != "VALID_SAME_FRAME":
+        relative_error = max(relative_error, 0.20)
     uncertainty = distance * relative_error
-    status = calibration.source
-    if intrinsics.calibrated_underwater and status == "REFERENCE_SCALED":
-        status = "CALIBRATED"
     return Measurement(
         distance_m=distance,
         uncertainty_m=uncertainty,
-        status=status,
+        status=calibration.source,
         point_a_3d=tuple(float(v) for v in p_a),
         point_b_3d=tuple(float(v) for v in p_b),
+        validity=validity,
+        warnings=tuple(warnings),
+        depth_a_m=z_a * calibration.scale,
+        depth_b_m=z_b * calibration.scale,
+        local_depth_relative_mad=(rel_a, rel_b),
     )
 
 
@@ -118,6 +150,9 @@ def calibration_from_reference(
     intrinsics: CameraIntrinsics,
     *,
     source: str,
+    frame_id: int | None = None,
+    backend_signature: str = "UNKNOWN",
+    intrinsics_source: str = "ASSUMED",
 ) -> ScaleCalibration:
     """Kalibrasi scale dari diameter pipa atau jarak dua laser yang diketahui."""
     if known_length_m <= 0:
@@ -131,11 +166,19 @@ def calibration_from_reference(
     )
     if raw.distance_m <= 1e-6:
         raise ValueError("Panjang referensi hasil depth nol/tidak valid.")
-    # Uncertainty meningkat apabila diameter terlihat tidak seragam atau depth noisy.
-    rel_uncertainty = min(0.35, max(0.08, raw.uncertainty_m / raw.distance_m))
+    # Tolerance reference 2% + click placement 2% + depth local variation.
+    rel_uncertainty = min(
+        0.35,
+        max(0.08, float(np.sqrt(raw.local_depth_relative_mad[0] ** 2
+                                 + raw.local_depth_relative_mad[1] ** 2
+                                 + 0.02**2 + 0.02**2))),
+    )
     return ScaleCalibration(
         scale=known_length_m / raw.distance_m,
         known_length_m=known_length_m,
         source=source,
         relative_uncertainty=rel_uncertainty,
+        frame_id=frame_id,
+        backend_signature=backend_signature,
+        intrinsics_source=intrinsics_source,
     )

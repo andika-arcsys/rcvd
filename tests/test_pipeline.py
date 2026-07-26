@@ -356,7 +356,7 @@ class TestMeasurement:
             (8, 10), (12, 10), depth, intrinsics,
             ScaleCalibration(scale=1, source="REFERENCE_SCALED", relative_uncertainty=0.1),
         )
-        assert result.status == "CALIBRATED"
+        assert result.validity == "VALID_SAME_FRAME"
 
 
 class TestWebDashboard:
@@ -403,6 +403,17 @@ class TestWebDashboard:
         assert engine.pending_depth
         assert engine.pending_action == "calibration"
         assert np.isclose(engine._pending_known_length_m, 0.762)
+
+    def test_resume_invalidates_reference_calibration(self):
+        from underwater_enhance.measurement import ScaleCalibration
+        from web.app import InspectionEngine
+
+        engine = InspectionEngine("0", None, "0", depth_every=15)
+        engine.calibration = ScaleCalibration(
+            scale=2.0, known_length_m=0.762, source="REFERENCE_SCALED", frame_id=9
+        )
+        engine.resume()
+        assert engine.calibration.source == "UNCALIBRATED"
 
 
 class TestCli:
