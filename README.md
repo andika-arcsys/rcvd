@@ -254,7 +254,9 @@ pip install -r requirements.txt
 
 :: Rekomendasi: Depth Anything 3 metric (model diunduh dari Hugging Face saat pertama dipakai)
 git clone https://github.com/ByteDance-Seed/Depth-Anything-3.git
-pip install -e .\Depth-Anything-3
+cd Depth-Anything-3
+python -m pip install -e .
+cd ..
 
 python web\app.py --source "D:\arcgiz\video 1.mp4" ^
   --model "D:\path\ke\best.pt" --device 0 ^
@@ -281,6 +283,11 @@ Backend Apple Depth Pro tetap tersedia: gunakan `--depth-backend depth_pro` dan
 `--depth-checkpoint checkpoints\depth_pro.pt` setelah mengikuti instalasi resmi
 Apple. Jangan mengaktifkan DA3/Depth Pro bersamaan dengan upscaler berat pada
 RTX 3070 8 GB.
+
+> Jangan jalankan `pip install .[gs]`, `pip install .[all]`, atau memasang
+> `gsplat` untuk dashboard ini. `gsplat` hanya dependency optional untuk
+> Gaussian Splatting/3D rendering dan tidak dipakai oleh frozen-frame metric
+> depth, YOLO, measurement canvas, maupun ROI gallery.
 
 ## Struktur proyek
 
