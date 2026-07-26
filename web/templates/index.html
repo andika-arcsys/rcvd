@@ -129,7 +129,7 @@
       document.getElementById('measurement').textContent = g
         ? `${g.kind}: ${g.value.toFixed(3)} ${g.unit} ± ${g.uncertainty.toFixed(3)} ${g.unit} [${g.validity}]`
         : m
-        ? `${m.validity === 'VALID_SAME_FRAME' ? 'MEASUREMENT' : 'ESTIMATE ONLY'}: ${m.distance_m.toFixed(3)} m ± ${m.uncertainty_m.toFixed(3)} m [${m.validity}]${m.warnings.length ? ' — '+m.warnings[0] : ''}`
+        ? `${m.validity === 'VALID_SAME_FRAME' ? 'MEASUREMENT' : 'ESTIMATE ONLY'}: ${(m.distance_m * 100).toFixed(2)} cm ± ${(m.uncertainty_m * 100).toFixed(2)} cm [${m.validity}]${m.warnings.length ? ' — '+m.warnings[0] : ''}`
         : `Mode: ${state.mode}; blue calibration: ${state.calibration_points.length}/2; yellow measurement: ${state.measurement_points.length}/2; geometry: ${state.geometry_points.length}`;
     }
     window.addEventListener('keydown', (event) => {

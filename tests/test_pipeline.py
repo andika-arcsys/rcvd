@@ -374,8 +374,8 @@ class TestMeasurement:
         path = calculate_accumulated_path_distance(
             [(10, 20), (20, 20)], depth, intrinsics, calibration, frame_id=7
         )
-        assert np.isclose(path.value, 0.2, atol=0.01)
-        assert path.unit == "m"
+        assert np.isclose(path.value, 20.0, atol=1.0)
+        assert path.unit == "cm"
 
         area = calculate_surface_area(
             [(10, 10), (20, 10), (20, 20), (10, 20)],
@@ -384,8 +384,8 @@ class TestMeasurement:
             calibration,
             frame_id=7,
         )
-        assert np.isclose(area.value, 0.04, atol=0.01)
-        assert area.unit == "m²"
+        assert np.isclose(area.value, 400.0, atol=100.0)
+        assert area.unit == "cm2"
 
     def test_metric_depth_zones_use_tensor_not_rgb(self):
         from underwater_enhance.measurement import (

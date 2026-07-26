@@ -1,7 +1,7 @@
 """Flask Vision Inspection Console.
 
 Jalankan:
-  python web/app.py --source "D:\\arcgiz\\video 1.mp4" --model best.pt
+  python web/app.py --source "D:\\arcgiz\\video 1.mp4" --model "D:\\rcvd\\exp-5.pt"
 
 Depth Pro hanya di-load saat toggle Depth dinyalakan. Klik dua titik pada
 canvas membekukan frame agar depth dan titik selalu berasal dari frame yang
@@ -166,7 +166,11 @@ class InspectionEngine:
         if self.yolo_model is not None:
             return True
         if not self.model_path or not Path(self.model_path).is_file():
-            self.error = "YOLO model path tidak tersedia."
+            expected = self.model_path or r"D:\rcvd\exp-5.pt"
+            self.error = (
+                f"YOLO model path tidak tersedia: {expected}. "
+                f"Jalankan dengan --model \"D:\\rcvd\\exp-5.pt\"."
+            )
             return False
         try:
             from ultralytics import YOLO
@@ -320,13 +324,14 @@ class InspectionEngine:
                         self.measurement = None
                         self.calibration_inference_state = "COMPLETE"
                         self.calibration_inference_message = (
-                            f"Depth reference={self.calibration.raw_reference_distance_m:.4f} m → "
+                            f"Depth reference="
+                            f"{self.calibration.raw_reference_distance_m * 100:.2f} cm → "
                             f"physical={known_length_m * 100:.2f} cm; "
                             f"scale={self.calibration.scale:.4f}x"
                         )
                         self.log(
                             f"Calibration inference COMPLETE: depth reference="
-                            f"{self.calibration.raw_reference_distance_m:.4f} m → "
+                            f"{self.calibration.raw_reference_distance_m * 100:.2f} cm → "
                             f"physical={known_length_m * 100:.2f} cm; "
                             f"scale={self.calibration.scale:.4f}x, frame={frozen_frame_id}"
                         )
@@ -340,8 +345,8 @@ class InspectionEngine:
                             frame_id=frozen_frame_id,
                         )
                         self.log(
-                            f"Measurement {self.measurement.distance_m:.3f}m ± "
-                            f"{self.measurement.uncertainty_m:.3f}m "
+                            f"Measurement {self.measurement.distance_m * 100:.2f} cm ± "
+                            f"{self.measurement.uncertainty_m * 100:.2f} cm "
                             f"[{self.measurement.validity}]"
                         )
                     elif action in ("geometry_distance", "geometry_area"):
@@ -412,7 +417,7 @@ class InspectionEngine:
             )
             if self.calibration_inference_state == "COMPLETE":
                 cal_text = (
-                    f"CAL INFERENCE: {self.calibration.raw_reference_distance_m:.3f}m "
+                    f"CAL INFERENCE: {self.calibration.raw_reference_distance_m * 100:.2f}cm "
                     f"-> {self.calibration.known_length_m * 100:.2f}cm "
                     f"(scale {self.calibration.scale:.3f}x)"
                 )
@@ -435,7 +440,8 @@ class InspectionEngine:
                 (measurement_points[0][1] + measurement_points[1][1]) // 2,
             )
             text = (
-                f"{measurement.distance_m:.3f} m +/- {measurement.uncertainty_m:.3f} m "
+                f"{measurement.distance_m * 100:.2f} cm +/- "
+                f"{measurement.uncertainty_m * 100:.2f} cm "
                 f"[{measurement.validity}]"
             )
             cv2.putText(canvas, text, midpoint, cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 4)
@@ -983,7 +989,11 @@ def create_app(engine: InspectionEngine) -> Flask:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", required=True, help="Path video atau indeks kamera")
-    parser.add_argument("--model", help="Path best.pt untuk toggle YOLO")
+    parser.add_argument(
+        "--model",
+        default=r"D:\rcvd\exp-5.pt",
+        help=r"Path bobot YOLO (default: D:\rcvd\exp-5.pt)",
+    )
     parser.add_argument("--device", default="0", help="YOLO/Depth device, default GPU 0")
     parser.add_argument("--depth-every", type=int, default=15)
     parser.add_argument(

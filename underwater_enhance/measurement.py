@@ -268,11 +268,13 @@ def calculate_accumulated_path_distance(
     )
     if validity != "VALID_SAME_FRAME":
         relative_error = max(relative_error, 0.20)
+    distance_cm = distance * 100.0
+    uncertainty_cm = distance_cm * relative_error
     return GeometryMeasurement(
         kind="PATH_DISTANCE",
-        value=distance,
-        unit="m",
-        uncertainty=distance * relative_error,
+        value=distance_cm,
+        unit="cm",
+        uncertainty=uncertainty_cm,
         validity=validity,
         warnings=tuple(warnings),
         sample_count=len(sampled),
@@ -329,11 +331,13 @@ def calculate_surface_area(
     if validity != "VALID_SAME_FRAME":
         relative_error = max(relative_error, 0.35)
     warnings.append("Area dihitung dari mesh depth; bukan pengganti survey 3D terkalibrasi.")
+    area_cm2 = area * 10000.0
+    uncertainty_cm2 = area_cm2 * relative_error
     return GeometryMeasurement(
         kind="SURFACE_AREA",
-        value=area,
-        unit="m²",
-        uncertainty=area * relative_error,
+        value=area_cm2,
+        unit="cm2",
+        uncertainty=uncertainty_cm2,
         validity=validity,
         warnings=tuple(warnings),
         sample_count=int(cells.sum()),

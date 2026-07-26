@@ -259,10 +259,12 @@ python -m pip install -e .
 cd ..
 
 python web\app.py --source "D:\arcgiz\video 1.mp4" ^
-  --model "D:\path\ke\best.pt" --device 0 ^
+  --model "D:\rcvd\exp-5.pt" --device 0 ^
   --depth-backend depth_anything3 ^
   --depth-model-id "depth-anything/DA3METRIC-LARGE"
 ```
+
+Default `--model` adalah `D:\rcvd\exp-5.pt` bila argumen tidak diisi.
 
 Buka `http://127.0.0.1:5000`. Workflow calibration:
 

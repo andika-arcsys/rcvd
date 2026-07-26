@@ -23,7 +23,7 @@
       if (!entries.length) { grid.innerHTML = '<div class="empty">Belum ada snapshot. Simpan frame dari Live Console.</div>'; return; }
       grid.innerHTML = entries.map(item => {
         const m = item.measurement;
-        const value = m ? `${m.distance_m.toFixed(3)} m ± ${m.uncertainty_m.toFixed(3)} m [${m.validity || m.status}]` : 'No measurement';
+        const value = m ? `${(m.distance_m * 100).toFixed(2)} cm ± ${(m.uncertainty_m * 100).toFixed(2)} cm [${m.validity || m.status}]` : 'No measurement';
         return `<article><img src="/api/gallery/${item.id}/image" alt="ROI snapshot"><div class="meta">
           <strong>${item.created_at}</strong><br>Frame: ${item.frame_id}<br>
           Measurement: ${value}<br>Scale: ${item.calibration.source} (${item.calibration.scale.toFixed(4)}x)
