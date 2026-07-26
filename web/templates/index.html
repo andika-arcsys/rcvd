@@ -57,6 +57,7 @@
         <strong>System</strong>
         <div id="vram" class="metric">VRAM: -</div>
         <div id="calibration" class="metric">Scale: uncalibrated</div>
+        <div id="calibrationInference" class="metric">Calibration inference: IDLE</div>
         <div id="error" class="error"></div>
       </section>
       <section class="panel"><strong>Event Log</strong><div id="logs"></div></section>
@@ -100,6 +101,8 @@
       document.getElementById('status').textContent = state.paused ? 'FRAME FROZEN' : 'LIVE';
       document.getElementById('vram').textContent = `VRAM: ${state.vram_mb} MB`;
       document.getElementById('calibration').textContent = `Scale: ${state.calibration.source} (${state.calibration.scale.toFixed(4)}x)`;
+      document.getElementById('calibrationInference').textContent =
+        `Calibration inference [${state.calibration.inference_state}]: ${state.calibration.inference_message}`;
       document.getElementById('error').textContent = state.error || '';
       document.getElementById('logs').textContent = state.logs.join('\n');
       const m = state.measurement;

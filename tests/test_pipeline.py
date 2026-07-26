@@ -415,6 +415,35 @@ class TestWebDashboard:
         engine.resume()
         assert engine.calibration.source == "UNCALIBRATED"
 
+    def test_calibration_inference_exposes_reference_distance_and_scale(self):
+        from underwater_enhance.depth_pro_adapter import DepthPrediction
+        from web.app import InspectionEngine
+
+        class FakeDepth:
+            def infer(self, frame):
+                return DepthPrediction(
+                    depth_m=np.full(frame.shape[:2], 2.0, dtype=np.float32),
+                    focal_length_px=100.0,
+                    intrinsics_source="TEST",
+                    depth_units="METERS",
+                    model_id="fake-depth",
+                )
+
+        engine = InspectionEngine("0", None, "0", depth_every=15)
+        engine.raw_frame = np.zeros((100, 100, 3), dtype=np.uint8)
+        engine.freeze()
+        engine.configure_mode("calibration")
+        engine.add_point(0.4, 0.5)
+        engine.add_point(0.6, 0.5)
+        engine.save_calibration_cm(50.0)
+        engine.depth_model = FakeDepth()
+        engine._run_depth_for_frozen()
+
+        state = engine.state()["calibration"]
+        assert state["inference_state"] == "COMPLETE"
+        assert state["raw_reference_distance_m"] is not None
+        assert "physical=50.00 cm" in state["inference_message"]
+
 
 class TestCli:
     @pytest.mark.parametrize("text,expected", [

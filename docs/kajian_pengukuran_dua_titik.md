@@ -13,7 +13,13 @@ Operator bekerja pada **satu frame beku**:
 2. Pilih dua titik **biru** pada referensi yang panjangnya diketahui, misalnya
    diameter pipa 30 inci = 76.2 cm atau dua laser marker.
 3. Simpan nilai dalam cm. Sistem mengonversi ke meter (`76.2 / 100 = 0.762 m`)
-   dan membentuk scale reference.
+   lalu menjalankan calibration inference. UI menampilkan:
+
+```text
+depth reference (model) → physical reference (cm) → scale factor
+```
+
+Contoh: `0.3720 m → 76.20 cm → scale 2.048x`.
 4. Pilih dua titik **kuning** yang ingin diukur pada frame beku yang sama.
 
 Calibration harus dilakukan pada objek/surface yang sama atau sedekat mungkin

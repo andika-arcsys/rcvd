@@ -272,7 +272,9 @@ Buka `http://127.0.0.1:5000`. Workflow calibration:
 3. Isi nilai referensi dalam **cm**, misalnya diameter pipa 30 inci =
    `76.2 cm`.
 4. Klik **Save calibration (cm)**. Event log menulis `76.20 cm (0.7620 m)`
-   dan depth inference dijalankan pada frame beku yang sama.
+   dan depth inference dijalankan pada frame beku yang sama. Panel System
+   menunjukkan status `QUEUED → RUNNING → COMPLETE` serta nilai
+   `depth reference → physical cm → scale factor`.
 5. Klik **Measure yellow points** untuk melakukan pengukuran berikutnya.
 
 Hasil awal diberi status `UNCALIBRATED` sampai reference scale tersimpan;

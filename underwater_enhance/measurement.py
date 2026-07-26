@@ -37,6 +37,7 @@ class ScaleCalibration:
     frame_id: int | None = None
     backend_signature: str = "UNKNOWN"
     intrinsics_source: str = "ASSUMED"
+    raw_reference_distance_m: float | None = None
 
 
 @dataclass(frozen=True)
@@ -181,4 +182,5 @@ def calibration_from_reference(
         frame_id=frame_id,
         backend_signature=backend_signature,
         intrinsics_source=intrinsics_source,
+        raw_reference_distance_m=raw.distance_m,
     )

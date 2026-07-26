@@ -92,6 +92,8 @@ class InspectionEngine:
         self.depth_map: np.ndarray | None = None
         self.intrinsics: CameraIntrinsics | None = None
         self.calibration = ScaleCalibration()
+        self.calibration_inference_state = "IDLE"
+        self.calibration_inference_message = "Belum ada calibration inference."
         self.measurement = None
         self.yolo_model = None
         self.depth_model: object | None = None
@@ -184,9 +186,16 @@ class InspectionEngine:
             with self.lock:
                 self.pending_depth = False
                 self.pending_action = None
+                if action == "calibration":
+                    self.calibration_inference_state = "FAILED"
+                    self.calibration_inference_message = self.error or "Depth backend tidak tersedia."
             return
         started = time.perf_counter()
         try:
+            if action == "calibration":
+                with self.lock:
+                    self.calibration_inference_state = "RUNNING"
+                    self.calibration_inference_message = "Depth inference sedang berjalan pada frame beku."
             prediction = self.depth_model.infer(frame)
             intrinsics = default_intrinsics(
                 frame.shape[1], frame.shape[0], prediction.focal_length_px
@@ -210,10 +219,17 @@ class InspectionEngine:
                             intrinsics_source=prediction.intrinsics_source,
                         )
                         self.measurement = None
+                        self.calibration_inference_state = "COMPLETE"
+                        self.calibration_inference_message = (
+                            f"Depth reference={self.calibration.raw_reference_distance_m:.4f} m → "
+                            f"physical={known_length_m * 100:.2f} cm; "
+                            f"scale={self.calibration.scale:.4f}x"
+                        )
                         self.log(
-                            f"Reference calibrated: scale={self.calibration.scale:.4f}, "
-                            f"reference={known_length_m * 100:.2f} cm "
-                            f"({known_length_m:.4f} m), frame={frozen_frame_id}"
+                            f"Calibration inference COMPLETE: depth reference="
+                            f"{self.calibration.raw_reference_distance_m:.4f} m → "
+                            f"physical={known_length_m * 100:.2f} cm; "
+                            f"scale={self.calibration.scale:.4f}x, frame={frozen_frame_id}"
                         )
                     elif action == "measurement":
                         self.measurement = measure_distance(
@@ -231,6 +247,9 @@ class InspectionEngine:
                         )
         except Exception as exc:  # noqa: BLE001 - keep worker alive on model failure
             self.error = f"Depth inference error: {exc}"
+            if action == "calibration":
+                self.calibration_inference_state = "FAILED"
+                self.calibration_inference_message = self.error
             self.log(self.error)
         finally:
             with self.lock:
@@ -267,6 +286,16 @@ class InspectionEngine:
                 canvas, "CALIBRATION REFERENCE (BLUE)", (20, 65),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 120, 0), 2,
             )
+            if self.calibration_inference_state == "COMPLETE":
+                cal_text = (
+                    f"CAL INFERENCE: {self.calibration.raw_reference_distance_m:.3f}m "
+                    f"-> {self.calibration.known_length_m * 100:.2f}cm "
+                    f"(scale {self.calibration.scale:.3f}x)"
+                )
+                cv2.putText(
+                    canvas, cal_text, (20, 90), cv2.FONT_HERSHEY_SIMPLEX,
+                    0.52, (0, 255, 0), 2,
+                )
 
         # Kuning: titik pengukuran setelah calibration tersimpan.
         for point in measurement_points:
@@ -439,6 +468,10 @@ class InspectionEngine:
             self._pending_known_length_m = length_cm / 100.0
             self.pending_action = "calibration"
             self.pending_depth = True
+            self.calibration_inference_state = "QUEUED"
+            self.calibration_inference_message = (
+                f"Queued: infer depth untuk reference {length_cm:.2f} cm pada frame beku."
+            )
         self.log(
             f"Calibration saved: reference {length_cm:.2f} cm "
             f"({length_cm / 100.0:.4f} m); depth inference queued."
@@ -458,6 +491,8 @@ class InspectionEngine:
             # Monocular reference scaling berubah dengan scene/focal/depth.
             # Jangan biarkan hasil calibration lama dipakai lintas frame.
             self.calibration = ScaleCalibration()
+            self.calibration_inference_state = "IDLE"
+            self.calibration_inference_message = "Calibration dihapus setelah Resume."
         self.log("Stream resumed.")
         if had_calibration:
             self.log("Reference calibration invalidated after resume; recalibrate on next frozen frame.")
@@ -485,9 +520,12 @@ class InspectionEngine:
                     "scale": self.calibration.scale,
                     "source": self.calibration.source,
                     "known_length_m": self.calibration.known_length_m,
+                    "raw_reference_distance_m": self.calibration.raw_reference_distance_m,
                     "frame_id": self.calibration.frame_id,
                     "backend_signature": self.calibration.backend_signature,
                     "intrinsics_source": self.calibration.intrinsics_source,
+                    "inference_state": self.calibration_inference_state,
+                    "inference_message": self.calibration_inference_message,
                 },
             }
         image_name = f"{metadata['id']}.jpg"
@@ -537,6 +575,12 @@ class InspectionEngine:
                     "scale": self.calibration.scale,
                     "source": self.calibration.source,
                     "known_length_m": self.calibration.known_length_m,
+                    "raw_reference_distance_m": self.calibration.raw_reference_distance_m,
+                    "frame_id": self.calibration.frame_id,
+                    "backend_signature": self.calibration.backend_signature,
+                    "intrinsics_source": self.calibration.intrinsics_source,
+                    "inference_state": self.calibration_inference_state,
+                    "inference_message": self.calibration_inference_message,
                 },
                 "measurement": None if self.measurement is None else {
                     "distance_m": self.measurement.distance_m,
