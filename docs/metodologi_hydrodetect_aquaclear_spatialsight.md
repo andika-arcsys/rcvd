@@ -631,9 +631,9 @@ concerns* agar ablas eksperimen dan audit kegagalan lebih mudah.
 
 [24] A. Bochkovskii et al., “Depth Pro: Sharp monocular metric depth in less than a second,” in *ICLR*, 2025, arXiv:2410.02073.
 
-[26] S. P. et al., related hybrid WB–CLAHE–DCP underwater enhancement studies, e.g., “A hybrid approach with CLAHE and dark channel prior for enhancing underwater images,” *Evergreen*, 2024, doi: 10.5109/7388856.
-
 [25] R. Ranftl, K. Lasinger, D. Hafner, K. Schindler, and V. Koltun, “Towards robust monocular depth estimation: Mixing datasets for zero-shot cross-dataset transfer,” *IEEE Trans. Pattern Anal. Mach. Intell.*, 2022. (MiDaS / DPT lineage).
+
+[26] “A hybrid approach with CLAHE and dark channel prior for enhancing underwater images,” *Evergreen Joint Journal*, 2024, doi: 10.5109/7388856.
 
 ---
 
