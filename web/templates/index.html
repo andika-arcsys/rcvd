@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Underwater Vision Measurement Console</title>
+  <style>
+    :root {
+      --bg:#0b1220; --panel:#111c2e; --line:#263650; --text:#dbeafe;
+      --muted:#8da2c0; --green:#26e48a; --yellow:#facc15; --red:#fb7185;
+    }
+    * { box-sizing:border-box; }
+    html, body { height:100%; margin:0; }
+    body {
+      background:var(--bg); color:var(--text);
+      font:14px "Segoe UI",system-ui,sans-serif;
+      display:flex; flex-direction:column; overflow:hidden;
+    }
+    header {
+      flex:0 0 auto; padding:10px 16px; border-bottom:1px solid var(--line);
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+    }
+    main {
+      flex:1; min-height:0; display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(260px,320px);
+      gap:12px; padding:12px;
+    }
+    .workspace { min-height:0; display:flex; flex-direction:column; gap:8px; }
+    .quad {
+      flex:1; min-height:0;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:1fr 1fr;
+      gap:8px;
+    }
+    .cell {
+      min-height:0; min-width:0;
+      background:var(--panel); border:1px solid var(--line); border-radius:10px;
+      display:flex; flex-direction:column; overflow:hidden;
+    }
+    .cell header.cell-title {
+      flex:0 0 auto; padding:6px 10px; border:0; border-bottom:1px solid var(--line);
+      font-size:12px; color:var(--muted); letter-spacing:0.02em;
+    }
+    .cell .view { flex:1; min-height:0; position:relative; background:#000; }
+    .cell img {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:contain; display:block; background:#000;
+    }
+    #streamRaw { cursor:crosshair; }
+    .meta { flex:0 0 auto; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; }
+    .controls {
+      min-height:0; overflow:auto; display:grid; gap:10px; align-content:start;
+    }
+    button,input {
+      background:#17243a; color:var(--text); border:1px solid var(--line);
+      border-radius:6px; padding:9px; width:100%;
+    }
+    button { cursor:pointer; text-align:left; }
+    button.active { border-color:var(--green); color:var(--green); }
+    label { color:var(--muted); display:grid; gap:4px; }
+    .metric {
+      font-family:ui-monospace,Consolas,monospace; color:var(--green);
+      padding:9px; background:#0b1424; border-radius:6px;
+    }
+    #logs {
+      height:140px; overflow:auto; font:12px ui-monospace,Consolas,monospace;
+      color:var(--muted); white-space:pre-wrap;
+    }
+    .error { color:var(--red); } small { color:var(--muted); }
+    @media (max-width:1000px) {
+      body { overflow:auto; }
+      main { grid-template-columns:1fr; height:auto; }
+      .quad { min-height:70vh; }
+      .controls { overflow:visible; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>UNDERWATER VISION MEASUREMENT CONSOLE</strong>
+    <span>
+      <a href="/gallery" style="color:#26e48a;margin-right:16px">ROI Gallery</a>
+      <span id="status">CONNECTING</span>
+    </span>
+  </header>
+  <main>
+    <section class="workspace">
+      <div class="quad" aria-label="Four panel video workspace">
+        <article class="cell">
+          <header class="cell-title">Layar 1 — Optical Native View (klik di sini untuk titik)</header>
+          <div class="view"><img id="streamRaw" src="/feed/raw" alt="Optical Native View"></div>
+        </article>
+        <article class="cell">
+          <header class="cell-title">Layar 2 — HydroDetect Engine</header>
+          <div class="view"><img id="streamYolo" src="/feed/yolo" alt="HydroDetect Engine"></div>
+        </article>
+        <article class="cell">
+          <header class="cell-title">Layar 3 — AquaClear</header>
+          <div class="view"><img id="streamEnhanced" src="/feed/enhanced" alt="AquaClear"></div>
+        </article>
+        <article class="cell">
+          <header class="cell-title">Layar 4 — SpatialSight</header>
+          <div class="view"><img id="streamDepth" src="/feed/depth" alt="SpatialSight"></div>
+        </article>
+      </div>
+      <div class="meta panel">
+        <div id="measurement" class="metric">Belum ada pengukuran.</div>
+        <p><small>Stream MJPEG di-downscale agar ringan; panel mengikuti ukuran window. Pengukuran memakai koordinat normalisasi ke frame penuh. Klik titik hanya di Optical Native View.</small></p>
+      </div>
+    </section>
+    <aside class="controls">
+      <section class="panel">
+        <strong>Video Transport</strong>
+        <button onclick="freeze()">Freeze frame</button>
+        <button onclick="resume()">Resume live</button>
+        <button onclick="clearPoints()">Clear points</button>
+      </section>
+      <section class="panel">
+        <strong>Vision Features</strong>
+        <button id="yoloBtn" onclick="toggle('yolo')">HydroDetect Engine: OFF</button>
+        <button id="depthBtn" onclick="toggle('depth')">SpatialSight: OFF</button>
+        <small>HydroDetect → Layar 2. SpatialSight → Layar 4. AquaClear (Layar 3) selalu aktif. Measurement: Freeze → kalibrasi biru (cm) → titik kuning/magenta/oranye.</small>
+      </section>
+      <section class="panel">
+        <strong>Measurement Mode</strong>
+        <button onclick="setMode('calibration')">1. Start blue calibration points</button>
+        <label>Pipe diameter / laser separation (cm)
+          <input id="knownLengthCm" type="number" min="0.1" step="0.1" placeholder="contoh: 76.2">
+        </label>
+        <button onclick="saveCalibration()">2. Save calibration (cm)</button>
+        <button onclick="setMode('measurement')">3. Measure yellow points</button>
+        <hr style="border-color:var(--line);width:100%">
+        <strong>Distance / Area (SpatialSight raw depth)</strong>
+        <button onclick="setMode('distance')">Start magenta distance (2 points)</button>
+        <button onclick="calculateGeometry('distance')">Calculate distance</button>
+        <button onclick="setMode('area')">Start orange area polygon</button>
+        <button onclick="calculateGeometry('area')">Calculate 3D surface area</button>
+        <button onclick="saveSnapshot()">Save snapshot to ROI Gallery</button>
+      </section>
+      <section class="panel">
+        <strong>System</strong>
+        <div id="vram" class="metric">VRAM: -</div>
+        <div id="calibration" class="metric">Scale: uncalibrated</div>
+        <div id="calibrationInference" class="metric">Calibration inference: IDLE</div>
+        <div id="intrinsicsStatus" class="metric">UNDERWATER INTRINSICS: NOT CALIBRATED</div>
+        <div id="error" class="error"></div>
+      </section>
+      <section class="panel"><strong>Event Log</strong><div id="logs"></div></section>
+    </aside>
+  </main>
+  <script>
+    let features = {yolo:false, depth:false};
+    async function post(path, payload={}) {
+      const response = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Request failed');
+      if (data.features) render(data);
+      return data;
+    }
+    async function toggle(name) { try { await post('/api/feature', {name, enabled:!features[name]}); } catch(e) { alert(e.message); } }
+    async function setMode(mode) { try { await post('/api/mode', {mode}); } catch(e) { alert(e.message); } }
+    async function saveCalibration() {
+      const lengthCm = Number(document.getElementById('knownLengthCm').value);
+      try { await post('/api/calibration', {length_cm:lengthCm}); } catch(e) { alert(e.message); }
+    }
+    async function calculateGeometry(mode) {
+      try { await post('/api/geometry', {mode}); } catch(e) { alert(e.message); }
+    }
+    async function freeze() { try { await post('/api/freeze'); } catch(e) { alert(e.message); } }
+    async function resume() { await post('/api/resume'); }
+    async function clearPoints() { await post('/api/clear-points'); }
+    async function saveSnapshot() {
+      try { const item = await post('/api/snapshot'); alert(`Snapshot saved to ROI Gallery: ${item.image}`); }
+      catch(e) { alert(e.message); }
+    }
+    document.getElementById('streamRaw').addEventListener('click', async (event) => {
+      const image = event.currentTarget, rect = image.getBoundingClientRect();
+      const naturalW = image.naturalWidth || rect.width;
+      const naturalH = image.naturalHeight || rect.height;
+      const scale = Math.min(rect.width / naturalW, rect.height / naturalH);
+      const contentW = naturalW * scale;
+      const contentH = naturalH * scale;
+      const offsetX = (rect.width - contentW) / 2;
+      const offsetY = (rect.height - contentH) / 2;
+      const x = event.clientX - rect.left - offsetX;
+      const y = event.clientY - rect.top - offsetY;
+      if (x < 0 || y < 0 || x > contentW || y > contentH) return;
+      try {
+        await post('/api/point', {x_norm: x / contentW, y_norm: y / contentH});
+      } catch(e) { alert(e.message); }
+    });
+    function render(state) {
+      if (!state || !state.features) return;
+      features = state.features;
+      for (const name of ['yolo','depth']) {
+        const button = document.getElementById(name+'Btn');
+        const label = name === 'yolo' ? 'HydroDetect Engine' : 'SpatialSight';
+        button.textContent = `${label}: ${features[name] ? 'ON' : 'OFF'}`;
+        button.classList.toggle('active', features[name]);
+      }
+      document.getElementById('status').textContent = state.paused ? 'FRAME FROZEN' : 'LIVE';
+      document.getElementById('vram').textContent = `VRAM: ${state.vram_mb} MB`;
+      document.getElementById('calibration').textContent = `Scale: ${state.calibration.source} (${state.calibration.scale.toFixed(4)}x)`;
+      document.getElementById('calibrationInference').textContent =
+        `Calibration inference [${state.calibration.inference_state}]: ${state.calibration.inference_message}`;
+      document.getElementById('intrinsicsStatus').textContent =
+        `UNDERWATER INTRINSICS: ${state.intrinsics_underwater_status} — ${state.intrinsics_underwater_message}`;
+      document.getElementById('error').textContent = state.error || '';
+      document.getElementById('logs').textContent = state.logs.join('\n');
+      const m = state.measurement;
+      const g = state.geometry_measurement;
+      document.getElementById('measurement').textContent = g
+        ? `${g.kind}: ${g.value.toFixed(2)} ${g.unit} ± ${g.uncertainty.toFixed(2)} ${g.unit} [${g.validity}]`
+        : m
+        ? `${m.validity === 'VALID_SAME_FRAME' ? 'MEASUREMENT' : 'ESTIMATE ONLY'}: ${(m.distance_m * 100).toFixed(2)} cm ± ${(m.uncertainty_m * 100).toFixed(2)} cm [${m.validity}]${m.warnings.length ? ' — '+m.warnings[0] : ''}`
+        : `Mode: ${state.mode}; blue calibration: ${state.calibration_points.length}/2; yellow measurement: ${state.measurement_points.length}/2; geometry: ${state.geometry_points.length}`;
+    }
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'Space' && event.target.tagName !== 'INPUT') {
+        event.preventDefault(); document.getElementById('status').textContent.includes('FROZEN') ? resume() : freeze();
+      }
+    });
+    setInterval(() => fetch('/api/state').then(r=>r.json()).then(render).catch(()=>{}), 800);
+  </script>
+</body>
+</html>
