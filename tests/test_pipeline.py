@@ -415,10 +415,16 @@ class TestWebDashboard:
         assert {
             "/",
             "/live",
+            "/live/quad",
+            "/live/raw",
+            "/live/hydrodetect",
+            "/live/aquaclear",
+            "/live/spatialsight",
             "/gallery",
             "/video_feed",
             "/depth_feed",
             "/feed/<name>",
+            "/api/active-view",
             "/api/state",
             "/api/point",
             "/api/mode",
@@ -433,6 +439,55 @@ class TestWebDashboard:
         large = np.zeros((1080, 1920, 3), dtype=np.uint8)
         stream = _downscale_for_stream(large, 640)
         assert max(stream.shape[:2]) == 640
+
+    def test_v2_active_view_runs_only_its_selected_panel(self):
+        from web.app import InspectionEngine
+
+        class CountingEnhancer:
+            def __init__(self):
+                self.calls = 0
+
+            def process(self, frame):
+                self.calls += 1
+                return frame
+
+        engine = InspectionEngine("0", None, "cpu", depth_every=15)
+        engine.enhancer = CountingEnhancer()
+        frame = np.zeros((120, 160, 3), dtype=np.uint8)
+
+        engine.set_active_view("raw")
+        engine._publish_quad_panels(frame)
+        assert engine.latest_feeds["raw"] is not None
+        assert engine.latest_feeds["enhanced"] is None
+        assert engine.enhancer.calls == 0
+        assert engine.features == {"yolo": False, "depth": False}
+
+        engine.set_active_view("enhanced")
+        engine._publish_quad_panels(frame)
+        assert engine.latest_feeds["enhanced"] is not None
+        assert engine.enhancer.calls == 1
+        assert engine.features == {"yolo": False, "depth": False}
+
+    def test_v2_routes_select_single_feature_page(self):
+        from web.app import InspectionEngine, create_app
+
+        engine = InspectionEngine("0", None, "cpu", depth_every=15)
+        app = create_app(engine)
+        client = app.test_client()
+
+        response = client.get("/live/aquaclear")
+        assert response.status_code == 200
+        assert engine.active_view == "enhanced"
+        assert b"/feed/enhanced" in response.data
+        assert b"/feed/raw" not in response.data
+
+        response = client.post("/api/active-view", json={"view": "raw"})
+        assert response.status_code == 200
+        assert response.get_json()["active_view"] == "raw"
+        assert engine.features == {"yolo": False, "depth": False}
+
+        response = client.post("/api/active-view", json={"view": "invalid"})
+        assert response.status_code == 400
 
     def test_gallery_snapshot_image_and_inspector_notes(self, tmp_path):
         from web.app import InspectionEngine, create_app

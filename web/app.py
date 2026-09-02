@@ -146,6 +146,9 @@ class InspectionEngine:
             "enhanced": None,
             "depth": None,
         }
+        # V1 mempertahankan layout quad. V2 mengaktifkan hanya satu panel/page
+        # sehingga model dan encoding panel lain tidak berjalan.
+        self.active_view = "quad"
         self.frame_id = 0
         self.source_fps = 30.0
         self.features = {"yolo": False, "depth": False}
@@ -572,18 +575,23 @@ class InspectionEngine:
         return _label_panel(resized, "SpatialSight", (255, 200, 80))
 
     def _publish_quad_panels(self, frame: np.ndarray) -> None:
-        """Encode 4 panel MJPEG downscaled; klik measurement tetap x_norm/y_norm penuh."""
-        raw_view = _label_panel(
-            _downscale_for_stream(self._draw_measurement_overlays(frame), self.stream_max_side),
-            "Optical Native View",
-            (120, 220, 255),
-        )
-        panels = {
-            "raw": raw_view,
-            "yolo": self._build_yolo_panel(frame),
-            "enhanced": self._build_enhanced_panel(frame),
-            "depth": self._build_depth_panel(frame),
+        """Publish quad V1 atau tepat satu panel V2 sesuai active_view."""
+        with self.lock:
+            active_view = self.active_view
+        builders = {
+            "raw": lambda: _label_panel(
+                _downscale_for_stream(
+                    self._draw_measurement_overlays(frame), self.stream_max_side
+                ),
+                "Optical Native View",
+                (120, 220, 255),
+            ),
+            "yolo": lambda: self._build_yolo_panel(frame),
+            "enhanced": lambda: self._build_enhanced_panel(frame),
+            "depth": lambda: self._build_depth_panel(frame),
         }
+        feed_names = tuple(builders) if active_view == "quad" else (active_view,)
+        panels = {name: builders[name]() for name in feed_names}
         encoded_feeds: dict[str, bytes] = {}
         for name, image in panels.items():
             payload = _encode_jpeg(image)
@@ -636,7 +644,12 @@ class InspectionEngine:
                     self.raw_frame = frame.copy()
                     self.frame_id += 1
                     depth_enabled = self.features["depth"]
-                    if depth_enabled and self.frame_id % self.depth_every == 0:
+                    depth_preview_active = self.active_view in ("quad", "depth")
+                    if (
+                        depth_enabled
+                        and depth_preview_active
+                        and self.frame_id % self.depth_every == 0
+                    ):
                         # Timpa hanya request lama yang belum diambil; preview
                         # boleh skip keyframe, playback utama tidak boleh tertahan.
                         self.depth_preview_request = (frame.copy(), self.frame_id)
@@ -660,6 +673,29 @@ class InspectionEngine:
                 torch.cuda.empty_cache()
         label = {"yolo": "HydroDetect", "depth": "SpatialSight"}.get(name, name.upper())
         self.log(f"{label} {'ON' if enabled else 'OFF'}")
+
+    def set_active_view(self, view: str) -> None:
+        """Pilih V2 single-feature page dan lepaskan model halaman sebelumnya."""
+        if view not in ("quad", "raw", "yolo", "enhanced", "depth"):
+            raise ValueError("Halaman aktif tidak dikenal.")
+        with self.lock:
+            self.active_view = view
+            # Preview lama tidak relevan setelah meninggalkan halaman SpatialSight.
+            if view != "depth":
+                self.depth_preview_request = None
+
+        # Hanya satu model berat yang dapat aktif di halaman V2.
+        if view == "yolo":
+            self.set_feature("yolo", True)
+            self.set_feature("depth", False)
+        elif view == "depth":
+            self.set_feature("yolo", False)
+            self.set_feature("depth", True)
+        elif view in ("raw", "enhanced"):
+            self.set_feature("yolo", False)
+            self.set_feature("depth", False)
+        # Pada quad, biarkan toggle V1 menentukan feature sendiri.
+        self.log(f"Active view: {view}")
 
     def add_point(self, x_norm: float, y_norm: float) -> None:
         with self.lock:
@@ -944,6 +980,7 @@ class InspectionEngine:
                 vram = torch.cuda.memory_allocated() / 1024**2
             return {
                 "features": self.features,
+                "active_view": self.active_view,
                 "depth_backend": self.depth_backend,
                 "source_fps": self.source_fps,
                 "depth_preview_frame_id": self.depth_preview_frame_id,
@@ -1026,11 +1063,62 @@ def create_app(engine: InspectionEngine) -> Flask:
 
     @app.get("/")
     def index():
+        engine.set_active_view("quad")
         return render_template("index.html")
 
     @app.get("/live")
     def live():
+        engine.set_active_view("quad")
         return render_template("index.html")
+
+    @app.get("/live/quad")
+    def live_quad():
+        engine.set_active_view("quad")
+        return render_template("index.html")
+
+    @app.get("/live/raw")
+    def live_raw():
+        engine.set_active_view("raw")
+        return render_template(
+            "live_v2.html",
+            view="raw",
+            title="Optical Native View",
+            feed="raw",
+            interactive=True,
+        )
+
+    @app.get("/live/hydrodetect")
+    def live_hydrodetect():
+        engine.set_active_view("yolo")
+        return render_template(
+            "live_v2.html",
+            view="yolo",
+            title="HydroDetect Engine",
+            feed="yolo",
+            interactive=False,
+        )
+
+    @app.get("/live/aquaclear")
+    def live_aquaclear():
+        engine.set_active_view("enhanced")
+        return render_template(
+            "live_v2.html",
+            view="enhanced",
+            title="AquaClear",
+            feed="enhanced",
+            interactive=False,
+        )
+
+    @app.get("/live/spatialsight")
+    def live_spatialsight():
+        engine.set_active_view("depth")
+        return render_template(
+            "live_v2.html",
+            view="depth",
+            title="SpatialSight",
+            feed="depth",
+            interactive=False,
+        )
 
     @app.get("/gallery")
     def gallery():
@@ -1060,6 +1148,15 @@ def create_app(engine: InspectionEngine) -> Flask:
         data = request.get_json(force=True)
         try:
             engine.set_feature(data["name"], bool(data["enabled"]))
+            return jsonify(engine.state())
+        except (KeyError, ValueError) as exc:
+            return jsonify({"error": str(exc)}), 400
+
+    @app.post("/api/active-view")
+    def active_view():
+        data = request.get_json(force=True)
+        try:
+            engine.set_active_view(data["view"])
             return jsonify(engine.state())
         except (KeyError, ValueError) as exc:
             return jsonify({"error": str(exc)}), 400

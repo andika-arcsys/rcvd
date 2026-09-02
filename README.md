@@ -266,7 +266,7 @@ python web\app.py --source "D:\arcgiz\video 1.mp4" ^
 
 Default `--model` adalah `D:\rcvd\exp-5.pt` bila argumen tidak diisi.
 
-Buka `http://127.0.0.1:5000`. Dashboard menampilkan **4 panel adaptif**
+Buka `http://127.0.0.1:5000`. Dashboard V1 menampilkan **4 panel adaptif**
 (2×2) yang mengikuti ukuran window browser:
 
 | Layar 1 | Layar 2 |
@@ -277,6 +277,25 @@ Buka `http://127.0.0.1:5000`. Dashboard menampilkan **4 panel adaptif**
 Stream MJPEG di-downscale (`--stream-max-side`, default 640). Klik titik
 pengukuran hanya di **Optical Native View**. ROI Gallery menampilkan
 thumbnail snapshot + kolom keterangan aktual inspector.
+
+### Underwater Drone Console V2 — single-feature pages
+
+V2 memisahkan setiap layar menjadi halaman berbeda agar browser hanya membuka
+**satu** stream MJPEG dan engine hanya memproses **satu** feature per frame.
+Saat berpindah halaman, HydroDetect atau SpatialSight dari halaman sebelumnya
+di-unload; ini mengurangi pemakaian GPU/VRAM dibanding mode quad.
+
+| Halaman | Feature yang diproses |
+| --- | --- |
+| `http://127.0.0.1:5000/live/raw` | Optical Native View (raw + canvas measurement) |
+| `http://127.0.0.1:5000/live/hydrodetect` | HydroDetect Engine (object detection/segmentation) |
+| `http://127.0.0.1:5000/live/aquaclear` | AquaClear (enhancement realtime) |
+| `http://127.0.0.1:5000/live/spatialsight` | SpatialSight (Depth Anything) |
+| `http://127.0.0.1:5000/live/quad` | V1 — empat layar bersamaan |
+
+Lakukan semua klik calibration, distance, area, dan measurement di halaman
+**Optical Native View**. Halaman lain adalah view bantuan, tetapi tombol
+Freeze/Resume dan Save snapshot tetap tersedia.
 
 Workflow calibration:
 
