@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} — Underwater Drone Console V2</title>
+  <style>
+    :root { --bg:#0b1220; --panel:#111c2e; --line:#263650; --text:#dbeafe; --muted:#8da2c0; --green:#26e48a; --red:#fb7185; }
+    * { box-sizing:border-box; } html,body { min-height:100%; margin:0; }
+    body { background:var(--bg); color:var(--text); font:14px "Segoe UI",system-ui,sans-serif; }
+    header { padding:12px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    a { color:var(--muted); text-decoration:none; } a:hover,a.active { color:var(--green); }
+    nav { display:flex; gap:12px; flex-wrap:wrap; }
+    main { min-height:calc(100vh - 61px); display:grid; grid-template-columns:minmax(0,1fr) minmax(270px,340px); gap:14px; padding:14px; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px; }
+    .viewer { min-height:0; display:flex; flex-direction:column; }
+    .viewer h1 { margin:0 0 10px; font-size:18px; }
+    .stream { flex:1; min-height:300px; background:#000; display:grid; place-items:center; border-radius:8px; overflow:hidden; }
+    .stream img { display:block; width:100%; max-height:calc(100vh - 210px); min-height:300px; object-fit:contain; background:#000; }
+    #stream { cursor:{% if interactive %}crosshair{% else %}default{% endif %}; }
+    .controls { display:grid; gap:10px; align-content:start; }
+    button,input { width:100%; background:#17243a; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:9px; }
+    button { cursor:pointer; text-align:left; } label { display:grid; gap:4px; color:var(--muted); }
+    .metric { font-family:ui-monospace,Consolas,monospace; color:var(--green); padding:9px; background:#0b1424; border-radius:6px; }
+    #logs { height:150px; overflow:auto; font:12px ui-monospace,Consolas,monospace; color:var(--muted); white-space:pre-wrap; }
+    .error { color:var(--red); } small { color:var(--muted); }
+    .notice { border-left:3px solid var(--green); padding-left:9px; color:var(--muted); line-height:1.45; }
+    @media(max-width:900px) { main { grid-template-columns:1fr; } .stream img { max-height:65vh; } }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>UNDERWATER DRONE CONSOLE V2 — {{ title }}</strong>
+    <nav aria-label="V2 single-feature pages">
+      <a href="/live/raw" class="{% if view == 'raw' %}active{% endif %}">Optical Native View</a>
+      <a href="/live/hydrodetect" class="{% if view == 'yolo' %}active{% endif %}">HydroDetect Engine</a>
+      <a href="/live/aquaclear" class="{% if view == 'enhanced' %}active{% endif %}">AquaClear</a>
+      <a href="/live/spatialsight" class="{% if view == 'depth' %}active{% endif %}">SpatialSight</a>
+      <a href="/live/quad">V1 Quad</a>
+      <a href="/gallery">ROI Gallery</a>
+    </nav>
+  </header>
+  <main>
+    <section class="viewer panel">
+      <h1>{{ title }}</h1>
+      <div class="stream"><img id="stream" src="/feed/{{ feed }}" alt="{{ title }} stream"></div>
+      {% if interactive %}
+      <p class="notice">Klik titik hanya di Optical Native View. Stream display di-downscale, tetapi koordinat klik dinormalisasi ke raw frame penuh.</p>
+      {% else %}
+      <p class="notice">Halaman ini hanya menjalankan {{ title }}. Model/jalur GPU dari halaman lain dilepas saat Anda berpindah halaman.</p>
+      {% endif %}
+      <div id="measurement" class="metric">Belum ada pengukuran.</div>
+    </section>
+
+    <aside class="controls">
+      <section class="panel">
+        <strong>Video Transport</strong>
+        <button onclick="freeze()">Freeze frame</button>
+        <button onclick="resume()">Resume live</button>
+        <button onclick="clearPoints()">Clear points</button>
+      </section>
+      {% if interactive %}
+      <section class="panel">
+        <strong>Measurement (Optical Native View)</strong>
+        <button onclick="setMode('calibration')">1. Start blue calibration points</button>
+        <label>Pipe diameter / laser separation (cm)
+          <input id="knownLengthCm" type="number" min="0.1" step="0.1" placeholder="contoh: 76.2">
+        </label>
+        <button onclick="saveCalibration()">2. Save calibration (cm)</button>
+        <button onclick="setMode('measurement')">3. Measure yellow points</button>
+        <hr style="border-color:var(--line);width:100%">
+        <button onclick="setMode('distance')">Start magenta distance (2 points)</button>
+        <button onclick="calculateGeometry('distance')">Calculate distance</button>
+        <button onclick="setMode('area')">Start orange area polygon</button>
+        <button onclick="calculateGeometry('area')">Calculate 3D surface area</button>
+      </section>
+      {% else %}
+      <section class="panel">
+        <strong>Measurement</strong>
+        <p><small>Freeze dan pengukuran dilakukan dari <a href="/live/raw">Optical Native View</a> agar titik selalu berasal dari raw evidence.</small></p>
+      </section>
+      {% endif %}
+      <section class="panel">
+        <button onclick="saveSnapshot()">Save snapshot to ROI Gallery</button>
+      </section>
+      <section class="panel">
+        <strong>System</strong>
+        <div id="status" class="metric">CONNECTING</div>
+        <div id="vram" class="metric">VRAM: -</div>
+        <div id="calibration" class="metric">Scale: uncalibrated</div>
+        <div id="calibrationInference" class="metric">Calibration inference: IDLE</div>
+        <div id="error" class="error"></div>
+      </section>
+      <section class="panel"><strong>Event Log</strong><div id="logs"></div></section>
+    </aside>
+  </main>
+  <script>
+    async function post(path, payload={}) {
+      const response = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Request failed');
+      render(data); return data;
+    }
+    async function freeze() { try { await post('/api/freeze'); } catch(e) { alert(e.message); } }
+    async function resume() { try { await post('/api/resume'); } catch(e) { alert(e.message); } }
+    async function clearPoints() { try { await post('/api/clear-points'); } catch(e) { alert(e.message); } }
+    async function setMode(mode) { try { await post('/api/mode', {mode}); } catch(e) { alert(e.message); } }
+    async function saveCalibration() {
+      const lengthCm = Number(document.getElementById('knownLengthCm').value);
+      try { await post('/api/calibration', {length_cm:lengthCm}); } catch(e) { alert(e.message); }
+    }
+    async function calculateGeometry(mode) { try { await post('/api/geometry', {mode}); } catch(e) { alert(e.message); } }
+    async function saveSnapshot() {
+      try { const item = await post('/api/snapshot'); alert(`Snapshot saved: ${item.image}`); }
+      catch(e) { alert(e.message); }
+    }
+    {% if interactive %}
+    document.getElementById('stream').addEventListener('click', async (event) => {
+      const image = event.currentTarget, rect = image.getBoundingClientRect();
+      const naturalW = image.naturalWidth || rect.width, naturalH = image.naturalHeight || rect.height;
+      const scale = Math.min(rect.width / naturalW, rect.height / naturalH);
+      const contentW = naturalW * scale, contentH = naturalH * scale;
+      const x = event.clientX - rect.left - (rect.width - contentW) / 2;
+      const y = event.clientY - rect.top - (rect.height - contentH) / 2;
+      if (x < 0 || y < 0 || x > contentW || y > contentH) return;
+      try { await post('/api/point', {x_norm:x/contentW, y_norm:y/contentH}); } catch(e) { alert(e.message); }
+    });
+    {% endif %}
+    function render(state) {
+      if (!state) return;
+      document.getElementById('status').textContent = state.paused ? 'FRAME FROZEN' : 'LIVE';
+      document.getElementById('vram').textContent = `VRAM: ${state.vram_mb} MB | View: ${state.active_view}`;
+      document.getElementById('calibration').textContent = `Scale: ${state.calibration.source} (${state.calibration.scale.toFixed(4)}x)`;
+      document.getElementById('calibrationInference').textContent = `Calibration: ${state.calibration.inference_state} — ${state.calibration.inference_message}`;
+      document.getElementById('error').textContent = state.error || '';
+      document.getElementById('logs').textContent = (state.logs || []).join('\n');
+      const m = state.measurement, g = state.geometry_measurement;
+      document.getElementById('measurement').textContent = g
+        ? `${g.kind}: ${g.value.toFixed(2)} ${g.unit} ± ${g.uncertainty.toFixed(2)} ${g.unit} [${g.validity}]`
+        : m
+        ? `${m.validity === 'VALID_SAME_FRAME' ? 'MEASUREMENT' : 'ESTIMATE ONLY'}: ${(m.distance_m * 100).toFixed(2)} cm ± ${(m.uncertainty_m * 100).toFixed(2)} cm [${m.validity}]`
+        : `Mode: ${state.mode}; blue: ${state.calibration_points.length}/2; yellow: ${state.measurement_points.length}/2; geometry: ${state.geometry_points.length}`;
+    }
+    window.addEventListener('keydown', (event) => {
+      if (event.code === 'Space' && event.target.tagName !== 'INPUT') {
+        event.preventDefault(); document.getElementById('status').textContent.includes('FROZEN') ? resume() : freeze();
+      }
+    });
+    setInterval(() => fetch('/api/state').then(r=>r.json()).then(render).catch(()=>{}), 800);
+  </script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<mxGraphModel dx="1600" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="2200" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- TITLE -->
+    <mxCell id="t1" value="WORKFLOW UNDERWATER DRONE INSPECTION CONSOLE&#xa;(Optical Native View · HydroDetect · AquaClear · SpatialSight · ROI Gallery)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="280" y="20" width="1040" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- ===== SWIMLANE LABELS ===== -->
+    <mxCell id="z1" value="AREA BAWAH AIR" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="70" width="200" height="24" as="geometry" />
+    </mxCell>
+    <mxCell id="z2" value="STASIUN PERMUKAAN / PILOT" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="420" y="70" width="280" height="24" as="geometry" />
+    </mxCell>
+    <mxCell id="z3" value="SERVER / PC ANALISIS (Flask Console)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="900" y="70" width="320" height="24" as="geometry" />
+    </mxCell>
+
+    <!-- ===== SYSTEM CONTEXT ===== -->
+    <mxCell id="c1" value="Aset Pipa Bawah Air&#xa;(target inspeksi)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="60" y="110" width="180" height="70" as="geometry" />
+    </mxCell>
+    <mxCell id="c2" value="Unit ROV / Underwater Drone&#xa;Kamera first-person + tether" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="60" y="220" width="180" height="70" as="geometry" />
+    </mxCell>
+    <mxCell id="c3" value="Stasiun Kontrol Pilot&#xa;Kontrol gerak + daya" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="460" y="110" width="200" height="70" as="geometry" />
+    </mxCell>
+    <mxCell id="c4" value="Video Source&#xa;file MP4 / kamera / RTSP" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="460" y="220" width="200" height="70" as="geometry" />
+    </mxCell>
+    <mxCell id="c5" value="Jalankan Console&#xa;python web/app.py&#xa;--source ... --model exp-5.pt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="960" y="110" width="240" height="80" as="geometry" />
+    </mxCell>
+    <mxCell id="c6" value="Browser Live Console&#xa;http://127.0.0.1:5000&#xa;Layout 2×2 adaptif" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="960" y="220" width="240" height="80" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e1" value="Inspeksi &amp; perekaman" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="c2" target="c1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e2" value="Sinyal kontrol &amp; daya" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="c3" target="c2">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e3" value="Aliran video &amp; telemetry" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="c2" target="c4">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e4" value="Input --source" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="c4" target="c5">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e5" value="MJPEG + API" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="c5" target="c6">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ===== 4 PANEL LIVE ===== -->
+    <mxCell id="s1" value="FASE LIVE — EMPAT LAYAR (selalu streaming, downscale MJPEG)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="330" width="700" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="p1" value="LAYAR 1&#xa;Optical Native View&#xa;&#xa;Raw video + canvas titik&#xa;Klik measurement HANYA di sini&#xa;Feed: /feed/raw" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;align=center" vertex="1" parent="1">
+      <mxGeometry x="40" y="370" width="200" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="p2" value="LAYAR 2&#xa;HydroDetect Engine&#xa;&#xa;Segmentasi/deteksi objek&#xa;Toggle ON untuk aktif&#xa;Feed: /feed/yolo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;align=center" vertex="1" parent="1">
+      <mxGeometry x="270" y="370" width="200" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="p3" value="LAYAR 3&#xa;AquaClear&#xa;&#xa;Enhancement air keruh&#xa;Selalu aktif (realtime)&#xa;Feed: /feed/enhanced" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;align=center" vertex="1" parent="1">
+      <mxGeometry x="500" y="370" width="200" height="120" as="geometry" />
+    </mxCell>
+    <mxCell id="p4" value="LAYAR 4&#xa;SpatialSight&#xa;&#xa;Depth map relatif (Turbo)&#xa;Toggle ON untuk aktif&#xa;Feed: /feed/depth" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;align=center" vertex="1" parent="1">
+      <mxGeometry x="730" y="370" width="200" height="120" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="c6" target="p1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeWidth=2;dashed=1;" edge="1" parent="1" source="c6" target="p2">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="c6" target="p3">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;strokeWidth=2;dashed=1;" edge="1" parent="1" source="c6" target="p4">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ===== OPTIONAL TOGGLES ===== -->
+    <mxCell id="s2" value="FITUR OPSIONAL (hemat VRAM — lazy load)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="520" width="500" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="f1" value="Toggle HydroDetect ON/OFF&#xa;Muat bobot exp-5.pt bila ON&#xa;OFF → unload model + kosongkan VRAM" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6" vertex="1" parent="1">
+      <mxGeometry x="270" y="560" width="220" height="70" as="geometry" />
+    </mxCell>
+    <mxCell id="f2" value="Toggle SpatialSight ON/OFF&#xa;Muat Depth Anything 3 / Depth Pro&#xa;Keyframe async tiap N frame" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+      <mxGeometry x="730" y="560" width="220" height="70" as="geometry" />
+    </mxCell>
+    <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=1;" edge="1" parent="1" source="p2" target="f1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=1;" edge="1" parent="1" source="p4" target="f2">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ===== MEASUREMENT WORKFLOW ===== -->
+    <mxCell id="s3" value="FASE PENGUKURAN METRIK (FRAME FROZEN — wajib same-frame)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="660" width="700" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="m1" value="Freeze frame&#xa;(Space / tombol)&#xa;Status: FRAME FROZEN" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="700" width="160" height="70" as="geometry" />
+    </mxCell>
+    <mxCell id="m2" value="Mode: Start blue&#xa;calibration points&#xa;Klik 2 titik biru di Layar 1&#xa;(diameter pipa / laser)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf" vertex="1" parent="1">
+      <mxGeometry x="240" y="700" width="180" height="80" as="geometry" />
+    </mxCell>
+    <mxCell id="m3" value="Input known length&#xa;contoh 76.2 cm&#xa;Save calibration" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="460" y="700" width="160" height="80" as="geometry" />
+    </mxCell>
+    <mxCell id="m4" value="SpatialSight infer&#xa;pada frame beku&#xa;scale = L_fisik / L_depth" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="670" y="690" width="160" height="100" as="geometry" />
+    </mxCell>
+    <mxCell id="m5" value="Calibration COMPLETE&#xa;ESTIMATE ONLY /&#xa;VALID_SAME_FRAME" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="880" y="700" width="170" height="80" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="p1" target="m1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="m1" target="m2">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="m2" target="m3">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="m3" target="m4">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="m4" target="m5">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- MEASUREMENT BRANCHES -->
+    <mxCell id="s4" value="CABANG PENGUKURAN (pilih salah satu / kombinasi pada frame beku yang sama)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="840" width="800" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="b1" value="A. Measure yellow&#xa;2 titik kuning&#xa;→ jarak Euclidean 3D&#xa;Hasil: cm ± uncertainty" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+      <mxGeometry x="40" y="880" width="180" height="100" as="geometry" />
+    </mxCell>
+    <mxCell id="b2" value="B. Magenta distance&#xa;tepat 2 titik magenta&#xa;Calculate distance&#xa;Hasil: PATH_DISTANCE cm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666" vertex="1" parent="1">
+      <mxGeometry x="260" y="880" width="180" height="100" as="geometry" />
+    </mxCell>
+    <mxCell id="b3" value="C. Orange area polygon&#xa;≥3 titik oranye&#xa;Calculate 3D surface area&#xa;Hasil: SURFACE_AREA cm2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00" vertex="1" parent="1">
+      <mxGeometry x="480" y="880" width="190" height="100" as="geometry" />
+    </mxCell>
+    <mxCell id="b4" value="Clear points&#xa;hapus titik tanpa&#xa;resume video" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666" vertex="1" parent="1">
+      <mxGeometry x="720" y="890" width="140" height="80" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="m5" target="b1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="m5" target="b2">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="m5" target="b3">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- SNAPSHOT + GALLERY -->
+    <mxCell id="s5" value="FASE DOKUMENTASI — SNAPSHOT &amp; ROI GALLERY" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="1020" width="600" height="30" as="geometry" />
+    </mxCell>
+
+    <mxCell id="g1" value="Save snapshot to ROI Gallery&#xa;Simpan Optical Native View&#xa;+ canvas + metadata JSON&#xa;(measurement, calibration, scale)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="40" y="1060" width="220" height="90" as="geometry" />
+    </mxCell>
+    <mxCell id="g2" value="Buka /gallery&#xa;Unload HydroDetect + SpatialSight&#xa;(hemat VRAM RTX)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450" vertex="1" parent="1">
+      <mxGeometry x="300" y="1060" width="200" height="90" as="geometry" />
+    </mxCell>
+    <mxCell id="g3" value="ROI Gallery card&#xa;• Thumbnail JPEG terlihat&#xa;• Timestamp, frame, scale&#xa;• Hasil pengukuran cm/cm2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="540" y="1060" width="200" height="90" as="geometry" />
+    </mxCell>
+    <mxCell id="g4" value="Editor keterangan aktual&#xa;inspector (textarea)&#xa;Simpan → JSON metadata&#xa;notes_updated_at" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="780" y="1060" width="200" height="90" as="geometry" />
+    </mxCell>
+    <mxCell id="g5" value="Kembali ke Live Console&#xa;/live — lanjut inspeksi" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="1">
+      <mxGeometry x="1020" y="1070" width="180" height="70" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="b1" target="g1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="b2" target="g1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="b3" target="g1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="g1" target="g2">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="g2" target="g3">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="g3" target="g4">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;" edge="1" parent="1" source="g4" target="g5">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- RESUME LOOP -->
+    <mxCell id="r1" value="Resume live&#xa;Calibration DIHAPUS&#xa;(wajib kalibrasi ulang&#xa;pada frame baru)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+      <mxGeometry x="1020" y="880" width="180" height="90" as="geometry" />
+    </mxCell>
+    <mxCell id="e27" value="lanjut scene berikutnya" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=2;dashed=1;" edge="1" parent="1" source="r1" target="p1">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1260" y="925" />
+          <mxPoint x="1260" y="430" />
+          <mxPoint x="140" y="430" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=1;dashed=1;" edge="1" parent="1" source="m1" target="r1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=classic;strokeWidth=1;dashed=1;" edge="1" parent="1" source="g5" target="r1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- FEATURE CHECKLIST BOX -->
+    <mxCell id="k1" value="CHECKLIST FITUR CONSOLE (satu per satu)&#xa;&#xa;1. Video Transport: Freeze / Resume / Clear points&#xa;2. Optical Native View: stream raw + canvas klik (letterbox-aware)&#xa;3. HydroDetect Engine: toggle + mask/box segmentasi&#xa;4. AquaClear: enhancement realtime selalu ON&#xa;5. SpatialSight: toggle + depth preview Turbo relatif&#xa;6. Calibration biru + input cm + Save → scale factor&#xa;7. Measurement kuning → jarak 3D (cm)&#xa;8. Distance magenta (tepat 2 titik) → PATH_DISTANCE cm&#xa;9. Area oranye (≥3 titik) → SURFACE_AREA cm2&#xa;10. Save snapshot → JPEG + JSON di web/data/gallery&#xa;11. ROI Gallery thumbnail + editor keterangan inspector&#xa;12. Context gallery → unload model (anti-OOM)&#xa;13. System panel: VRAM, scale, inference state, logs&#xa;14. Keyboard Space = Freeze/Resume" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#f5f5f5;strokeColor=#666666;size=14;align=left;spacingLeft=8;fontSize=11" vertex="1" parent="1">
+      <mxGeometry x="40" y="1200" width="420" height="320" as="geometry" />
+    </mxCell>
+
+    <!-- LIBRARY / PROCESS NOTES -->
+    <mxCell id="k2" value="KETERANGAN DI LUAR BLOK FLOWCHART — LIBRARY &amp; PROSES&#xa;&#xa;STACK APLIKASI&#xa;• Flask ≥3.1 — web server, route API + MJPEG multipart stream&#xa;• OpenCV (cv2) — VideoCapture, resize/downscale, JPEG encode, overlay canvas, colormap Turbo&#xa;• NumPy — tensor depth Float32, back-projection 3D, mesh area&#xa;• PyTorch + CUDA — akselerasi HydroDetect &amp; SpatialSight (GPU 0)&#xa;• Ultralytics YOLO — backend HydroDetect (bobot mis. D:\rcvd\exp-5.pt, conf 0.7, retina_masks)&#xa;• Depth Anything 3 (DA3METRIC-LARGE via HF) — backend default SpatialSight&#xa;• Apple Depth Pro (opsional) — backend alternatif SpatialSight&#xa;• underwater_enhance.pipeline (AquaClear) — red compensation, WB, CLAHE, unsharp, temporal EMA (preset realtime)&#xa;• underwater_enhance.measurement — kalibrasi skala, Euclidean 3D, path distance, surface triangulation, uncertainty&#xa;&#xa;PROSES INTERNAL YANG TIDAK TAMPIL DI UI&#xa;• Worker thread vision-worker: pacing FPS sumber, publish 4 panel&#xa;• Worker depth-preview-worker: inference keyframe async (tidak menahan playback)&#xa;• Stream max side default 640 (--stream-max-side); klik tetap x_norm/y_norm ke resolusi penuh&#xa;• Angka meter/cm dihitung dari tensor depth mentah, BUKAN dari warna colormap&#xa;• Resume menginvalidasi REFERENCE_SCALED (cegah INVALID_CROSS_FRAME)&#xa;• Satuan tampilan operator: cm dan cm2&#xa;• Gallery path absolut: web/data/gallery/{id}.jpg + {id}.json&#xa;&#xa;BATAS VALIDITAS&#xa;• UNCALIBRATED | ESTIMATE_ONLY_SAME_FRAME | VALID_SAME_FRAME | INVALID_CROSS_FRAME&#xa;• Intrinsics underwater default: NOT CALIBRATED (asumsi focal model)&#xa;• Hasil untuk prioritas review / estimasi; bukan sertifikat metrologi tanpa K underwater" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;size=14;align=left;spacingLeft=8;fontSize=10" vertex="1" parent="1">
+      <mxGeometry x="500" y="1200" width="700" height="380" as="geometry" />
+    </mxCell>
+
+    <!-- LEGEND -->
+    <mxCell id="lg" value="LEGENDA WARNA&#xa;Merah muda = kontrol operator / transport&#xa;Biru = Optical Native View / klik titik&#xa;Ungu = HydroDetect&#xa;Hijau = AquaClear / hasil / gallery&#xa;Kuning = SpatialSight / depth / measurement&#xa;Oranye = area / aset pipa&#xa;Garis putus = opsional / loop resume" style="shape=note;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;size=14;align=left;spacingLeft=8;fontSize=11" vertex="1" parent="1">
+      <mxGeometry x="1240" y="1200" width="280" height="180" as="geometry" />
+    </mxCell>
+  </root>
+</mxGraphModel>

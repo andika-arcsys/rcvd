@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ROI Inspection Gallery</title>
+  <style>
+    :root {
+      --bg:#0b1220; --panel:#111c2e; --line:#263650; --text:#dbeafe;
+      --green:#26e48a; --muted:#8da2c0; --red:#fb7185;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:14px "Segoe UI",system-ui,sans-serif; }
+    header {
+      padding:14px 20px; border-bottom:1px solid var(--line);
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+    }
+    a { color:var(--green); text-decoration:none; }
+    main { padding:20px; max-width:1400px; margin:0 auto; }
+    #grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));
+      gap:18px;
+    }
+    article {
+      background:var(--panel); border:1px solid var(--line); border-radius:12px;
+      overflow:hidden; display:flex; flex-direction:column;
+    }
+    .thumb-wrap {
+      background:#05080f; min-height:220px; max-height:320px;
+      display:flex; align-items:center; justify-content:center;
+      border-bottom:1px solid var(--line);
+    }
+    .thumb-wrap img {
+      width:100%; height:220px; object-fit:contain; display:block; background:#000;
+    }
+    .thumb-wrap .missing {
+      color:var(--red); padding:24px; text-align:center;
+    }
+    .meta { padding:14px; color:var(--muted); line-height:1.55; display:grid; gap:10px; }
+    .meta strong { color:var(--text); }
+    .facts { font:12px ui-monospace,Consolas,monospace; }
+    label { display:grid; gap:6px; color:var(--muted); font-size:12px; }
+    textarea {
+      width:100%; min-height:96px; resize:vertical;
+      background:#0b1424; color:var(--text); border:1px solid var(--line);
+      border-radius:8px; padding:10px; font:13px "Segoe UI",system-ui,sans-serif;
+    }
+    button {
+      background:#17243a; color:var(--text); border:1px solid var(--line);
+      border-radius:6px; padding:9px 12px; cursor:pointer; width:fit-content;
+    }
+    button:hover { border-color:var(--green); color:var(--green); }
+    .status { font-size:12px; min-height:1.2em; }
+    .status.ok { color:var(--green); }
+    .status.err { color:var(--red); }
+    .empty { color:var(--muted); padding:48px 20px; text-align:center; grid-column:1 / -1; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>ROI GALLERY — Optical Native View Snapshots</strong>
+    <a href="/live">← Live Inspection Console</a>
+  </header>
+  <main>
+    <div id="grid"><div class="empty">Loading snapshots…</div></div>
+  </main>
+  <script>
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;');
+    }
+
+    function measurementText(item) {
+      const g = item.geometry_measurement;
+      if (g) {
+        return `${g.kind}: ${Number(g.value).toFixed(2)} ${g.unit} ± ${Number(g.uncertainty).toFixed(2)} ${g.unit} [${g.validity}]`;
+      }
+      const m = item.measurement;
+      if (!m) return 'No measurement';
+      return `${(m.distance_m * 100).toFixed(2)} cm ± ${(m.uncertainty_m * 100).toFixed(2)} cm [${m.validity || m.status}]`;
+    }
+
+    function renderCard(item) {
+      const notes = item.inspector_notes || '';
+      const bust = item.image_mtime || Date.now();
+      const imageBlock = item.has_image === false
+        ? `<div class="missing">Gambar tidak ditemukan<br><small>${escapeHtml(item.image || item.id)}</small></div>`
+        : `<img src="/api/gallery/${encodeURIComponent(item.id)}/image?v=${bust}" alt="ROI snapshot ${escapeHtml(item.id)}" loading="lazy">`;
+      const scale = item.calibration ? `${item.calibration.source} (${Number(item.calibration.scale).toFixed(4)}x)` : '-';
+      return `<article data-id="${escapeHtml(item.id)}">
+        <div class="thumb-wrap">${imageBlock}</div>
+        <div class="meta">
+          <div>
+            <strong>${escapeHtml(item.created_at || '-')}</strong><br>
+            <span class="facts">
+              View: ${escapeHtml(item.view || 'Optical Native View')}<br>
+              Frame: ${escapeHtml(item.frame_id)}<br>
+              Measurement: ${escapeHtml(measurementText(item))}<br>
+              Scale: ${escapeHtml(scale)}
+            </span>
+          </div>
+          <label>Keterangan aktual inspector
+            <textarea data-notes placeholder="Tulis hasil observasi, kondisi pipa, free span, anomali, dll.">${escapeHtml(notes)}</textarea>
+          </label>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button type="button" data-save>Simpan keterangan</button>
+            <span class="status" data-status></span>
+          </div>
+        </div>
+      </article>`;
+    }
+
+    async function saveNotes(article) {
+      const id = article.dataset.id;
+      const notes = article.querySelector('[data-notes]').value;
+      const status = article.querySelector('[data-status]');
+      status.className = 'status';
+      status.textContent = 'Menyimpan…';
+      try {
+        const response = await fetch(`/api/gallery/${encodeURIComponent(id)}/notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Gagal menyimpan');
+        status.className = 'status ok';
+        status.textContent = `Tersimpan ${data.notes_updated_at || ''}`.trim();
+      } catch (error) {
+        status.className = 'status err';
+        status.textContent = error.message;
+      }
+    }
+
+    async function load() {
+      const grid = document.getElementById('grid');
+      try {
+        const entries = await fetch('/api/gallery').then((r) => r.json());
+        if (!Array.isArray(entries) || !entries.length) {
+          grid.innerHTML = '<div class="empty">Belum ada snapshot. Simpan frame dari Live Console (Optical Native View).</div>';
+          return;
+        }
+        grid.innerHTML = entries.map(renderCard).join('');
+        grid.querySelectorAll('article [data-save]').forEach((button) => {
+          button.addEventListener('click', () => saveNotes(button.closest('article')));
+        });
+      } catch (error) {
+        grid.innerHTML = `<div class="empty">Gagal memuat gallery: ${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    // Jangan unload context sebelum thumbnail siap; gallery page sudah set context di server route.
+    load();
+  </script>
+</body>
+</html>
