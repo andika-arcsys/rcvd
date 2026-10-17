@@ -6,13 +6,30 @@ Folder ini adalah **root proyek DeepInsight**. Kode lama di root repo (`underwat
 
 ## Status
 
-Fase 0 (pelajari sumber) dan desain arsitektur selesai. Kode aplikasi belum ada. Fase 1 (kerangka monorepo) adalah langkah berikutnya.
+Fase 1 selesai: monorepo berjalan. Engine menjawab `/health` dan `/diagnostics`. Tampilan punya 24 rute (masih kerangka: judul, kode, dan tautan transisi). Isi layar, model AI, dan modul ukur menyusul pada fase berikutnya.
+
+## Menjalankan
+
+Dari folder `v2/`, dengan Python 3.12, Node 20+, dan pnpm:
+
+```bash
+make setup
+make dev
+```
+
+`make dev` menyalakan engine di `http://127.0.0.1:8765` dan tampilan di `http://127.0.0.1:5173`. `make test` menjalankan pytest dan vitest. `make lint` menjalankan ruff, mypy, eslint, dan prettier.
+
+Shell Tauri (`make tauri-dev`) butuh Rust dan dependensi sistem Tauri (di Linux: webkit2gtk 4.1). Target produksi tetap Windows 10/11.
 
 ## Peta folder
 
 | Folder | Isi |
 | --- | --- |
-| `docs/` | `SPEC_Fungsional.md` (sumber utama), `ANSWERS_OPEN_QUESTIONS.md`, `ARCHITECTURE.md`, `DECISIONS.md`, `DESIGN_DELTA.md`, `STUDY_NOTES.md`, `NAVIGATION_MAP.md`, `DATA_MODEL.md`, `OPEN_QUESTIONS.md`, `PENJELASAN_ATURAN_CURSOR.md` |
+| `apps/desktop/` | Tampilan Tauri 2 + React + TypeScript + Vite |
+| `services/engine/` | Engine Python 3.12 (FastAPI) |
+| `packages/shared/` | Tipe klien dari OpenAPI |
+| `config/` | Ambang, peran, kontrol, dan `app.yaml` |
+| `docs/` | `SPEC_Fungsional.md` (sumber utama), `ANSWERS_OPEN_QUESTIONS.md`, `ARCHITECTURE.md`, `DECISIONS.md`, `DESIGN_DELTA.md`, `STUDY_NOTES.md`, `NAVIGATION_MAP.md`, `DATA_MODEL.md`, `OPEN_QUESTIONS.md`, `PENJELASAN_ATURAN_CURSOR.md`, `ERROR_CODES.md` |
 | `mockups/` | 25 berkas `.dc.html` (24 layar + komponen Nav) |
 | `flowmap/` | Flow map draw.io (3 halaman, 88 garis bernomor) |
 | `reference/` | Salinan PDF, JPG, `.drawio.xml` dan README handoff asli; jangan dijadikan rujukan |

@@ -1,0 +1,28 @@
+# Matriks akses peran x menu. USULAN – perlu konfirmasi tim.
+# full = akses penuh, view = lihat saja, none = tidak ada akses.
+schema_version: 1
+
+roles:
+  - ketua_tim
+  - pilot_drone
+  - ahli_ukur
+  - pengelola_data
+  - teknisi_program
+  - pemeriksa_teknik
+  - manajemen
+
+default_admin_roles: [ketua_tim, teknisi_program]
+
+menus:
+  dashboard:      {ketua_tim: full, pilot_drone: full, ahli_ukur: full, pengelola_data: full, teknisi_program: full, pemeriksa_teknik: full, manajemen: view}
+  misi:           {ketua_tim: full, pilot_drone: view, ahli_ukur: view, pengelola_data: view, teknisi_program: view, pemeriksa_teknik: view, manajemen: none}
+  live_operation: {ketua_tim: full, pilot_drone: full, ahli_ukur: full, pengelola_data: view, teknisi_program: view, pemeriksa_teknik: view, manajemen: none}
+  review:         {ketua_tim: full, pilot_drone: none, ahli_ukur: view, pengelola_data: none, teknisi_program: none, pemeriksa_teknik: full, manajemen: none}
+  gallery:        {ketua_tim: full, pilot_drone: view, ahli_ukur: full, pengelola_data: full, teknisi_program: view, pemeriksa_teknik: full, manajemen: none}
+  laporan:        {ketua_tim: full, pilot_drone: none, ahli_ukur: view, pengelola_data: view, teknisi_program: none, pemeriksa_teknik: full, manajemen: view}
+  pims_rbi:       {ketua_tim: full, pilot_drone: none, ahli_ukur: none, pengelola_data: none, teknisi_program: none, pemeriksa_teknik: full, manajemen: none}
+  analisis_ai:    {ketua_tim: view, pilot_drone: none, ahli_ukur: none, pengelola_data: none, teknisi_program: full, pemeriksa_teknik: view, manajemen: none}
+  sustainability: {ketua_tim: full, pilot_drone: view, ahli_ukur: view, pengelola_data: view, teknisi_program: view, pemeriksa_teknik: full, manajemen: view}
+  arsip:          {ketua_tim: full, pilot_drone: view, ahli_ukur: view, pengelola_data: full, teknisi_program: view, pemeriksa_teknik: full, manajemen: view}
+  pengaturan:     {ketua_tim: full, pilot_drone: none, ahli_ukur: none, pengelola_data: none, teknisi_program: full, pemeriksa_teknik: none, manajemen: none}
+  keluar:         {ketua_tim: full, pilot_drone: full, ahli_ukur: full, pengelola_data: full, teknisi_program: full, pemeriksa_teknik: full, manajemen: full}

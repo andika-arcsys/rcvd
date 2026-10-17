@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+dist/
+target/
+*.log
+.DS_Store
+# Data runtime dan model berat tidak di-commit
+cache/
+models/**/*.pt
+models/**/*.onnx

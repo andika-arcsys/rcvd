@@ -1,0 +1,61 @@
+# Semua ambang dan batas DeepInsight. Tidak ada angka di kode.
+# Penanda: SUMBER = dari skenario/prosedur/keputusan desain; USULAN = perlu konfirmasi tim.
+schema_version: 1
+
+calibration:
+  rel_uncertainty_basis: 2sigma   # SUMBER: ambang berlaku pada +-2 sigma (angka yang tampil)
+  click_sigma_px: 1.5             # USULAN – perlu konfirmasi tim (galat klik node)
+  valid_max_rel: 0.03             # USULAN – perlu konfirmasi tim (<= 3% VALID)
+  estimate_max_rel: 0.10          # USULAN – perlu konfirmasi tim (3-10% ESTIMATE_ONLY, >10% UNCALIBRATED)
+  diameter_sanity_pct: 10         # USULAN – perlu konfirmasi tim (peringatan saja)
+  edge_risk_px: 5                 # USULAN – perlu konfirmasi tim (DEPTH_EDGE_RISK v1)
+  camera_file_required_for_valid: true  # SUMBER: tanpa file kamera status maksimal ESTIMATE_ONLY
+
+rod_test:
+  length_m: 1.0                   # SUMBER
+  tolerance_pct: 3                # SUMBER
+
+freeze:
+  max_delta_cm: 5                 # SUMBER: dua freeze per segmen
+
+span:
+  rope_tolerance_pct: 2           # SUMBER
+  segment_target_m: 2.0           # USULAN – perlu konfirmasi tim
+  warning_ratio: 0.8              # USULAN – perlu konfirmasi tim
+  critical_limit_m:               # SUMBER
+    inch_16: 9.65
+    inch_8: 5.32
+
+pipe:
+  nominal_od_mm:                  # USULAN – perlu konfirmasi tim (OD nominal)
+    inch_16: 406.4
+    inch_8: 219.1
+
+inspection_interval_years:        # SUMBER: PR-06-117
+  low: 3
+  low_to_moderate: 2
+  moderate_and_above: 1
+
+auth:
+  max_attempts: 5                 # USULAN – perlu konfirmasi tim
+  lock_minutes: 15                # USULAN – perlu konfirmasi tim
+
+performance:
+  watchdog_interval_s: 2          # SUMBER
+  fps_min: 15                     # USULAN – perlu konfirmasi tim
+  fps_window_s: 5                 # USULAN – perlu konfirmasi tim
+  vram_max_pct: 85                # USULAN – perlu konfirmasi tim
+  gpu_max_pct: 95                 # USULAN – perlu konfirmasi tim
+  gpu_window_s: 10                # USULAN – perlu konfirmasi tim
+  vram_baseline_tolerance_mb: 150 # USULAN – perlu konfirmasi tim (target rancangan)
+
+video:
+  width: 1920                     # USULAN – perlu konfirmasi tim
+  height: 1080
+  fps: 30
+  lost_signal_s: 2                # USULAN – perlu konfirmasi tim
+  ring_buffer_s: 3                # USULAN – perlu konfirmasi tim
+  display_max_side: 1280          # USULAN – perlu konfirmasi tim
+
+cache:
+  max_mb: 2048                    # USULAN – perlu konfirmasi tim

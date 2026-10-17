@@ -1,0 +1,16 @@
+# Pemetaan kontrol. USULAN – perlu konfirmasi tim. Dapat dipetakan ulang.
+schema_version: 1
+
+keyboard:
+  freeze: Space
+  mark_finding: KeyT
+  tab_optical: F1
+  tab_aquaclear: F2
+  tab_hydrodetect: F3
+  tab_spatialsight: F4
+  tab_canvas: F5
+
+gamepad:            # layout Xbox / XInput
+  freeze: A
+  feature_prev: LB
+  feature_next: RB
