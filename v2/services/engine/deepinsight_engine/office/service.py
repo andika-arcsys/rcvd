@@ -26,8 +26,10 @@ from deepinsight_engine.measure import (
 from deepinsight_engine.measure.compare import geq
 
 from .db import Database
+from .findings import insert_candidate, list_candidates
 from .models import (
     DashboardView,
+    FindingView,
     LoginResult,
     MissionInput,
     MissionView,
@@ -66,6 +68,10 @@ class Office:
         self.session_id = session_id
         self.db = Database(data_dir / "deepinsight.db")
         self._user_id: str | None = None
+
+    @property
+    def user_id(self) -> str | None:
+        return self._user_id
 
     def audit(
         self, action: str, *, user_id: str | None, entity: str, entity_id: str, detail: str
@@ -316,6 +322,20 @@ class Office:
             missions=missions,
             remeasure=tasks,
         )
+
+    def add_finding(self, frame_id: str, jpeg_path: str) -> int:
+        row_id = insert_candidate(self.db, self.session_id, frame_id, jpeg_path)
+        self.audit(
+            "mark_finding",
+            user_id=self._user_id,
+            entity="finding",
+            entity_id=frame_id,
+            detail=jpeg_path,
+        )
+        return row_id
+
+    def findings(self) -> list[FindingView]:
+        return list_candidates(self.db)
 
     def add_review_item(
         self, kind: str, title: str, span_m: float | None, limit_m: float | None

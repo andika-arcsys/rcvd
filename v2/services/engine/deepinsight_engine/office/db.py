@@ -62,7 +62,10 @@ CREATE TABLE IF NOT EXISTS review_items (
   title TEXT NOT NULL,
   span_m REAL,
   limit_m REAL,
-  decided INTEGER NOT NULL
+  decided INTEGER NOT NULL,
+  frame_id TEXT,
+  jpeg_path TEXT,
+  session_id TEXT
 );
 CREATE TABLE IF NOT EXISTS remeasure (
   id INTEGER PRIMARY KEY,
@@ -79,6 +82,7 @@ class Database:
         path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as conn:
             conn.executescript(_SCHEMA)
+            _migrate_review(conn)
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
@@ -89,3 +93,13 @@ class Database:
             conn.commit()
         finally:
             conn.close()
+
+
+def _migrate_review(conn: sqlite3.Connection) -> None:
+    cols = {str(row[1]) for row in conn.execute("PRAGMA table_info(review_items)")}
+    if "frame_id" not in cols:
+        conn.execute("ALTER TABLE review_items ADD COLUMN frame_id TEXT")
+    if "jpeg_path" not in cols:
+        conn.execute("ALTER TABLE review_items ADD COLUMN jpeg_path TEXT")
+    if "session_id" not in cols:
+        conn.execute("ALTER TABLE review_items ADD COLUMN session_id TEXT")

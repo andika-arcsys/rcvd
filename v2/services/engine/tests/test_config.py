@@ -25,6 +25,9 @@ def test_repo_config_loads(config_dir: Path) -> None:
     assert thr.measure.undistort_iterations == 20
     assert thr.calibration.min_baseline_px == 150
     assert thr.laser.ref_cm is None
+    assert settings.video.source.kind is None
+    assert settings.video.recording.enabled is False
+    assert settings.video.turbidity.rms_low_max is None
 
 
 def test_roles_matrix_is_complete(config_dir: Path) -> None:

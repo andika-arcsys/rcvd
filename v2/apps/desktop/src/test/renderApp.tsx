@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { AppRoutes } from '../App';
 import { EngineProvider } from '../engine/EngineProvider';
-import { SessionProvider, type SessionUser } from '../session/SessionContext';
+import { SessionProvider, type FrozenFrame, type SessionUser } from '../session/SessionContext';
 
 const ROLES = {
   schema_version: 1,
@@ -87,6 +87,8 @@ export function renderApp(
     role?: string;
     user?: SessionUser | null;
     missionName?: string | null;
+    frozen?: FrozenFrame | null;
+    unsavedMeasure?: boolean;
     children?: ReactNode;
   } = {},
 ) {
@@ -97,6 +99,8 @@ export function renderApp(
         initialRole={options.role ?? ''}
         initialUser={options.user ?? null}
         initialMissionName={options.missionName ?? null}
+        initialFrozen={options.frozen ?? null}
+        initialUnsavedMeasure={options.unsavedMeasure ?? false}
       >
         <MemoryRouter
           initialEntries={[path]}

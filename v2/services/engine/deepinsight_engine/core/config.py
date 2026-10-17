@@ -9,6 +9,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
 from .errors import EngineError
+from .video_config import VideoFile
 
 Access = Literal["full", "view", "none"]
 
@@ -255,6 +256,7 @@ class Settings(_Strict):
     aquaclear: AquaclearConfig
     pipelines: PipelineFile
     users: UsersFile
+    video: VideoFile
 
 
 def _load_yaml(path: Path) -> object:
@@ -281,4 +283,5 @@ def load_settings(config_dir: Path) -> Settings:
         aquaclear=_validate(AquaclearConfig, config_dir / "aquaclear_presets.yaml"),
         pipelines=_validate(PipelineFile, config_dir / "pipelines.yaml"),
         users=_validate(UsersFile, config_dir / "users.yaml"),
+        video=_validate(VideoFile, config_dir / "video.yaml"),
     )

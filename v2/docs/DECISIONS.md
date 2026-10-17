@@ -71,6 +71,7 @@ Status semua ADR: **Diusulkan**, menunggu persetujuan. Format: Konteks → Keput
 - **Keputusan.** Engine mengirim JPEG ber-resolusi tampilan (≤ 1280 px sisi panjang) beserta `frame_id` lewat WebSocket biner. UI memakai canvas video + lapisan canvas overlay terpisah. Mask AI dikirim sebagai poligon/RLE kecil, bukan gambar.
 - **Alternatif.** MJPEG HTTP (tanpa frame_id yang rapi); WebRTC (kompleks untuk lokal); decode di Rust (lebih cepat, kompleks).
 - **Konsekuensi.** Perlu kompresi tampilan di engine (CPU). Bila fps tampilan kurang, naikkan ke jalur Rust/native di fase optimasi.
+- **Fase 5.** Pilihan ini dikunci untuk Optical Native View: WebSocket mengirim JSON `frame_id` lalu JPEG biner tampilan. Overlay tetap di kanvas UI. WebRTC dan MJPEG tidak dipakai.
 
 ## ADR-011 Semua ambang di config; salinan ke Mission [J]
 

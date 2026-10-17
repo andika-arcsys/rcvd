@@ -6,6 +6,11 @@ export interface SessionUser {
   roles: string[];
 }
 
+export interface FrozenFrame {
+  frameId: string;
+  snapshotId: string;
+}
+
 interface SessionState {
   role: string;
   setRole: (role: string) => void;
@@ -15,6 +20,10 @@ interface SessionState {
   setUser: (user: SessionUser | null) => void;
   limitedMode: boolean;
   setLimitedMode: (value: boolean) => void;
+  frozen: FrozenFrame | null;
+  setFrozen: (value: FrozenFrame | null) => void;
+  unsavedMeasure: boolean;
+  setUnsavedMeasure: (value: boolean) => void;
 }
 
 const SessionContext = createContext<SessionState | null>(null);
@@ -25,16 +34,22 @@ export function SessionProvider({
   initialRole = '',
   initialUser = null,
   initialMissionName = null,
+  initialFrozen = null,
+  initialUnsavedMeasure = false,
 }: {
   children: ReactNode;
   initialRole?: string;
   initialUser?: SessionUser | null;
   initialMissionName?: string | null;
+  initialFrozen?: FrozenFrame | null;
+  initialUnsavedMeasure?: boolean;
 }) {
   const [role, setRole] = useState(initialRole);
   const [missionName, setMissionName] = useState(initialMissionName);
   const [user, setUser] = useState(initialUser);
   const [limitedMode, setLimitedMode] = useState(false);
+  const [frozen, setFrozen] = useState(initialFrozen);
+  const [unsavedMeasure, setUnsavedMeasure] = useState(initialUnsavedMeasure);
   const value = useMemo(
     () => ({
       role,
@@ -45,8 +60,12 @@ export function SessionProvider({
       setUser,
       limitedMode,
       setLimitedMode,
+      frozen,
+      setFrozen,
+      unsavedMeasure,
+      setUnsavedMeasure,
     }),
-    [role, missionName, user, limitedMode],
+    [role, missionName, user, limitedMode, frozen, unsavedMeasure],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

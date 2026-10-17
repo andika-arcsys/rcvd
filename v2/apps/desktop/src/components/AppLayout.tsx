@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useEngine } from '../engine/EngineProvider';
 import { t } from '../i18n';
 import { screenByPath } from '../navigation/registry';
 import { useSession } from '../session/SessionContext';
-import { ConfirmDialog } from './ConfirmDialog';
+import { ExitPrompt } from './ExitPrompt';
 import { Header } from './Header';
 import { Sidebar, type AccessMap } from './Sidebar';
 
 /** Layar kerja: sidebar global + header. Layar tanpa sidebar memakai Outlet langsung. */
 export function AppLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { role, missionName } = useSession();
+  const { role, missionName, frozen, unsavedMeasure } = useSession();
   const { roles } = useEngine();
   const [confirmExit, setConfirmExit] = useState(false);
   const screen = screenByPath(location.pathname);
@@ -41,22 +40,10 @@ export function AppLayout() {
         </main>
       </div>
       {confirmExit && (
-        <ConfirmDialog
-          title={t('common.exitTitle')}
-          actions={[
-            { label: t('common.cancel'), onSelect: () => setConfirmExit(false) },
-            {
-              label: t('common.exit'),
-              tone: 'danger',
-              onSelect: () => {
-                setConfirmExit(false);
-                navigate('/penutupan');
-              },
-            },
-          ]}
-        >
-          {t('common.exitBody')}
-        </ConfirmDialog>
+        <ExitPrompt
+          held={frozen !== null || unsavedMeasure}
+          onClose={() => setConfirmExit(false)}
+        />
       )}
     </div>
   );

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -75,6 +75,19 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.runtime.stop()
 
 
+def _audit_from(office: Office) -> Callable[[str, str, str, str], None]:
+    def audit(action: str, entity: str, entity_id: str, detail: str) -> None:
+        office.audit(
+            action,
+            user_id=office.user_id,
+            entity=entity,
+            entity_id=entity_id,
+            detail=detail,
+        )
+
+    return audit
+
+
 def create_app(
     config_dir: Path | None = None,
     data_dir: Path | None = None,
@@ -107,6 +120,7 @@ def create_app(
     app.state.errors = ErrorLog()
     app.state.runtime = build_runtime(cfg, cfg_dir, resolved_data, app.state.errors.add)
     app.state.office = Office(resolved_data, cfg_dir, cfg, session)
+    app.state.runtime.bind_audit(_audit_from(app.state.office))
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cfg.app.engine.cors_origins,

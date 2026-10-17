@@ -1,0 +1,15 @@
+# D-02 sumber video lapangan belum diisi. null = engine tidak membuka perangkat saat mulai.
+schema_version: 1
+source:
+  kind: null
+  path: null
+  device_index: null
+  rtsp_url: null
+recording:
+  enabled: false
+# Q-UI-3 ambang kekeruhan (RMS kontras dan varians Laplacian) belum diisi tim.
+turbidity:
+  rms_low_max: null
+  rms_medium_max: null
+  laplacian_low_max: null
+  laplacian_medium_max: null

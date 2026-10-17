@@ -21,10 +21,12 @@ def test_gpu_model_without_weights_stays_optical(client: TestClient) -> None:
     assert client.get("/models").json()["state"] == "optical"
 
 
-def test_camera_driver_is_not_installed(client: TestClient) -> None:
+def test_missing_camera_is_vid_003(client: TestClient) -> None:
     response = client.post("/video/device", json={"kind": "camera"})
     assert response.status_code == 503
-    assert response.json()["code"] == "VID-003"
+    body = response.json()
+    assert body["code"] == "VID-003"
+    assert "belum terpasang" not in (body["detail"] or "")
 
 
 def test_synthetic_freeze_is_raw_png_outside_cache(client: TestClient, tmp_path: Path) -> None:

@@ -191,6 +191,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/video/performance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Video Performance */
+        get: operations["video_performance_video_performance_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/freeze": {
         parameters: {
             query?: never;
@@ -202,6 +219,24 @@ export interface paths {
         put?: never;
         /** Freeze */
         post: operations["freeze_freeze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Findings */
+        get: operations["list_findings_findings_get"];
+        put?: never;
+        /** Mark Finding */
+        post: operations["mark_finding_findings_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -473,6 +508,12 @@ export interface components {
         DeviceRequest: {
             /** Kind */
             kind: string;
+            /** Path */
+            path?: string | null;
+            /** Device Index */
+            device_index?: number | null;
+            /** Rtsp Url */
+            rtsp_url?: string | null;
         };
         /** DiagnosticsReport */
         DiagnosticsReport: {
@@ -525,6 +566,19 @@ export interface components {
         FileRequest: {
             /** Path */
             path: string;
+        };
+        /** FindingView */
+        FindingView: {
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string;
+            /** Frame Id */
+            frame_id: string | null;
+            /** Jpeg Path */
+            jpeg_path: string | null;
         };
         /** FrameList */
         FrameList: {
@@ -644,6 +698,22 @@ export interface components {
             /** Roles */
             roles: string[];
         };
+        /** MarkRequest */
+        MarkRequest: {
+            /** Frame Id */
+            frame_id: string;
+        };
+        /** MarkResult */
+        MarkResult: {
+            /** Id */
+            id: number;
+            /** Frame Id */
+            frame_id: string;
+            /** Path */
+            path: string;
+            /** Sha256 */
+            sha256: string;
+        };
         /** Measure */
         Measure: {
             /** Heron Rel Tol */
@@ -748,6 +818,21 @@ export interface components {
             unload_timeout_s: number;
             /** Load Timeout S */
             load_timeout_s: number;
+        };
+        /** PerformanceView */
+        PerformanceView: {
+            /** Warning */
+            warning: string | null;
+            /** Detail */
+            detail: string | null;
+            /** Fps */
+            fps: number | null;
+            /** Gpu Util Pct */
+            gpu_util_pct: number | null;
+            /** Vram Used Mb */
+            vram_used_mb: number | null;
+            /** Vram Total Mb */
+            vram_total_mb: number | null;
         };
         /** Pipe */
         Pipe: {
@@ -968,6 +1053,24 @@ export interface components {
             frame_count: number;
             /** Enhanced */
             enhanced: boolean;
+            /** Fps */
+            fps: number | null;
+            /** Recording */
+            recording: boolean;
+            /** Turbidity Level */
+            turbidity_level: string | null;
+            /** Turbidity Configured */
+            turbidity_configured: boolean;
+            /** Gpu Util Pct */
+            gpu_util_pct: number | null;
+            /** Lost */
+            lost: boolean;
+            /** Snapshot Count */
+            snapshot_count: number;
+            /** Performance Warning */
+            performance_warning: string | null;
+            /** Performance Detail */
+            performance_detail: string | null;
         };
     };
     responses: never;
@@ -1279,7 +1382,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["VideoStatus"];
                 };
             };
             /** @description Validation Error */
@@ -1324,6 +1427,37 @@ export interface operations {
             };
         };
     };
+    video_performance_video_performance_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerformanceView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     freeze_freeze_post: {
         parameters: {
             query?: never;
@@ -1346,6 +1480,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FreezeResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_findings_findings_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FindingView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_finding_findings_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarkResult"];
                 };
             };
             /** @description Validation Error */

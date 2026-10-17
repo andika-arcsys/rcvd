@@ -10,15 +10,18 @@ from pathlib import Path
 from .core.config import Settings
 from .core.errors import EngineError
 from .core.ids import uuid7
-from .diagnostics import LiveStatus
+from .diagnostics import LiveStatus, probe_gpu
 from .gpu.cache import CacheManager
 from .gpu.manager import ModelManager
 from .gpu.probe import VramProbe
 from .gpu.watchdog import Watchdog
+from .video.capture import CaptureLoop
 from .video.evidence import store_png
-from .video.file_source import read_file, reject_live_device
+from .video.file_source import open_live, read_file
 from .video.frames import RingBuffer, StoredFrame
+from .video.marks import store_jpeg
 from .video.pipeline import FramePipeline
+from .video.quality import configured, turbidity_level
 from .video.synthetic import gradient_bgr
 
 
@@ -40,6 +43,10 @@ class Runtime:
         self._thread: threading.Thread | None = None
         self._lost: str | None = None
         self._sent_warning: str | None = None
+        self._lock = threading.RLock()
+        self._audit: Callable[[str, str, str, str], None] = _noop_audit
+        self._capture = CaptureLoop(self._ingest, settings.thresholds.video.fps)
+        self._marks = data_dir / "marks"
         self.models = ModelManager(
             settings.models,
             models_dir,
@@ -62,37 +69,45 @@ class Runtime:
     def start(self) -> None:
         self._thread = threading.Thread(target=self._loop, name="di-watchdog", daemon=True)
         self._thread.start()
+        self._open_configured_source()
 
     def stop(self) -> None:
         self._stop.set()
         if self._thread is not None:
             self._thread.join(timeout=1)
+        self._capture.stop()
         self.models.close()
 
+    def bind_audit(self, audit: Callable[[str, str, str, str], None]) -> None:
+        self._audit = audit
+
     def poll(self) -> None:
-        lost = self.pipeline.observe(time.monotonic())
+        with self._lock:
+            lost = self.pipeline.observe(time.monotonic())
         if lost and lost != self._lost:
             self._on_error(lost, "sinyal video")
         self._lost = lost
         warning = self.watchdog.tick()
         if warning and warning != self._sent_warning:
             self._on_error(warning, self.watchdog.detail)
+            self._audit("performance_warning", "watchdog", warning, self.watchdog.detail or "")
         self._sent_warning = warning
 
     def status(self) -> LiveStatus:
         now = time.monotonic()
-        return LiveStatus(
-            model_active=self.models.active,
-            model_state=self.models.state,
-            workers=self.models.workers,
-            video_state=self.pipeline.state,
-            fps_display=self.pipeline.fps("display", now),
-            fps_inference=self.pipeline.fps("infer", now),
-            frame_count=len(self.pipeline.ring),
-            cache_mb=self.cache.used_mb(),
-            performance_warning=self.watchdog.warning,
-            performance_detail=self.watchdog.detail,
-        )
+        with self._lock:
+            return LiveStatus(
+                model_active=self.models.active,
+                model_state=self.models.state,
+                workers=self.models.workers,
+                video_state=self.pipeline.state,
+                fps_display=self.pipeline.fps("display", now),
+                fps_inference=self.pipeline.fps("infer", now),
+                frame_count=len(self.pipeline.ring),
+                cache_mb=self.cache.used_mb(),
+                performance_warning=self.watchdog.warning,
+                performance_detail=self.watchdog.detail,
+            )
 
     def switch(self, name: str, preset: str | None) -> None:
         self.models.switch(name, preset)
@@ -108,28 +123,122 @@ class Runtime:
         stored = [StoredFrame(uuid7(), now, width, height, bgr) for width, height, bgr in frames]
         return self._push_many(stored)
 
-    def open_device(self, kind: str) -> None:
-        reject_live_device(kind)
+    def open_device(
+        self,
+        kind: str,
+        path: str | None = None,
+        device_index: int | None = None,
+        rtsp_url: str | None = None,
+    ) -> None:
+        capture = open_live(kind, path, device_index, rtsp_url)
+        self._capture.start(capture)
 
     def freeze(self, frame_id: str, session: str) -> dict[str, object]:
-        frame = self.pipeline.ring.get(frame_id)
+        with self._lock:
+            self._reject_lost(frame_id)
+            frame = self.pipeline.ring.get(frame_id)
+            if frame is None:
+                raise EngineError("VID-002", frame_id)
+            if not (self._evidence / f"{frame.frame_id}.png").is_file():
+                self._serial += 1
+            return store_png(self._evidence, frame, session, max(self._serial, 1))
+
+    def mark(self, frame_id: str) -> tuple[str, str]:
+        with self._lock:
+            self._reject_lost(frame_id)
+            frame = self.pipeline.ring.get(frame_id)
         if frame is None:
             raise EngineError("VID-002", frame_id)
-        if not (self._evidence / f"{frame.frame_id}.png").is_file():
-            self._serial += 1
-        return store_png(self._evidence, frame, session, max(self._serial, 1))
+        video = self._settings.thresholds.video
+        path, digest = store_jpeg(
+            self._marks, frame, video.display_max_side, video.display_jpeg_quality
+        )
+        return str(path), digest
+
+    def video_view(self) -> dict[str, object]:
+        with self._lock:
+            shown = self.pipeline.last_display
+            frame = self.pipeline.ring.latest()
+            state = self.pipeline.state
+            count = len(self.pipeline.ring)
+            fps = self.pipeline.fps("display", time.monotonic())
+            serial = self._serial
+            warning = self.watchdog.warning
+            detail = self.watchdog.detail
+        level = turbidity_level(frame, self._settings.video.turbidity) if frame else None
+        gpu = probe_gpu()
+        return {
+            "state": state,
+            "frame_id": None if shown is None else shown.frame_id,
+            "frame_count": count,
+            "enhanced": bool(shown and shown.enhanced),
+            "fps": fps,
+            "recording": self._settings.video.recording.enabled,
+            "turbidity_level": level,
+            "turbidity_configured": configured(self._settings.video.turbidity),
+            "gpu_util_pct": gpu.utilization_pct,
+            "lost": state == "lost",
+            "snapshot_count": serial,
+            "performance_warning": warning,
+            "performance_detail": detail,
+        }
+
+    def performance_view(self) -> dict[str, object]:
+        info = probe_gpu()
+        with self._lock:
+            fps = self.pipeline.fps("display", time.monotonic())
+        return {
+            "warning": self.watchdog.warning,
+            "detail": self.watchdog.detail,
+            "fps": fps,
+            "gpu_util_pct": info.utilization_pct,
+            "vram_used_mb": info.vram_used_mb,
+            "vram_total_mb": info.vram_total_mb,
+        }
+
+    def display_packet(self) -> tuple[dict[str, object], bytes | None]:
+        with self._lock:
+            shown = self.pipeline.last_display
+            state = self.pipeline.state
+        jpeg = None if shown is None or state == "lost" else shown.jpeg
+        return {
+            "state": state,
+            "frame_id": None if shown is None else shown.frame_id,
+            "enhanced": bool(shown and shown.enhanced),
+        }, jpeg
 
     def close_session(self) -> None:
+        self._capture.stop()
         self.models.close()
         self.cache.clear()
 
     def _push_many(self, frames: list[StoredFrame]) -> list[str]:
         ids: list[str] = []
-        for frame in frames:
+        with self._lock:
+            for frame in frames:
+                self.pipeline.push(frame)
+                self._cache_display(frame)
+                ids.append(frame.frame_id)
+        return ids
+
+    def _ingest(self, width: int, height: int, raw: bytes) -> None:
+        frame = StoredFrame(uuid7(), time.monotonic(), width, height, raw)
+        with self._lock:
             self.pipeline.push(frame)
             self._cache_display(frame)
-            ids.append(frame.frame_id)
-        return ids
+
+    def _reject_lost(self, frame_id: str) -> None:
+        if self.pipeline.state == "lost":
+            raise EngineError("VID-001", frame_id)
+
+    def _open_configured_source(self) -> None:
+        source = self._settings.video.source
+        if source.kind is None:
+            return
+        try:
+            self.open_device(source.kind, source.path, source.device_index, source.rtsp_url)
+        except EngineError as exc:
+            self._on_error(exc.spec.code, exc.detail)
 
     def _cache_display(self, frame: StoredFrame) -> None:
         shown = self.pipeline.last_display
@@ -144,7 +253,8 @@ class Runtime:
             return None
 
     def _display_fps(self) -> float | None:
-        return self.pipeline.fps("display", time.monotonic())
+        with self._lock:
+            return self.pipeline.fps("display", time.monotonic())
 
     def _check_geometry(self, count: int, width: int, height: int) -> None:
         video = self._settings.thresholds.video
@@ -169,6 +279,10 @@ def build_runtime(
     configured = Path(settings.app.models.dir)
     models_dir = configured if configured.is_absolute() else config_dir.parent / configured
     return Runtime(settings, models_dir, data_dir, on_error, VramProbe())
+
+
+def _noop_audit(action: str, entity: str, entity_id: str, detail: str) -> None:
+    del action, entity, entity_id, detail
 
 
 def _synthetic_frames(count: int, width: int, height: int, settings: Settings) -> list[StoredFrame]:

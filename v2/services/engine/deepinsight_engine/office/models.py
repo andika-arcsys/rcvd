@@ -100,6 +100,14 @@ class RemeasureTask(BaseModel):
     note: str
 
 
+class FindingView(BaseModel):
+    id: int
+    kind: str
+    title: str
+    frame_id: str | None
+    jpeg_path: str | None
+
+
 class DashboardView(BaseModel):
     active_missions: int
     pending_review: int
