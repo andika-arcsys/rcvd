@@ -10,7 +10,7 @@ Struktur sudah sesuai tujuan di repo DeepInsight:
 | `tests/golden/measure_vectors.json` | `tests/golden/measure_vectors.json` |
 | `.cursor/rules/deepinsight.mdc` | `.cursor/rules/deepinsight.mdc` (rekonstruksi; bandingkan dengan versi di `DeepInsight_Cursor_Kit.zip`) |
 
-`docs/ANSWERS_OPEN_QUESTIONS.md` dan `docs/PENJELASAN_ATURAN_CURSOR.md` belum ada di sini: tambahkan dari berkas yang Anda unggah.
+`docs/ANSWERS_OPEN_QUESTIONS.md` dan `docs/PENJELASAN_ATURAN_CURSOR.md` adalah salinan berkas yang Anda unggah.
 
 Prompt untuk agen baru:
 
