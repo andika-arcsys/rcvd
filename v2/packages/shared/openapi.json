@@ -1456,6 +1456,241 @@
           }
         }
       }
+    },
+    "/measure/context/{frame_id}": {
+      "get": {
+        "tags": [
+          "measure"
+        ],
+        "summary": "Measure Context",
+        "operationId": "measure_context_measure_context__frame_id__get",
+        "parameters": [
+          {
+            "name": "frame_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Frame Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContextOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/measure/edge": {
+      "post": {
+        "tags": [
+          "measure"
+        ],
+        "summary": "Measure Edge",
+        "operationId": "measure_edge_measure_edge_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EdgeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EdgeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/measure/laser": {
+      "post": {
+        "tags": [
+          "measure"
+        ],
+        "summary": "Measure Laser",
+        "operationId": "measure_laser_measure_laser_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FrameIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaserOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/snapshots": {
+      "post": {
+        "tags": [
+          "measure"
+        ],
+        "summary": "Save Snapshot",
+        "operationId": "save_snapshot_snapshots_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1477,6 +1712,62 @@
           "laser_on"
         ],
         "title": "AckInput"
+      },
+      "AnnoIn": {
+        "properties": {
+          "shape": {
+            "type": "string",
+            "enum": [
+              "arrow",
+              "line",
+              "circle"
+            ],
+            "title": "Shape"
+          },
+          "color": {
+            "type": "string",
+            "enum": [
+              "red",
+              "yellow",
+              "blue",
+              "green",
+              "white"
+            ],
+            "title": "Color"
+          },
+          "a": {
+            "$ref": "#/components/schemas/Px"
+          },
+          "b": {
+            "$ref": "#/components/schemas/Px"
+          }
+        },
+        "type": "object",
+        "required": [
+          "shape",
+          "color",
+          "a",
+          "b"
+        ],
+        "title": "AnnoIn"
+      },
+      "AreaView": {
+        "properties": {
+          "area_m2": {
+            "type": "number",
+            "title": "Area M2"
+          },
+          "uncertainty_2sigma_m2": {
+            "type": "number",
+            "title": "Uncertainty 2Sigma M2"
+          }
+        },
+        "type": "object",
+        "required": [
+          "area_m2",
+          "uncertainty_2sigma_m2"
+        ],
+        "title": "AreaView"
       },
       "Auth": {
         "properties": {
@@ -1534,6 +1825,62 @@
         ],
         "title": "CacheInfo"
       },
+      "CalView": {
+        "properties": {
+          "scale_m_per_px": {
+            "type": "number",
+            "title": "Scale M Per Px"
+          },
+          "rel_uncert": {
+            "type": "number",
+            "title": "Rel Uncert"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "baseline_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Hint"
+          },
+          "nodes": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "ref_m": {
+            "type": "number",
+            "title": "Ref M"
+          },
+          "camera_present": {
+            "type": "boolean",
+            "title": "Camera Present"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scale_m_per_px",
+          "rel_uncert",
+          "status",
+          "baseline_hint",
+          "nodes",
+          "ref_m",
+          "camera_present"
+        ],
+        "title": "CalView"
+      },
       "Calibration": {
         "properties": {
           "rel_uncertainty_basis": {
@@ -1564,6 +1911,14 @@
             "type": "number",
             "title": "Edge Risk Px"
           },
+          "canny_low": {
+            "type": "number",
+            "title": "Canny Low"
+          },
+          "canny_high": {
+            "type": "number",
+            "title": "Canny High"
+          },
           "camera_file_required_for_valid": {
             "type": "boolean",
             "title": "Camera File Required For Valid"
@@ -1582,6 +1937,8 @@
           "estimate_max_rel",
           "diameter_sanity_pct",
           "edge_risk_px",
+          "canny_low",
+          "canny_high",
           "camera_file_required_for_valid",
           "min_baseline_px"
         ],
@@ -1724,6 +2081,67 @@
           "view_jpeg_b64"
         ],
         "title": "CompareView"
+      },
+      "ContextOut": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset"
+          },
+          "camera_present": {
+            "type": "boolean",
+            "title": "Camera Present"
+          },
+          "freeze_no": {
+            "type": "integer",
+            "title": "Freeze No"
+          },
+          "laser": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Laser"
+          },
+          "jpeg_b64": {
+            "type": "string",
+            "title": "Jpeg B64"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "width",
+          "height",
+          "preset",
+          "camera_present",
+          "freeze_no",
+          "laser",
+          "jpeg_b64"
+        ],
+        "title": "ContextOut"
       },
       "ControlsConfig": {
         "properties": {
@@ -2047,6 +2465,40 @@
         ],
         "title": "DiskInfo"
       },
+      "EdgeIn": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/Px"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "points"
+        ],
+        "title": "EdgeIn"
+      },
+      "EdgeOut": {
+        "properties": {
+          "risk": {
+            "type": "boolean",
+            "title": "Risk"
+          }
+        },
+        "type": "object",
+        "required": [
+          "risk"
+        ],
+        "title": "EdgeOut"
+      },
       "FileRequest": {
         "properties": {
           "path": {
@@ -2107,6 +2559,19 @@
         ],
         "title": "FindingView"
       },
+      "FrameIn": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id"
+        ],
+        "title": "FrameIn"
+      },
       "FrameList": {
         "properties": {
           "frame_ids": {
@@ -2122,6 +2587,39 @@
           "frame_ids"
         ],
         "title": "FrameList"
+      },
+      "FrameView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "source_png": {
+            "type": "string",
+            "title": "Source Png"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sha256",
+          "width",
+          "height",
+          "source_png"
+        ],
+        "title": "FrameView"
       },
       "Freeze": {
         "properties": {
@@ -2352,6 +2850,25 @@
         ],
         "title": "HealthResponse"
       },
+      "Interaction": {
+        "properties": {
+          "hit_px": {
+            "type": "integer",
+            "title": "Hit Px"
+          },
+          "magnifier": {
+            "type": "integer",
+            "title": "Magnifier"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "hit_px",
+          "magnifier"
+        ],
+        "title": "Interaction"
+      },
       "IntervalYears": {
         "properties": {
           "low": {
@@ -2388,12 +2905,68 @@
               }
             ],
             "title": "Ref Cm"
+          },
+          "hue_low": {
+            "type": "integer",
+            "title": "Hue Low"
+          },
+          "hue_high": {
+            "type": "integer",
+            "title": "Hue High"
+          },
+          "hue_wrap_low": {
+            "type": "integer",
+            "title": "Hue Wrap Low"
+          },
+          "hue_wrap_high": {
+            "type": "integer",
+            "title": "Hue Wrap High"
+          },
+          "sat_min": {
+            "type": "integer",
+            "title": "Sat Min"
+          },
+          "val_min": {
+            "type": "integer",
+            "title": "Val Min"
+          },
+          "min_area_px": {
+            "type": "integer",
+            "title": "Min Area Px"
           }
         },
         "additionalProperties": false,
         "type": "object",
+        "required": [
+          "hue_low",
+          "hue_high",
+          "hue_wrap_low",
+          "hue_wrap_high",
+          "sat_min",
+          "val_min",
+          "min_area_px"
+        ],
         "title": "Laser",
-        "description": "Jarak dua titik laser. null sampai tim mengisi D-05."
+        "description": "Jarak dua titik laser. null sampai tim mengisi D-05. Hue mengikuti OpenCV 0–180."
+      },
+      "LaserOut": {
+        "properties": {
+          "points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "points"
+        ],
+        "title": "LaserOut"
       },
       "LastError": {
         "properties": {
@@ -2520,6 +3093,24 @@
           "sha256"
         ],
         "title": "MarkResult"
+      },
+      "MeasView": {
+        "properties": {
+          "meters": {
+            "type": "number",
+            "title": "Meters"
+          },
+          "uncertainty_2sigma_m": {
+            "type": "number",
+            "title": "Uncertainty 2Sigma M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meters",
+          "uncertainty_2sigma_m"
+        ],
+        "title": "MeasView"
       },
       "Measure": {
         "properties": {
@@ -2780,6 +3371,22 @@
         ],
         "title": "ModelStatus"
       },
+      "PairIn": {
+        "properties": {
+          "a": {
+            "$ref": "#/components/schemas/Px"
+          },
+          "b": {
+            "$ref": "#/components/schemas/Px"
+          }
+        },
+        "type": "object",
+        "required": [
+          "a",
+          "b"
+        ],
+        "title": "PairIn"
+      },
       "Performance": {
         "properties": {
           "watchdog_interval_s": {
@@ -2973,6 +3580,41 @@
           "critical_limit_m"
         ],
         "title": "PipelineView"
+      },
+      "PolyIn": {
+        "properties": {
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/Px"
+            },
+            "type": "array",
+            "minItems": 3,
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "points"
+        ],
+        "title": "PolyIn"
+      },
+      "Px": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          }
+        },
+        "type": "object",
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "Px"
       },
       "RemeasureTask": {
         "properties": {
@@ -3219,6 +3861,85 @@
         ],
         "title": "RolesConfig"
       },
+      "SaveIn": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "ref_cm": {
+            "type": "number",
+            "title": "Ref Cm"
+          },
+          "calibration": {
+            "$ref": "#/components/schemas/PairIn"
+          },
+          "lengths": {
+            "items": {
+              "$ref": "#/components/schemas/PairIn"
+            },
+            "type": "array",
+            "title": "Lengths",
+            "default": []
+          },
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/PolyIn"
+            },
+            "type": "array",
+            "title": "Areas",
+            "default": []
+          },
+          "annotations": {
+            "items": {
+              "$ref": "#/components/schemas/AnnoIn"
+            },
+            "type": "array",
+            "title": "Annotations",
+            "default": []
+          },
+          "segment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment"
+          },
+          "marker": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "P0",
+                  "G_kiri",
+                  "G_kanan",
+                  "PE+2"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marker"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "ref_cm",
+          "calibration"
+        ],
+        "title": "SaveIn"
+      },
       "SessionClose": {
         "properties": {
           "state": {
@@ -3236,6 +3957,142 @@
           "cache_mb"
         ],
         "title": "SessionClose"
+      },
+      "SnapshotOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "supersedes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes"
+          },
+          "frame": {
+            "$ref": "#/components/schemas/FrameView"
+          },
+          "session": {
+            "type": "string",
+            "title": "Session"
+          },
+          "segment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment"
+          },
+          "marker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marker"
+          },
+          "freeze_no": {
+            "type": "integer",
+            "title": "Freeze No"
+          },
+          "aquaclear_preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aquaclear Preset"
+          },
+          "calibration": {
+            "$ref": "#/components/schemas/CalView"
+          },
+          "measurements": {
+            "items": {
+              "$ref": "#/components/schemas/MeasView"
+            },
+            "type": "array",
+            "title": "Measurements"
+          },
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/AreaView"
+            },
+            "type": "array",
+            "title": "Areas"
+          },
+          "annotations": {
+            "items": {
+              "$ref": "#/components/schemas/AnnoIn"
+            },
+            "type": "array",
+            "title": "Annotations"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "json_path": {
+            "type": "string",
+            "title": "Json Path"
+          },
+          "jpeg_path": {
+            "type": "string",
+            "title": "Jpeg Path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "version",
+          "supersedes",
+          "frame",
+          "session",
+          "segment",
+          "marker",
+          "freeze_no",
+          "aquaclear_preset",
+          "calibration",
+          "measurements",
+          "areas",
+          "annotations",
+          "warnings",
+          "operator",
+          "note",
+          "json_path",
+          "jpeg_path"
+        ],
+        "title": "SnapshotOut"
       },
       "Span": {
         "properties": {
@@ -3358,6 +4215,9 @@
           },
           "laser": {
             "$ref": "#/components/schemas/Laser"
+          },
+          "interaction": {
+            "$ref": "#/components/schemas/Interaction"
           }
         },
         "additionalProperties": false,
@@ -3375,7 +4235,8 @@
           "performance",
           "video",
           "cache",
-          "laser"
+          "laser",
+          "interaction"
         ],
         "title": "Thresholds"
       },

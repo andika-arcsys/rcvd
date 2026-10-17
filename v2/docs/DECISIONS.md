@@ -64,6 +64,7 @@ Status semua ADR: **Diusulkan**, menunggu persetujuan. Format: Konteks → Keput
 - **Keputusan.** Luas = shoelace pada koordinat terkalibrasi. Heron hanya cek silang untuk 3 titik. Validasi: titik berbeda, tidak berpotongan sendiri, luas > 0.
 - **Alternatif.** Mempertahankan metode mockup (SPEC menyebut prinsip “luas dari panjang sisi” agar dapat diperiksa tangan).
 - **Konsekuensi.** Panjang sisi dan diagonal tetap ditampilkan sebagai informasi sehingga operator masih dapat memeriksa manual. SPEC 3.4 perlu direvisi sesuai keputusan ini.
+- **Fase 7.** Layar 3.4 dan 3.5 menghitung luas dengan shoelace lewat modul measure. Metode diagonal-Heron pada mockup tidak dipakai. Angka di JSON snapshot dihitung ulang oleh Python saat Simpan.
 
 ## ADR-010 Transport video: WebSocket biner JPEG dengan overlay di UI
 

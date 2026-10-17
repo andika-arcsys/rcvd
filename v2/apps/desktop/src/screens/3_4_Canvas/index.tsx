@@ -1,5 +1,5 @@
-import { ScreenPlaceholder } from '../../components/ScreenPlaceholder';
+import { MeasureWorkspace } from '../3_5_Snapshot/Workspace';
 
 export default function CanvasScreen() {
-  return <ScreenPlaceholder code="3.4" />;
+  return <MeasureWorkspace saveLabel="measure.saveAs" />;
 }

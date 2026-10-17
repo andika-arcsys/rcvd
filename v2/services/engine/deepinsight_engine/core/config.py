@@ -30,6 +30,8 @@ class Calibration(_Strict):
     estimate_max_rel: float
     diameter_sanity_pct: float
     edge_risk_px: float
+    canny_low: float
+    canny_high: float
     camera_file_required_for_valid: bool
     min_baseline_px: int
 
@@ -37,6 +39,8 @@ class Calibration(_Strict):
     def _ordered(self) -> Calibration:
         if not 0 < self.valid_max_rel < self.estimate_max_rel < 1:
             raise ValueError("Harus 0 < valid_max_rel < estimate_max_rel < 1")
+        if not 0 <= self.canny_low < self.canny_high <= 255:
+            raise ValueError("canny_low harus di bawah canny_high")
         return self
 
 
@@ -106,9 +110,34 @@ class Cache(_Strict):
 
 
 class Laser(_Strict):
-    """Jarak dua titik laser. null sampai tim mengisi D-05."""
+    """Jarak dua titik laser. null sampai tim mengisi D-05. Hue mengikuti OpenCV 0–180."""
 
     ref_cm: float | None = None
+    hue_low: int
+    hue_high: int
+    hue_wrap_low: int
+    hue_wrap_high: int
+    sat_min: int
+    val_min: int
+    min_area_px: int
+
+    @model_validator(mode="after")
+    def _ranges(self) -> Laser:
+        hues = (self.hue_low, self.hue_high, self.hue_wrap_low, self.hue_wrap_high)
+        if any(not 0 <= item <= 180 for item in hues):
+            raise ValueError("hue laser harus 0–180")
+        if self.hue_low > self.hue_high or self.hue_wrap_low > self.hue_wrap_high:
+            raise ValueError("rentang hue laser terbalik")
+        if any(not 0 <= item <= 255 for item in (self.sat_min, self.val_min)):
+            raise ValueError("saturasi dan value harus 0–255")
+        if self.min_area_px < 1:
+            raise ValueError("min_area_px minimal 1")
+        return self
+
+
+class Interaction(_Strict):
+    hit_px: int
+    magnifier: int
 
 
 class Thresholds(_Strict):
@@ -125,6 +154,7 @@ class Thresholds(_Strict):
     video: Video
     cache: Cache
     laser: Laser
+    interaction: Interaction
 
 
 class AppInfo(_Strict):

@@ -211,6 +211,20 @@ _SPECS: tuple[ErrorSpec, ...] = (
         "Pembagi cek silang tali tidak boleh nol.",
         "Isi panjang tali ukur.",
     ),
+    ErrorSpec(
+        "EDGE-001",
+        422,
+        "Titik terlalu dekat tepi objek.",
+        "Jarak titik ke tepi Canny di bawah edge_risk_px.",
+        "Geser titik menjauh dari tepi, lalu simpan lagi.",
+    ),
+    ErrorSpec(
+        "SNAP-001",
+        422,
+        "Kalibrasi belum sah untuk disimpan.",
+        "Status masih UNCALIBRATED.",
+        "Ulangi dua titik laser dan panjang referensi.",
+    ),
 )
 
 REGISTRY: dict[str, ErrorSpec] = {spec.code: spec for spec in _SPECS}

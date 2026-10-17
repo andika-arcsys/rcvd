@@ -448,6 +448,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/measure/context/{frame_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Measure Context */
+        get: operations["measure_context_measure_context__frame_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/measure/edge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Measure Edge */
+        post: operations["measure_edge_measure_edge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/measure/laser": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Measure Laser */
+        post: operations["measure_laser_measure_laser_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Snapshot */
+        post: operations["save_snapshot_snapshots_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -458,6 +526,28 @@ export interface components {
             preset_locked: boolean;
             /** Laser On */
             laser_on: boolean;
+        };
+        /** AnnoIn */
+        AnnoIn: {
+            /**
+             * Shape
+             * @enum {string}
+             */
+            shape: "arrow" | "line" | "circle";
+            /**
+             * Color
+             * @enum {string}
+             */
+            color: "red" | "yellow" | "blue" | "green" | "white";
+            a: components["schemas"]["Px"];
+            b: components["schemas"]["Px"];
+        };
+        /** AreaView */
+        AreaView: {
+            /** Area M2 */
+            area_m2: number;
+            /** Uncertainty 2Sigma M2 */
+            uncertainty_2sigma_m2: number;
         };
         /** Auth */
         Auth: {
@@ -480,6 +570,23 @@ export interface components {
             /** Max Mb */
             max_mb: number;
         };
+        /** CalView */
+        CalView: {
+            /** Scale M Per Px */
+            scale_m_per_px: number;
+            /** Rel Uncert */
+            rel_uncert: number;
+            /** Status */
+            status: string;
+            /** Baseline Hint */
+            baseline_hint: string | null;
+            /** Nodes */
+            nodes: number[][];
+            /** Ref M */
+            ref_m: number;
+            /** Camera Present */
+            camera_present: boolean;
+        };
         /** Calibration */
         Calibration: {
             /**
@@ -497,6 +604,10 @@ export interface components {
             diameter_sanity_pct: number;
             /** Edge Risk Px */
             edge_risk_px: number;
+            /** Canny Low */
+            canny_low: number;
+            /** Canny High */
+            canny_high: number;
             /** Camera File Required For Valid */
             camera_file_required_for_valid: boolean;
             /** Min Baseline Px */
@@ -541,6 +652,25 @@ export interface components {
             raw_jpeg_b64: string | null;
             /** View Jpeg B64 */
             view_jpeg_b64: string | null;
+        };
+        /** ContextOut */
+        ContextOut: {
+            /** Frame Id */
+            frame_id: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Preset */
+            preset: string | null;
+            /** Camera Present */
+            camera_present: boolean;
+            /** Freeze No */
+            freeze_no: number;
+            /** Laser */
+            laser: number[][];
+            /** Jpeg B64 */
+            jpeg_b64: string;
         };
         /** ControlsConfig */
         ControlsConfig: {
@@ -642,6 +772,18 @@ export interface components {
             /** Total Gb */
             total_gb: number;
         };
+        /** EdgeIn */
+        EdgeIn: {
+            /** Frame Id */
+            frame_id: string;
+            /** Points */
+            points: components["schemas"]["Px"][];
+        };
+        /** EdgeOut */
+        EdgeOut: {
+            /** Risk */
+            risk: boolean;
+        };
         /** FileRequest */
         FileRequest: {
             /** Path */
@@ -660,10 +802,28 @@ export interface components {
             /** Jpeg Path */
             jpeg_path: string | null;
         };
+        /** FrameIn */
+        FrameIn: {
+            /** Frame Id */
+            frame_id: string;
+        };
         /** FrameList */
         FrameList: {
             /** Frame Ids */
             frame_ids: string[];
+        };
+        /** FrameView */
+        FrameView: {
+            /** Id */
+            id: string;
+            /** Sha256 */
+            sha256: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Source Png */
+            source_png: string;
         };
         /** Freeze */
         Freeze: {
@@ -738,6 +898,13 @@ export interface components {
             /** Uptime S */
             uptime_s: number;
         };
+        /** Interaction */
+        Interaction: {
+            /** Hit Px */
+            hit_px: number;
+            /** Magnifier */
+            magnifier: number;
+        };
         /** IntervalYears */
         IntervalYears: {
             /** Low */
@@ -749,11 +916,30 @@ export interface components {
         };
         /**
          * Laser
-         * @description Jarak dua titik laser. null sampai tim mengisi D-05.
+         * @description Jarak dua titik laser. null sampai tim mengisi D-05. Hue mengikuti OpenCV 0–180.
          */
         Laser: {
             /** Ref Cm */
             ref_cm?: number | null;
+            /** Hue Low */
+            hue_low: number;
+            /** Hue High */
+            hue_high: number;
+            /** Hue Wrap Low */
+            hue_wrap_low: number;
+            /** Hue Wrap High */
+            hue_wrap_high: number;
+            /** Sat Min */
+            sat_min: number;
+            /** Val Min */
+            val_min: number;
+            /** Min Area Px */
+            min_area_px: number;
+        };
+        /** LaserOut */
+        LaserOut: {
+            /** Points */
+            points: number[][];
         };
         /** LastError */
         LastError: {
@@ -797,6 +983,13 @@ export interface components {
             path: string;
             /** Sha256 */
             sha256: string;
+        };
+        /** MeasView */
+        MeasView: {
+            /** Meters */
+            meters: number;
+            /** Uncertainty 2Sigma M */
+            uncertainty_2sigma_m: number;
         };
         /** Measure */
         Measure: {
@@ -882,6 +1075,11 @@ export interface components {
             /** Limited Mode */
             limited_mode: boolean;
         };
+        /** PairIn */
+        PairIn: {
+            a: components["schemas"]["Px"];
+            b: components["schemas"]["Px"];
+        };
         /** Performance */
         Performance: {
             /** Watchdog Interval S */
@@ -939,6 +1137,18 @@ export interface components {
             diameter: string;
             /** Critical Limit M */
             critical_limit_m: number;
+        };
+        /** PolyIn */
+        PolyIn: {
+            /** Points */
+            points: components["schemas"]["Px"][];
+        };
+        /** Px */
+        Px: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
         };
         /** RemeasureTask */
         RemeasureTask: {
@@ -1027,12 +1237,81 @@ export interface components {
                 };
             };
         };
+        /** SaveIn */
+        SaveIn: {
+            /** Frame Id */
+            frame_id: string;
+            /** Ref Cm */
+            ref_cm: number;
+            calibration: components["schemas"]["PairIn"];
+            /**
+             * Lengths
+             * @default []
+             */
+            lengths: components["schemas"]["PairIn"][];
+            /**
+             * Areas
+             * @default []
+             */
+            areas: components["schemas"]["PolyIn"][];
+            /**
+             * Annotations
+             * @default []
+             */
+            annotations: components["schemas"]["AnnoIn"][];
+            /** Segment */
+            segment?: string | null;
+            /** Marker */
+            marker?: ("P0" | "G_kiri" | "G_kanan" | "PE+2") | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
         /** SessionClose */
         SessionClose: {
             /** State */
             state: string;
             /** Cache Mb */
             cache_mb: number;
+        };
+        /** SnapshotOut */
+        SnapshotOut: {
+            /** Id */
+            id: string;
+            /** Version */
+            version: number;
+            /** Supersedes */
+            supersedes: string | null;
+            frame: components["schemas"]["FrameView"];
+            /** Session */
+            session: string;
+            /** Segment */
+            segment: string | null;
+            /** Marker */
+            marker: string | null;
+            /** Freeze No */
+            freeze_no: number;
+            /** Aquaclear Preset */
+            aquaclear_preset: string | null;
+            calibration: components["schemas"]["CalView"];
+            /** Measurements */
+            measurements: components["schemas"]["MeasView"][];
+            /** Areas */
+            areas: components["schemas"]["AreaView"][];
+            /** Annotations */
+            annotations: components["schemas"]["AnnoIn"][];
+            /** Warnings */
+            warnings: string[];
+            /** Operator */
+            operator: string;
+            /** Note */
+            note: string;
+            /** Json Path */
+            json_path: string;
+            /** Jpeg Path */
+            jpeg_path: string;
         };
         /** Span */
         Span: {
@@ -1078,6 +1357,7 @@ export interface components {
             video: components["schemas"]["Video"];
             cache: components["schemas"]["Cache"];
             laser: components["schemas"]["Laser"];
+            interaction: components["schemas"]["Interaction"];
         };
         /** ValidationError */
         ValidationError: {
@@ -2063,6 +2343,144 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompareView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    measure_context_measure_context__frame_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                frame_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContextOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    measure_edge_measure_edge_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EdgeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EdgeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    measure_laser_measure_laser_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FrameIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LaserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_snapshot_snapshots_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotOut"];
                 };
             };
             /** @description Validation Error */

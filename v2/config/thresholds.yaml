@@ -9,6 +9,8 @@ calibration:
   estimate_max_rel: 0.10          # USULAN – perlu konfirmasi tim (3-10% ESTIMATE_ONLY, >10% UNCALIBRATED)
   diameter_sanity_pct: 10         # USULAN – perlu konfirmasi tim (peringatan saja)
   edge_risk_px: 5                 # USULAN – perlu konfirmasi tim (DEPTH_EDGE_RISK v1)
+  canny_low: 50                   # USULAN Q-KAL-5 – perlu konfirmasi tim
+  canny_high: 150                 # USULAN Q-KAL-5 – perlu konfirmasi tim
   camera_file_required_for_valid: true  # SUMBER: tanpa file kamera status maksimal ESTIMATE_ONLY
   min_baseline_px: 150            # USULAN – perlu konfirmasi tim (jarak minimum dua node kalibrasi)
 
@@ -73,3 +75,15 @@ cache:
 
 laser:
   ref_cm: null                    # D-05 belum diisi tim. Jangan diisi dengan angka contoh.
+  # USULAN Q-KAL-5. OpenCV hue 0–180. Belum diukur pada laser lapangan.
+  hue_low: 0
+  hue_high: 10
+  hue_wrap_low: 170
+  hue_wrap_high: 180
+  sat_min: 120
+  val_min: 120
+  min_area_px: 4
+
+interaction:
+  hit_px: 12                      # USULAN – jarak klik untuk menggeser node, bukan ambang ukur
+  magnifier: 4                    # USULAN – pembesaran kaca saat node digeser

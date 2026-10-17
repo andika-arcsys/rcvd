@@ -1,24 +1,5 @@
-import { Link } from 'react-router-dom';
-import { t } from '../../i18n';
-import { useSession } from '../../session/SessionContext';
+import { MeasureWorkspace } from './Workspace';
 
-/** Stub sampai Fase 7. Menampilkan frame yang dibekukan; pengukuran belum dihitung di sini. */
 export default function SnapshotScreen() {
-  const { frozen } = useSession();
-  return (
-    <section className="p-6">
-      <p className="text-sm text-muted">{frozen ? t('live.snapshotWait') : t('live.noFreeze')}</p>
-      <p className="mt-3 font-mono">
-        {t('live.frame')} {frozen?.frameId ?? t('common.dash')}
-      </p>
-      {frozen?.preset ? (
-        <p className="mt-2 text-sm">
-          {t('feature.presetRecorded')}: {frozen.preset}
-        </p>
-      ) : null}
-      <Link to="/live" className="mt-4 inline-block text-sm text-info">
-        {t('live.resume')}
-      </Link>
-    </section>
-  );
+  return <MeasureWorkspace saveLabel="measure.save" />;
 }

@@ -10,6 +10,7 @@ from .. import __version__
 from ..core.config import ControlsConfig, RolesConfig, Settings, Thresholds
 from ..diagnostics import DiagnosticsReport, ErrorLog, build_report
 from .routes_live import live
+from .routes_measure import measure
 from .routes_office import office
 from .routes_stream import stream
 from .routes_vision import vision
@@ -60,4 +61,5 @@ router.include_router(protected)
 router.include_router(live)
 router.include_router(office)
 router.include_router(vision)
+router.include_router(measure)
 router.include_router(stream)
