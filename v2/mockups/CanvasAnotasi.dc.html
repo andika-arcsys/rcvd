@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Canvas ukur dan anotasi</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}
+.tool{background:#16232F;color:#E6EDF3;border:1px solid #2A3A4B;border-radius:8px;min-height:52px;font-size:13px;font-family:inherit;cursor:pointer;text-align:left;padding:8px 10px;width:100%}
+.tool.on{background:#E6EDF3;color:#0B131B;border-color:#E6EDF3;font-weight:600}
+.chip{background:#16232F;color:#E6EDF3;border:1px solid #2A3A4B;border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit;cursor:pointer;min-height:36px}
+.chip.on{background:#E6EDF3;color:#0B131B;font-weight:600}
+.sw{width:30px;height:30px;border-radius:15px;border:2px solid transparent;cursor:pointer;padding:0}
+.sw.on{border-color:#E6EDF3;box-shadow:0 0 0 2px #0B131B inset}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid #22313F}
+.mono{font-family:'IBM Plex Mono',monospace}
+.ok{color:#9FE0BE}.bad{color:#F2A5A0}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="Live Operation" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+      <a href="Main.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px 14px; font-size: 13px">← Optical</a>
+      <span style="background: #E6EDF3; color: #0B131B; border-radius: 8px; padding: 10px 16px; font-weight: 600">Canvas · ukur &amp; anotasi</span>
+      <span style="background: #2A1A08; border: 1px solid #F28C28; border-radius: 6px; padding: 6px 10px; font-size: 12px" class="mono">FROZEN · frame [ID]</span>
+      <span style="margin-left: auto; font-size: 13px; background: #101B25; border: 1px solid #22313F; border-radius: 8px; padding: 8px 12px">{{hint}}</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; flex: 1">
+      <div role="toolbar" aria-label="Alat" style="flex: 0 0 150px; display: flex; flex-direction: column; gap: 6px">
+        <div style="font-size: 11px; color: #93A4B5">1 · KALIBRASI</div>
+        <button class="{{tKal}}" onClick="{{setKal}}">Kalibrasi<br><span class="mono" style="font-size: 11px; opacity: .7">node 1 + node 2</span></button>
+        <div style="font-size: 11px; color: #93A4B5; padding-top: 6px">2 · UKUR</div>
+        <button class="{{tLen}}" onClick="{{setLen}}">Panjang<br><span class="mono" style="font-size: 11px; opacity: .7">node 1 → node 2</span></button>
+        <button class="{{tArea}}" onClick="{{setArea}}">Luas<br><span class="mono" style="font-size: 11px; opacity: .7">3 atau 4 titik</span></button>
+        <div style="font-size: 11px; color: #93A4B5; padding-top: 6px">3 · ANOTASI</div>
+        <button class="{{tAnot}}" onClick="{{setAnot}}">Anotasi<br><span class="mono" style="font-size: 11px; opacity: .7">panah, garis, bulat</span></button>
+        <div style="display: flex; gap: 6px; padding-top: 8px">
+          <button class="chip" onClick="{{undo}}" style="flex: 1">Undo</button>
+          <button class="chip" onClick="{{clearAll}}" style="flex: 1">Hapus</button>
+        </div>
+      </div>
+
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-height: 44px">
+          <sc-if value="{{isKal}}" hint-placeholder-val="{{false}}">
+            <label style="display: flex; gap: 8px; align-items: center; font-size: 13px">Panjang referensi antar node (cm)
+              <input type="number" value="{{refCm}}" onChange="{{setRef}}" style="width: 90px; background: #0B131B; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 6px; padding: 8px; font-family: 'IBM Plex Mono', monospace">
+            </label>
+            <span style="font-size: 12px; color: #93A4B5">Klik titik laser 1 lalu titik laser 2 pada gambar</span>
+          </sc-if>
+          <sc-if value="{{isArea}}" hint-placeholder-val="{{false}}">
+            <span style="font-size: 13px">Jumlah titik:</span>
+            <button class="{{t3}}" onClick="{{set3}}">3 titik (segitiga)</button>
+            <button class="{{t4}}" onClick="{{set4}}">4 titik (segi empat)</button>
+          </sc-if>
+          <sc-if value="{{isAnot}}" hint-placeholder-val="{{false}}">
+            <button class="{{tArrow}}" onClick="{{setArrow}}">Panah</button>
+            <button class="{{tLine}}" onClick="{{setLine}}">Garis</button>
+            <button class="{{tCircle}}" onClick="{{setCircle}}">Tanda bulat</button>
+            <span style="width: 12px"></span>
+            <button aria-label="Merah" class="{{cRed}}" style="background: #E5534B" onClick="{{colRed}}"></button>
+            <button aria-label="Kuning" class="{{cYel}}" style="background: #E5B33A" onClick="{{colYel}}"></button>
+            <button aria-label="Biru" class="{{cBlu}}" style="background: #4EA8DE" onClick="{{colBlu}}"></button>
+            <button aria-label="Hijau" class="{{cGrn}}" style="background: #3FB97C" onClick="{{colGrn}}"></button>
+            <button aria-label="Putih" class="{{cWht}}" style="background: #F2F5F8" onClick="{{colWht}}"></button>
+          </sc-if>
+          <sc-if value="{{isLen}}" hint-placeholder-val="{{false}}">
+            <span style="font-size: 13px">Klik node 1 lalu node 2. Panjang dihitung dari kalibrasi terakhir.</span>
+          </sc-if>
+        </div>
+        <section aria-label="Frame terkunci, klik untuk menaruh node" onClick="{{onPick}}" style="position: relative; width: 100%; aspect-ratio: 8 / 5; border-radius: 12px; overflow: hidden; border: 3px solid #F28C28; background: #123640; cursor: crosshair">
+          <svg viewBox="0 0 800 500" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none">
+            <rect width="800" height="500" fill="#123640"/><rect y="360" width="800" height="140" fill="#2B3A2E"/>
+            <rect x="-20" y="210" width="840" height="84" rx="42" fill="#55636B"/><rect x="-20" y="222" width="840" height="14" fill="#6F7D84"/>
+            <rect x="110" y="300" width="100" height="56" fill="#3A4A3C" transform="rotate(-10 160 328)"/>
+            <ellipse cx="520" cy="296" rx="46" ry="16" fill="#2E5560"/>
+            <circle cx="360" cy="252" r="5" fill="#FF4D4D"/><circle cx="440" cy="252" r="5" fill="#FF4D4D"/>
+          </svg>
+          <svg viewBox="0 0 800 500" preserveAspectRatio="none" role="img" aria-label="Lapisan ukur dan anotasi" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none">
+            <sc-for list="{{calLines}}" as="c" hint-placeholder-count="0">
+              <line x1="{{c.x1}}" y1="{{c.y1}}" x2="{{c.x2}}" y2="{{c.y2}}" stroke="#3FB97C" stroke-width="3" stroke-dasharray="8 5"></line>
+              <circle cx="{{c.x1}}" cy="{{c.y1}}" r="9" fill="none" stroke="#3FB97C" stroke-width="3"></circle>
+              <circle cx="{{c.x2}}" cy="{{c.y2}}" r="9" fill="none" stroke="#3FB97C" stroke-width="3"></circle>
+              <text x="{{c.mx}}" y="{{c.my}}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="15" fill="#B9E6CD" stroke="#0B131B" stroke-width="4" paint-order="stroke">{{c.label}}</text>
+            </sc-for>
+            <sc-for list="{{lenLines}}" as="l" hint-placeholder-count="0">
+              <line x1="{{l.x1}}" y1="{{l.y1}}" x2="{{l.x2}}" y2="{{l.y2}}" stroke="#7CC4F0" stroke-width="3"></line>
+              <circle cx="{{l.x1}}" cy="{{l.y1}}" r="6" fill="#7CC4F0"></circle>
+              <circle cx="{{l.x2}}" cy="{{l.y2}}" r="6" fill="#7CC4F0"></circle>
+              <text x="{{l.mx}}" y="{{l.my}}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="15" fill="#E6EDF3" stroke="#0B131B" stroke-width="4" paint-order="stroke">{{l.label}}</text>
+            </sc-for>
+            <sc-for list="{{areaPolys}}" as="a" hint-placeholder-count="0">
+              <polygon points="{{a.pts}}" fill="#E5B33A" fill-opacity="0.3" stroke="#E5B33A" stroke-width="3"></polygon>
+              <text x="{{a.cx}}" y="{{a.cy}}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="16" fill="#FFE7A8" stroke="#0B131B" stroke-width="4" paint-order="stroke">{{a.label}}</text>
+            </sc-for>
+            <sc-for list="{{areaDiag}}" as="d" hint-placeholder-count="0">
+              <line x1="{{d.x1}}" y1="{{d.y1}}" x2="{{d.x2}}" y2="{{d.y2}}" stroke="#E5B33A" stroke-width="1.5" stroke-dasharray="5 4"></line>
+            </sc-for>
+            <sc-for list="{{edgeLabels}}" as="e" hint-placeholder-count="0">
+              <text x="{{e.x}}" y="{{e.y}}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="#E6EDF3" stroke="#0B131B" stroke-width="3" paint-order="stroke">{{e.t}}</text>
+            </sc-for>
+            <sc-for list="{{anLines}}" as="n" hint-placeholder-count="0">
+              <line x1="{{n.x1}}" y1="{{n.y1}}" x2="{{n.x2}}" y2="{{n.y2}}" stroke="{{n.col}}" stroke-width="4" stroke-linecap="round"></line>
+            </sc-for>
+            <sc-for list="{{anHeads}}" as="h" hint-placeholder-count="0">
+              <polygon points="{{h.pts}}" fill="{{h.col}}"></polygon>
+            </sc-for>
+            <sc-for list="{{anCircles}}" as="o" hint-placeholder-count="0">
+              <circle cx="{{o.cx}}" cy="{{o.cy}}" r="{{o.r}}" fill="none" stroke="{{o.col}}" stroke-width="4"></circle>
+            </sc-for>
+            <sc-for list="{{pend}}" as="p" hint-placeholder-count="0">
+              <circle cx="{{p.x}}" cy="{{p.y}}" r="7" fill="#F28C28" stroke="#0B131B" stroke-width="2"></circle>
+              <text x="{{p.tx}}" y="{{p.ty}}" font-family="IBM Plex Sans, sans-serif" font-size="13" fill="#FFD1A3" stroke="#0B131B" stroke-width="3" paint-order="stroke">{{p.t}}</text>
+            </sc-for>
+          </svg>
+        </section>
+      </div>
+
+      <aside style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 12px">
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px">
+          <div style="font-size: 12px; color: #93A4B5; margin-bottom: 6px">Kalibrasi terakhir (dipakai untuk semua ukuran)</div>
+          <div class="row"><span>Status</span><b class="{{calCls}}">{{calStatus}}</b></div>
+          <div class="row"><span>Referensi</span><b class="mono">{{calRef}}</b></div>
+          <div class="row" style="border-bottom: 0"><span>Skala</span><b class="mono">{{calScale}}</b></div>
+        </div>
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; flex: 1">
+          <div style="font-size: 12px; color: #93A4B5; margin-bottom: 6px">Hasil ukur</div>
+          <sc-for list="{{results}}" as="r" hint-placeholder-count="2">
+            <div class="row"><span>{{r.name}}</span><b class="mono">{{r.val}}</b></div>
+          </sc-for>
+          <sc-if value="{{noResults}}" hint-placeholder-val="{{false}}">
+            <div style="font-size: 13px; color: #93A4B5">Belum ada ukuran. Kalibrasi dulu, lalu pilih Panjang atau Luas.</div>
+          </sc-if>
+          <div style="font-size: 12px; color: #93A4B5; margin-top: 10px; line-height: 1.5">Luas 3 titik: rumus Heron dari tiga sisi. Luas 4 titik: dibagi diagonal (garis putus-putus) menjadi dua segitiga, lalu dijumlahkan.</div>
+        </div>
+      </aside>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <a href="Review.dc.html" style="text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 16px 28px; font-weight: 600; font-size: 16px">Simpan &amp; kirim ke Review</a>
+      <a href="SimpanSnapshot.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px 20px">Simpan sebagai snapshot</a>
+      <a href="Main.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px 20px">Tutup Canvas</a>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+constructor(p) { super(p); this.state = { mode: 'kal', n: 4, at: 'arrow', col: '#E5534B', refCm: 10, pend: [], cal: null, lens: [], areas: [], anots: [], hist: [] }; }
+st() { return this.state || {}; }
+push(patch) { const s = this.st(); this.setState(Object.assign({ hist: (s.hist || []).concat([JSON.stringify({ cal: s.cal, lens: s.lens, areas: s.areas, anots: s.anots })]) }, patch)); }
+pick(e) {
+  const s = this.st();
+  const r = e.currentTarget.getBoundingClientRect();
+  const x = Math.round((e.clientX - r.left) / r.width * 800), y = Math.round((e.clientY - r.top) / r.height * 500);
+  const pts = (s.pend || []).concat([[x, y]]);
+  const need = s.mode === 'area' ? s.n : 2;
+  if (s.mode !== 'kal' && !s.cal && s.mode !== 'anot') { return; }
+  if (pts.length < need) { this.setState({ pend: pts }); return; }
+  if (s.mode === 'kal') this.push({ pend: [], cal: { a: pts[0], b: pts[1], cm: Number(s.refCm) || 0 } });
+  else if (s.mode === 'len') this.push({ pend: [], lens: (s.lens || []).concat([{ a: pts[0], b: pts[1] }]) });
+  else if (s.mode === 'area') this.push({ pend: [], areas: (s.areas || []).concat([{ p: pts }]) });
+  else this.push({ pend: [], anots: (s.anots || []).concat([{ t: s.at, c: s.col, a: pts[0], b: pts[1] }]) });
+}
+renderVals() {
+  const s = this.st();
+  const d = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  const cal = s.cal;
+  const mpp = cal && d(cal.a, cal.b) > 0 ? (cal.cm / 100) / d(cal.a, cal.b) : 0;
+  const m = (v) => (v * mpp).toFixed(2).replace('.', ',');
+  const heron = (a, b, c) => { const p = (a + b + c) / 2; return Math.sqrt(Math.max(p * (p - a) * (p - b) * (p - c), 0)); };
+  const mode = s.mode || 'kal';
+  const results = [];
+  const lenLines = (s.lens || []).map((l, i) => { const v = 'L' + (i + 1) + ' = ' + m(d(l.a, l.b)) + ' m'; results.push({ name: 'Panjang L' + (i + 1), val: m(d(l.a, l.b)) + ' m' }); return { x1: l.a[0], y1: l.a[1], x2: l.b[0], y2: l.b[1], mx: (l.a[0] + l.b[0]) / 2, my: (l.a[1] + l.b[1]) / 2 - 12, label: v }; });
+  const edgeLabels = [], areaDiag = [];
+  const areaPolys = (s.areas || []).map((ar, i) => {
+    const p = ar.p, k = p.length;
+    const sides = p.map((q, j) => d(q, p[(j + 1) % k]) * mpp);
+    p.forEach((q, j) => { const r2 = p[(j + 1) % k]; edgeLabels.push({ x: (q[0] + r2[0]) / 2, y: (q[1] + r2[1]) / 2 - 6, t: sides[j].toFixed(2).replace('.', ',') + ' m' }); });
+    let A;
+    if (k === 3) A = heron(sides[0], sides[1], sides[2]);
+    else { const dg = d(p[0], p[2]) * mpp; areaDiag.push({ x1: p[0][0], y1: p[0][1], x2: p[2][0], y2: p[2][1] }); A = heron(sides[0], sides[1], dg) + heron(sides[2], sides[3], dg); }
+    const cx = p.reduce((t, q) => t + q[0], 0) / k, cy = p.reduce((t, q) => t + q[1], 0) / k;
+    const a2 = A.toFixed(2).replace('.', ',');
+    results.push({ name: 'Luas A' + (i + 1) + ' (' + k + ' titik)', val: a2 + ' m²' });
+    return { pts: p.map(q => q.join(',')).join(' '), cx, cy: cy + 5, label: 'A' + (i + 1) + ' = ' + a2 + ' m²' };
+  });
+  const anLines = [], anHeads = [], anCircles = [];
+  (s.anots || []).forEach(n => {
+    if (n.t === 'circle') { anCircles.push({ cx: n.a[0], cy: n.a[1], r: Math.max(d(n.a, n.b), 8), col: n.c }); return; }
+    anLines.push({ x1: n.a[0], y1: n.a[1], x2: n.b[0], y2: n.b[1], col: n.c });
+    if (n.t === 'arrow') { const ang = Math.atan2(n.b[1] - n.a[1], n.b[0] - n.a[0]), L = 18; const p1 = [n.b[0] - L * Math.cos(ang - 0.45), n.b[1] - L * Math.sin(ang - 0.45)], p2 = [n.b[0] - L * Math.cos(ang + 0.45), n.b[1] - L * Math.sin(ang + 0.45)]; anHeads.push({ pts: [n.b, p1, p2].map(q => q.join(',')).join(' '), col: n.c }); }
+  });
+  const calLines = cal ? [{ x1: cal.a[0], y1: cal.a[1], x2: cal.b[0], y2: cal.b[1], mx: (cal.a[0] + cal.b[0]) / 2, my: (cal.a[1] + cal.b[1]) / 2 - 16, label: 'ref ' + cal.cm + ' cm' }] : [];
+  const need = mode === 'area' ? s.n : 2;
+  const pend = (s.pend || []).map((q, i) => ({ x: q[0], y: q[1], tx: q[0] + 10, ty: q[1] - 10, t: (mode === 'area' ? 'titik ' : 'node ') + (i + 1) }));
+  const hints = { kal: 'Kalibrasi: klik node ' + ((s.pend || []).length + 1) + ' dari 2', len: cal ? 'Panjang: klik node ' + ((s.pend || []).length + 1) + ' dari 2' : 'Kalibrasi dulu sebelum mengukur', area: cal ? 'Luas: klik titik ' + ((s.pend || []).length + 1) + ' dari ' + need : 'Kalibrasi dulu sebelum mengukur', anot: 'Anotasi: klik titik awal lalu titik akhir' };
+  const on = (k, v, base) => (k === v ? base + ' on' : base);
+  const set = (patch) => () => this.setState(Object.assign({ pend: [] }, patch));
+  return {
+    hint: hints[mode],
+    isKal: mode === 'kal', isLen: mode === 'len', isArea: mode === 'area', isAnot: mode === 'anot',
+    tKal: on(mode, 'kal', 'tool'), tLen: on(mode, 'len', 'tool'), tArea: on(mode, 'area', 'tool'), tAnot: on(mode, 'anot', 'tool'),
+    setKal: set({ mode: 'kal' }), setLen: set({ mode: 'len' }), setArea: set({ mode: 'area' }), setAnot: set({ mode: 'anot' }),
+    t3: on(s.n, 3, 'chip'), t4: on(s.n, 4, 'chip'), set3: set({ n: 3 }), set4: set({ n: 4 }),
+    tArrow: on(s.at, 'arrow', 'chip'), tLine: on(s.at, 'line', 'chip'), tCircle: on(s.at, 'circle', 'chip'),
+    setArrow: set({ at: 'arrow' }), setLine: set({ at: 'line' }), setCircle: set({ at: 'circle' }),
+    cRed: on(s.col, '#E5534B', 'sw'), cYel: on(s.col, '#E5B33A', 'sw'), cBlu: on(s.col, '#4EA8DE', 'sw'), cGrn: on(s.col, '#3FB97C', 'sw'), cWht: on(s.col, '#F2F5F8', 'sw'),
+    colRed: () => this.setState({ col: '#E5534B' }), colYel: () => this.setState({ col: '#E5B33A' }), colBlu: () => this.setState({ col: '#4EA8DE' }), colGrn: () => this.setState({ col: '#3FB97C' }), colWht: () => this.setState({ col: '#F2F5F8' }),
+    refCm: s.refCm, setRef: (e) => this.setState({ refCm: e.target.value }),
+    onPick: (e) => this.pick(e),
+    undo: () => { const h = (s.hist || []).slice(); const last = h.pop(); if (last) this.setState(Object.assign(JSON.parse(last), { hist: h, pend: [] })); else this.setState({ pend: [] }); },
+    clearAll: () => this.push({ pend: [], cal: null, lens: [], areas: [], anots: [] }),
+    calLines, lenLines, areaPolys, areaDiag, edgeLabels, anLines, anHeads, anCircles, pend,
+    calStatus: cal ? 'VALID' : 'UNCALIBRATED', calCls: cal ? 'ok' : 'bad',
+    calRef: cal ? cal.cm + ' cm · ' + d(cal.a, cal.b).toFixed(0) + ' px' : '—',
+    calScale: cal ? (mpp * 1000).toFixed(2).replace('.', ',') + ' mm/px' : '—',
+    results, noResults: results.length === 0
+  };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Lokasi berkas model, relatif terhadap folder models/ (app.yaml models.dir).
+# Berkas .onnx dan .pt tidak di-commit (sering di atas batas 100 MB GitHub).
+schema_version: 1
+
+entries:
+  aquaclear:
+    requires_gpu: false
+  hydrodetect:
+    onnx: hydrodetect/exp5/model.onnx
+    classes: hydrodetect/exp5/classes.json
+    metadata: hydrodetect/exp5/metadata.json
+    requires_gpu: true
+  spatialsight:
+    onnx: spatialsight/model.onnx
+    requires_gpu: true

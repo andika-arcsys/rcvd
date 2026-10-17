@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>AquaClear</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="Live Operation" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+      <span style="background: #E6EDF3; color: #0B131B; border-radius: 8px; padding: 10px 16px; font-weight: 600">AquaClear · aktif</span>
+      <span style="font-size: 13px; color: #93A4B5">Tampilan untuk melihat; pengukuran selalu memakai frame asli</span>
+      <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #93A4B5">GPU [xx]% · [xx] FPS</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; flex: 1">
+      <section aria-label="Perbandingan asli dan ditingkatkan" style="flex: 999 1 560px; min-width: 0; position: relative; border-radius: 12px; overflow: hidden; border: 1px solid #22313F; min-height: 560px">
+        <svg viewBox="0 0 800 560" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Kiri asli keruh, kanan hasil AquaClear" style="position: absolute; inset: 0; width: 100%; height: 100%">
+          <rect width="400" height="560" fill="#2F4A3E"/><rect x="400" width="400" height="560" fill="#123A48"/>
+          <rect y="400" width="400" height="160" fill="#3A4636"/><rect x="400" y="400" width="400" height="160" fill="#2B3A2E"/>
+          <rect x="-20" y="250" width="420" height="84" rx="42" fill="#5C6A5E" opacity=".7"/>
+          <rect x="400" y="250" width="420" height="84" rx="42" fill="#5E6C74"/><rect x="400" y="262" width="420" height="14" fill="#8593A0"/>
+          <line x1="400" y1="0" x2="400" y2="560" stroke="#E6EDF3" stroke-width="3"/>
+          <circle cx="400" cy="280" r="18" fill="#E6EDF3"/>
+        </svg>
+        <span style="position: absolute; top: 12px; left: 12px; background: rgba(11,19,27,.85); border-radius: 6px; padding: 6px 10px; font-size: 12px">Asli</span>
+        <span style="position: absolute; top: 12px; right: 12px; background: rgba(11,19,27,.85); border-radius: 6px; padding: 6px 10px; font-size: 12px">AquaClear · preset inspection</span>
+      </section>
+      <aside style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 12px">
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 12px; color: #93A4B5">Preset</div>
+          <button aria-pressed="true" style="text-align: left; background: #1C2C3B; border: 2px solid #7CC4F0; color: #E6EDF3; border-radius: 8px; padding: 10px; font-family: inherit"><b>Inspection</b> · kontras tepi pipa</button>
+          <button style="text-align: left; background: transparent; border: 1px solid #2A3A4B; color: #E6EDF3; border-radius: 8px; padding: 10px; font-family: inherit"><b>Balanced</b> · warna alami</button>
+          <button style="text-align: left; background: transparent; border: 1px solid #2A3A4B; color: #E6EDF3; border-radius: 8px; padding: 10px; font-family: inherit"><b>Ringan</b> · beban GPU kecil</button>
+        </div>
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; font-size: 13px">
+          <label style="display: flex; flex-direction: column; gap: 4px">Koreksi warna<input type="range" min="0" max="100" value="60"></label>
+          <label style="display: flex; flex-direction: column; gap: 4px">Kontras<input type="range" min="0" max="100" value="45"></label>
+          <label style="display: flex; flex-direction: column; gap: 4px">Pengurangan partikel<input type="range" min="0" max="100" value="30"></label>
+          <label style="display: flex; gap: 8px; align-items: center"><input type="checkbox" checked> Tampilan berdampingan</label>
+        </div>
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; font-size: 13px; line-height: 1.6"><span style="color: #93A4B5">Gerbang G2</span><br>Tepi pipa dan titik laser jelas? Bila belum, dekatkan ROV ±0,5 m atau tunggu air lebih jernih.</div>
+      </aside>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <a href="Snapshot.dc.html" style="text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 16px 28px; font-weight: 600; font-size: 16px">Kunci preset &amp; FREEZE</a>
+      <a href="GantiWindow.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px 20px">Ganti window</a>
+      <a href="Main.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px 20px">Kembali ke Optical</a>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

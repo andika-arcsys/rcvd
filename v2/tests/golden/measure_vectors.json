@@ -1,0 +1,269 @@
+[
+  {
+    "name": "kalibrasi_dan_panjang",
+    "ref_m": 0.762,
+    "node1": [
+      100,
+      200
+    ],
+    "node2": [
+      500,
+      200
+    ],
+    "sigma_px": 1.5,
+    "a": [
+      150,
+      300
+    ],
+    "b": [
+      850,
+      300
+    ],
+    "scale_m_per_px": 0.001905,
+    "rel_sigma_scale": 0.005303300858899107,
+    "length_m": 1.3335,
+    "sigma_L_m": 0.008145128193051967,
+    "U95_m": 0.016290256386103933,
+    "rel_U95": 0.012216165268919336,
+    "status": "VALID"
+  },
+  {
+    "name": "segitiga_3_4_5",
+    "scale_m_per_px": 0.01,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        300,
+        0
+      ],
+      [
+        0,
+        400
+      ]
+    ],
+    "shoelace_m2": 6.0,
+    "heron_m2": 6.0,
+    "sides_m": [
+      3.0,
+      4.0,
+      5.0
+    ],
+    "valid": true
+  },
+  {
+    "name": "persegi_panjang",
+    "scale_m_per_px": 0.01,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        200,
+        0
+      ],
+      [
+        200,
+        100
+      ],
+      [
+        0,
+        100
+      ]
+    ],
+    "shoelace_m2": 2.0,
+    "diagonal_1_3_m": 2.23606797749979,
+    "valid": true
+  },
+  {
+    "name": "segiempat_cekung",
+    "scale_m_per_px": 0.01,
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        400,
+        0
+      ],
+      [
+        100,
+        100
+      ],
+      [
+        0,
+        400
+      ]
+    ],
+    "shoelace_m2": 4.0,
+    "diagonal_1_3_heron_m2": 4.000000000000006,
+    "valid": true
+  },
+  {
+    "name": "dasi_bersilang",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        200,
+        200
+      ],
+      [
+        200,
+        0
+      ],
+      [
+        0,
+        200
+      ]
+    ],
+    "valid": false,
+    "pesan": "Urutan titik bersilangan, klik ulang searah keliling"
+  },
+  {
+    "name": "segaris",
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        100,
+        0
+      ],
+      [
+        200,
+        0
+      ]
+    ],
+    "shoelace_m2": 0.0,
+    "pesan": "Titik segaris, luas nol"
+  },
+  {
+    "name": "status_rel_0.02",
+    "rel": 0.02,
+    "status": "VALID"
+  },
+  {
+    "name": "status_rel_0.03",
+    "rel": 0.03,
+    "status": "VALID"
+  },
+  {
+    "name": "status_rel_0.0301",
+    "rel": 0.0301,
+    "status": "ESTIMATE_ONLY"
+  },
+  {
+    "name": "status_rel_0.1",
+    "rel": 0.1,
+    "status": "ESTIMATE_ONLY"
+  },
+  {
+    "name": "status_rel_0.1001",
+    "rel": 0.1001,
+    "status": "UNCALIBRATED"
+  },
+  {
+    "name": "segiempat_diagonal_1_3_di_luar",
+    "scale_m_per_px": 0.01,
+    "points": [
+      [
+        400,
+        0
+      ],
+      [
+        100,
+        100
+      ],
+      [
+        0,
+        400
+      ],
+      [
+        0,
+        0
+      ]
+    ],
+    "simple": true,
+    "shoelace_m2": 4.0,
+    "heron_diagonal_1_3_m2": 11.999999999999998,
+    "catatan": "Titik 2 sudut refleks: diagonal titik1-titik3 berada di luar bidang sehingga metode diagonal pada mockup melebihkan luas; shoelace benar"
+  },
+  {
+    "name": "undistort_node_opencv_pinhole",
+    "camera": {
+      "model": "opencv_pinhole",
+      "fx": 1400.0,
+      "fy": 1400.0,
+      "cx": 960.0,
+      "cy": 540.0,
+      "dist": [
+        -0.25,
+        0.08,
+        0.0005,
+        -0.0003,
+        0.0
+      ]
+    },
+    "ref_m": 0.762,
+    "node1": [
+      100,
+      200
+    ],
+    "node2": [
+      500,
+      200
+    ],
+    "a": [
+      150,
+      300
+    ],
+    "b": [
+      1850,
+      980
+    ],
+    "undistorted": {
+      "node1": [
+        -10.509723986306426,
+        155.76668182496115
+      ],
+      "node2": [
+        479.43245431710153,
+        184.60546166689062
+      ],
+      "a": [
+        65.02962156532158,
+        274.41845704736863
+      ],
+      "b": [
+        1984.6332815940482,
+        1045.8643415947106
+      ]
+    },
+    "scale_m_per_px": 0.001552598261436769,
+    "length_m": 3.2120428725235874,
+    "length_without_undistort_m": 3.487971245581018,
+    "catatan": "Hanya titik node yang di-undistort; gambar bukti tetap asli. tolerance_abs=1e-6 px"
+  },
+  {
+    "name": "tanpa_file_kamera_maks_estimate",
+    "rel_U95": 0.012,
+    "camera_file_present": false,
+    "status": "ESTIMATE_ONLY",
+    "catatan": "Tanpa file kalibrasi kamera status dibatasi ESTIMATE_ONLY walau rel <= 3%"
+  },
+  {
+    "name": "tanpa_file_kamera_tetap_uncalibrated",
+    "rel_U95": 0.12,
+    "camera_file_present": false,
+    "status": "UNCALIBRATED",
+    "catatan": "Batas atas tidak menaikkan status; > 10% tetap UNCALIBRATED"
+  }
+]

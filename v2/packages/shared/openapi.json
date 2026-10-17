@@ -1,0 +1,1790 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DeepInsight Engine",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/diagnostics": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Diagnostics",
+        "operationId": "diagnostics_diagnostics_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiagnosticsReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/roles": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Config Roles",
+        "operationId": "config_roles_config_roles_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RolesConfig"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/thresholds": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Config Thresholds",
+        "operationId": "config_thresholds_config_thresholds_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thresholds"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/controls": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Config Controls",
+        "operationId": "config_controls_config_controls_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlsConfig"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models": {
+      "get": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Model Status",
+        "operationId": "model_status_models_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/models/switch": {
+      "post": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Switch Model",
+        "operationId": "switch_model_models_switch_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/synthetic": {
+      "post": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Push Synthetic",
+        "operationId": "push_synthetic_video_synthetic_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyntheticRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrameList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/file": {
+      "post": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Push File",
+        "operationId": "push_file_video_file_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrameList"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/device": {
+      "post": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Open Device",
+        "operationId": "open_device_video_device_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/status": {
+      "get": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Video Status",
+        "operationId": "video_status_video_status_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/freeze": {
+      "post": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Freeze",
+        "operationId": "freeze_freeze_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FreezeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FreezeResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/close": {
+      "post": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Close Session",
+        "operationId": "close_session_session_close_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionClose"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Auth": {
+        "properties": {
+          "max_attempts": {
+            "type": "integer",
+            "title": "Max Attempts"
+          },
+          "lock_minutes": {
+            "type": "integer",
+            "title": "Lock Minutes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "max_attempts",
+          "lock_minutes"
+        ],
+        "title": "Auth"
+      },
+      "Cache": {
+        "properties": {
+          "max_mb": {
+            "type": "integer",
+            "title": "Max Mb"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "max_mb"
+        ],
+        "title": "Cache"
+      },
+      "CacheInfo": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "size_mb": {
+            "type": "number",
+            "title": "Size Mb"
+          },
+          "max_mb": {
+            "type": "integer",
+            "title": "Max Mb"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "size_mb",
+          "max_mb"
+        ],
+        "title": "CacheInfo"
+      },
+      "Calibration": {
+        "properties": {
+          "rel_uncertainty_basis": {
+            "type": "string",
+            "enum": [
+              "2sigma",
+              "1sigma"
+            ],
+            "title": "Rel Uncertainty Basis"
+          },
+          "click_sigma_px": {
+            "type": "number",
+            "title": "Click Sigma Px"
+          },
+          "valid_max_rel": {
+            "type": "number",
+            "title": "Valid Max Rel"
+          },
+          "estimate_max_rel": {
+            "type": "number",
+            "title": "Estimate Max Rel"
+          },
+          "diameter_sanity_pct": {
+            "type": "number",
+            "title": "Diameter Sanity Pct"
+          },
+          "edge_risk_px": {
+            "type": "number",
+            "title": "Edge Risk Px"
+          },
+          "camera_file_required_for_valid": {
+            "type": "boolean",
+            "title": "Camera File Required For Valid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rel_uncertainty_basis",
+          "click_sigma_px",
+          "valid_max_rel",
+          "estimate_max_rel",
+          "diameter_sanity_pct",
+          "edge_risk_px",
+          "camera_file_required_for_valid"
+        ],
+        "title": "Calibration"
+      },
+      "ControlsConfig": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "title": "Schema Version"
+          },
+          "keyboard": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Keyboard"
+          },
+          "gamepad": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Gamepad"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "keyboard",
+          "gamepad"
+        ],
+        "title": "ControlsConfig"
+      },
+      "DeviceRequest": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "DeviceRequest"
+      },
+      "DiagnosticsReport": {
+        "properties": {
+          "app_name": {
+            "type": "string",
+            "title": "App Name"
+          },
+          "app_version": {
+            "type": "string",
+            "title": "App Version"
+          },
+          "engine_version": {
+            "type": "string",
+            "title": "Engine Version"
+          },
+          "env": {
+            "type": "string",
+            "title": "Env"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "uptime_s": {
+            "type": "number",
+            "title": "Uptime S"
+          },
+          "python": {
+            "type": "string",
+            "title": "Python"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "gpu": {
+            "$ref": "#/components/schemas/GpuInfo"
+          },
+          "model": {
+            "$ref": "#/components/schemas/ModelInfo"
+          },
+          "video": {
+            "$ref": "#/components/schemas/VideoInfo"
+          },
+          "camera_state": {
+            "type": "string",
+            "title": "Camera State"
+          },
+          "clock_sync": {
+            "type": "string",
+            "title": "Clock Sync"
+          },
+          "cache": {
+            "$ref": "#/components/schemas/CacheInfo"
+          },
+          "disk": {
+            "$ref": "#/components/schemas/DiskInfo"
+          },
+          "workers": {
+            "type": "integer",
+            "title": "Workers"
+          },
+          "last_errors": {
+            "items": {
+              "$ref": "#/components/schemas/LastError"
+            },
+            "type": "array",
+            "title": "Last Errors"
+          },
+          "performance_warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Performance Warning"
+          },
+          "performance_detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Performance Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "app_name",
+          "app_version",
+          "engine_version",
+          "env",
+          "session_id",
+          "uptime_s",
+          "python",
+          "platform",
+          "gpu",
+          "model",
+          "video",
+          "camera_state",
+          "clock_sync",
+          "cache",
+          "disk",
+          "workers",
+          "last_errors"
+        ],
+        "title": "DiagnosticsReport"
+      },
+      "DiskInfo": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "free_gb": {
+            "type": "number",
+            "title": "Free Gb"
+          },
+          "total_gb": {
+            "type": "number",
+            "title": "Total Gb"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "free_gb",
+          "total_gb"
+        ],
+        "title": "DiskInfo"
+      },
+      "FileRequest": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path"
+        ],
+        "title": "FileRequest"
+      },
+      "FrameList": {
+        "properties": {
+          "frame_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Frame Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_ids"
+        ],
+        "title": "FrameList"
+      },
+      "Freeze": {
+        "properties": {
+          "max_delta_cm": {
+            "type": "number",
+            "title": "Max Delta Cm"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "max_delta_cm"
+        ],
+        "title": "Freeze"
+      },
+      "FreezeRequest": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id"
+        ],
+        "title": "FreezeRequest"
+      },
+      "FreezeResult": {
+        "properties": {
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "png_bytes": {
+            "type": "integer",
+            "title": "Png Bytes"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "snapshot_id",
+          "frame_id",
+          "session_id",
+          "sha256",
+          "width",
+          "height",
+          "png_bytes",
+          "path"
+        ],
+        "title": "FreezeResult"
+      },
+      "GpuInfo": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "vram_total_mb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vram Total Mb"
+          },
+          "vram_used_mb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vram Used Mb"
+          },
+          "utilization_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Utilization Pct"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available"
+        ],
+        "title": "GpuInfo"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "uptime_s": {
+            "type": "number",
+            "title": "Uptime S"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version",
+          "session_id",
+          "uptime_s"
+        ],
+        "title": "HealthResponse"
+      },
+      "IntervalYears": {
+        "properties": {
+          "low": {
+            "type": "integer",
+            "title": "Low"
+          },
+          "low_to_moderate": {
+            "type": "integer",
+            "title": "Low To Moderate"
+          },
+          "moderate_and_above": {
+            "type": "integer",
+            "title": "Moderate And Above"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "low",
+          "low_to_moderate",
+          "moderate_and_above"
+        ],
+        "title": "IntervalYears"
+      },
+      "LastError": {
+        "properties": {
+          "ts": {
+            "type": "number",
+            "title": "Ts"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ts",
+          "code"
+        ],
+        "title": "LastError"
+      },
+      "Measure": {
+        "properties": {
+          "heron_rel_tol": {
+            "type": "number",
+            "title": "Heron Rel Tol"
+          },
+          "boundary_tol": {
+            "type": "number",
+            "title": "Boundary Tol"
+          },
+          "undistort_iterations": {
+            "type": "integer",
+            "title": "Undistort Iterations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "heron_rel_tol",
+          "boundary_tol",
+          "undistort_iterations"
+        ],
+        "title": "Measure"
+      },
+      "ModelInfo": {
+        "properties": {
+          "active": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active",
+          "state"
+        ],
+        "title": "ModelInfo"
+      },
+      "ModelStatus": {
+        "properties": {
+          "active": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "gpu_available": {
+            "type": "boolean",
+            "title": "Gpu Available"
+          },
+          "limited_mode": {
+            "type": "boolean",
+            "title": "Limited Mode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active",
+          "state",
+          "gpu_available",
+          "limited_mode"
+        ],
+        "title": "ModelStatus"
+      },
+      "Performance": {
+        "properties": {
+          "watchdog_interval_s": {
+            "type": "number",
+            "title": "Watchdog Interval S"
+          },
+          "fps_min": {
+            "type": "number",
+            "title": "Fps Min"
+          },
+          "fps_window_s": {
+            "type": "number",
+            "title": "Fps Window S"
+          },
+          "vram_max_pct": {
+            "type": "number",
+            "title": "Vram Max Pct"
+          },
+          "gpu_max_pct": {
+            "type": "number",
+            "title": "Gpu Max Pct"
+          },
+          "gpu_window_s": {
+            "type": "number",
+            "title": "Gpu Window S"
+          },
+          "vram_baseline_tolerance_mb": {
+            "type": "number",
+            "title": "Vram Baseline Tolerance Mb"
+          },
+          "unload_timeout_s": {
+            "type": "number",
+            "title": "Unload Timeout S"
+          },
+          "load_timeout_s": {
+            "type": "number",
+            "title": "Load Timeout S"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "watchdog_interval_s",
+          "fps_min",
+          "fps_window_s",
+          "vram_max_pct",
+          "gpu_max_pct",
+          "gpu_window_s",
+          "vram_baseline_tolerance_mb",
+          "unload_timeout_s",
+          "load_timeout_s"
+        ],
+        "title": "Performance"
+      },
+      "Pipe": {
+        "properties": {
+          "nominal_od_mm": {
+            "$ref": "#/components/schemas/PipeValues"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nominal_od_mm"
+        ],
+        "title": "Pipe"
+      },
+      "PipeValues": {
+        "properties": {
+          "inch_16": {
+            "type": "number",
+            "title": "Inch 16"
+          },
+          "inch_8": {
+            "type": "number",
+            "title": "Inch 8"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "inch_16",
+          "inch_8"
+        ],
+        "title": "PipeValues"
+      },
+      "RodTest": {
+        "properties": {
+          "length_m": {
+            "type": "number",
+            "title": "Length M"
+          },
+          "tolerance_pct": {
+            "type": "number",
+            "title": "Tolerance Pct"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "length_m",
+          "tolerance_pct"
+        ],
+        "title": "RodTest"
+      },
+      "RolesConfig": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "title": "Schema Version"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles"
+          },
+          "default_admin_roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Default Admin Roles"
+          },
+          "menus": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "string",
+                "enum": [
+                  "full",
+                  "view",
+                  "none"
+                ]
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Menus"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "roles",
+          "default_admin_roles",
+          "menus"
+        ],
+        "title": "RolesConfig"
+      },
+      "SessionClose": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "cache_mb": {
+            "type": "number",
+            "title": "Cache Mb"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "cache_mb"
+        ],
+        "title": "SessionClose"
+      },
+      "Span": {
+        "properties": {
+          "rope_tolerance_pct": {
+            "type": "number",
+            "title": "Rope Tolerance Pct"
+          },
+          "segment_target_m": {
+            "type": "number",
+            "title": "Segment Target M"
+          },
+          "warning_ratio": {
+            "type": "number",
+            "title": "Warning Ratio"
+          },
+          "critical_limit_m": {
+            "$ref": "#/components/schemas/PipeValues"
+          },
+          "resurvey_months": {
+            "type": "integer",
+            "title": "Resurvey Months"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rope_tolerance_pct",
+          "segment_target_m",
+          "warning_ratio",
+          "critical_limit_m",
+          "resurvey_months"
+        ],
+        "title": "Span"
+      },
+      "SwitchRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "SwitchRequest"
+      },
+      "SyntheticRequest": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          }
+        },
+        "type": "object",
+        "required": [
+          "count",
+          "width",
+          "height"
+        ],
+        "title": "SyntheticRequest"
+      },
+      "Thresholds": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "title": "Schema Version"
+          },
+          "calibration": {
+            "$ref": "#/components/schemas/Calibration"
+          },
+          "rod_test": {
+            "$ref": "#/components/schemas/RodTest"
+          },
+          "freeze": {
+            "$ref": "#/components/schemas/Freeze"
+          },
+          "span": {
+            "$ref": "#/components/schemas/Span"
+          },
+          "measure": {
+            "$ref": "#/components/schemas/Measure"
+          },
+          "pipe": {
+            "$ref": "#/components/schemas/Pipe"
+          },
+          "inspection_interval_years": {
+            "$ref": "#/components/schemas/IntervalYears"
+          },
+          "auth": {
+            "$ref": "#/components/schemas/Auth"
+          },
+          "performance": {
+            "$ref": "#/components/schemas/Performance"
+          },
+          "video": {
+            "$ref": "#/components/schemas/Video"
+          },
+          "cache": {
+            "$ref": "#/components/schemas/Cache"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "calibration",
+          "rod_test",
+          "freeze",
+          "span",
+          "measure",
+          "pipe",
+          "inspection_interval_years",
+          "auth",
+          "performance",
+          "video",
+          "cache"
+        ],
+        "title": "Thresholds"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Video": {
+        "properties": {
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "fps": {
+            "type": "integer",
+            "title": "Fps"
+          },
+          "lost_signal_s": {
+            "type": "number",
+            "title": "Lost Signal S"
+          },
+          "ring_buffer_s": {
+            "type": "number",
+            "title": "Ring Buffer S"
+          },
+          "display_max_side": {
+            "type": "integer",
+            "title": "Display Max Side"
+          },
+          "display_jpeg_quality": {
+            "type": "integer",
+            "title": "Display Jpeg Quality"
+          },
+          "fps_sample_s": {
+            "type": "number",
+            "title": "Fps Sample S"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "width",
+          "height",
+          "fps",
+          "lost_signal_s",
+          "ring_buffer_s",
+          "display_max_side",
+          "display_jpeg_quality",
+          "fps_sample_s"
+        ],
+        "title": "Video"
+      },
+      "VideoInfo": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "fps_display": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fps Display"
+          },
+          "fps_inference": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fps Inference"
+          },
+          "ring_buffer_s": {
+            "type": "number",
+            "title": "Ring Buffer S"
+          },
+          "frame_count": {
+            "type": "integer",
+            "title": "Frame Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "ring_buffer_s"
+        ],
+        "title": "VideoInfo"
+      },
+      "VideoStatus": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "frame_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frame Id"
+          },
+          "frame_count": {
+            "type": "integer",
+            "title": "Frame Count"
+          },
+          "enhanced": {
+            "type": "boolean",
+            "title": "Enhanced"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "frame_id",
+          "frame_count",
+          "enhanced"
+        ],
+        "title": "VideoStatus"
+      }
+    }
+  }
+}

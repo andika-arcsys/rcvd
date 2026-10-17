@@ -1,0 +1,483 @@
+{
+  "tolerance_rel": 1e-9,
+  "limits": {
+    "uncertainty_k": 2.0,
+    "valid_max_rel": 0.03,
+    "estimate_max_rel": 0.1,
+    "camera_file_required_for_valid": true,
+    "rod_length_m": 1.0,
+    "rod_tolerance_pct": 3,
+    "freeze_max_delta_cm": 5,
+    "rope_tolerance_pct": 2,
+    "warning_ratio": 0.8,
+    "critical_inch_16": 9.65,
+    "critical_inch_8": 5.32,
+    "heron_rel_tol": 1e-9,
+    "boundary_tol": 1e-9,
+    "undistort_iterations": 20,
+    "resurvey_months": 6
+  },
+  "cases": [
+    {
+      "name": "kalibrasi_100px_ref_0_10",
+      "op": "calibrate",
+      "p1": [0, 0],
+      "p2": [100, 0],
+      "ref_m": 0.1,
+      "click_sigma_px": 1.5,
+      "camera": null,
+      "expect": {
+        "scale_m_per_px": 0.001,
+        "rel_uncert": 0.042426406871192854,
+        "status": "ESTIMATE_ONLY",
+        "nodes": [[0, 0], [100, 0]]
+      }
+    },
+    {
+      "name": "kalibrasi_200px_tanpa_kamera_maks_estimate",
+      "op": "calibrate",
+      "p1": [0, 0],
+      "p2": [200, 0],
+      "ref_m": 0.2,
+      "click_sigma_px": 1.5,
+      "camera": null,
+      "expect": {
+        "scale_m_per_px": 0.001,
+        "rel_uncert": 0.021213203435596427,
+        "status": "ESTIMATE_ONLY"
+      }
+    },
+    {
+      "name": "kalibrasi_200px_dengan_kamera_valid",
+      "op": "calibrate",
+      "p1": [0, 0],
+      "p2": [200, 0],
+      "ref_m": 0.2,
+      "click_sigma_px": 1.5,
+      "camera": { "fx": 1000, "fy": 1000, "cx": 0, "cy": 0, "dist": [0, 0, 0, 0, 0] },
+      "expect": {
+        "scale_m_per_px": 0.001,
+        "rel_uncert": 0.021213203435596427,
+        "status": "VALID"
+      }
+    },
+    {
+      "name": "status_rel_0_02",
+      "op": "status",
+      "rel_uncert": 0.02,
+      "camera_present": true,
+      "expect": { "status": "VALID" }
+    },
+    {
+      "name": "status_rel_0_03",
+      "op": "status",
+      "rel_uncert": 0.03,
+      "camera_present": true,
+      "expect": { "status": "VALID" }
+    },
+    {
+      "name": "status_rel_0_0301",
+      "op": "status",
+      "rel_uncert": 0.0301,
+      "camera_present": true,
+      "expect": { "status": "ESTIMATE_ONLY" }
+    },
+    {
+      "name": "status_rel_0_1",
+      "op": "status",
+      "rel_uncert": 0.1,
+      "camera_present": true,
+      "expect": { "status": "ESTIMATE_ONLY" }
+    },
+    {
+      "name": "status_rel_0_1001",
+      "op": "status",
+      "rel_uncert": 0.1001,
+      "camera_present": true,
+      "expect": { "status": "UNCALIBRATED" }
+    },
+    {
+      "name": "tanpa_file_kamera_maks_estimate",
+      "op": "status",
+      "rel_uncert": 0.012,
+      "camera_present": false,
+      "expect": { "status": "ESTIMATE_ONLY" }
+    },
+    {
+      "name": "tanpa_file_kamera_tetap_uncalibrated",
+      "op": "status",
+      "rel_uncert": 0.12,
+      "camera_present": false,
+      "expect": { "status": "UNCALIBRATED" }
+    },
+    {
+      "name": "kalibrasi_jarak_nol",
+      "op": "calibrate",
+      "p1": [0, 0],
+      "p2": [0, 0],
+      "ref_m": 0.1,
+      "click_sigma_px": 1.5,
+      "camera": null,
+      "error": "CAL-001",
+      "message": "Jarak referensi nol."
+    },
+    {
+      "name": "undistort_node_opencv_pinhole",
+      "op": "length",
+      "p1": [150, 300],
+      "p2": [1850, 980],
+      "calibration": {
+        "p1": [100, 200],
+        "p2": [500, 200],
+        "ref_m": 0.762,
+        "click_sigma_px": 1.5,
+        "camera": {
+          "fx": 1400,
+          "fy": 1400,
+          "cx": 960,
+          "cy": 540,
+          "dist": [-0.25, 0.08, 0.0005, -0.0003, 0]
+        }
+      },
+      "expect": {
+        "meters": 3.2120428725235874,
+        "uncertainty_2sigma_m": 0.028537180156981708,
+        "scale_m_per_px": 0.001552598261436769,
+        "status": "VALID",
+        "nodes": [
+          [-10.509723986306426, 155.76668182496115],
+          [479.43245431710153, 184.60546166689062]
+        ]
+      }
+    },
+    {
+      "name": "panjang_tanpa_undistort",
+      "op": "length",
+      "p1": [150, 300],
+      "p2": [1850, 980],
+      "calibration": {
+        "p1": [100, 200],
+        "p2": [500, 200],
+        "ref_m": 0.762,
+        "click_sigma_px": 1.5,
+        "camera": null
+      },
+      "expect": { "meters": 3.487971245581018, "status": "ESTIMATE_ONLY" }
+    },
+    {
+      "name": "panjang_3_4_5",
+      "op": "length",
+      "p1": [0, 0],
+      "p2": [300, 400],
+      "calibration": {
+        "p1": [0, 0],
+        "p2": [100, 0],
+        "ref_m": 0.1,
+        "click_sigma_px": 1.5,
+        "camera": null
+      },
+      "expect": { "meters": 0.5, "uncertainty_2sigma_m": 0.021633307652783935 }
+    },
+    {
+      "name": "luas_persegi",
+      "op": "area",
+      "points": [[0, 0], [1000, 0], [1000, 1000], [0, 1000]],
+      "calibration": {
+        "p1": [0, 0],
+        "p2": [100, 0],
+        "ref_m": 0.1,
+        "click_sigma_px": 1.5,
+        "camera": null
+      },
+      "expect": {
+        "area_m2": 1,
+        "uncertainty_2sigma_m2": 0.08495881355103778,
+        "sides_m": [1, 1, 1, 1],
+        "diagonals_m": [1.4142135623730951, 1.4142135623730951],
+        "heron_m2": null
+      }
+    },
+    {
+      "name": "luas_segitiga_3_4_5",
+      "op": "area",
+      "points": [[0, 0], [3000, 0], [0, 4000]],
+      "calibration": {
+        "p1": [0, 0],
+        "p2": [100, 0],
+        "ref_m": 0.1,
+        "click_sigma_px": 1.5,
+        "camera": null
+      },
+      "expect": {
+        "area_m2": 6,
+        "uncertainty_2sigma_m2": 0.5092273559030386,
+        "sides_m": [3, 5, 4],
+        "diagonals_m": [],
+        "heron_m2": 6
+      }
+    },
+    {
+      "name": "luas_cekung_diagonal_salah",
+      "op": "area",
+      "points": [[400, 0], [100, 100], [0, 400], [0, 0]],
+      "calibration": {
+        "p1": [0, 0],
+        "p2": [10, 0],
+        "ref_m": 0.1,
+        "click_sigma_px": 1.5,
+        "camera": null
+      },
+      "expect": {
+        "area_m2": 4,
+        "uncertainty_2sigma_m2": 3.3963657046908247,
+        "sides_m": [3.1622776601683795, 3.1622776601683795, 4, 4],
+        "diagonals_m": [5.656854249492381, 1.4142135623730951],
+        "heron_m2": null
+      }
+    },
+    {
+      "name": "titik_kembar",
+      "op": "area",
+      "points": [[0, 0], [0, 0], [100, 0]],
+      "calibration": {
+        "p1": [0, 0],
+        "p2": [100, 0],
+        "ref_m": 0.1,
+        "click_sigma_px": 1.5,
+        "camera": null
+      },
+      "error": "AREA-001",
+      "message": "Titik kembar."
+    },
+    {
+      "name": "urutan_bersilangan",
+      "op": "area",
+      "points": [[0, 0], [200, 200], [200, 0], [0, 200]],
+      "calibration": {
+        "p1": [0, 0],
+        "p2": [100, 0],
+        "ref_m": 0.1,
+        "click_sigma_px": 1.5,
+        "camera": null
+      },
+      "error": "AREA-002",
+      "message": "Urutan titik bersilangan, klik ulang searah keliling."
+    },
+    {
+      "name": "titik_segaris",
+      "op": "area",
+      "points": [[0, 0], [100, 0], [200, 0]],
+      "calibration": {
+        "p1": [0, 0],
+        "p2": [100, 0],
+        "ref_m": 0.1,
+        "click_sigma_px": 1.5,
+        "camera": null
+      },
+      "error": "AREA-003",
+      "message": "Titik segaris, luas nol."
+    },
+    {
+      "name": "heron_selisih",
+      "op": "heron_cross_check",
+      "a": 6,
+      "b": 6.000001,
+      "error": "AREA-004",
+      "message": "Cek silang Heron tidak cocok dengan shoelace."
+    },
+    {
+      "name": "heron_cocok",
+      "op": "heron_cross_check",
+      "a": 6,
+      "b": 6,
+      "expect": { "ok": true }
+    },
+    {
+      "name": "uji_batang_1_029_lolos",
+      "op": "rod_test",
+      "measured_m": 1.029,
+      "expect": { "passed": true }
+    },
+    {
+      "name": "uji_batang_1_031_gagal",
+      "op": "rod_test",
+      "measured_m": 1.031,
+      "expect": { "passed": false }
+    },
+    {
+      "name": "uji_batang_batas_3_persen",
+      "op": "rod_test",
+      "measured_m": 1.03,
+      "expect": { "passed": true }
+    },
+    {
+      "name": "freeze_2_049_lolos",
+      "op": "freeze_pair",
+      "a_m": 2,
+      "b_m": 2.049,
+      "expect": { "passed": true }
+    },
+    {
+      "name": "freeze_2_051_gagal",
+      "op": "freeze_pair",
+      "a_m": 2,
+      "b_m": 2.051,
+      "expect": { "passed": false }
+    },
+    {
+      "name": "freeze_batas_0_05",
+      "op": "freeze_pair",
+      "a_m": 2,
+      "b_m": 2.05,
+      "expect": { "passed": true }
+    },
+    {
+      "name": "tali_102_lolos",
+      "op": "tape_check",
+      "length_total_m": 102,
+      "tape_m": 100,
+      "expect": { "passed": true }
+    },
+    {
+      "name": "tali_102_01_gagal",
+      "op": "tape_check",
+      "length_total_m": 102.01,
+      "tape_m": 100,
+      "expect": { "passed": false }
+    },
+    {
+      "name": "tali_nol",
+      "op": "tape_check",
+      "length_total_m": 1,
+      "tape_m": 0,
+      "error": "TAPE-001",
+      "message": "Panjang tali ukur nol."
+    },
+    {
+      "name": "batas_kritis_16",
+      "op": "critical_limit",
+      "diameter": "16",
+      "expect": { "critical_limit_m": 9.65 }
+    },
+    {
+      "name": "batas_kritis_8",
+      "op": "critical_limit",
+      "diameter": "8",
+      "expect": { "critical_limit_m": 5.32 }
+    },
+    {
+      "name": "peringatan_7_72",
+      "op": "span_warning",
+      "length_m": 7.72,
+      "diameter": "16",
+      "expect": { "warning": true }
+    },
+    {
+      "name": "peringatan_7_71",
+      "op": "span_warning",
+      "length_m": 7.71,
+      "diameter": "16",
+      "expect": { "warning": false }
+    },
+    {
+      "name": "span_16_9_64_di_bawah_batas",
+      "op": "span",
+      "diameter": "16",
+      "g_left": "S1",
+      "g_right": "S1",
+      "segments": [{ "id": "S1", "pairs": [[9.64, 9.64]] }],
+      "expect": {
+        "length_total_m": 9.64,
+        "length_left_m": 4.82,
+        "length_right_m": 4.82,
+        "warning": true,
+        "recommendation": "RESURVEY",
+        "recommendation_message": "laporan dan survei ulang 6 bulan",
+        "critical_limit_m": 9.65
+      }
+    },
+    {
+      "name": "span_16_9_65_fea",
+      "op": "span",
+      "diameter": "16",
+      "g_left": "S1",
+      "g_right": "S1",
+      "segments": [{ "id": "S1", "pairs": [[9.65, 9.65]] }],
+      "expect": {
+        "length_total_m": 9.65,
+        "warning": true,
+        "recommendation": "FEA_SUPPORT",
+        "recommendation_message": "laporan, kajian FEA, dan perbaikan penopang",
+        "critical_limit_m": 9.65
+      }
+    },
+    {
+      "name": "span_16_7_72_peringatan",
+      "op": "span",
+      "diameter": "16",
+      "g_left": "S1",
+      "g_right": "S1",
+      "segments": [{ "id": "S1", "pairs": [[7.72, 7.72]] }],
+      "expect": {
+        "length_total_m": 7.72,
+        "warning": true,
+        "recommendation": "RESURVEY",
+        "recommendation_message": "laporan dan survei ulang 6 bulan"
+      }
+    },
+    {
+      "name": "span_pasangan_terakhir_lolos",
+      "op": "span",
+      "diameter": "8",
+      "g_left": "S1",
+      "g_right": "S1",
+      "segments": [{ "id": "S1", "pairs": [[2, 2.051], [2, 2.049]] }],
+      "expect": {
+        "length_total_m": 2.0244999999999997,
+        "segments": [{ "id": "S1", "a_m": 2, "b_m": 2.049, "length_m": 2.0244999999999997 }]
+      }
+    },
+    {
+      "name": "span_pasangan_terakhir_gagal_pakai_sebelumnya",
+      "op": "span",
+      "diameter": "8",
+      "g_left": "S1",
+      "g_right": "S1",
+      "segments": [{ "id": "S1", "pairs": [[1, 1], [1, 1.2]] }],
+      "expect": {
+        "length_total_m": 1,
+        "segments": [{ "id": "S1", "a_m": 1, "b_m": 1, "length_m": 1 }]
+      }
+    },
+    {
+      "name": "span_potongan_proporsional",
+      "op": "span",
+      "diameter": "8",
+      "g_left": "S2",
+      "g_right": "S3",
+      "segments": [
+        { "id": "S1", "pairs": [[1, 1]] },
+        { "id": "S2", "pairs": [[2, 2]] },
+        { "id": "S3", "pairs": [[3, 3]] }
+      ],
+      "expect": {
+        "length_total_m": 5,
+        "length_left_m": 2.5,
+        "length_right_m": 2.5,
+        "cut_segment_id": "S3",
+        "cut_offset_m": 0.5,
+        "recommendation": "RESURVEY"
+      }
+    },
+    {
+      "name": "span_tanpa_pasangan_lolos",
+      "op": "span",
+      "diameter": "16",
+      "g_left": "S1",
+      "g_right": "S1",
+      "segments": [{ "id": "S1", "pairs": [[2, 2.051]] }],
+      "error": "SPAN-001",
+      "message": "Segmen tidak punya pasangan freeze yang lolos."
+    }
+  ]
+}

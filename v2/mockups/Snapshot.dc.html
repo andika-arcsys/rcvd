@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Mode Snapshot</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B131B}
+a{color:#7CC4F0}a:hover{color:#A9DAF7}
+button{font-family:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="Live Operation" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 16px; box-sizing: border-box">
+  <header style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; background: #2A1A08; border: 1px solid #F28C28; border-radius: 10px; padding: 12px 16px">
+    <a href="Main.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #5A4A3A; border-radius: 6px; padding: 6px 10px; font-size: 13px">← Optical</a>
+    <span style="background: #F28C28; color: #1A0F02; font-weight: 600; border-radius: 6px; padding: 4px 10px; font-size: 13px">FROZEN</span>
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">Frame [ID] · [timecode] · preset AquaClear: inspection (tercatat)</span>
+    <span style="font-size: 13px; color: #93A4B5">Segmen <b style="color: #E6EDF3">[S-n]</b> · freeze <b style="color: #E6EDF3">1 dari 2</b></span>
+    <a href="Main.dc.html" style="margin-left: auto; text-decoration: none; color: #E6EDF3; border: 1px solid #5A4A3A; border-radius: 8px; padding: 10px 16px; font-size: 14px">RESUME · kalibrasi dihapus</a>
+  </header>
+  <div style="display: flex; flex-wrap: wrap; gap: 12px; flex: 1">
+    <div role="toolbar" aria-label="Alat ukur" style="flex: 0 0 120px; display: flex; flex-direction: column; gap: 8px">
+      <button aria-pressed="true" style="background: #E6EDF3; color: #0B131B; border: 0; border-radius: 8px; min-height: 52px; font-size: 13px; font-weight: 600">Kalibrasi<br><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px">K</span></button>
+      <button style="background: #16232F; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; min-height: 52px; font-size: 13px">Distance<br><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #93A4B5">D</span></button>
+      <button style="background: #16232F; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; min-height: 52px; font-size: 13px">Path<br><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #93A4B5">P</span></button>
+      <button style="background: #16232F; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; min-height: 52px; font-size: 13px">Area<br><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #93A4B5">A</span></button>
+      <button style="background: #16232F; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; min-height: 52px; font-size: 13px">Hapus titik</button>
+      <button style="background: #16232F; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; min-height: 52px; font-size: 13px">Undo<br><span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #93A4B5">Ctrl+Z</span></button>
+    </div>
+    <section aria-label="Frame terkunci" style="flex: 999 1 560px; min-width: 0; position: relative; border-radius: 12px; overflow: hidden; border: 3px solid #F28C28; background: #123640; min-height: 600px">
+      <svg viewBox="0 0 800 560" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Frame beku dengan titik laser dan garis ukur" style="position: absolute; inset: 0; width: 100%; height: 100%">
+        <rect width="800" height="560" fill="#123640"/>
+        <rect y="400" width="800" height="160" fill="#2B3A2E"/>
+        <rect x="-20" y="250" width="840" height="84" rx="42" fill="#55636B"/>
+        <rect x="-20" y="262" width="840" height="14" fill="#6F7D84"/>
+        <rect x="90" y="334" width="80" height="66" fill="#3A4A3C"/>
+        <rect x="630" y="334" width="80" height="66" fill="#3A4A3C"/>
+        <circle cx="360" cy="292" r="14" fill="none" stroke="#3FB97C" stroke-width="3"/>
+        <circle cx="360" cy="292" r="5" fill="#FF4D4D"/>
+        <circle cx="440" cy="292" r="14" fill="none" stroke="#3FB97C" stroke-width="3"/>
+        <circle cx="440" cy="292" r="5" fill="#FF4D4D"/>
+        <line x1="170" y1="372" x2="630" y2="372" stroke="#7CC4F0" stroke-width="3"/>
+        <line x1="170" y1="358" x2="170" y2="386" stroke="#7CC4F0" stroke-width="3"/>
+        <line x1="630" y1="358" x2="630" y2="386" stroke="#7CC4F0" stroke-width="3"/>
+      </svg>
+      <div style="position: absolute; left: 50%; top: 40%; transform: translate(-50%,-100%); background: #0F2A1E; border: 1px solid #3FB97C; border-radius: 8px; padding: 10px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 8px; min-width: 300px">
+        <b>Titik laser terdeteksi otomatis</b>
+        <span style="color: #B9E6CD">Skala usulan [x,xx] mm/px · panjang referensi [xx] cm</span>
+        <div style="display: flex; gap: 8px">
+          <button style="background: #3FB97C; color: #06210F; border: 0; border-radius: 6px; padding: 10px 14px; font-size: 13px; font-weight: 600; min-height: 44px">Terima (Enter)</button>
+          <button style="background: transparent; color: #E6EDF3; border: 1px solid #3FB97C; border-radius: 6px; padding: 10px 14px; font-size: 13px; min-height: 44px">Geser titik</button>
+          <button style="background: transparent; color: #93A4B5; border: 0; padding: 10px 6px; font-size: 13px; min-height: 44px; text-decoration: underline">Klik manual (cadangan)</button>
+        </div>
+      </div>
+      <div style="position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%); background: rgba(11,19,27,.88); border: 1px solid #7CC4F0; border-radius: 6px; padding: 6px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 14px">Distance [x,xx] m ± [x,x] cm</div>
+      <div style="position: absolute; bottom: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px">
+        <span style="background: rgba(11,19,27,.88); border-radius: 6px; padding: 6px 10px">Kaca pembesar aktif saat titik digeser</span>
+        <span style="background: rgba(11,19,27,.88); border-radius: 6px; padding: 6px 10px">Ukuran dihitung pada frame ASLI</span>
+      </div>
+    </section>
+    <aside style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 12px">
+      <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 12px; color: #93A4B5">Status kalibrasi</div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; font-family: 'IBM Plex Mono', monospace">
+          <span style="border: 1px solid #3A4A5B; color: #93A4B5; border-radius: 6px; padding: 4px 8px">UNCALIBRATED</span>
+          <span style="border: 1px solid #3A4A5B; color: #93A4B5; border-radius: 6px; padding: 4px 8px">ESTIMATE_ONLY</span>
+          <span style="background: #13361F; border: 1px solid #3FB97C; color: #9FE0BE; border-radius: 6px; padding: 4px 8px; font-weight: 500">VALID</span>
+        </div>
+        <div style="font-size: 13px; line-height: 1.6">Sumber: laser otomatis (A2), dikonfirmasi operator</div>
+      </div>
+      <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 12px; color: #93A4B5">Cek kewajaran skala (diameter pipa)</div>
+        <div style="font-size: 13px; display: flex; justify-content: space-between"><span>Diameter terukur vs nominal 16"</span><b style="color: #9FE0BE">Wajar</b></div>
+        <div style="font-size: 12px; color: #93A4B5">Peringatan muncul bila selisih melewati ambang [x]% (ditetapkan tim)</div>
+      </div>
+      <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+        <div style="font-size: 12px; color: #93A4B5">Segmen kritis · multi-frame</div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 12px; text-align: center">
+          <div style="background: #13361F; border: 1px solid #3FB97C; border-radius: 6px; padding: 8px">Freeze 1<br><b style="font-family: 'IBM Plex Mono', monospace">[x,xx] m</b></div>
+          <div style="border: 1px dashed #3A4A5B; border-radius: 6px; padding: 8px; color: #93A4B5">Freeze 2<br>belum</div>
+          <div style="border: 1px dashed #3A4A5B; border-radius: 6px; padding: 8px; color: #93A4B5">Selisih<br>≤5 cm</div>
+        </div>
+      </div>
+      <div style="background: #2A1414; border: 1px solid #E5534B; border-radius: 10px; padding: 12px 14px; font-size: 13px; display: flex; gap: 10px; align-items: flex-start">
+        <b style="color: #F2A5A0; font-family: 'IBM Plex Mono', monospace; font-size: 12px">DEPTH_EDGE_RISK</b>
+        <span>Muncul bila titik ukur terlalu dekat tepi objek; Simpan dinonaktifkan sampai titik digeser.</span>
+      </div>
+      <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; font-size: 13px; line-height: 1.7">
+        <div style="font-size: 12px; color: #93A4B5; margin-bottom: 4px">Metadata</div>
+        Waktu [hh:mm:ss] · kedalaman [x,x] m<br>Operator [nama] · peran Ahli pengukuran
+      </div>
+      <a href="SimpanSnapshot.dc.html" style="text-align: center; text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 18px; font-size: 16px; font-weight: 600">Simpan snapshot (JPEG + JSON)</a>
+    </aside>
+  </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

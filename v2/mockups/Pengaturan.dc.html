@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Pengaturan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}a{color:#7CC4F0}</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="Pengaturan" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+    <div><div style="font-size: 13px; color: #93A4B5">Setiap perubahan tercatat di audit log</div><h1 style="margin: 4px 0 0; font-size: 26px; font-weight: 600">Pengaturan</h1></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+      <section style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 14px">
+        <b>Alat referensi</b>
+        <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px">Jarak dua titik laser (cm)<input value="[xx]" style="background: #0B131B; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px; font-family: 'IBM Plex Mono', monospace"></label>
+        <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px">Panjang batang uji (m)<input value="1,00" style="background: #0B131B; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px; font-family: 'IBM Plex Mono', monospace"></label>
+      </section>
+      <section style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 14px">
+        <b>Ambang pemeriksaan</b>
+        <div style="display: flex; justify-content: space-between"><span>Uji batang 1 m</span><b style="font-family: 'IBM Plex Mono', monospace">±3%</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Selisih dua freeze</span><b style="font-family: 'IBM Plex Mono', monospace">≤5 cm</b></div>
+        <div style="display: flex; justify-content: space-between"><span>L-total vs tali ukur</span><b style="font-family: 'IBM Plex Mono', monospace">≤2%</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Batas kritis 16" / 8"</span><b style="font-family: 'IBM Plex Mono', monospace">9,65 m / 5,32 m</b></div>
+        <div style="display: flex; justify-content: space-between"><span>Cek kewajaran diameter</span><b style="font-family: 'IBM Plex Mono', monospace">[x]%</b></div>
+      </section>
+      <section style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 14px">
+        <b>Preset AquaClear dan kamera</b>
+        <div style="display: flex; justify-content: space-between"><span>Inspection</span><a href="AquaClear.dc.html">Ubah</a></div>
+        <div style="display: flex; justify-content: space-between"><span>Balanced</span><a href="AquaClear.dc.html">Ubah</a></div>
+        <div style="display: flex; justify-content: space-between"><span>Ringan</span><a href="AquaClear.dc.html">Ubah</a></div>
+        <div style="display: flex; justify-content: space-between"><span>Model aktif HydroDetect</span><b style="font-family: 'IBM Plex Mono', monospace">exp-5</b></div>
+      </section>
+      <section style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 14px">
+        <b>Pengguna dan peran</b>
+        <div style="display: flex; justify-content: space-between"><span>[nama]</span><span style="color: #93A4B5">Ketua tim</span></div>
+        <div style="display: flex; justify-content: space-between"><span>[nama]</span><span style="color: #93A4B5">Pilot drone</span></div>
+        <div style="display: flex; justify-content: space-between"><span>[nama]</span><span style="color: #93A4B5">Ahli pengukuran</span></div>
+        <button style="align-self: flex-start; background: transparent; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px 14px; font-family: inherit">Tambah pengguna</button>
+      </section>
+    </div>
+    <a href="Dashboard.dc.html" style="align-self: flex-start; text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 16px 32px; font-weight: 600">Simpan perubahan</a>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>
