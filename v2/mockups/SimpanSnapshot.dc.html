@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Simpan snapshot</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}</style>
+</helmet>
+<div style="min-height: 900px; background: #070C11; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box">
+  <div role="dialog" aria-label="Simpan snapshot" style="width: 100%; max-width: 900px; background: #101B25; border: 1px solid #2A3A4B; border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; gap: 10px; align-items: center"><span style="background: #3FB97C; color: #06210F; border-radius: 6px; padding: 4px 10px; font-weight: 600; font-size: 13px">TERSIMPAN</span><b style="font-size: 20px">Snapshot [ID] · segmen [S-n] · freeze 1</b></div>
+    <div style="display: flex; flex-wrap: wrap; gap: 18px">
+      <svg viewBox="0 0 320 200" role="img" aria-label="Thumbnail frame dengan garis ukur" style="flex: 1 1 280px; max-width: 360px; border-radius: 10px">
+        <rect width="320" height="200" fill="#123640"/><rect y="150" width="320" height="50" fill="#2B3A2E"/>
+        <rect x="-10" y="90" width="340" height="34" rx="17" fill="#55636B"/>
+        <line x1="70" y1="138" x2="250" y2="138" stroke="#7CC4F0" stroke-width="3"/>
+        <circle cx="145" cy="107" r="3" fill="#FF4D4D"/><circle cx="175" cy="107" r="3" fill="#FF4D4D"/>
+      </svg>
+      <div style="flex: 1 1 320px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; font-size: 13px">
+        <div style="background: #0B131B; border-radius: 8px; padding: 10px"><div style="color: #93A4B5">Ukuran</div><b style="font-family: 'IBM Plex Mono', monospace">Distance [x,xx] m ± [x,x] cm</b></div>
+        <div style="background: #0B131B; border-radius: 8px; padding: 10px"><div style="color: #93A4B5">Kalibrasi</div><b style="color: #9FE0BE">VALID · laser otomatis</b></div>
+        <div style="background: #0B131B; border-radius: 8px; padding: 10px"><div style="color: #93A4B5">Pipa · segmen</div><b>16" · [S-n]</b></div>
+        <div style="background: #0B131B; border-radius: 8px; padding: 10px"><div style="color: #93A4B5">Preset</div><b>AquaClear inspection</b></div>
+        <div style="background: #0B131B; border-radius: 8px; padding: 10px; grid-column: span 2"><div style="color: #93A4B5">Berkas</div><b style="font-family: 'IBM Plex Mono', monospace">[ID].jpg · [ID].json</b></div>
+      </div>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px">Catatan (opsional)
+      <input placeholder="contoh: dasar sungai berlumpur di sisi kiri" style="background: #0B131B; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 12px; font-size: 14px; font-family: inherit">
+    </label>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <a href="Snapshot.dc.html" style="flex: 1 1 200px; text-align: center; text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px">Ukur titik lain (frame sama)</a>
+      <a href="Main.dc.html" style="flex: 1 1 200px; text-align: center; text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 16px; font-weight: 600">Frame selesai · RESUME</a>
+      <a href="Gallery.dc.html" style="flex: 1 1 200px; text-align: center; text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px">Buka Gallery</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

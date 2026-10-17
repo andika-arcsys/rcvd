@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>PIMS RBI</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}a{color:#7CC4F0}
+.r1{background:#1F6B45}.r2{background:#8A8A2A}.r3{background:#B5651D}.r4{background:#9E2B2B}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="PIMS / RBI" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+    <div><div style="font-size: 13px; color: #93A4B5">PIMS / RBI · segmen river crossing 16"</div><h1 style="margin: 4px 0 0; font-size: 26px; font-weight: 600">Pembaruan risiko dari temuan survei</h1></div>
+    <div style="display: flex; flex-wrap: wrap; gap: 16px">
+      <section style="flex: 1 1 460px; background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px">
+        <b style="font-size: 15px">Matriks risiko 5×5 (PR-06-019)</b>
+        <div style="display: flex; gap: 8px; margin-top: 12px">
+          <div style="writing-mode: vertical-rl; transform: rotate(180deg); font-size: 12px; color: #93A4B5; text-align: center">Probability (PoF) →</div>
+          <div style="flex: 1">
+            <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px">
+              <sc-for list="{{cells}}" as="c" hint-placeholder-count="25">
+                <div class="{{c.cls}}" style="height: 56px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600">{{c.mark}}</div>
+              </sc-for>
+            </div>
+            <div style="font-size: 12px; color: #93A4B5; text-align: center; margin-top: 6px">Impact (CoF) →</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 14px; font-size: 12px; margin-top: 10px; flex-wrap: wrap"><span><b>S</b> = sebelum survei</span><span><b>B</b> = setelah temuan baru</span></div>
+      </section>
+      <section style="flex: 1 1 340px; display: flex; flex-direction: column; gap: 12px">
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px; font-size: 14px; display: flex; flex-direction: column; gap: 8px">
+          <b>PoF geohazard (PR-06-111)</b>
+          <div style="display: flex; justify-content: space-between"><span>Free span terhadap batas kritis</span><b>[xx]%</b></div>
+          <div style="display: flex; justify-content: space-between"><span>Mitigasi / stabilisasi</span><b>[ada / tidak]</b></div>
+          <div style="display: flex; justify-content: space-between"><span>Kategori PoF</span><b>[kategori]</b></div>
+        </div>
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px; font-size: 14px; display: flex; flex-direction: column; gap: 8px">
+          <b>Efektivitas inspeksi (PR-06-117)</b>
+          <div style="display: flex; gap: 6px; font-family: 'IBM Plex Mono', monospace">
+            <span style="border: 1px solid #3A4A5B; border-radius: 6px; padding: 6px 10px">A</span>
+            <span style="background: #1C2C3B; border: 2px solid #7CC4F0; border-radius: 6px; padding: 6px 10px">B</span>
+            <span style="border: 1px solid #3A4A5B; border-radius: 6px; padding: 6px 10px">C</span>
+            <span style="border: 1px solid #3A4A5B; border-radius: 6px; padding: 6px 10px">D</span>
+            <span style="border: 1px solid #3A4A5B; border-radius: 6px; padding: 6px 10px">E</span>
+          </div>
+          <div style="font-size: 12px; color: #93A4B5">Level diusulkan; ditetapkan oleh Pemeriksa teknik</div>
+          <div style="display: flex; justify-content: space-between; margin-top: 6px"><span>Interval inspeksi berikut</span><b>[1 / 2 / 3] tahun</b></div>
+          <div style="font-size: 12px; color: #93A4B5">Low 3 tahun · Low to Moderate 2 tahun · Moderate ke atas 1 tahun</div>
+        </div>
+        <a href="Arsip.dc.html" style="text-align: center; text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 16px; font-weight: 600">Simpan risiko &amp; arsipkan paket bukti</a>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+  const cells = [];
+  for (let p = 5; p >= 1; p--) for (let i = 1; i <= 5; i++) {
+    const s = p + i;
+    const cls = s <= 4 ? 'r1' : s <= 6 ? 'r2' : s <= 8 ? 'r3' : 'r4';
+    const mark = (p === 2 && i === 4) ? 'S' : (p === 3 && i === 4) ? 'B' : '';
+    cells.push({ cls, mark });
+  }
+  return { cells };
+}
+}
+</script>
+</body>
+</html>

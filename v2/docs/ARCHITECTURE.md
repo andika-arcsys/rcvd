@@ -23,7 +23,7 @@ flowchart LR
     UI["React UI<br/>24 layar, Sidebar, MeasureCanvas"]
     RS["Rust: supervisor sidecar,<br/>token, jendela, kontroler"]
   end
-  subgraph Engine["Engine (Python 3.11, FastAPI, sidecar)"]
+  subgraph Engine["Engine (Python 3.12, FastAPI, sidecar)"]
     API["REST + WebSocket<br/>OpenAPI"]
     VS["VideoSource<br/>USB / RTSP / file"]
     RB["FramePipeline<br/>ring buffer 3 dtk"]

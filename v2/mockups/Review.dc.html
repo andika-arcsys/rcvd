@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Review dan Adjudikasi</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}a{color:#7CC4F0}
+.tab{background:#16232F;color:#E6EDF3;border:1px solid #2A3A4B;border-radius:8px;padding:10px 14px;font-size:13px;font-family:inherit;cursor:pointer;min-height:44px}
+.tab.on{background:#E6EDF3;color:#0B131B;border-color:#E6EDF3;font-weight:600}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:6px 0;border-bottom:1px solid #22313F}
+.mono{font-family:'IBM Plex Mono',monospace}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="Review" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 20px; box-sizing: border-box">
+  <header style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end">
+    <div>
+      <div style="font-size: 12px; color: #93A4B5; display: flex; gap: 10px; align-items: center"><a href="Dashboard.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 6px; padding: 6px 10px">← Kembali</a>Dashboard › Review &amp; Adjudikasi · misi Sinorang River Crossing</div>
+      <h1 style="margin: 4px 0 0; font-size: 24px; font-weight: 600">Verifikasi temuan, kalibrasi, dan ukuran</h1>
+    </div>
+    <div style="margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px">
+      <span style="background: #2A1414; border: 1px solid #E5534B; border-radius: 8px; padding: 8px 12px">Kritis <b>[n]</b></span>
+      <span style="background: #2A2410; border: 1px solid #E5B33A; border-radius: 8px; padding: 8px 12px">Sedang <b>[n]</b></span>
+      <span style="background: #16232F; border: 1px solid #2A3A4B; border-radius: 8px; padding: 8px 12px">Rendah <b>[n]</b></span>
+    </div>
+  </header>
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; flex: 1">
+    <section aria-label="Antrian kandidat" style="flex: 1 1 280px; max-width: 320px; background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 12px; color: #93A4B5">Antrian · urut risiko</div>
+      <button aria-current="true" style="text-align: left; background: #2A1414; border: 2px solid #E5534B; border-radius: 10px; padding: 12px; color: #E6EDF3; font-family: inherit; display: flex; flex-direction: column; gap: 4px">
+        <span style="display: flex; justify-content: space-between; width: 100%; font-size: 12px"><b style="color: #F2A5A0">KRITIS · 2 pemeriksa</b><span style="color: #93A4B5">HydroDetect</span></span>
+        <b style="font-size: 15px">Leakage + luas mask</b>
+        <span style="font-size: 12px; color: #93A4B5">keyakinan [0,xx] · VALID · A [x,xx] m²</span>
+      </button>
+      <button style="text-align: left; background: #2A1414; border: 1px solid #5A2A2A; border-radius: 10px; padding: 12px; color: #E6EDF3; font-family: inherit; display: flex; flex-direction: column; gap: 4px">
+        <span style="display: flex; justify-content: space-between; width: 100%; font-size: 12px"><b style="color: #F2A5A0">KRITIS · 2 pemeriksa</b><span style="color: #93A4B5">Kalkulator span</span></span>
+        <b style="font-size: 15px">Free span mendekati batas</b>
+        <span style="font-size: 12px; color: #93A4B5">L-total [x,xx] m / 9,65 m</span>
+      </button>
+      <button style="text-align: left; background: #1E1B10; border: 1px solid #5A4A1A; border-radius: 10px; padding: 12px; color: #E6EDF3; font-family: inherit; display: flex; flex-direction: column; gap: 4px">
+        <span style="display: flex; justify-content: space-between; width: 100%; font-size: 12px"><b style="color: #F2D27A">SEDANG</b><span style="color: #93A4B5">Canvas</span></span>
+        <b style="font-size: 15px">Sandbag bergeser + luas A1</b>
+        <span style="font-size: 12px; color: #93A4B5">ESTIMATE_ONLY · perlu cek</span>
+      </button>
+      <button style="text-align: left; background: #16232F; border: 1px solid #2A3A4B; border-radius: 10px; padding: 12px; color: #E6EDF3; font-family: inherit; display: flex; flex-direction: column; gap: 4px">
+        <span style="display: flex; justify-content: space-between; width: 100%; font-size: 12px"><b style="color: #93A4B5">RENDAH · shortcut aktif</b><span style="color: #93A4B5">HydroDetect</span></span>
+        <b style="font-size: 15px">Underwater trash</b>
+        <span style="font-size: 12px; color: #93A4B5">tanpa ukuran</span>
+      </button>
+    </section>
+
+    <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+      <div role="tablist" aria-label="Lapisan verifikasi" style="display: flex; flex-wrap: wrap; gap: 6px">
+        <button role="tab" class="{{tAi}}" onClick="{{setAi}}">Overlay AI</button>
+        <button role="tab" class="{{tKal}}" onClick="{{setKal}}">Kalibrasi</button>
+        <button role="tab" class="{{tLen}}" onClick="{{setLen}}">Panjang</button>
+        <button role="tab" class="{{tArea}}" onClick="{{setArea}}">Luas segmen</button>
+        <span style="margin-left: auto; align-self: center; font-size: 12px; color: #93A4B5">Semua lapisan di atas frame ASLI [ID]</span>
+      </div>
+      <section style="position: relative; border-radius: 12px; overflow: hidden; border: 1px solid #22313F; min-height: 360px; background: #123640">
+        <svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Frame asli pipa" style="position: absolute; inset: 0; width: 100%; height: 100%">
+          <rect width="800" height="400" fill="#123640"/><rect y="300" width="800" height="100" fill="#2B3A2E"/>
+          <rect x="-20" y="170" width="840" height="80" rx="40" fill="#55636B"/><rect x="-20" y="182" width="840" height="12" fill="#6F7D84"/>
+          <ellipse cx="420" cy="254" rx="40" ry="14" fill="#2E5560"/>
+          <circle cx="330" cy="210" r="5" fill="#FF4D4D"/><circle cx="410" cy="210" r="5" fill="#FF4D4D"/>
+        </svg>
+        <sc-if value="{{isAi}}" hint-placeholder-val="{{true}}">
+          <svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
+            <rect x="-20" y="170" width="840" height="80" rx="40" fill="#4EA8DE" fill-opacity=".22" stroke="#4EA8DE" stroke-width="2"/>
+            <ellipse cx="420" cy="254" rx="46" ry="18" fill="#E5534B" fill-opacity=".5" stroke="#E5534B" stroke-width="2"/>
+            <rect x="360" y="282" width="120" height="24" rx="4" fill="#E5534B"/><text x="420" y="299" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" fill="#fff">Leakage [0,xx]</text>
+          </svg>
+        </sc-if>
+        <sc-if value="{{isKal}}" hint-placeholder-val="{{false}}">
+          <svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
+            <circle cx="330" cy="210" r="15" fill="none" stroke="#3FB97C" stroke-width="3"/><circle cx="410" cy="210" r="15" fill="none" stroke="#3FB97C" stroke-width="3"/>
+            <line x1="330" y1="210" x2="410" y2="210" stroke="#3FB97C" stroke-width="2" stroke-dasharray="6 4"/>
+            <rect x="290" y="132" width="160" height="28" rx="5" fill="#0F2A1E" stroke="#3FB97C"/><text x="370" y="151" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" fill="#B9E6CD">ref [xx] cm · VALID</text>
+          </svg>
+        </sc-if>
+        <sc-if value="{{isLen}}" hint-placeholder-val="{{false}}">
+          <svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
+            <line x1="374" y1="290" x2="466" y2="290" stroke="#7CC4F0" stroke-width="3"/>
+            <line x1="374" y1="280" x2="374" y2="300" stroke="#7CC4F0" stroke-width="3"/><line x1="466" y1="280" x2="466" y2="300" stroke="#7CC4F0" stroke-width="3"/>
+            <rect x="330" y="306" width="180" height="26" rx="5" fill="#0B131B" stroke="#7CC4F0"/><text x="420" y="324" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" fill="#E6EDF3">L [x,xx] m ± [x,x] cm</text>
+          </svg>
+        </sc-if>
+        <sc-if value="{{isArea}}" hint-placeholder-val="{{false}}">
+          <svg viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%">
+            <ellipse cx="420" cy="254" rx="46" ry="18" fill="#E5B33A" fill-opacity=".35" stroke="#E5B33A" stroke-width="3"/>
+            <ellipse cx="420" cy="254" rx="40" ry="14" fill="none" stroke="#E6EDF3" stroke-width="2" stroke-dasharray="5 4"/>
+            <rect x="330" y="282" width="180" height="26" rx="5" fill="#0B131B" stroke="#E5B33A"/><text x="420" y="300" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" fill="#E6EDF3">A [x,xx] m² (mask)</text>
+          </svg>
+          <div style="position: absolute; left: 12px; bottom: 12px; background: rgba(11,19,27,.9); border: 1px solid #E5B33A; border-radius: 8px; padding: 8px 12px; font-size: 12px">Kuning = mask AI · putih putus-putus = poligon koreksi reviewer</div>
+        </sc-if>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px">
+        <section style="flex: 1 1 300px; background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 14px">
+          <b style="font-size: 14px">Verifikasi ukuran</b>
+          <div class="row"><span>Status kalibrasi</span><b style="color: #9FE0BE">VALID · laser otomatis</b></div>
+          <div class="row"><span>Skala</span><b class="mono">[x,xx] mm/px</b></div>
+          <div class="row"><span>Cek diameter nominal</span><b style="color: #9FE0BE">Wajar</b></div>
+          <div class="row"><span>Panjang L</span><b class="mono">[x,xx] m ± [x,x] cm</b></div>
+          <div class="row"><span>Luas segmen A (mask AI)</span><b class="mono">[x,xx] m²</b></div>
+          <div class="row"><span>Luas setelah koreksi</span><b class="mono">[x,xx] m² · selisih [x]%</b></div>
+          <div class="row" style="border-bottom: 0"><span>DEPTH_EDGE_RISK</span><b style="color: #9FE0BE">Tidak ada</b></div>
+        </section>
+        <section style="flex: 1 1 300px; background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap"><b style="font-size: 14px">Keputusan</b><span style="font-size: 12px; background: #2A1414; border: 1px solid #E5534B; border-radius: 6px; padding: 3px 8px">Kritis · 1 dari 2 pemeriksa</span></div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+            <a href="Laporan.dc.html" style="text-align: center; text-decoration: none; background: #13361F; border: 1px solid #3FB97C; color: #E6EDF3; border-radius: 8px; padding: 13px; font-size: 14px; font-weight: 600">Konfirmasi temuan &amp; ukuran</a>
+            <button style="background: #2A1414; border: 1px solid #E5534B; color: #E6EDF3; border-radius: 8px; min-height: 48px; font-size: 14px; font-family: inherit">Tolak</button>
+            <button style="background: #16232F; border: 1px solid #2A3A4B; color: #E6EDF3; border-radius: 8px; min-height: 48px; font-size: 14px; font-family: inherit">Ubah kelas</button>
+            <a href="CanvasAnotasi.dc.html" style="text-align: center; text-decoration: none; background: #2A2410; border: 1px solid #E5B33A; color: #E6EDF3; border-radius: 8px; padding: 13px; font-size: 14px">Koreksi ukur di Canvas</a>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px">Alasan (wajib)
+            <textarea rows="2" placeholder="Dasar keputusan, termasuk penilaian kalibrasi dan ukuran" style="background: #0B131B; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px; font-family: inherit; font-size: 14px"></textarea>
+          </label>
+          <div style="font-size: 12px; color: #93A4B5">Pemeriksa 1: [nama] · [waktu] · Pemeriksa 2: menunggu · <a href="Snapshot.dc.html">Minta ukur ulang</a></div>
+        </section>
+      </div>
+    </div>
+  </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+  const m = (this.state && this.state.tab) || 'ai';
+  const c = (k) => m === k ? 'tab on' : 'tab';
+  return {
+    isAi: m === 'ai', isKal: m === 'kal', isLen: m === 'len', isArea: m === 'area',
+    tAi: c('ai'), tKal: c('kal'), tLen: c('len'), tArea: c('area'),
+    setAi: () => this.setState({ tab: 'ai' }),
+    setKal: () => this.setState({ tab: 'kal' }),
+    setLen: () => this.setState({ tab: 'len' }),
+    setArea: () => this.setState({ tab: 'area' })
+  };
+}
+}
+</script>
+</body>
+</html>

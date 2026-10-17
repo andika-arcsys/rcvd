@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Splash dan cek sistem</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box">
+  <div style="width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 24px">
+    <div>
+      <div style="font-size: 40px; font-weight: 600">DeepInsight</div>
+      <div style="font-size: 15px; color: #93A4B5; margin-top: 6px">Inspeksi bawah air ROV · Van Der Wick · JOB Tomori</div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #93A4B5; margin-top: 10px">Aplikasi v[x.y] · model HydroDetect exp-5</div>
+    </div>
+    <div style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+      <b style="font-size: 15px">Cek sistem otomatis</b>
+      <div style="display: flex; justify-content: space-between; font-size: 14px"><span>GPU tersedia</span><b style="color: #9FE0BE">OK</b></div>
+      <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Ruang penyimpanan cukup</span><b style="color: #9FE0BE">OK · [xxx] GB</b></div>
+      <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Jam tersinkron</span><b style="color: #9FE0BE">OK</b></div>
+      <div style="display: flex; justify-content: space-between; font-size: 14px"><span>Kamera ROV terhubung</span><b style="color: #F2D27A">Menunggu…</b></div>
+      <div style="height: 6px; background: #22313F; border-radius: 3px"><div style="width: 75%; height: 6px; background: #7CC4F0; border-radius: 3px"></div></div>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap">
+      <a href="Login.dc.html" style="flex: 1; text-align: center; text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 16px; font-weight: 600">Sistem siap · Lanjut</a>
+      <a href="Login.dc.html" style="flex: 1; text-align: center; text-decoration: none; border: 1px solid #2A3A4B; color: #E6EDF3; border-radius: 10px; padding: 16px">Lanjut mode terbatas</a>
+    </div>
+    <div style="font-size: 12px; color: #93A4B5">Mode terbatas menonaktifkan HydroDetect dan SpatialSight bila GPU tidak tersedia.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

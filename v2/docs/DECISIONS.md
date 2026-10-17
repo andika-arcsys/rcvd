@@ -9,7 +9,7 @@ Status semua ADR: **Diusulkan**, menunggu persetujuan. Format: Konteks → Keput
 - **Alternatif.** Electron (ekosistem lebih luas, ±100 MB lebih besar dan lebih banyak RAM). Web murni (tidak sesuai Q-UI-2).
 - **Konsekuensi.** Installer dan RAM lebih kecil, sisa RAM/VRAM untuk model. Perlu kehati-hatian dengan perbedaan WebView2, dan keterampilan Rust untuk modul kecil (supervisor, gamepad). Logika bisnis tidak berada di Rust.
 
-## ADR-002 Mesin: Python 3.11 + FastAPI sebagai sidecar
+## ADR-002 Mesin: Python 3.12 + FastAPI sebagai sidecar
 
 - **Konteks.** Model (Ultralytics, ONNX Runtime), OpenCV (AquaClear), dan pengukuran paling matang di Python. UI harus tetap responsif.
 - **Keputusan.** Engine FastAPI/uvicorn dalam satu proses, dibungkus bersama installer. Kontrak lewat OpenAPI; UI memakai tipe yang dihasilkan. WebSocket untuk video biner dan event.

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>SpatialSight</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="Live Operation" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+      <span style="background: #E6EDF3; color: #0B131B; border-radius: 8px; padding: 10px 16px; font-weight: 600">SpatialSight · model kedalaman</span>
+      <span style="background: #2A2410; border: 1px solid #E5B33A; color: #F2D27A; border-radius: 6px; padding: 6px 10px; font-size: 13px">Preview relatif, bukan ukuran</span>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; flex: 1">
+      <section aria-label="Peta kedalaman relatif" style="flex: 999 1 560px; min-width: 0; position: relative; border-radius: 12px; overflow: hidden; border: 1px solid #22313F; min-height: 560px">
+        <svg viewBox="0 0 800 560" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Peta kedalaman: pipa dekat, dasar sungai jauh" style="position: absolute; inset: 0; width: 100%; height: 100%">
+          <defs><linearGradient id="dp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1B1F5E"/><stop offset=".6" stop-color="#2F6FA8"/><stop offset="1" stop-color="#E8C547"/></linearGradient></defs>
+          <rect width="800" height="560" fill="url(#dp)"/>
+          <rect x="-20" y="250" width="840" height="84" rx="42" fill="#F28C28"/>
+          <rect x="90" y="334" width="80" height="66" fill="#E5B33A"/><rect x="630" y="334" width="80" height="66" fill="#E5B33A"/>
+          <rect x="190" y="340" width="420" height="40" fill="#1E3F7A" opacity=".7"/>
+        </svg>
+        <div style="position: absolute; right: 12px; top: 12px; bottom: 12px; width: 28px; border-radius: 6px; background: #2F6FA8"></div>
+        <div style="position: absolute; right: 48px; top: 12px; font-size: 12px; background: rgba(11,19,27,.85); padding: 4px 8px; border-radius: 4px">dekat</div>
+        <div style="position: absolute; right: 48px; bottom: 12px; font-size: 12px; background: rgba(11,19,27,.85); padding: 4px 8px; border-radius: 4px">jauh</div>
+        <div style="position: absolute; left: 12px; bottom: 12px; font-size: 12px; background: rgba(11,19,27,.85); padding: 6px 10px; border-radius: 6px">Area gelap di bawah pipa = celah bebas bentang (indikasi)</div>
+      </section>
+      <aside style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 12px">
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; font-size: 14px; line-height: 1.6">
+          <div style="font-size: 12px; color: #93A4B5">Kegunaan</div>
+          Menemukan celah di bawah pipa dan memperkirakan lokasi G kiri / G kanan sebelum mengukur.
+        </div>
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; font-size: 13px">
+          <label style="display: flex; flex-direction: column; gap: 4px">Transparansi overlay<input type="range" min="0" max="100" value="70"></label>
+          <label style="display: flex; gap: 8px; align-items: center"><input type="checkbox" checked> Tampilkan legenda dekat–jauh</label>
+        </div>
+        <div style="background: #2A1414; border: 1px solid #E5534B; border-radius: 10px; padding: 14px; font-size: 13px; line-height: 1.6">Angka panjang tidak diambil dari layar ini. Ukuran sah hanya lewat FREEZE, kalibrasi laser, dan ukur pada frame asli.</div>
+      </aside>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <a href="Snapshot.dc.html" style="text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 16px 28px; font-weight: 600; font-size: 16px">FREEZE untuk ukur</a>
+      <a href="GantiWindow.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px 20px">Ganti window</a>
+      <a href="Main.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px 20px">Kembali ke Optical</a>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

@@ -5,6 +5,11 @@ alwaysApply: true
 
 # Aturan tetap DeepInsight
 
+## 0. Root proyek dan lingkungan
+- **Root proyek DeepInsight = folder `v2/`** di repo ini. Semua jalur di aturan ini (`docs/`, `mockups/`, `flowmap/`, `config/`, `apps/`, `services/`, `packages/`, `tests/`) relatif terhadap `v2/`. Jangan mengubah kode di luar `v2/` (kode lama di root repo bukan bagian DeepInsight) dan jangan mengimpor darinya.
+- **Python 3.12** (menggantikan 3.11 di prompt awal). Pin versi di `pyproject.toml` dan di CI.
+- Target produksi Windows 10/11 64-bit. VM pengembangan Linux tanpa GPU: uji VRAM, build installer Tauri, dan uji GPU dijalankan di mesin Windows dan ditandai belum terverifikasi sampai itu.
+
 ## 1. Sumber kebenaran dan urutan prioritas
 Urutan (yang lebih tinggi menang; yang lebih baru dan lebih spesifik menang):
 1. `docs/ANSWERS_OPEN_QUESTIONS.md` dan `docs/DECISIONS.md`
@@ -13,13 +18,13 @@ Urutan (yang lebih tinggi menang; yang lebih baru dan lebih spesifik menang):
 4. `mockups/*.dc.html`
 5. `flowmap/*.drawio` untuk alur navigasi bernomor (diperbarui oleh `docs/NAVIGATION_MAP.md` dan `docs/DESIGN_DELTA.md`)
 
-Baca juga `docs/ARCHITECTURE.md`. Jalur: `docs/`, `mockups/`, `flowmap/` di root repo (bukan `design/`).
+Baca juga `docs/ARCHITECTURE.md`. Jalur: `docs/`, `mockups/`, `flowmap/` di bawah `v2/` (bukan `design/`).
 Format mockup: `<sc-for>` perulangan, `<sc-if>` kondisi, `<dc-import name="Nav">` sidebar, `{{x}}` nilai dari `renderVals()`. `this.state`/`setState`/`props` = state dan props React biasa; `support.js` tidak diperlukan.
 Jangan menambah fitur di luar SPEC dan keputusan. Bila tidak jelas atau bertentangan, tulis di `docs/OPEN_QUESTIONS.md`; jangan menebak. Bila aturan ini bertentangan dengan ANSWERS atau DECISIONS, ikuti keduanya dan perbarui file ini.
 
 ## 2. Arsitektur (tidak diubah tanpa catatan di DECISIONS.md)
 - `apps/desktop`: Tauri 2, React, TypeScript, Vite, Tailwind. Tampilan saja; tanpa logika AI dan tanpa angka bukti.
-- `services/engine`: Python 3.11, FastAPI di 127.0.0.1 dengan token per peluncuran. Video, inferensi, pengukuran, penyimpanan.
+- `services/engine`: Python 3.12, FastAPI di 127.0.0.1 dengan token per peluncuran. Video, inferensi, pengukuran, penyimpanan.
 - `packages/shared`: tipe dari OpenAPI; cerminan `measure` TypeScript hanya untuk pratinjau.
 - `config/*.yaml`: semua ambang dan batas. Tidak ada angka di kode. Nilai tak resmi diberi komentar `# USULAN – perlu konfirmasi tim`.
 - Saat misi dimulai, salin ambang ke Mission (`thresholds_snapshot`).
