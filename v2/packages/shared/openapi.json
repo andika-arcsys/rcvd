@@ -1225,6 +1225,30 @@
         ],
         "title": "LastError"
       },
+      "Measure": {
+        "properties": {
+          "heron_rel_tol": {
+            "type": "number",
+            "title": "Heron Rel Tol"
+          },
+          "boundary_tol": {
+            "type": "number",
+            "title": "Boundary Tol"
+          },
+          "undistort_iterations": {
+            "type": "integer",
+            "title": "Undistort Iterations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "heron_rel_tol",
+          "boundary_tol",
+          "undistort_iterations"
+        ],
+        "title": "Measure"
+      },
       "ModelInfo": {
         "properties": {
           "active": {
@@ -1470,6 +1494,10 @@
           },
           "critical_limit_m": {
             "$ref": "#/components/schemas/PipeValues"
+          },
+          "resurvey_months": {
+            "type": "integer",
+            "title": "Resurvey Months"
           }
         },
         "additionalProperties": false,
@@ -1478,7 +1506,8 @@
           "rope_tolerance_pct",
           "segment_target_m",
           "warning_ratio",
-          "critical_limit_m"
+          "critical_limit_m",
+          "resurvey_months"
         ],
         "title": "Span"
       },
@@ -1547,6 +1576,9 @@
           "span": {
             "$ref": "#/components/schemas/Span"
           },
+          "measure": {
+            "$ref": "#/components/schemas/Measure"
+          },
           "pipe": {
             "$ref": "#/components/schemas/Pipe"
           },
@@ -1574,6 +1606,7 @@
           "rod_test",
           "freeze",
           "span",
+          "measure",
           "pipe",
           "inspection_interval_years",
           "auth",

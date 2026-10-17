@@ -20,6 +20,9 @@ def test_repo_config_loads(config_dir: Path) -> None:
     assert thr.span.rope_tolerance_pct == 2
     assert thr.calibration.rel_uncertainty_basis == "2sigma"
     assert thr.calibration.camera_file_required_for_valid is True
+    assert thr.span.resurvey_months == 6
+    assert thr.measure.heron_rel_tol == 1e-9
+    assert thr.measure.undistort_iterations == 20
 
 
 def test_roles_matrix_is_complete(config_dir: Path) -> None:

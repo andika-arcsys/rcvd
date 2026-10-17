@@ -423,6 +423,15 @@ export interface components {
             /** Detail */
             detail?: string | null;
         };
+        /** Measure */
+        Measure: {
+            /** Heron Rel Tol */
+            heron_rel_tol: number;
+            /** Boundary Tol */
+            boundary_tol: number;
+            /** Undistort Iterations */
+            undistort_iterations: number;
+        };
         /** ModelInfo */
         ModelInfo: {
             /** Active */
@@ -511,6 +520,8 @@ export interface components {
             /** Warning Ratio */
             warning_ratio: number;
             critical_limit_m: components["schemas"]["PipeValues"];
+            /** Resurvey Months */
+            resurvey_months: number;
         };
         /** SwitchRequest */
         SwitchRequest: {
@@ -536,6 +547,7 @@ export interface components {
             rod_test: components["schemas"]["RodTest"];
             freeze: components["schemas"]["Freeze"];
             span: components["schemas"]["Span"];
+            measure: components["schemas"]["Measure"];
             pipe: components["schemas"]["Pipe"];
             inspection_interval_years: components["schemas"]["IntervalYears"];
             auth: components["schemas"]["Auth"];

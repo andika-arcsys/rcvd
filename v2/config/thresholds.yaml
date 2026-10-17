@@ -25,6 +25,12 @@ span:
   critical_limit_m:               # SUMBER
     inch_16: 9.65
     inch_8: 5.32
+  resurvey_months: 6              # SUMBER: rekomendasi bila di bawah batas kritis
+
+measure:
+  heron_rel_tol: 1.0e-9           # SUMBER: cek silang shoelace vs Heron
+  boundary_tol: 1.0e-9            # SUMBER: batas inklusif yang sama di Python dan TypeScript
+  undistort_iterations: 20        # SUMBER: iterasi OpenCV sampai cocok vektor emas
 
 pipe:
   nominal_od_mm:                  # USULAN – perlu konfirmasi tim (OD nominal)

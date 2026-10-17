@@ -52,6 +52,13 @@ class Span(_Strict):
     segment_target_m: float
     warning_ratio: float
     critical_limit_m: PipeValues
+    resurvey_months: int
+
+
+class Measure(_Strict):
+    heron_rel_tol: float
+    boundary_tol: float
+    undistort_iterations: int
 
 
 class Pipe(_Strict):
@@ -102,6 +109,7 @@ class Thresholds(_Strict):
     rod_test: RodTest
     freeze: Freeze
     span: Span
+    measure: Measure
     pipe: Pipe
     inspection_interval_years: IntervalYears
     auth: Auth
