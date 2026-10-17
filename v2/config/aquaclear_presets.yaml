@@ -1,0 +1,18 @@
+# Parameter AquaClear (OpenCV, CPU). Bukan berkas model.
+# USULAN – perlu konfirmasi tim: angka preset belum diukur terhadap skrip lama.
+schema_version: 1
+default: medium
+
+presets:
+  light:
+    clahe_clip: 1.2
+    clahe_tile: 8
+    dehaze: 0.0
+  medium:
+    clahe_clip: 2.0
+    clahe_tile: 8
+    dehaze: 0.4
+  heavy:
+    clahe_clip: 3.5
+    clahe_tile: 8
+    dehaze: 0.7

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 import time
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -20,6 +22,7 @@ from ..core.ids import session_id as make_session_id
 from ..core.logging import get_logger, setup_logging
 from ..core.paths import default_config_dir, default_data_dir
 from ..diagnostics import ErrorLog
+from ..runtime import build_runtime
 from .routes import router
 from .security import TOKEN_HEADER
 
@@ -62,13 +65,23 @@ def _install_handlers(app: FastAPI) -> None:
         return _error_response(request, "SYS-002", type(exc).__name__)
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    app.state.runtime.start()
+    try:
+        yield
+    finally:
+        app.state.runtime.stop()
+
+
 def create_app(
     config_dir: Path | None = None,
     data_dir: Path | None = None,
     token: str | None = None,
     settings: Settings | None = None,
 ) -> FastAPI:
-    cfg = settings or load_settings(config_dir or default_config_dir())
+    cfg_dir = config_dir or default_config_dir()
+    cfg = settings or load_settings(cfg_dir)
     resolved_data = data_dir or default_data_dir(cfg.app.app.data_dir)
     resolved_token = token if token is not None else os.environ.get(TOKEN_ENV)
     if cfg.app.app.env == "prod" and not resolved_token:
@@ -84,13 +97,14 @@ def create_app(
         log_cfg.backups,
     )
 
-    app = FastAPI(title="DeepInsight Engine", version=__version__)
+    app = FastAPI(title="DeepInsight Engine", version=__version__, lifespan=_lifespan)
     app.state.settings = cfg
     app.state.data_dir = resolved_data
     app.state.session_id = session
     app.state.token = resolved_token
     app.state.started = time.monotonic()
     app.state.errors = ErrorLog()
+    app.state.runtime = build_runtime(cfg, cfg_dir, resolved_data, app.state.errors.add)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cfg.app.engine.cors_origins,

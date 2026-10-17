@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Request
 from .. import __version__
 from ..core.config import ControlsConfig, RolesConfig, Settings, Thresholds
 from ..diagnostics import DiagnosticsReport, ErrorLog, build_report
+from .routes_live import live
 from .schemas import HealthResponse
 from .security import require_token
 
@@ -31,7 +32,10 @@ def diagnostics(request: Request) -> DiagnosticsReport:
     state = request.app.state
     errors: ErrorLog = state.errors
     settings: Settings = state.settings
-    return build_report(settings, state.data_dir, state.session_id, state.started, errors)
+    state.runtime.poll()
+    return build_report(
+        settings, state.data_dir, state.session_id, state.started, errors, state.runtime.status()
+    )
 
 
 @protected.get("/config/roles", response_model=RolesConfig, tags=["config"])
@@ -50,3 +54,4 @@ def config_controls(request: Request) -> ControlsConfig:
 
 
 router.include_router(protected)
+router.include_router(live)

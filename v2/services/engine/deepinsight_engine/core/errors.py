@@ -71,6 +71,55 @@ _SPECS: tuple[ErrorSpec, ...] = (
         "Tidak ada frame baru melebihi batas LOST SIGNAL.",
         "Periksa kabel dan kamera ROV; FREEZE dinonaktifkan sementara.",
     ),
+    ErrorSpec(
+        "VID-002",
+        410,
+        "Frame tidak ada lagi di buffer.",
+        "frame_id lebih tua dari ring buffer atau tidak dikenal.",
+        "Bekukan frame yang masih tampil.",
+    ),
+    ErrorSpec(
+        "VID-003",
+        503,
+        "Sumber video tidak dapat dibuka.",
+        "Berkas, kamera, atau RTSP tidak tersedia.",
+        "Periksa jalur berkas atau sambungan kamera.",
+    ),
+    ErrorSpec(
+        "MDL-001",
+        404,
+        "Berkas model tidak ditemukan.",
+        "model.onnx atau classes.json belum ada di folder models.",
+        "Salin berkas ke jalur di config/models.yaml. Bobot besar tidak disimpan di Git.",
+    ),
+    ErrorSpec(
+        "MDL-002",
+        500,
+        "Model gagal dimuat.",
+        "Runtime atau isi berkas model tidak dapat dipakai.",
+        "Periksa log engine dan berkas model.",
+    ),
+    ErrorSpec(
+        "MDL-003",
+        503,
+        "Fitur ini membutuhkan GPU NVIDIA.",
+        "Mode terbatas: HydroDetect dan SpatialSight nonaktif tanpa GPU.",
+        "Gunakan Optical atau AquaClear, atau jalankan di PC dengan GPU NVIDIA.",
+    ),
+    ErrorSpec(
+        "GPU-002",
+        500,
+        "VRAM tidak kembali ke garis dasar.",
+        "Setelah lepas model, pemakaian VRAM masih di atas toleransi.",
+        "Proses pekerja dihentikan paksa.",
+    ),
+    ErrorSpec(
+        "GPU-003",
+        503,
+        "Performa di bawah ambang.",
+        "FPS, VRAM, atau utilisasi GPU melewati batas config.",
+        "Matikan fitur atau pilih preset AquaClear ringan.",
+    ),
 )
 
 REGISTRY: dict[str, ErrorSpec] = {spec.code: spec for spec in _SPECS}

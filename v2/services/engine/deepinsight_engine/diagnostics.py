@@ -49,6 +49,7 @@ class VideoInfo(BaseModel):
     fps_display: float | None = None
     fps_inference: float | None = None
     ring_buffer_s: float
+    frame_count: int = 0
 
 
 class LastError(BaseModel):
@@ -75,6 +76,8 @@ class DiagnosticsReport(BaseModel):
     disk: DiskInfo
     workers: int
     last_errors: list[LastError]
+    performance_warning: str | None = None
+    performance_detail: str | None = None
 
 
 @dataclass
@@ -122,8 +125,26 @@ def _dir_size_mb(path: Path) -> float:
     return total / 1024**2
 
 
+class LiveStatus(BaseModel):
+    model_active: str | None
+    model_state: str
+    workers: int
+    video_state: str
+    fps_display: float | None = None
+    fps_inference: float | None = None
+    frame_count: int = 0
+    cache_mb: float = 0.0
+    performance_warning: str | None = None
+    performance_detail: str | None = None
+
+
 def build_report(
-    settings: Settings, data_dir: Path, session_id: str, started: float, errors: ErrorLog
+    settings: Settings,
+    data_dir: Path,
+    session_id: str,
+    started: float,
+    errors: ErrorLog,
+    live: LiveStatus | None = None,
 ) -> DiagnosticsReport:
     disk = shutil.disk_usage(data_dir if data_dir.exists() else data_dir.anchor or ".")
     cache_dir = data_dir / "cache"
@@ -137,15 +158,22 @@ def build_report(
         python=platform.python_version(),
         platform=platform.platform(),
         gpu=probe_gpu(),
-        model=ModelInfo(active=settings.app.models.active, state="optical"),
+        model=ModelInfo(
+            active=None if live is None else live.model_active,
+            state="optical" if live is None else live.model_state,
+        ),
         video=VideoInfo(
-            state="not_configured", ring_buffer_s=settings.thresholds.video.ring_buffer_s
+            state="not_configured" if live is None else live.video_state,
+            fps_display=None if live is None else live.fps_display,
+            fps_inference=None if live is None else live.fps_inference,
+            ring_buffer_s=settings.thresholds.video.ring_buffer_s,
+            frame_count=0 if live is None else live.frame_count,
         ),
         camera_state="not_configured",
         clock_sync="unknown",
         cache=CacheInfo(
             path=str(cache_dir),
-            size_mb=round(_dir_size_mb(cache_dir), 3),
+            size_mb=round(_dir_size_mb(cache_dir) if live is None else live.cache_mb, 3),
             max_mb=settings.thresholds.cache.max_mb,
         ),
         disk=DiskInfo(
@@ -153,6 +181,8 @@ def build_report(
             free_gb=round(disk.free / 1024**3, 2),
             total_gb=round(disk.total / 1024**3, 2),
         ),
-        workers=0,
+        workers=0 if live is None else live.workers,
         last_errors=list(errors.items),
+        performance_warning=None if live is None else live.performance_warning,
+        performance_detail=None if live is None else live.performance_detail,
     )

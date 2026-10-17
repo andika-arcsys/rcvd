@@ -6,7 +6,7 @@ Folder ini adalah **root proyek DeepInsight**. Kode lama di root repo (`underwat
 
 ## Status
 
-Fase 1 selesai: monorepo berjalan. Engine menjawab `/health` dan `/diagnostics`. Tampilan punya 24 rute (masih kerangka: judul, kode, dan tautan transisi). Isi layar, model AI, dan modul ukur menyusul pada fase berikutnya.
+Fase 2 selesai di engine: ring buffer, FREEZE dari `frame_id` (PNG + SHA-256), AquaClear di CPU, dan satu pekerja model. HydroDetect serta SpatialSight menolak muat bila berkas bobot atau GPU tidak ada (`MDL-001`, `MDL-003`). Tampilan masih kerangka 24 rute. Modul ukur menyusul pada fase berikutnya.
 
 ## Menjalankan
 

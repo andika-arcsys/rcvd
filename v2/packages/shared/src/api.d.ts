@@ -89,6 +89,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Model Status */
+        get: operations["model_status_models_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/models/switch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Switch Model */
+        post: operations["switch_model_models_switch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/video/synthetic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Push Synthetic */
+        post: operations["push_synthetic_video_synthetic_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/video/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Push File */
+        post: operations["push_file_video_file_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/video/device": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open Device */
+        post: operations["open_device_video_device_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/video/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Video Status */
+        get: operations["video_status_video_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/freeze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Freeze */
+        post: operations["freeze_freeze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/session/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close Session */
+        post: operations["close_session_session_close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -147,6 +283,11 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** DeviceRequest */
+        DeviceRequest: {
+            /** Kind */
+            kind: string;
+        };
         /** DiagnosticsReport */
         DiagnosticsReport: {
             /** App Name */
@@ -178,6 +319,10 @@ export interface components {
             workers: number;
             /** Last Errors */
             last_errors: components["schemas"]["LastError"][];
+            /** Performance Warning */
+            performance_warning?: string | null;
+            /** Performance Detail */
+            performance_detail?: string | null;
         };
         /** DiskInfo */
         DiskInfo: {
@@ -188,10 +333,44 @@ export interface components {
             /** Total Gb */
             total_gb: number;
         };
+        /** FileRequest */
+        FileRequest: {
+            /** Path */
+            path: string;
+        };
+        /** FrameList */
+        FrameList: {
+            /** Frame Ids */
+            frame_ids: string[];
+        };
         /** Freeze */
         Freeze: {
             /** Max Delta Cm */
             max_delta_cm: number;
+        };
+        /** FreezeRequest */
+        FreezeRequest: {
+            /** Frame Id */
+            frame_id: string;
+        };
+        /** FreezeResult */
+        FreezeResult: {
+            /** Snapshot Id */
+            snapshot_id: string;
+            /** Frame Id */
+            frame_id: string;
+            /** Session Id */
+            session_id: string;
+            /** Sha256 */
+            sha256: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Png Bytes */
+            png_bytes: number;
+            /** Path */
+            path: string;
         };
         /** GpuInfo */
         GpuInfo: {
@@ -251,6 +430,17 @@ export interface components {
             /** State */
             state: string;
         };
+        /** ModelStatus */
+        ModelStatus: {
+            /** Active */
+            active: string | null;
+            /** State */
+            state: string;
+            /** Gpu Available */
+            gpu_available: boolean;
+            /** Limited Mode */
+            limited_mode: boolean;
+        };
         /** Performance */
         Performance: {
             /** Watchdog Interval S */
@@ -267,6 +457,10 @@ export interface components {
             gpu_window_s: number;
             /** Vram Baseline Tolerance Mb */
             vram_baseline_tolerance_mb: number;
+            /** Unload Timeout S */
+            unload_timeout_s: number;
+            /** Load Timeout S */
+            load_timeout_s: number;
         };
         /** Pipe */
         Pipe: {
@@ -301,6 +495,13 @@ export interface components {
                 };
             };
         };
+        /** SessionClose */
+        SessionClose: {
+            /** State */
+            state: string;
+            /** Cache Mb */
+            cache_mb: number;
+        };
         /** Span */
         Span: {
             /** Rope Tolerance Pct */
@@ -310,6 +511,22 @@ export interface components {
             /** Warning Ratio */
             warning_ratio: number;
             critical_limit_m: components["schemas"]["PipeValues"];
+        };
+        /** SwitchRequest */
+        SwitchRequest: {
+            /** Name */
+            name: string;
+            /** Preset */
+            preset?: string | null;
+        };
+        /** SyntheticRequest */
+        SyntheticRequest: {
+            /** Count */
+            count: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
         };
         /** Thresholds */
         Thresholds: {
@@ -353,6 +570,10 @@ export interface components {
             ring_buffer_s: number;
             /** Display Max Side */
             display_max_side: number;
+            /** Display Jpeg Quality */
+            display_jpeg_quality: number;
+            /** Fps Sample S */
+            fps_sample_s: number;
         };
         /** VideoInfo */
         VideoInfo: {
@@ -364,6 +585,22 @@ export interface components {
             fps_inference?: number | null;
             /** Ring Buffer S */
             ring_buffer_s: number;
+            /**
+             * Frame Count
+             * @default 0
+             */
+            frame_count: number;
+        };
+        /** VideoStatus */
+        VideoStatus: {
+            /** State */
+            state: string;
+            /** Frame Id */
+            frame_id: string | null;
+            /** Frame Count */
+            frame_count: number;
+            /** Enhanced */
+            enhanced: boolean;
         };
     };
     responses: never;
@@ -505,6 +742,274 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ControlsConfig"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    model_status_models_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    switch_model_models_switch_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwitchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    push_synthetic_video_synthetic_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyntheticRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrameList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    push_file_video_file_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrameList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_device_video_device_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    video_status_video_status_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    freeze_freeze_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FreezeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreezeResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_session_session_close_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionClose"];
                 };
             };
             /** @description Validation Error */

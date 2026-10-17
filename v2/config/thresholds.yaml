@@ -48,6 +48,8 @@ performance:
   gpu_max_pct: 95                 # USULAN – perlu konfirmasi tim
   gpu_window_s: 10                # USULAN – perlu konfirmasi tim
   vram_baseline_tolerance_mb: 150 # USULAN – perlu konfirmasi tim (target rancangan)
+  unload_timeout_s: 5            # USULAN – perlu konfirmasi tim (lepas lunak sebelum proses dihentikan)
+  load_timeout_s: 8               # USULAN – perlu konfirmasi tim (anggaran ganti model)
 
 video:
   width: 1920                     # USULAN – perlu konfirmasi tim
@@ -56,6 +58,8 @@ video:
   lost_signal_s: 2                # USULAN – perlu konfirmasi tim
   ring_buffer_s: 3                # USULAN – perlu konfirmasi tim
   display_max_side: 1280          # USULAN – perlu konfirmasi tim
+  display_jpeg_quality: 80        # USULAN – perlu konfirmasi tim
+  fps_sample_s: 1                 # USULAN – perlu konfirmasi tim (jendela hitung fps)
 
 cache:
   max_mb: 2048                    # USULAN – perlu konfirmasi tim

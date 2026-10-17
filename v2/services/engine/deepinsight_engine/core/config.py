@@ -77,6 +77,8 @@ class Performance(_Strict):
     gpu_max_pct: float
     gpu_window_s: float
     vram_baseline_tolerance_mb: float
+    unload_timeout_s: float
+    load_timeout_s: float
 
 
 class Video(_Strict):
@@ -86,6 +88,8 @@ class Video(_Strict):
     lost_signal_s: float
     ring_buffer_s: float
     display_max_side: int
+    display_jpeg_quality: int
+    fps_sample_s: float
 
 
 class Cache(_Strict):
@@ -131,6 +135,44 @@ class Models(_Strict):
     active: str | None
 
 
+class ModelEntry(_Strict):
+    requires_gpu: bool
+    onnx: str | None = None
+    classes: str | None = None
+    metadata: str | None = None
+
+
+class ModelCatalog(_Strict):
+    schema_version: int
+    entries: dict[str, ModelEntry]
+
+
+class AquaPreset(_Strict):
+    clahe_clip: float
+    clahe_tile: int
+    dehaze: float
+
+    @model_validator(mode="after")
+    def _range(self) -> AquaPreset:
+        if not 0 <= self.dehaze <= 1:
+            raise ValueError("dehaze harus di antara 0 dan 1")
+        if self.clahe_tile < 1:
+            raise ValueError("clahe_tile minimal 1")
+        return self
+
+
+class AquaclearConfig(_Strict):
+    schema_version: int
+    default: str
+    presets: dict[str, AquaPreset]
+
+    @model_validator(mode="after")
+    def _default_exists(self) -> AquaclearConfig:
+        if self.default not in self.presets:
+            raise ValueError("preset bawaan tidak ada di daftar")
+        return self
+
+
 class AppConfig(_Strict):
     schema_version: int
     app: AppInfo
@@ -170,6 +212,8 @@ class Settings(_Strict):
     thresholds: Thresholds
     roles: RolesConfig
     controls: ControlsConfig
+    models: ModelCatalog
+    aquaclear: AquaclearConfig
 
 
 def _load_yaml(path: Path) -> object:
@@ -192,4 +236,6 @@ def load_settings(config_dir: Path) -> Settings:
         thresholds=_validate(Thresholds, config_dir / "thresholds.yaml"),
         roles=_validate(RolesConfig, config_dir / "roles.yaml"),
         controls=_validate(ControlsConfig, config_dir / "controls.yaml"),
+        models=_validate(ModelCatalog, config_dir / "models.yaml"),
+        aquaclear=_validate(AquaclearConfig, config_dir / "aquaclear_presets.yaml"),
     )
