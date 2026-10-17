@@ -1,0 +1,58 @@
+"""Keluaran HydroDetect dan SpatialSight, plus pasangan JPEG AquaClear."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel
+
+from .security import require_token
+
+vision = APIRouter(dependencies=[Depends(require_token)], tags=["vision"])
+
+
+class CandidateView(BaseModel):
+    class_name: str
+    score: float
+    bbox: list[int]
+    polygon: list[list[int]]
+    rle: list[int]
+    rle_size: list[int]
+    hidden_by_filter: bool
+
+
+class DepthView(BaseModel):
+    width: int
+    height: int
+    values: list[float]
+    label: str
+
+
+class ClassChip(BaseModel):
+    name: str
+    hidden_by_default: bool
+    color: str
+
+
+class VisionView(BaseModel):
+    frame_id: str | None
+    kind: str | None
+    preset: str | None
+    candidates: list[CandidateView]
+    depth: DepthView | None
+    classes: list[ClassChip]
+
+
+class CompareView(BaseModel):
+    frame_id: str | None
+    raw_jpeg_b64: str | None
+    view_jpeg_b64: str | None
+
+
+@vision.get("/vision", response_model=VisionView)
+def vision_status(request: Request) -> VisionView:
+    return VisionView.model_validate(request.app.state.runtime.vision_view())
+
+
+@vision.get("/video/compare", response_model=CompareView)
+def video_compare(request: Request) -> CompareView:
+    return CompareView.model_validate(request.app.state.runtime.compare_view())

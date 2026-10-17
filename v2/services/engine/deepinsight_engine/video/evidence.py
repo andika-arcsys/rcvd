@@ -11,7 +11,13 @@ from .encode import encode_png
 from .frames import StoredFrame
 
 
-def store_png(directory: Path, frame: StoredFrame, session: str, serial: int) -> dict[str, object]:
+def store_png(
+    directory: Path,
+    frame: StoredFrame,
+    session: str,
+    serial: int,
+    preset: str | None = None,
+) -> dict[str, object]:
     directory.mkdir(parents=True, exist_ok=True)
     png_path = directory / f"{frame.frame_id}.png"
     meta_path = directory / f"{frame.frame_id}.json"
@@ -30,6 +36,7 @@ def store_png(directory: Path, frame: StoredFrame, session: str, serial: int) ->
         "height": frame.height,
         "png_bytes": len(png),
         "path": str(png_path),
+        "aquaclear_preset": preset,
     }
     meta_path.write_text(json.dumps(body), encoding="utf-8")
     return body

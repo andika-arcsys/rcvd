@@ -72,6 +72,7 @@ Status semua ADR: **Diusulkan**, menunggu persetujuan. Format: Konteks → Keput
 - **Alternatif.** MJPEG HTTP (tanpa frame_id yang rapi); WebRTC (kompleks untuk lokal); decode di Rust (lebih cepat, kompleks).
 - **Konsekuensi.** Perlu kompresi tampilan di engine (CPU). Bila fps tampilan kurang, naikkan ke jalur Rust/native di fase optimasi.
 - **Fase 5.** Pilihan ini dikunci untuk Optical Native View: WebSocket mengirim JSON `frame_id` lalu JPEG biner tampilan. Overlay tetap di kanvas UI. WebRTC dan MJPEG tidak dipakai.
+- **Fase 6.** HydroDetect mengirim poligon dan RLE, bukan gambar mask. Overlay digambar di UI. SpatialSight mengirim kisi relatif 0–1 dengan label tetap "Preview relatif, bukan ukuran", tanpa angka panjang. FREEZE dari AquaClear mencatat nama preset; PNG bukti tetap frame asli.
 
 ## ADR-011 Semua ambang di config; salinan ke Mission [J]
 

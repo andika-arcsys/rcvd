@@ -10,8 +10,14 @@ from .db import Database
 from .models import FindingView
 
 
-def insert_candidate(db: Database, session_id: str, frame_id: str, jpeg_path: str) -> int:
-    title = f"Kandidat {frame_id}"
+def insert_candidate(
+    db: Database,
+    session_id: str,
+    frame_id: str,
+    jpeg_path: str,
+    class_name: str | None = None,
+) -> int:
+    title = f"Kandidat {frame_id}" if not class_name else f"Kandidat {class_name} {frame_id}"
     with db.connect() as conn:
         cur = conn.execute(
             """INSERT INTO review_items

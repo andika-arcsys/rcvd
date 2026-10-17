@@ -414,6 +414,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/vision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Vision Status */
+        get: operations["vision_status_vision_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/video/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Video Compare */
+        get: operations["video_compare_video_compare_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -473,6 +507,41 @@ export interface components {
             /** Id */
             id: string;
         };
+        /** CandidateView */
+        CandidateView: {
+            /** Class Name */
+            class_name: string;
+            /** Score */
+            score: number;
+            /** Bbox */
+            bbox: number[];
+            /** Polygon */
+            polygon: number[][];
+            /** Rle */
+            rle: number[];
+            /** Rle Size */
+            rle_size: number[];
+            /** Hidden By Filter */
+            hidden_by_filter: boolean;
+        };
+        /** ClassChip */
+        ClassChip: {
+            /** Name */
+            name: string;
+            /** Hidden By Default */
+            hidden_by_default: boolean;
+            /** Color */
+            color: string;
+        };
+        /** CompareView */
+        CompareView: {
+            /** Frame Id */
+            frame_id: string | null;
+            /** Raw Jpeg B64 */
+            raw_jpeg_b64: string | null;
+            /** View Jpeg B64 */
+            view_jpeg_b64: string | null;
+        };
         /** ControlsConfig */
         ControlsConfig: {
             /** Schema Version */
@@ -503,6 +572,17 @@ export interface components {
             missions: components["schemas"]["MissionView"][];
             /** Remeasure */
             remeasure: components["schemas"]["RemeasureTask"][];
+        };
+        /** DepthView */
+        DepthView: {
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Values */
+            values: number[];
+            /** Label */
+            label: string;
         };
         /** DeviceRequest */
         DeviceRequest: {
@@ -613,6 +693,8 @@ export interface components {
             png_bytes: number;
             /** Path */
             path: string;
+            /** Aquaclear Preset */
+            aquaclear_preset?: string | null;
         };
         /** FreezeView */
         FreezeView: {
@@ -702,6 +784,8 @@ export interface components {
         MarkRequest: {
             /** Frame Id */
             frame_id: string;
+            /** Class Name */
+            class_name?: string | null;
         };
         /** MarkResult */
         MarkResult: {
@@ -1071,6 +1155,20 @@ export interface components {
             performance_warning: string | null;
             /** Performance Detail */
             performance_detail: string | null;
+        };
+        /** VisionView */
+        VisionView: {
+            /** Frame Id */
+            frame_id: string | null;
+            /** Kind */
+            kind: string | null;
+            /** Preset */
+            preset: string | null;
+            /** Candidates */
+            candidates: components["schemas"]["CandidateView"][];
+            depth: components["schemas"]["DepthView"] | null;
+            /** Classes */
+            classes: components["schemas"]["ClassChip"][];
         };
     };
     responses: never;
@@ -1903,6 +2001,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MissionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vision_status_vision_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    video_compare_video_compare_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareView"];
                 };
             };
             /** @description Validation Error */

@@ -178,6 +178,52 @@ class AquaPreset(_Strict):
         return self
 
 
+class HydrodetectConfig(_Strict):
+    schema_version: int
+    default_confidence: float
+    overrides: dict[str, float]
+    hidden_by_default: list[str]
+    filter_names: list[str]
+    colors: dict[str, str]
+    max_candidates: int
+
+    @model_validator(mode="after")
+    def _ranges(self) -> HydrodetectConfig:
+        _unit_interval(self.default_confidence, "default_confidence")
+        names = set(self.filter_names)
+        for name, value in self.overrides.items():
+            if name not in names:
+                raise ValueError(f"override {name} tidak ada di filter")
+            _unit_interval(value, name)
+        for name in self.hidden_by_default:
+            if name not in names:
+                raise ValueError(f"kelas tersembunyi {name} tidak ada di filter")
+        if set(self.colors) != names:
+            raise ValueError("warna overlay harus satu per nama filter")
+        if self.max_candidates < 1:
+            raise ValueError("max_candidates minimal 1")
+        return self
+
+
+class SpatialSightConfig(_Strict):
+    schema_version: int
+    preview_max_side: int
+    relative_label: str
+
+    @model_validator(mode="after")
+    def _label(self) -> SpatialSightConfig:
+        if self.preview_max_side < 2:
+            raise ValueError("preview_max_side minimal 2")
+        if self.relative_label != "Preview relatif, bukan ukuran":
+            raise ValueError("label SpatialSight harus tetap")
+        return self
+
+
+def _unit_interval(value: float, name: str) -> None:
+    if not 0 < value <= 1:
+        raise ValueError(f"{name} harus di antara 0 dan 1")
+
+
 class AquaclearConfig(_Strict):
     schema_version: int
     default: str
@@ -254,6 +300,8 @@ class Settings(_Strict):
     controls: ControlsConfig
     models: ModelCatalog
     aquaclear: AquaclearConfig
+    hydrodetect: HydrodetectConfig
+    spatialsight: SpatialSightConfig
     pipelines: PipelineFile
     users: UsersFile
     video: VideoFile
@@ -281,6 +329,8 @@ def load_settings(config_dir: Path) -> Settings:
         controls=_validate(ControlsConfig, config_dir / "controls.yaml"),
         models=_validate(ModelCatalog, config_dir / "models.yaml"),
         aquaclear=_validate(AquaclearConfig, config_dir / "aquaclear_presets.yaml"),
+        hydrodetect=_validate(HydrodetectConfig, config_dir / "hydrodetect.yaml"),
+        spatialsight=_validate(SpatialSightConfig, config_dir / "spatialsight.yaml"),
         pipelines=_validate(PipelineFile, config_dir / "pipelines.yaml"),
         users=_validate(UsersFile, config_dir / "users.yaml"),
         video=_validate(VideoFile, config_dir / "video.yaml"),

@@ -1,0 +1,48 @@
+import type { components } from '@deepinsight/shared';
+import { useEffect, useState } from 'react';
+import { useEngine } from '../../engine/EngineProvider';
+
+export type Vision = components['schemas']['VisionView'];
+export type Compare = components['schemas']['CompareView'];
+
+const POLL_MS = 1000;
+
+export function useVision(): Vision | null {
+  const { client } = useEngine();
+  const [data, setData] = useState<Vision | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    const load = () => {
+      void client.GET('/vision').then(({ data: next }) => {
+        if (!cancel && next) setData(next);
+      });
+    };
+    load();
+    const timer = setInterval(load, POLL_MS);
+    return () => {
+      cancel = true;
+      clearInterval(timer);
+    };
+  }, [client]);
+  return data;
+}
+
+export function useCompare(): Compare | null {
+  const { client } = useEngine();
+  const [data, setData] = useState<Compare | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    const load = () => {
+      void client.GET('/video/compare').then(({ data: next }) => {
+        if (!cancel && next) setData(next);
+      });
+    };
+    load();
+    const timer = setInterval(load, POLL_MS);
+    return () => {
+      cancel = true;
+      clearInterval(timer);
+    };
+  }, [client]);
+  return data;
+}

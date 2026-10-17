@@ -4,8 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from pathlib import Path
+from typing import Any
 
-from ..core.config import AquaPreset, ModelCatalog, ModelEntry
+from ..core.config import (
+    AquaPreset,
+    HydrodetectConfig,
+    ModelCatalog,
+    ModelEntry,
+    SpatialSightConfig,
+)
 from ..core.errors import REGISTRY, EngineError
 from ..video.frames import StoredFrame
 from .probe import VramProbe
@@ -25,6 +32,8 @@ class ModelManager:
         tolerance_mb: float,
         on_error: Callable[[str, str | None], None],
         worker_env: Mapping[str, str] | None = None,
+        hydro: HydrodetectConfig | None = None,
+        spatial: SpatialSightConfig | None = None,
     ) -> None:
         self._catalog = catalog
         self._models_dir = models_dir
@@ -36,9 +45,13 @@ class ModelManager:
         self._tolerance = tolerance_mb
         self._on_error = on_error
         self._worker_env = dict(worker_env or {})
+        self._hydro = hydro
+        self._spatial = spatial
         self._baseline = probe.snapshot()
         self._worker: WorkerHandle | None = None
         self.active: str | None = None
+        self.preset_name: str | None = None
+        self.last_result: dict[str, Any] | None = None
         self.state = "optical"
         self.killed_for_vram = False
 
@@ -70,12 +83,16 @@ class ModelManager:
         self.state = "loading"
         self._worker = self._open(name, entry, preset)
         self.active = name
+        self.preset_name = (preset or self._default_preset) if name == "aquaclear" else None
+        self.last_result = None
         self.state = "ready"
 
     def infer(self, frame: StoredFrame) -> bytes | None:
         if self.state != "ready" or self._worker is None:
             return None
-        return self._worker.infer(frame)
+        raw = self._worker.infer(frame)
+        self.last_result = self._worker.last_event
+        return raw
 
     def close(self) -> None:
         self._to_optical()
@@ -84,6 +101,8 @@ class ModelManager:
         self.state = "unloading"
         self._release()
         self.active = None
+        self.preset_name = None
+        self.last_result = None
         self.state = "optical"
 
     def _open(self, name: str, entry: ModelEntry, preset: str | None) -> WorkerHandle:
@@ -109,6 +128,8 @@ class ModelManager:
     def _fail_optical(self) -> None:
         self._worker = None
         self.active = None
+        self.preset_name = None
+        self.last_result = None
         self.state = "optical"
 
     def _release(self) -> None:
@@ -141,6 +162,8 @@ class ModelManager:
             "onnx": entry.onnx,
             "classes": entry.classes,
             "preset": chosen.model_dump(),
+            "hydro": None if self._hydro is None else self._hydro.model_dump(),
+            "spatial": None if self._spatial is None else self._spatial.model_dump(),
         }
 
     def _preset(self, name: str | None) -> AquaPreset:

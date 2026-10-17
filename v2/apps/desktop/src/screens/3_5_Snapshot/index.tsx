@@ -11,6 +11,11 @@ export default function SnapshotScreen() {
       <p className="mt-3 font-mono">
         {t('live.frame')} {frozen?.frameId ?? t('common.dash')}
       </p>
+      {frozen?.preset ? (
+        <p className="mt-2 text-sm">
+          {t('feature.presetRecorded')}: {frozen.preset}
+        </p>
+      ) : null}
       <Link to="/live" className="mt-4 inline-block text-sm text-info">
         {t('live.resume')}
       </Link>

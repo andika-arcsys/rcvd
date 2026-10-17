@@ -1,0 +1,4 @@
+# USULAN tampilan. Kisi pratinjau relatif, bukan resolusi ukur dan bukan meter.
+schema_version: 1
+preview_max_side: 64
+relative_label: "Preview relatif, bukan ukuran"

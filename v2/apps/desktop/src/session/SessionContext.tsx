@@ -9,6 +9,7 @@ export interface SessionUser {
 export interface FrozenFrame {
   frameId: string;
   snapshotId: string;
+  preset?: string | null;
 }
 
 interface SessionState {

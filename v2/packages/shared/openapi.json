@@ -1358,6 +1358,104 @@
           }
         }
       }
+    },
+    "/vision": {
+      "get": {
+        "tags": [
+          "vision"
+        ],
+        "summary": "Vision Status",
+        "operationId": "vision_status_vision_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisionView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/compare": {
+      "get": {
+        "tags": [
+          "vision"
+        ],
+        "summary": "Video Compare",
+        "operationId": "video_compare_video_compare_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1502,6 +1600,131 @@
         ],
         "title": "CameraView"
       },
+      "CandidateView": {
+        "properties": {
+          "class_name": {
+            "type": "string",
+            "title": "Class Name"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "bbox": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Bbox"
+          },
+          "polygon": {
+            "items": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Polygon"
+          },
+          "rle": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Rle"
+          },
+          "rle_size": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Rle Size"
+          },
+          "hidden_by_filter": {
+            "type": "boolean",
+            "title": "Hidden By Filter"
+          }
+        },
+        "type": "object",
+        "required": [
+          "class_name",
+          "score",
+          "bbox",
+          "polygon",
+          "rle",
+          "rle_size",
+          "hidden_by_filter"
+        ],
+        "title": "CandidateView"
+      },
+      "ClassChip": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "hidden_by_default": {
+            "type": "boolean",
+            "title": "Hidden By Default"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "hidden_by_default",
+          "color"
+        ],
+        "title": "ClassChip"
+      },
+      "CompareView": {
+        "properties": {
+          "frame_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frame Id"
+          },
+          "raw_jpeg_b64": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw Jpeg B64"
+          },
+          "view_jpeg_b64": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "View Jpeg B64"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "raw_jpeg_b64",
+          "view_jpeg_b64"
+        ],
+        "title": "CompareView"
+      },
       "ControlsConfig": {
         "properties": {
           "schema_version": {
@@ -1605,6 +1828,37 @@
           "remeasure"
         ],
         "title": "DashboardView"
+      },
+      "DepthView": {
+        "properties": {
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "values": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Values"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "width",
+          "height",
+          "values",
+          "label"
+        ],
+        "title": "DepthView"
       },
       "DeviceRequest": {
         "properties": {
@@ -1929,6 +2183,17 @@
           "path": {
             "type": "string",
             "title": "Path"
+          },
+          "aquaclear_preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aquaclear Preset"
           }
         },
         "type": "object",
@@ -2209,6 +2474,17 @@
           "frame_id": {
             "type": "string",
             "title": "Frame Id"
+          },
+          "class_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Name"
           }
         },
         "type": "object",
@@ -3351,6 +3627,77 @@
           "performance_detail"
         ],
         "title": "VideoStatus"
+      },
+      "VisionView": {
+        "properties": {
+          "frame_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frame Id"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateView"
+            },
+            "type": "array",
+            "title": "Candidates"
+          },
+          "depth": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DepthView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "classes": {
+            "items": {
+              "$ref": "#/components/schemas/ClassChip"
+            },
+            "type": "array",
+            "title": "Classes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "kind",
+          "preset",
+          "candidates",
+          "depth",
+          "classes"
+        ],
+        "title": "VisionView"
       }
     }
   }

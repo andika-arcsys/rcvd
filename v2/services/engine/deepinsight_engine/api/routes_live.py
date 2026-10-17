@@ -74,6 +74,7 @@ class PerformanceView(BaseModel):
 
 class MarkRequest(BaseModel):
     frame_id: str
+    class_name: str | None = None
 
 
 class MarkResult(BaseModel):
@@ -96,6 +97,7 @@ class FreezeResult(BaseModel):
     height: int
     png_bytes: int
     path: str
+    aquaclear_preset: str | None = None
 
 
 class SessionClose(BaseModel):
@@ -162,7 +164,7 @@ def freeze(body: FreezeRequest, request: Request) -> FreezeResult:
 @live.post("/findings", response_model=MarkResult)
 def mark_finding(body: MarkRequest, request: Request) -> MarkResult:
     path, digest = request.app.state.runtime.mark(body.frame_id)
-    row_id = request.app.state.office.add_finding(body.frame_id, path)
+    row_id = request.app.state.office.add_finding(body.frame_id, path, body.class_name)
     return MarkResult(id=row_id, frame_id=body.frame_id, path=path, sha256=digest)
 
 

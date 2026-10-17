@@ -47,6 +47,7 @@ class Runtime:
         self._audit: Callable[[str, str, str, str], None] = _noop_audit
         self._capture = CaptureLoop(self._ingest, settings.thresholds.video.fps)
         self._marks = data_dir / "marks"
+        self._vision: dict[str, object] = {}
         self.models = ModelManager(
             settings.models,
             models_dir,
@@ -57,6 +58,8 @@ class Runtime:
             perf.load_timeout_s,
             perf.vram_baseline_tolerance_mb,
             on_error,
+            hydro=settings.hydrodetect,
+            spatial=settings.spatialsight,
         )
         self.cache = CacheManager(data_dir / "cache", settings.thresholds.cache.max_mb)
         self.pipeline = FramePipeline(
@@ -141,7 +144,8 @@ class Runtime:
                 raise EngineError("VID-002", frame_id)
             if not (self._evidence / f"{frame.frame_id}.png").is_file():
                 self._serial += 1
-            return store_png(self._evidence, frame, session, max(self._serial, 1))
+            preset = self.models.preset_name if self.models.active == "aquaclear" else None
+            return store_png(self._evidence, frame, session, max(self._serial, 1), preset)
 
     def mark(self, frame_id: str) -> tuple[str, str]:
         with self._lock:
@@ -196,6 +200,26 @@ class Runtime:
             "vram_total_mb": info.vram_total_mb,
         }
 
+    def vision_view(self) -> dict[str, object]:
+        from .gpu.report import assemble_vision
+
+        with self._lock:
+            event = dict(self._vision)
+            preset = self.models.preset_name
+        hydro = self._settings.hydrodetect
+        spatial = self._settings.spatialsight
+        return assemble_vision(event, preset, hydro, spatial)
+
+    def compare_view(self) -> dict[str, object]:
+        from .video.compare import compare_payload
+
+        video = self._settings.thresholds.video
+        with self._lock:
+            frame = self.pipeline.ring.latest()
+            shown = self.pipeline.last_display
+        jpeg = None if shown is None else shown.jpeg
+        return compare_payload(frame, jpeg, video.display_max_side, video.display_jpeg_quality)
+
     def display_packet(self) -> tuple[dict[str, object], bytes | None]:
         with self._lock:
             shown = self.pipeline.last_display
@@ -247,10 +271,13 @@ class Runtime:
 
     def _enhance(self, frame: StoredFrame) -> bytes | None:
         try:
-            return self.models.infer(frame)
+            raw = self.models.infer(frame)
         except EngineError as exc:
             self._on_error(exc.spec.code, exc.detail)
             return None
+        event = self.models.last_result
+        self._vision = {} if event is None else dict(event)
+        return raw
 
     def _display_fps(self) -> float | None:
         with self._lock:

@@ -22,6 +22,7 @@ class WorkerHandle:
         self._env = dict(env or {})
         self._queue: Queue[str] = Queue()
         self._proc: subprocess.Popen[str] | None = None
+        self.last_event: dict[str, Any] | None = None
 
     @property
     def pid(self) -> int | None:
@@ -67,6 +68,7 @@ class WorkerHandle:
             view[: len(frame.bgr)] = frame.bgr
             self.request(_infer_payload(frame, shared.name))
             event = self.read_event()
+            self.last_event = event
             _raise_if_error(event)
             if not event.get("enhanced"):
                 return None
