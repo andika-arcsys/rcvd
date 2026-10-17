@@ -661,10 +661,564 @@
           }
         }
       }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "office"
+        ],
+        "summary": "Login",
+        "operationId": "login_auth_login_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pipelines": {
+      "get": {
+        "tags": [
+          "office"
+        ],
+        "summary": "Pipelines",
+        "operationId": "pipelines_pipelines_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PipelineView"
+                  },
+                  "title": "Response Pipelines Pipelines Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cameras": {
+      "get": {
+        "tags": [
+          "office"
+        ],
+        "summary": "Cameras",
+        "operationId": "cameras_cameras_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CameraView"
+                  },
+                  "title": "Response Cameras Cameras Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard": {
+      "get": {
+        "tags": [
+          "office"
+        ],
+        "summary": "Dashboard",
+        "operationId": "dashboard_dashboard_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/missions/current": {
+      "get": {
+        "tags": [
+          "office"
+        ],
+        "summary": "Current Mission",
+        "operationId": "current_mission_missions_current_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "office"
+        ],
+        "summary": "Save Mission",
+        "operationId": "save_mission_missions_current_put",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MissionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/missions/current/acks": {
+      "post": {
+        "tags": [
+          "office"
+        ],
+        "summary": "Acknowledge",
+        "operationId": "acknowledge_missions_current_acks_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AckInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/missions/current/freeze": {
+      "post": {
+        "tags": [
+          "office"
+        ],
+        "summary": "Freeze Rod",
+        "operationId": "freeze_rod_missions_current_freeze_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FreezeView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/missions/current/rod-test": {
+      "post": {
+        "tags": [
+          "office"
+        ],
+        "summary": "Rod Test Route",
+        "operationId": "rod_test_route_missions_current_rod_test_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RodInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RodView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/missions/current/start": {
+      "post": {
+        "tags": [
+          "office"
+        ],
+        "summary": "Start Mission",
+        "operationId": "start_mission_missions_current_start_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AckInput": {
+        "properties": {
+          "preset_locked": {
+            "type": "boolean",
+            "title": "Preset Locked"
+          },
+          "laser_on": {
+            "type": "boolean",
+            "title": "Laser On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "preset_locked",
+          "laser_on"
+        ],
+        "title": "AckInput"
+      },
       "Auth": {
         "properties": {
           "max_attempts": {
@@ -754,6 +1308,10 @@
           "camera_file_required_for_valid": {
             "type": "boolean",
             "title": "Camera File Required For Valid"
+          },
+          "min_baseline_px": {
+            "type": "integer",
+            "title": "Min Baseline Px"
           }
         },
         "additionalProperties": false,
@@ -765,9 +1323,23 @@
           "estimate_max_rel",
           "diameter_sanity_pct",
           "edge_risk_px",
-          "camera_file_required_for_valid"
+          "camera_file_required_for_valid",
+          "min_baseline_px"
         ],
         "title": "Calibration"
+      },
+      "CameraView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "CameraView"
       },
       "ControlsConfig": {
         "properties": {
@@ -798,6 +1370,80 @@
           "gamepad"
         ],
         "title": "ControlsConfig"
+      },
+      "DashboardView": {
+        "properties": {
+          "active_missions": {
+            "type": "integer",
+            "title": "Active Missions"
+          },
+          "pending_review": {
+            "type": "integer",
+            "title": "Pending Review"
+          },
+          "snapshots_today": {
+            "type": "integer",
+            "title": "Snapshots Today"
+          },
+          "longest_span_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longest Span M"
+          },
+          "critical_limit_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Critical Limit M"
+          },
+          "banner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewBanner"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "missions": {
+            "items": {
+              "$ref": "#/components/schemas/MissionView"
+            },
+            "type": "array",
+            "title": "Missions"
+          },
+          "remeasure": {
+            "items": {
+              "$ref": "#/components/schemas/RemeasureTask"
+            },
+            "type": "array",
+            "title": "Remeasure"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_missions",
+          "pending_review",
+          "snapshots_today",
+          "longest_span_m",
+          "critical_limit_m",
+          "banner",
+          "missions",
+          "remeasure"
+        ],
+        "title": "DashboardView"
       },
       "DeviceRequest": {
         "properties": {
@@ -863,6 +1509,10 @@
             "type": "string",
             "title": "Clock Sync"
           },
+          "clock_utc": {
+            "type": "string",
+            "title": "Clock Utc"
+          },
           "cache": {
             "$ref": "#/components/schemas/CacheInfo"
           },
@@ -918,6 +1568,7 @@
           "video",
           "camera_state",
           "clock_sync",
+          "clock_utc",
           "cache",
           "disk",
           "workers",
@@ -1051,6 +1702,29 @@
           "path"
         ],
         "title": "FreezeResult"
+      },
+      "FreezeView": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "snapshot_id",
+          "source"
+        ],
+        "title": "FreezeView"
       },
       "GpuInfo": {
         "properties": {
@@ -1196,6 +1870,25 @@
         ],
         "title": "IntervalYears"
       },
+      "Laser": {
+        "properties": {
+          "ref_cm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref Cm"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "Laser",
+        "description": "Jarak dua titik laser. null sampai tim mengisi D-05."
+      },
       "LastError": {
         "properties": {
           "ts": {
@@ -1225,6 +1918,51 @@
         ],
         "title": "LastError"
       },
+      "LoginRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "pin": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Pin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "pin"
+        ],
+        "title": "LoginRequest"
+      },
+      "LoginResult": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "name",
+          "roles"
+        ],
+        "title": "LoginResult"
+      },
       "Measure": {
         "properties": {
           "heron_rel_tol": {
@@ -1248,6 +1986,181 @@
           "undistort_iterations"
         ],
         "title": "Measure"
+      },
+      "MissionEnvelope": {
+        "properties": {
+          "mission": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MissionView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "mission"
+        ],
+        "title": "MissionEnvelope"
+      },
+      "MissionInput": {
+        "properties": {
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "survey_date": {
+            "type": "string",
+            "title": "Survey Date"
+          },
+          "pipeline_id": {
+            "type": "string",
+            "title": "Pipeline Id"
+          },
+          "camera_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera Id"
+          },
+          "team": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Team"
+          }
+        },
+        "type": "object",
+        "required": [
+          "location",
+          "survey_date",
+          "pipeline_id",
+          "team"
+        ],
+        "title": "MissionInput"
+      },
+      "MissionView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "location": {
+            "type": "string",
+            "title": "Location"
+          },
+          "survey_date": {
+            "type": "string",
+            "title": "Survey Date"
+          },
+          "pipeline_id": {
+            "type": "string",
+            "title": "Pipeline Id"
+          },
+          "diameter": {
+            "type": "string",
+            "title": "Diameter"
+          },
+          "critical_limit_m": {
+            "type": "number",
+            "title": "Critical Limit M"
+          },
+          "team": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Team"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "camera_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera Id"
+          },
+          "preset_locked": {
+            "type": "boolean",
+            "title": "Preset Locked"
+          },
+          "laser_on": {
+            "type": "boolean",
+            "title": "Laser On"
+          },
+          "rod": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RodView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "precheck": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Precheck"
+          },
+          "ready": {
+            "type": "boolean",
+            "title": "Ready"
+          },
+          "laser_ref_cm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Laser Ref Cm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "location",
+          "survey_date",
+          "pipeline_id",
+          "diameter",
+          "critical_limit_m",
+          "team",
+          "status",
+          "camera_id",
+          "preset_locked",
+          "laser_on",
+          "rod",
+          "precheck",
+          "ready",
+          "laser_ref_cm"
+        ],
+        "title": "MissionView"
       },
       "ModelInfo": {
         "properties": {
@@ -1395,6 +2308,153 @@
         ],
         "title": "PipeValues"
       },
+      "PipelineView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "diameter": {
+            "type": "string",
+            "title": "Diameter"
+          },
+          "critical_limit_m": {
+            "type": "number",
+            "title": "Critical Limit M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "diameter",
+          "critical_limit_m"
+        ],
+        "title": "PipelineView"
+      },
+      "RemeasureTask": {
+        "properties": {
+          "segment": {
+            "type": "string",
+            "title": "Segment"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "segment",
+          "note"
+        ],
+        "title": "RemeasureTask"
+      },
+      "ReviewBanner": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "kind"
+        ],
+        "title": "ReviewBanner"
+      },
+      "RodInput": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "cal_p1": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Cal P1"
+          },
+          "cal_p2": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Cal P2"
+          },
+          "meas_p1": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Meas P1"
+          },
+          "meas_p2": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Meas P2"
+          },
+          "time_of_day": {
+            "type": "string",
+            "title": "Time Of Day",
+            "default": "pagi"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "snapshot_id",
+          "cal_p1",
+          "cal_p2",
+          "meas_p1",
+          "meas_p2"
+        ],
+        "title": "RodInput"
+      },
       "RodTest": {
         "properties": {
           "length_m": {
@@ -1413,6 +2473,67 @@
           "tolerance_pct"
         ],
         "title": "RodTest"
+      },
+      "RodView": {
+        "properties": {
+          "measured_m": {
+            "type": "number",
+            "title": "Measured M"
+          },
+          "error_pct": {
+            "type": "number",
+            "title": "Error Pct"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "calibration_status": {
+            "type": "string",
+            "title": "Calibration Status"
+          },
+          "baseline_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Hint"
+          },
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "measured_m",
+          "error_pct",
+          "passed",
+          "calibration_status",
+          "baseline_hint",
+          "frame_id",
+          "snapshot_id"
+        ],
+        "title": "RodView"
       },
       "RolesConfig": {
         "properties": {
@@ -1596,6 +2717,9 @@
           },
           "cache": {
             "$ref": "#/components/schemas/Cache"
+          },
+          "laser": {
+            "$ref": "#/components/schemas/Laser"
           }
         },
         "additionalProperties": false,
@@ -1612,7 +2736,8 @@
           "auth",
           "performance",
           "video",
-          "cache"
+          "cache",
+          "laser"
         ],
         "title": "Thresholds"
       },

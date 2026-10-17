@@ -23,6 +23,13 @@ export function calibrationStatus(
   return status;
 }
 
+export function baselineHint(distPx: number, minimumPx: number): string | null {
+  if (distPx < minimumPx) {
+    return `Dekatkan ROV atau perlebar jarak laser (minimal ${minimumPx} px)`;
+  }
+  return null;
+}
+
 function referenceDistance(
   p1: Point,
   p2: Point,
@@ -60,5 +67,6 @@ export function calibrate(
     uncertainty_k: limits.uncertainty_k,
     camera,
     nodes: [a, b],
+    baseline_hint: baselineHint(dist, limits.min_baseline_px),
   };
 }

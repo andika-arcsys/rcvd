@@ -93,7 +93,7 @@ Status semua ADR: **Diusulkan**, menunggu persetujuan. Format: Konteks → Keput
 - **Konteks.** Lensa menimbulkan distorsi yang mengubah jarak piksel, terutama di tepi frame. Gambar bukti tidak boleh diubah.
 - **Keputusan.** Titik yang diklik di-undistort memakai `config/cameras/<id>.yaml` (model pinhole OpenCV) sebelum skala dan jarak dihitung. Gambar tetap asli. Tanpa file kalibrasi (atau tidak cocok dengan kamera), status maksimal ESTIMATE_ONLY. Nama file kamera dan hash-nya dicatat di JSON snapshot.
 - **Alternatif.** Undistort seluruh gambar (mengubah bukti; mahal); abaikan distorsi (bias).
-- **Konsekuensi.** Pembuatan file kalibrasi tetap pekerjaan tim (Q-MIS-2). Vektor emas `undistort_node_opencv_pinhole` mengunci perilaku di Python dan TypeScript.
+- **Konsekuensi.** Pembuatan file kalibrasi tetap pekerjaan tim (Q-MIS-2). Vektor emas `undistort_node_opencv_pinhole` mengunci perilaku di Python dan TypeScript. Tanpa file kalibrasi kamera, status maksimal ESTIMATE_ONLY; ketidakpastian di atas `estimate_max_rel` tetap UNCALIBRATED dan tidak dinaikkan. Vektor `tanpa_file_kamera_maks_estimate` dan `tanpa_file_kamera_tetap_uncalibrated` mengunci kedua arah. Jarak dua node kalibrasi di bawah `calibration.min_baseline_px` (USULAN 150) menambah petunjuk "Dekatkan ROV atau perlebar jarak laser" dan tidak mengubah status.
 
 ## ADR-015 Urutan prioritas sumber kebenaran [J]
 

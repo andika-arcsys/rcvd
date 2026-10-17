@@ -11,6 +11,7 @@ export type Access = 'full' | 'view' | 'none';
 
 export {
   area,
+  baselineHint,
   calibrate,
   calibrationStatus,
   criticalLimit,

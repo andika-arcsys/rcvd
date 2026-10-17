@@ -31,7 +31,7 @@ def test_uuid7_is_valid_and_time_ordered() -> None:
 def test_error_codes_are_well_formed() -> None:
     assert REGISTRY
     for code, spec in REGISTRY.items():
-        assert re.fullmatch(r"[A-Z]{3,4}-\d{3}", code)
+        assert re.fullmatch(r"[A-Z]{3,5}-\d{3}", code)
         assert spec.message_id and spec.cause and spec.action
 
 

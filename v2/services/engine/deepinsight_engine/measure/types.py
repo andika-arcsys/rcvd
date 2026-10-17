@@ -38,6 +38,7 @@ class MeasureLimits:
     boundary_tol: float
     undistort_iterations: int
     resurvey_months: int
+    min_baseline_px: int
 
 
 @dataclass(frozen=True)
@@ -50,6 +51,7 @@ class Calibration:
     uncertainty_k: float
     camera: Camera | None
     nodes: tuple[Point, Point]
+    baseline_hint: str | None
 
 
 @dataclass(frozen=True)

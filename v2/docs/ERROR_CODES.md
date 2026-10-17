@@ -13,13 +13,17 @@ Jangan diubah manual.
 | AREA-003 | 422 | Titik segaris, luas nol. | Shoelace bernilai nol. | Pilih titik yang membentuk bidang. |
 | AREA-004 | 422 | Cek silang Heron tidak cocok dengan shoelace. | Selisih relatif luas 3 titik melewati heron_rel_tol. | Laporkan kasus ini; rumus luas tidak konsisten. |
 | AREA-005 | 422 | Minimal tiga titik untuk luas. | Poligon punya kurang dari 3 titik. | Tambahkan titik sampai membentuk bidang. |
+| AUTH-001 | 401 | Pengguna atau PIN tidak valid. | ID pengguna atau PIN salah. | Periksa ID dan PIN. PIN tidak dicatat di log. |
+| AUTH-002 | 423 | Akun terkunci sementara. | Percobaan masuk melebihi batas config. | Tunggu sampai kunci berakhir, atau minta administrator membuka akun. |
 | CAL-001 | 422 | Jarak referensi nol. | Dua node referensi berimpit atau panjang referensi tidak positif. | Pilih dua node yang berbeda dan isi panjang referensi. |
 | GPU-001 | 503 | GPU NVIDIA tidak terdeteksi. | Driver NVML tidak tersedia atau tidak ada GPU. | Lanjut mode terbatas, atau pasang driver NVIDIA yang sesuai. |
 | GPU-002 | 500 | VRAM tidak kembali ke garis dasar. | Setelah lepas model, pemakaian VRAM masih di atas toleransi. | Proses pekerja dihentikan paksa. |
 | GPU-003 | 503 | Performa di bawah ambang. | FPS, VRAM, atau utilisasi GPU melewati batas config. | Matikan fitur atau pilih preset AquaClear ringan. |
+| LASER-001 | 422 | Jarak dua titik laser belum diisi. | config laser.ref_cm masih kosong (D-05). | Isi jarak laser yang diukur tim sebelum uji batang. |
 | MDL-001 | 404 | Berkas model tidak ditemukan. | model.onnx atau classes.json belum ada di folder models. | Salin berkas ke jalur di config/models.yaml. Bobot besar tidak disimpan di Git. |
 | MDL-002 | 500 | Model gagal dimuat. | Runtime atau isi berkas model tidak dapat dipakai. | Periksa log engine dan berkas model. |
 | MDL-003 | 503 | Fitur ini membutuhkan GPU NVIDIA. | Mode terbatas: HydroDetect dan SpatialSight nonaktif tanpa GPU. | Gunakan Optical atau AquaClear, atau jalankan di PC dengan GPU NVIDIA. |
+| MIS-001 | 422 | Misi belum siap dimulai. | Pre-check, tim, atau rencana masih belum lengkap, atau misi sudah berjalan. | Lengkapi rencana dan semua butir pre-check. |
 | SPAN-001 | 422 | Segmen tidak punya pasangan freeze yang lolos. | Setiap pasangan freeze pada segmen melebihi selisih maksimum. | Ukur ulang segmen tersebut. |
 | SPAN-002 | 422 | Diameter atau rentang G tidak dikenal. | Diameter bukan 16 atau 8, atau G kanan berada sebelum G kiri. | Periksa diameter pipa dan urutan segmen. |
 | STO-001 | 507 | Ruang penyimpanan tidak cukup. | Ruang kosong di bawah batas minimum. | Kosongkan disk lalu coba lagi. |

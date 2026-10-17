@@ -8,6 +8,7 @@ import shutil
 import time
 from collections import deque
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -72,6 +73,7 @@ class DiagnosticsReport(BaseModel):
     video: VideoInfo
     camera_state: str
     clock_sync: str
+    clock_utc: str
     cache: CacheInfo
     disk: DiskInfo
     workers: int
@@ -170,7 +172,9 @@ def build_report(
             frame_count=0 if live is None else live.frame_count,
         ),
         camera_state="not_configured",
-        clock_sync="unknown",
+        # Jam OS. NTP tidak dicek (Q-UI-5); clock_sync=ok berarti jam sistem terbaca.
+        clock_sync="ok",
+        clock_utc=datetime.now(UTC).isoformat(),
         cache=CacheInfo(
             path=str(cache_dir),
             size_mb=round(_dir_size_mb(cache_dir) if live is None else live.cache_mb, 3),

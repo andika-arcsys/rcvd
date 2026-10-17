@@ -1,0 +1,15 @@
+# D-23 belum diisi tim. Akun ini hanya untuk uji lokal, bukan personel lapangan.
+# PIN tidak disimpan. Hash Argon2id. Nilai PIN uji ada di docs/DATA_NEEDED.md.
+schema_version: 1
+users:
+  - id: uji
+    name: Akun uji
+    pin_hash: "$argon2id$v=19$m=65536,t=3,p=4$y6D+oE9QqxiJt4/29ZdjMg$oRo5H5muSd+Sr8xUbkLDE/n69Xl6Cqpvz2TmOtL14Bg"
+    roles:
+      - ketua_tim
+      - pilot_drone
+      - ahli_ukur
+      - pengelola_data
+      - teknisi_program
+      - pemeriksa_teknik
+      - manajemen

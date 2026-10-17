@@ -225,10 +225,171 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Login */
+        post: operations["login_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pipelines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pipelines */
+        get: operations["pipelines_pipelines_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cameras */
+        get: operations["cameras_cameras_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard */
+        get: operations["dashboard_dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/missions/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current Mission */
+        get: operations["current_mission_missions_current_get"];
+        /** Save Mission */
+        put: operations["save_mission_missions_current_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/missions/current/acks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Acknowledge */
+        post: operations["acknowledge_missions_current_acks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/missions/current/freeze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Freeze Rod */
+        post: operations["freeze_rod_missions_current_freeze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/missions/current/rod-test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rod Test Route */
+        post: operations["rod_test_route_missions_current_rod_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/missions/current/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Mission */
+        post: operations["start_mission_missions_current_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AckInput */
+        AckInput: {
+            /** Preset Locked */
+            preset_locked: boolean;
+            /** Laser On */
+            laser_on: boolean;
+        };
         /** Auth */
         Auth: {
             /** Max Attempts */
@@ -269,6 +430,13 @@ export interface components {
             edge_risk_px: number;
             /** Camera File Required For Valid */
             camera_file_required_for_valid: boolean;
+            /** Min Baseline Px */
+            min_baseline_px: number;
+        };
+        /** CameraView */
+        CameraView: {
+            /** Id */
+            id: string;
         };
         /** ControlsConfig */
         ControlsConfig: {
@@ -282,6 +450,24 @@ export interface components {
             gamepad: {
                 [key: string]: string;
             };
+        };
+        /** DashboardView */
+        DashboardView: {
+            /** Active Missions */
+            active_missions: number;
+            /** Pending Review */
+            pending_review: number;
+            /** Snapshots Today */
+            snapshots_today: number;
+            /** Longest Span M */
+            longest_span_m: number | null;
+            /** Critical Limit M */
+            critical_limit_m: number | null;
+            banner: components["schemas"]["ReviewBanner"] | null;
+            /** Missions */
+            missions: components["schemas"]["MissionView"][];
+            /** Remeasure */
+            remeasure: components["schemas"]["RemeasureTask"][];
         };
         /** DeviceRequest */
         DeviceRequest: {
@@ -313,6 +499,8 @@ export interface components {
             camera_state: string;
             /** Clock Sync */
             clock_sync: string;
+            /** Clock Utc */
+            clock_utc: string;
             cache: components["schemas"]["CacheInfo"];
             disk: components["schemas"]["DiskInfo"];
             /** Workers */
@@ -372,6 +560,15 @@ export interface components {
             /** Path */
             path: string;
         };
+        /** FreezeView */
+        FreezeView: {
+            /** Frame Id */
+            frame_id: string;
+            /** Snapshot Id */
+            snapshot_id: string;
+            /** Source */
+            source: string;
+        };
         /** GpuInfo */
         GpuInfo: {
             /** Available */
@@ -414,6 +611,14 @@ export interface components {
             /** Moderate And Above */
             moderate_and_above: number;
         };
+        /**
+         * Laser
+         * @description Jarak dua titik laser. null sampai tim mengisi D-05.
+         */
+        Laser: {
+            /** Ref Cm */
+            ref_cm?: number | null;
+        };
         /** LastError */
         LastError: {
             /** Ts */
@@ -423,6 +628,22 @@ export interface components {
             /** Detail */
             detail?: string | null;
         };
+        /** LoginRequest */
+        LoginRequest: {
+            /** User Id */
+            user_id: string;
+            /** Pin */
+            pin: string;
+        };
+        /** LoginResult */
+        LoginResult: {
+            /** User Id */
+            user_id: string;
+            /** Name */
+            name: string;
+            /** Roles */
+            roles: string[];
+        };
         /** Measure */
         Measure: {
             /** Heron Rel Tol */
@@ -431,6 +652,63 @@ export interface components {
             boundary_tol: number;
             /** Undistort Iterations */
             undistort_iterations: number;
+        };
+        /** MissionEnvelope */
+        MissionEnvelope: {
+            mission: components["schemas"]["MissionView"] | null;
+        };
+        /** MissionInput */
+        MissionInput: {
+            /** Location */
+            location: string;
+            /** Survey Date */
+            survey_date: string;
+            /** Pipeline Id */
+            pipeline_id: string;
+            /** Camera Id */
+            camera_id?: string | null;
+            /** Team */
+            team: {
+                [key: string]: string;
+            };
+        };
+        /** MissionView */
+        MissionView: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Location */
+            location: string;
+            /** Survey Date */
+            survey_date: string;
+            /** Pipeline Id */
+            pipeline_id: string;
+            /** Diameter */
+            diameter: string;
+            /** Critical Limit M */
+            critical_limit_m: number;
+            /** Team */
+            team: {
+                [key: string]: string;
+            };
+            /** Status */
+            status: string;
+            /** Camera Id */
+            camera_id: string | null;
+            /** Preset Locked */
+            preset_locked: boolean;
+            /** Laser On */
+            laser_on: boolean;
+            rod: components["schemas"]["RodView"] | null;
+            /** Precheck */
+            precheck: {
+                [key: string]: boolean;
+            };
+            /** Ready */
+            ready: boolean;
+            /** Laser Ref Cm */
+            laser_ref_cm: number | null;
         };
         /** ModelInfo */
         ModelInfo: {
@@ -482,12 +760,88 @@ export interface components {
             /** Inch 8 */
             inch_8: number;
         };
+        /** PipelineView */
+        PipelineView: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Diameter */
+            diameter: string;
+            /** Critical Limit M */
+            critical_limit_m: number;
+        };
+        /** RemeasureTask */
+        RemeasureTask: {
+            /** Segment */
+            segment: string;
+            /** Note */
+            note: string;
+        };
+        /** ReviewBanner */
+        ReviewBanner: {
+            /** Title */
+            title: string;
+            /** Kind */
+            kind: string;
+        };
+        /** RodInput */
+        RodInput: {
+            /** Frame Id */
+            frame_id: string;
+            /** Snapshot Id */
+            snapshot_id: string;
+            /** Cal P1 */
+            cal_p1: [
+                number,
+                number
+            ];
+            /** Cal P2 */
+            cal_p2: [
+                number,
+                number
+            ];
+            /** Meas P1 */
+            meas_p1: [
+                number,
+                number
+            ];
+            /** Meas P2 */
+            meas_p2: [
+                number,
+                number
+            ];
+            /**
+             * Time Of Day
+             * @default pagi
+             */
+            time_of_day: string;
+        };
         /** RodTest */
         RodTest: {
             /** Length M */
             length_m: number;
             /** Tolerance Pct */
             tolerance_pct: number;
+        };
+        /** RodView */
+        RodView: {
+            /** Measured M */
+            measured_m: number;
+            /** Error Pct */
+            error_pct: number;
+            /** Passed */
+            passed: boolean;
+            /** Calibration Status */
+            calibration_status: string;
+            /** Baseline Hint */
+            baseline_hint: string | null;
+            /** Frame Id */
+            frame_id: string;
+            /** Snapshot Id */
+            snapshot_id: string;
+            /** Source */
+            source?: string | null;
         };
         /** RolesConfig */
         RolesConfig: {
@@ -554,6 +908,7 @@ export interface components {
             performance: components["schemas"]["Performance"];
             video: components["schemas"]["Video"];
             cache: components["schemas"]["Cache"];
+            laser: components["schemas"]["Laser"];
         };
         /** ValidationError */
         ValidationError: {
@@ -1022,6 +1377,332 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionClose"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    login_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pipelines_pipelines_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cameras_cameras_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CameraView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    current_mission_missions_current_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionEnvelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_mission_missions_current_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MissionInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    acknowledge_missions_current_acks_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AckInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    freeze_rod_missions_current_freeze_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FreezeView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rod_test_route_missions_current_rod_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RodInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RodView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_mission_missions_current_start_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionView"];
                 };
             };
             /** @description Validation Error */

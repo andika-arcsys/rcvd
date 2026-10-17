@@ -24,6 +24,13 @@ def calibration_status(rel_uncert: float, camera_present: bool, limits: MeasureL
     return status
 
 
+def baseline_hint(dist_px: float, minimum_px: int) -> str | None:
+    """Petunjuk bila baseline di bawah ambang. Angka diambil dari config."""
+    if dist_px < minimum_px:
+        return f"Dekatkan ROV atau perlebar jarak laser (minimal {minimum_px} px)"
+    return None
+
+
 def _reference_distance(
     p1: Point,
     p2: Point,
@@ -59,4 +66,5 @@ def calibrate(
         uncertainty_k=limits.uncertainty_k,
         camera=camera,
         nodes=(a, b),
+        baseline_hint=baseline_hint(dist, limits.min_baseline_px),
     )

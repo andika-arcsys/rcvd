@@ -23,6 +23,8 @@ def test_repo_config_loads(config_dir: Path) -> None:
     assert thr.span.resurvey_months == 6
     assert thr.measure.heron_rel_tol == 1e-9
     assert thr.measure.undistort_iterations == 20
+    assert thr.calibration.min_baseline_px == 150
+    assert thr.laser.ref_cm is None
 
 
 def test_roles_matrix_is_complete(config_dir: Path) -> None:

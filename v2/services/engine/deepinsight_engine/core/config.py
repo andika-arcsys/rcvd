@@ -30,6 +30,7 @@ class Calibration(_Strict):
     diameter_sanity_pct: float
     edge_risk_px: float
     camera_file_required_for_valid: bool
+    min_baseline_px: int
 
     @model_validator(mode="after")
     def _ordered(self) -> Calibration:
@@ -103,6 +104,12 @@ class Cache(_Strict):
     max_mb: int
 
 
+class Laser(_Strict):
+    """Jarak dua titik laser. null sampai tim mengisi D-05."""
+
+    ref_cm: float | None = None
+
+
 class Thresholds(_Strict):
     schema_version: int
     calibration: Calibration
@@ -116,6 +123,7 @@ class Thresholds(_Strict):
     performance: Performance
     video: Video
     cache: Cache
+    laser: Laser
 
 
 class AppInfo(_Strict):
@@ -213,6 +221,29 @@ class ControlsConfig(_Strict):
     gamepad: dict[str, str]
 
 
+class Pipeline(_Strict):
+    id: str
+    name: str
+    diameter: Literal["16", "8"]
+
+
+class PipelineFile(_Strict):
+    schema_version: int
+    pipelines: list[Pipeline]
+
+
+class UserAccount(_Strict):
+    id: str
+    name: str
+    pin_hash: str
+    roles: list[str]
+
+
+class UsersFile(_Strict):
+    schema_version: int
+    users: list[UserAccount]
+
+
 class Settings(_Strict):
     """Seluruh config yang dimuat saat engine mulai."""
 
@@ -222,6 +253,8 @@ class Settings(_Strict):
     controls: ControlsConfig
     models: ModelCatalog
     aquaclear: AquaclearConfig
+    pipelines: PipelineFile
+    users: UsersFile
 
 
 def _load_yaml(path: Path) -> object:
@@ -246,4 +279,6 @@ def load_settings(config_dir: Path) -> Settings:
         controls=_validate(ControlsConfig, config_dir / "controls.yaml"),
         models=_validate(ModelCatalog, config_dir / "models.yaml"),
         aquaclear=_validate(AquaclearConfig, config_dir / "aquaclear_presets.yaml"),
+        pipelines=_validate(PipelineFile, config_dir / "pipelines.yaml"),
+        users=_validate(UsersFile, config_dir / "users.yaml"),
     )

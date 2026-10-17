@@ -10,6 +10,7 @@ calibration:
   diameter_sanity_pct: 10         # USULAN – perlu konfirmasi tim (peringatan saja)
   edge_risk_px: 5                 # USULAN – perlu konfirmasi tim (DEPTH_EDGE_RISK v1)
   camera_file_required_for_valid: true  # SUMBER: tanpa file kamera status maksimal ESTIMATE_ONLY
+  min_baseline_px: 150            # USULAN – perlu konfirmasi tim (jarak minimum dua node kalibrasi)
 
 rod_test:
   length_m: 1.0                   # SUMBER
@@ -69,3 +70,6 @@ video:
 
 cache:
   max_mb: 2048                    # USULAN – perlu konfirmasi tim
+
+laser:
+  ref_cm: null                    # D-05 belum diisi tim. Jangan diisi dengan angka contoh.

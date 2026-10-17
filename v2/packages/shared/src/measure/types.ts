@@ -26,6 +26,7 @@ export type MeasureLimits = {
   boundary_tol: number;
   undistort_iterations: number;
   resurvey_months: number;
+  min_baseline_px: number;
 };
 
 export type Calibration = {
@@ -37,6 +38,7 @@ export type Calibration = {
   uncertainty_k: number;
   camera: Camera | null;
   nodes: readonly [Point, Point];
+  baseline_hint: string | null;
 };
 
 export type LengthResult = { meters: number; uncertainty_2sigma_m: number };

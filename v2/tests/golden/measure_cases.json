@@ -15,7 +15,8 @@
     "heron_rel_tol": 1e-9,
     "boundary_tol": 1e-9,
     "undistort_iterations": 20,
-    "resurvey_months": 6
+    "resurvey_months": 6,
+    "min_baseline_px": 150
   },
   "cases": [
     {
@@ -30,7 +31,8 @@
         "scale_m_per_px": 0.001,
         "rel_uncert": 0.042426406871192854,
         "status": "ESTIMATE_ONLY",
-        "nodes": [[0, 0], [100, 0]]
+        "nodes": [[0, 0], [100, 0]],
+        "baseline_hint": "Dekatkan ROV atau perlebar jarak laser (minimal 150 px)"
       }
     },
     {
@@ -44,7 +46,8 @@
       "expect": {
         "scale_m_per_px": 0.001,
         "rel_uncert": 0.021213203435596427,
-        "status": "ESTIMATE_ONLY"
+        "status": "ESTIMATE_ONLY",
+        "baseline_hint": null
       }
     },
     {
@@ -58,7 +61,8 @@
       "expect": {
         "scale_m_per_px": 0.001,
         "rel_uncert": 0.021213203435596427,
-        "status": "VALID"
+        "status": "VALID",
+        "baseline_hint": null
       }
     },
     {

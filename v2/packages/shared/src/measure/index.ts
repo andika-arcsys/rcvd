@@ -1,5 +1,5 @@
 export { area, heronCrossCheck } from './area';
-export { calibrate, calibrationStatus } from './calibrate';
+export { baselineHint, calibrate, calibrationStatus } from './calibrate';
 export { MeasureError } from './error';
 export { criticalLimit, freezePair, rodTest, spanWarning, tapeCheck } from './gates';
 export { length } from './length';

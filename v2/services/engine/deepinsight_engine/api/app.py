@@ -22,6 +22,7 @@ from ..core.ids import session_id as make_session_id
 from ..core.logging import get_logger, setup_logging
 from ..core.paths import default_config_dir, default_data_dir
 from ..diagnostics import ErrorLog
+from ..office import Office
 from ..runtime import build_runtime
 from .routes import router
 from .security import TOKEN_HEADER
@@ -105,10 +106,11 @@ def create_app(
     app.state.started = time.monotonic()
     app.state.errors = ErrorLog()
     app.state.runtime = build_runtime(cfg, cfg_dir, resolved_data, app.state.errors.add)
+    app.state.office = Office(resolved_data, cfg_dir, cfg, session)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cfg.app.engine.cors_origins,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PUT"],
         allow_headers=[TOKEN_HEADER, "Content-Type"],
     )
     _install_handlers(app)

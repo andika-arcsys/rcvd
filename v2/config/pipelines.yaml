@@ -1,0 +1,7 @@
+# D-20 belum diisi tim. Entri di bawah hanya agar layar misi dapat diuji.
+# Bukan data lapangan: tidak ada KP, tidak ada OD.
+schema_version: 1
+pipelines:
+  - id: contoh
+    name: "Contoh (bukan data lapangan)"
+    diameter: "16"

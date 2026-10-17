@@ -10,6 +10,7 @@ from .. import __version__
 from ..core.config import ControlsConfig, RolesConfig, Settings, Thresholds
 from ..diagnostics import DiagnosticsReport, ErrorLog, build_report
 from .routes_live import live
+from .routes_office import office
 from .schemas import HealthResponse
 from .security import require_token
 
@@ -55,3 +56,4 @@ def config_controls(request: Request) -> ControlsConfig:
 
 router.include_router(protected)
 router.include_router(live)
+router.include_router(office)

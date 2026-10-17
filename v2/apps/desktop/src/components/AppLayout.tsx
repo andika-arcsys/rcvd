@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEngine } from '../engine/EngineProvider';
 import { t } from '../i18n';
 import { screenByPath } from '../navigation/registry';
@@ -16,6 +16,7 @@ export function AppLayout() {
   const { roles } = useEngine();
   const [confirmExit, setConfirmExit] = useState(false);
   const screen = screenByPath(location.pathname);
+  if (!role) return <Navigate to="/login" replace />;
   if (!screen) return <Outlet />;
 
   const access: AccessMap | null = roles
@@ -41,11 +42,11 @@ export function AppLayout() {
       </div>
       {confirmExit && (
         <ConfirmDialog
-          title="Keluar dari sesi?"
+          title={t('common.exitTitle')}
           actions={[
-            { label: 'Batal', onSelect: () => setConfirmExit(false) },
+            { label: t('common.cancel'), onSelect: () => setConfirmExit(false) },
             {
-              label: 'Keluar',
+              label: t('common.exit'),
               tone: 'danger',
               onSelect: () => {
                 setConfirmExit(false);
@@ -54,8 +55,7 @@ export function AppLayout() {
             },
           ]}
         >
-          Sesi akan ditutup dan paket bukti disegel. Frame beku atau ukuran yang belum disimpan akan
-          ditanyakan lebih dulu pada fase berikutnya.
+          {t('common.exitBody')}
         </ConfirmDialog>
       )}
     </div>

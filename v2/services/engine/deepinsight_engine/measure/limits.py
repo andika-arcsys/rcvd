@@ -28,4 +28,5 @@ def limits_from_thresholds(thresholds: Thresholds) -> MeasureLimits:
         boundary_tol=measure.boundary_tol,
         undistort_iterations=measure.undistort_iterations,
         resurvey_months=span.resurvey_months,
+        min_baseline_px=thresholds.calibration.min_baseline_px,
     )
