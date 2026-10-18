@@ -1,0 +1,19 @@
+# USULAN Q-REV-1 – perlu konfirmasi tim. Bukan ambang ukur.
+schema_version: 1
+order:
+  - critical
+  - medium
+  - low
+critical:
+  - Leakage
+medium:
+  - Sandbag
+  - Spacer
+  - Trunk/Root
+low:
+  - Pipe
+  - River bottom
+  - Fish
+  - Underwater Trash
+gallery_window: 24
+thumbnail_cache: 48

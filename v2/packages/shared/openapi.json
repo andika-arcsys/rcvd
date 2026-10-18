@@ -222,6 +222,55 @@
         }
       }
     },
+    "/config/risk": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Config Risk",
+        "operationId": "config_risk_config_risk_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskClasses"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/models": {
       "get": {
         "tags": [
@@ -1691,6 +1740,470 @@
           }
         }
       }
+    },
+    "/gallery": {
+      "get": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Gallery",
+        "operationId": "gallery_gallery_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CardOut"
+                  },
+                  "title": "Response Gallery Gallery Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gallery/{snapshot_id}": {
+      "get": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Gallery Detail",
+        "operationId": "gallery_detail_gallery__snapshot_id__get",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gallery/{snapshot_id}/jpeg": {
+      "get": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Gallery Jpeg",
+        "operationId": "gallery_jpeg_gallery__snapshot_id__jpeg_get",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gallery/{snapshot_id}/review": {
+      "post": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Send Snapshot",
+        "operationId": "send_snapshot_gallery__snapshot_id__review_post",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueItem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/span/assess": {
+      "post": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Span Assess",
+        "operationId": "span_assess_span_assess_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/span/review": {
+      "post": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Send Span",
+        "operationId": "send_span_span_review_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssessIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueItem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review/queue": {
+      "get": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Review Queue",
+        "operationId": "review_queue_review_queue_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QueueItem"
+                  },
+                  "title": "Response Review Queue Review Queue Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review/{item_id}/decision": {
+      "post": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Review Decision",
+        "operationId": "review_decision_review__item_id__decision_post",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1768,6 +2281,210 @@
           "uncertainty_2sigma_m2"
         ],
         "title": "AreaView"
+      },
+      "AssessIn": {
+        "properties": {
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/SegIn"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Segments"
+          },
+          "g_left": {
+            "type": "string",
+            "title": "G Left"
+          },
+          "g_right": {
+            "type": "string",
+            "title": "G Right"
+          },
+          "diameter": {
+            "type": "string",
+            "title": "Diameter"
+          },
+          "tape_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tape M"
+          },
+          "rod_evening_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rod Evening M"
+          },
+          "measurer": {
+            "type": "string",
+            "title": "Measurer",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "segments",
+          "g_left",
+          "g_right",
+          "diameter"
+        ],
+        "title": "AssessIn"
+      },
+      "AssessOut": {
+        "properties": {
+          "send_allowed": {
+            "type": "boolean",
+            "title": "Send Allowed"
+          },
+          "failed_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Failed Ids"
+          },
+          "blocked": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Blocked"
+          },
+          "length_total_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Length Total M"
+          },
+          "length_left_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Length Left M"
+          },
+          "length_right_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Length Right M"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          },
+          "recommendation_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation Message"
+          },
+          "critical_limit_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Critical Limit M"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/SegOut"
+            },
+            "type": "array",
+            "title": "Segments"
+          },
+          "tape_passed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tape Passed"
+          },
+          "rod_passed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rod Passed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "send_allowed",
+          "failed_ids",
+          "blocked",
+          "length_total_m",
+          "length_left_m",
+          "length_right_m",
+          "recommendation",
+          "recommendation_message",
+          "critical_limit_m",
+          "warning",
+          "segments",
+          "tape_passed",
+          "rod_passed"
+        ],
+        "title": "AssessOut"
       },
       "Auth": {
         "properties": {
@@ -2015,6 +2732,88 @@
         ],
         "title": "CandidateView"
       },
+      "CardOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "segment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment"
+          },
+          "marker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marker"
+          },
+          "freeze_no": {
+            "type": "integer",
+            "title": "Freeze No"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "meters": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Meters"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset"
+          },
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "version",
+          "segment",
+          "marker",
+          "freeze_no",
+          "status",
+          "meters",
+          "operator",
+          "preset",
+          "frame_id"
+        ],
+        "title": "CardOut"
+      },
       "ClassChip": {
         "properties": {
           "name": {
@@ -2247,6 +3046,76 @@
         ],
         "title": "DashboardView"
       },
+      "DecisionIn": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "confirm",
+              "reject",
+              "reclass",
+              "canvas",
+              "remeasure"
+            ],
+            "title": "Action"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "class_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Name"
+          },
+          "segment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "reason",
+          "role"
+        ],
+        "title": "DecisionIn"
+      },
+      "DecisionOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version"
+        ],
+        "title": "DecisionOut"
+      },
       "DepthView": {
         "properties": {
           "width": {
@@ -2277,6 +3146,133 @@
           "label"
         ],
         "title": "DepthView"
+      },
+      "DetailOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "segment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment"
+          },
+          "marker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marker"
+          },
+          "freeze_no": {
+            "type": "integer",
+            "title": "Freeze No"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "scale_m_per_px": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scale M Per Px"
+          },
+          "rel_uncert": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rel Uncert"
+          },
+          "meters": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Meters"
+          },
+          "uncertainty_m": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Uncertainty M"
+          },
+          "areas_m2": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Areas M2"
+          },
+          "operator": {
+            "type": "string",
+            "title": "Operator"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset"
+          },
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "version",
+          "segment",
+          "marker",
+          "freeze_no",
+          "status",
+          "scale_m_per_px",
+          "rel_uncert",
+          "meters",
+          "uncertainty_m",
+          "areas_m2",
+          "operator",
+          "preset",
+          "frame_id",
+          "note"
+        ],
+        "title": "DetailOut"
       },
       "DeviceRequest": {
         "properties": {
@@ -3387,6 +4383,24 @@
         ],
         "title": "PairIn"
       },
+      "PairM": {
+        "properties": {
+          "a_m": {
+            "type": "number",
+            "title": "A M"
+          },
+          "b_m": {
+            "type": "number",
+            "title": "B M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "a_m",
+          "b_m"
+        ],
+        "title": "PairM"
+      },
       "Performance": {
         "properties": {
           "watchdog_interval_s": {
@@ -3616,6 +4630,112 @@
         ],
         "title": "Px"
       },
+      "QueueItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "class_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Name"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "calibration_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibration Status"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "reviewers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reviewers"
+          },
+          "frame_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frame Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "span_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Span M"
+          },
+          "training": {
+            "type": "boolean",
+            "title": "Training"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "class_name",
+          "level",
+          "source",
+          "calibration_status",
+          "status",
+          "reviewers",
+          "frame_id",
+          "snapshot_id",
+          "span_m",
+          "training"
+        ],
+        "title": "QueueItem"
+      },
       "RemeasureTask": {
         "properties": {
           "segment": {
@@ -3651,6 +4771,63 @@
           "kind"
         ],
         "title": "ReviewBanner"
+      },
+      "RiskClasses": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "title": "Schema Version"
+          },
+          "order": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Order"
+          },
+          "critical": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Critical"
+          },
+          "medium": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Medium"
+          },
+          "low": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Low"
+          },
+          "gallery_window": {
+            "type": "integer",
+            "title": "Gallery Window"
+          },
+          "thumbnail_cache": {
+            "type": "integer",
+            "title": "Thumbnail Cache"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "schema_version",
+          "order",
+          "critical",
+          "medium",
+          "low",
+          "gallery_window",
+          "thumbnail_cache"
+        ],
+        "title": "RiskClasses",
+        "description": "Urutan antrian Review. USULAN Q-REV-1."
       },
       "RodInput": {
         "properties": {
@@ -3939,6 +5116,97 @@
           "calibration"
         ],
         "title": "SaveIn"
+      },
+      "SegIn": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "pairs": {
+            "items": {
+              "$ref": "#/components/schemas/PairM"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Pairs"
+          },
+          "calibration_status": {
+            "type": "string",
+            "title": "Calibration Status",
+            "default": "VALID"
+          },
+          "estimate_reason": {
+            "type": "string",
+            "title": "Estimate Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "pairs"
+        ],
+        "title": "SegIn"
+      },
+      "SegOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "a_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A M"
+          },
+          "b_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "B M"
+          },
+          "length_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Length M"
+          },
+          "calibration_status": {
+            "type": "string",
+            "title": "Calibration Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ok",
+          "a_m",
+          "b_m",
+          "length_m",
+          "calibration_status"
+        ],
+        "title": "SegOut"
       },
       "SessionClose": {
         "properties": {

@@ -7,11 +7,12 @@ import time
 from fastapi import APIRouter, Depends, Request
 
 from .. import __version__
-from ..core.config import ControlsConfig, RolesConfig, Settings, Thresholds
+from ..core.config import ControlsConfig, RiskClasses, RolesConfig, Settings, Thresholds
 from ..diagnostics import DiagnosticsReport, ErrorLog, build_report
 from .routes_live import live
 from .routes_measure import measure
 from .routes_office import office
+from .routes_phase8 import phase8
 from .routes_stream import stream
 from .routes_vision import vision
 from .schemas import HealthResponse
@@ -57,9 +58,15 @@ def config_controls(request: Request) -> ControlsConfig:
     return request.app.state.settings.controls  # type: ignore[no-any-return]
 
 
+@protected.get("/config/risk", response_model=RiskClasses, tags=["config"])
+def config_risk(request: Request) -> RiskClasses:
+    return request.app.state.settings.risk  # type: ignore[no-any-return]
+
+
 router.include_router(protected)
 router.include_router(live)
 router.include_router(office)
 router.include_router(vision)
 router.include_router(measure)
+router.include_router(phase8)
 router.include_router(stream)

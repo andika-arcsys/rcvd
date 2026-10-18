@@ -50,6 +50,7 @@ interface RodDialogProps {
   onClose: () => void;
   onFreeze: () => Promise<FreezeView | null>;
   onSave: (body: RodInput) => Promise<string | null>;
+  initialWhen?: string;
 }
 
 export function RodDialog({
@@ -59,8 +60,9 @@ export function RodDialog({
   onClose,
   onFreeze,
   onSave,
+  initialWhen = 'pagi',
 }: RodDialogProps) {
-  const fields = useRodFields();
+  const fields = useRodFields(initialWhen);
   return (
     <div
       role="dialog"
@@ -189,12 +191,12 @@ function WhenSelect({ value, onChange }: { value: string; onChange: (value: stri
   );
 }
 
-function useRodFields() {
+function useRodFields(initialWhen: string) {
   const [cal1, setCal1] = useState('0, 0');
   const [cal2, setCal2] = useState('');
   const [meas1, setMeas1] = useState('0, 0');
   const [meas2, setMeas2] = useState('');
-  const [when, setWhen] = useState('pagi');
+  const [when, setWhen] = useState(initialWhen);
   const [frozen, setFrozen] = useState<FreezeView | null>(null);
   const [preview, setPreview] = useState<RodPreview | null>(null);
   const [message, setMessage] = useState<string | null>(null);

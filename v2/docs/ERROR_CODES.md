@@ -25,6 +25,10 @@ Jangan diubah manual.
 | MDL-002 | 500 | Model gagal dimuat. | Runtime atau isi berkas model tidak dapat dipakai. | Periksa log engine dan berkas model. |
 | MDL-003 | 503 | Fitur ini membutuhkan GPU NVIDIA. | Mode terbatas: HydroDetect dan SpatialSight nonaktif tanpa GPU. | Gunakan Optical atau AquaClear, atau jalankan di PC dengan GPU NVIDIA. |
 | MIS-001 | 422 | Misi belum siap dimulai. | Pre-check, tim, atau rencana masih belum lengkap, atau misi sudah berjalan. | Lengkapi rencana dan semua butir pre-check. |
+| REV-001 | 422 | Ukuran belum terkalibrasi tidak dapat dikonfirmasi. | Status kalibrasi masih UNCALIBRATED. | Perbaiki ukuran di Canvas, lalu konfirmasi lagi. |
+| REV-002 | 422 | Pemeriksa kedua harus orang lain. | Pemeriksa yang sama mencoba memutuskan temuan kritis dua kali. | Minta pemeriksa lain. |
+| REV-003 | 422 | Sengketa diputus Ketua tim. | Peran yang memutus bukan Ketua tim. | Masuk sebagai Ketua tim dan tulis alasan. |
+| REV-004 | 422 | Alasan keputusan wajib diisi. | Alasan kosong, atau ubah kelas tanpa nama kelas. | Isi alasan sebelum menyimpan keputusan. |
 | SNAP-001 | 422 | Kalibrasi belum sah untuk disimpan. | Status masih UNCALIBRATED. | Ulangi dua titik laser dan panjang referensi. |
 | SPAN-001 | 422 | Segmen tidak punya pasangan freeze yang lolos. | Setiap pasangan freeze pada segmen melebihi selisih maksimum. | Ukur ulang segmen tersebut. |
 | SPAN-002 | 422 | Diameter atau rentang G tidak dikenal. | Diameter bukan 16 atau 8, atau G kanan berada sebelum G kiri. | Periksa diameter pipa dan urutan segmen. |

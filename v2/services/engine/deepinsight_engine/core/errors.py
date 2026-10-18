@@ -225,6 +225,34 @@ _SPECS: tuple[ErrorSpec, ...] = (
         "Status masih UNCALIBRATED.",
         "Ulangi dua titik laser dan panjang referensi.",
     ),
+    ErrorSpec(
+        "REV-001",
+        422,
+        "Ukuran belum terkalibrasi tidak dapat dikonfirmasi.",
+        "Status kalibrasi masih UNCALIBRATED.",
+        "Perbaiki ukuran di Canvas, lalu konfirmasi lagi.",
+    ),
+    ErrorSpec(
+        "REV-002",
+        422,
+        "Pemeriksa kedua harus orang lain.",
+        "Pemeriksa yang sama mencoba memutuskan temuan kritis dua kali.",
+        "Minta pemeriksa lain.",
+    ),
+    ErrorSpec(
+        "REV-003",
+        422,
+        "Sengketa diputus Ketua tim.",
+        "Peran yang memutus bukan Ketua tim.",
+        "Masuk sebagai Ketua tim dan tulis alasan.",
+    ),
+    ErrorSpec(
+        "REV-004",
+        422,
+        "Alasan keputusan wajib diisi.",
+        "Alasan kosong, atau ubah kelas tanpa nama kelas.",
+        "Isi alasan sebelum menyimpan keputusan.",
+    ),
 )
 
 REGISTRY: dict[str, ErrorSpec] = {spec.code: spec for spec in _SPECS}

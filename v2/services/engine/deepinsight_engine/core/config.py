@@ -321,6 +321,29 @@ class UsersFile(_Strict):
     users: list[UserAccount]
 
 
+class RiskClasses(_Strict):
+    """Urutan antrian Review. USULAN Q-REV-1."""
+
+    schema_version: int
+    order: list[str]
+    critical: list[str]
+    medium: list[str]
+    low: list[str]
+    gallery_window: int
+    thumbnail_cache: int
+
+    @model_validator(mode="after")
+    def _lists(self) -> RiskClasses:
+        if self.gallery_window < 1 or self.thumbnail_cache < 1:
+            raise ValueError("jendela gallery minimal 1")
+        names = self.critical + self.medium + self.low
+        if len(names) != len(set(names)):
+            raise ValueError("kelas risiko tidak boleh ganda")
+        if any(level not in {"critical", "medium", "low"} for level in self.order):
+            raise ValueError("tingkat risiko tidak dikenal")
+        return self
+
+
 class Settings(_Strict):
     """Seluruh config yang dimuat saat engine mulai."""
 
@@ -335,6 +358,7 @@ class Settings(_Strict):
     pipelines: PipelineFile
     users: UsersFile
     video: VideoFile
+    risk: RiskClasses
 
 
 def _load_yaml(path: Path) -> object:
@@ -364,4 +388,5 @@ def load_settings(config_dir: Path) -> Settings:
         pipelines=_validate(PipelineFile, config_dir / "pipelines.yaml"),
         users=_validate(UsersFile, config_dir / "users.yaml"),
         video=_validate(VideoFile, config_dir / "video.yaml"),
+        risk=_validate(RiskClasses, config_dir / "risk_classes.yaml"),
     )

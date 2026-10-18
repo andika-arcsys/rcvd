@@ -97,9 +97,32 @@ class Database:
 
 def _migrate_review(conn: sqlite3.Connection) -> None:
     cols = {str(row[1]) for row in conn.execute("PRAGMA table_info(review_items)")}
-    if "frame_id" not in cols:
-        conn.execute("ALTER TABLE review_items ADD COLUMN frame_id TEXT")
-    if "jpeg_path" not in cols:
-        conn.execute("ALTER TABLE review_items ADD COLUMN jpeg_path TEXT")
-    if "session_id" not in cols:
-        conn.execute("ALTER TABLE review_items ADD COLUMN session_id TEXT")
+    extra = {
+        "frame_id": "TEXT",
+        "jpeg_path": "TEXT",
+        "session_id": "TEXT",
+        "class_name": "TEXT",
+        "calibration_status": "TEXT",
+        "source": "TEXT",
+        "snapshot_id": "TEXT",
+        "created_at": "TEXT",
+        "queue_status": "TEXT",
+        "training": "INTEGER",
+    }
+    for name, kind in extra.items():
+        if name not in cols:
+            conn.execute(f"ALTER TABLE review_items ADD COLUMN {name} {kind}")
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS review_decisions (
+             id INTEGER PRIMARY KEY,
+             item_id INTEGER NOT NULL,
+             version INTEGER NOT NULL,
+             supersedes INTEGER,
+             action TEXT NOT NULL,
+             reason TEXT NOT NULL,
+             reviewer_id TEXT NOT NULL,
+             role TEXT NOT NULL,
+             class_name TEXT,
+             created_at TEXT NOT NULL
+           )"""
+    )

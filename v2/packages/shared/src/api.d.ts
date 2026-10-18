@@ -89,6 +89,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/config/risk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Config Risk */
+        get: operations["config_risk_config_risk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/models": {
         parameters: {
             query?: never;
@@ -516,6 +533,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/gallery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gallery */
+        get: operations["gallery_gallery_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gallery/{snapshot_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gallery Detail */
+        get: operations["gallery_detail_gallery__snapshot_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gallery/{snapshot_id}/jpeg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gallery Jpeg */
+        get: operations["gallery_jpeg_gallery__snapshot_id__jpeg_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gallery/{snapshot_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Snapshot */
+        post: operations["send_snapshot_gallery__snapshot_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/span/assess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Span Assess */
+        post: operations["span_assess_span_assess_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/span/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Span */
+        post: operations["send_span_span_review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Review Queue */
+        get: operations["review_queue_review_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review/{item_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Review Decision */
+        post: operations["review_decision_review__item_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -548,6 +701,55 @@ export interface components {
             area_m2: number;
             /** Uncertainty 2Sigma M2 */
             uncertainty_2sigma_m2: number;
+        };
+        /** AssessIn */
+        AssessIn: {
+            /** Segments */
+            segments: components["schemas"]["SegIn"][];
+            /** G Left */
+            g_left: string;
+            /** G Right */
+            g_right: string;
+            /** Diameter */
+            diameter: string;
+            /** Tape M */
+            tape_m?: number | null;
+            /** Rod Evening M */
+            rod_evening_m?: number | null;
+            /**
+             * Measurer
+             * @default
+             */
+            measurer: string;
+        };
+        /** AssessOut */
+        AssessOut: {
+            /** Send Allowed */
+            send_allowed: boolean;
+            /** Failed Ids */
+            failed_ids: string[];
+            /** Blocked */
+            blocked: string[];
+            /** Length Total M */
+            length_total_m: number | null;
+            /** Length Left M */
+            length_left_m: number | null;
+            /** Length Right M */
+            length_right_m: number | null;
+            /** Recommendation */
+            recommendation: string | null;
+            /** Recommendation Message */
+            recommendation_message: string | null;
+            /** Critical Limit M */
+            critical_limit_m: number | null;
+            /** Warning */
+            warning: boolean | null;
+            /** Segments */
+            segments: components["schemas"]["SegOut"][];
+            /** Tape Passed */
+            tape_passed: boolean | null;
+            /** Rod Passed */
+            rod_passed: boolean | null;
         };
         /** Auth */
         Auth: {
@@ -635,6 +837,29 @@ export interface components {
             /** Hidden By Filter */
             hidden_by_filter: boolean;
         };
+        /** CardOut */
+        CardOut: {
+            /** Id */
+            id: string;
+            /** Version */
+            version: number;
+            /** Segment */
+            segment: string | null;
+            /** Marker */
+            marker: string | null;
+            /** Freeze No */
+            freeze_no: number;
+            /** Status */
+            status: string;
+            /** Meters */
+            meters: number[];
+            /** Operator */
+            operator: string;
+            /** Preset */
+            preset: string | null;
+            /** Frame Id */
+            frame_id: string;
+        };
         /** ClassChip */
         ClassChip: {
             /** Name */
@@ -703,6 +928,29 @@ export interface components {
             /** Remeasure */
             remeasure: components["schemas"]["RemeasureTask"][];
         };
+        /** DecisionIn */
+        DecisionIn: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "confirm" | "reject" | "reclass" | "canvas" | "remeasure";
+            /** Reason */
+            reason: string;
+            /** Role */
+            role: string;
+            /** Class Name */
+            class_name?: string | null;
+            /** Segment */
+            segment?: string | null;
+        };
+        /** DecisionOut */
+        DecisionOut: {
+            /** Status */
+            status: string;
+            /** Version */
+            version: number;
+        };
         /** DepthView */
         DepthView: {
             /** Width */
@@ -713,6 +961,39 @@ export interface components {
             values: number[];
             /** Label */
             label: string;
+        };
+        /** DetailOut */
+        DetailOut: {
+            /** Id */
+            id: string;
+            /** Version */
+            version: number;
+            /** Segment */
+            segment: string | null;
+            /** Marker */
+            marker: string | null;
+            /** Freeze No */
+            freeze_no: number;
+            /** Status */
+            status: string;
+            /** Scale M Per Px */
+            scale_m_per_px: number | null;
+            /** Rel Uncert */
+            rel_uncert: number | null;
+            /** Meters */
+            meters: number[];
+            /** Uncertainty M */
+            uncertainty_m: number[];
+            /** Areas M2 */
+            areas_m2: number[];
+            /** Operator */
+            operator: string;
+            /** Preset */
+            preset: string | null;
+            /** Frame Id */
+            frame_id: string;
+            /** Note */
+            note: string;
         };
         /** DeviceRequest */
         DeviceRequest: {
@@ -1080,6 +1361,13 @@ export interface components {
             a: components["schemas"]["Px"];
             b: components["schemas"]["Px"];
         };
+        /** PairM */
+        PairM: {
+            /** A M */
+            a_m: number;
+            /** B M */
+            b_m: number;
+        };
         /** Performance */
         Performance: {
             /** Watchdog Interval S */
@@ -1150,6 +1438,33 @@ export interface components {
             /** Y */
             y: number;
         };
+        /** QueueItem */
+        QueueItem: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /** Class Name */
+            class_name: string | null;
+            /** Level */
+            level: string;
+            /** Source */
+            source: string;
+            /** Calibration Status */
+            calibration_status: string | null;
+            /** Status */
+            status: string;
+            /** Reviewers */
+            reviewers: string[];
+            /** Frame Id */
+            frame_id: string | null;
+            /** Snapshot Id */
+            snapshot_id: string | null;
+            /** Span M */
+            span_m: number | null;
+            /** Training */
+            training: boolean;
+        };
         /** RemeasureTask */
         RemeasureTask: {
             /** Segment */
@@ -1163,6 +1478,26 @@ export interface components {
             title: string;
             /** Kind */
             kind: string;
+        };
+        /**
+         * RiskClasses
+         * @description Urutan antrian Review. USULAN Q-REV-1.
+         */
+        RiskClasses: {
+            /** Schema Version */
+            schema_version: number;
+            /** Order */
+            order: string[];
+            /** Critical */
+            critical: string[];
+            /** Medium */
+            medium: string[];
+            /** Low */
+            low: string[];
+            /** Gallery Window */
+            gallery_window: number;
+            /** Thumbnail Cache */
+            thumbnail_cache: number;
         };
         /** RodInput */
         RodInput: {
@@ -1268,6 +1603,38 @@ export interface components {
              * @default
              */
             note: string;
+        };
+        /** SegIn */
+        SegIn: {
+            /** Id */
+            id: string;
+            /** Pairs */
+            pairs: components["schemas"]["PairM"][];
+            /**
+             * Calibration Status
+             * @default VALID
+             */
+            calibration_status: string;
+            /**
+             * Estimate Reason
+             * @default
+             */
+            estimate_reason: string;
+        };
+        /** SegOut */
+        SegOut: {
+            /** Id */
+            id: string;
+            /** Ok */
+            ok: boolean;
+            /** A M */
+            a_m: number | null;
+            /** B M */
+            b_m: number | null;
+            /** Length M */
+            length_m: number | null;
+            /** Calibration Status */
+            calibration_status: string;
         };
         /** SessionClose */
         SessionClose: {
@@ -1590,6 +1957,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ControlsConfig"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    config_risk_config_risk_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskClasses"];
                 };
             };
             /** @description Validation Error */
@@ -2481,6 +2879,274 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SnapshotOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    gallery_gallery_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    gallery_detail_gallery__snapshot_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    gallery_jpeg_gallery__snapshot_id__jpeg_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_snapshot_gallery__snapshot_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    span_assess_span_assess_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssessIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_span_span_review_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssessIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_queue_review_queue_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_decision_review__item_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionOut"];
                 };
             };
             /** @description Validation Error */

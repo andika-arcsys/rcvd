@@ -15,6 +15,7 @@ Angka teknis yang belum diisi tim tidak dikarang. Uji kode memakai fixture di `t
 | D-20 | Daftar pipa lapangan (nama, diameter, OD, KP) | `config/pipelines.yaml` | 4, 8 | Satu pipa fixture `contoh`, diameter 16", tanpa KP dan tanpa OD. Bukan data Sinorang. |
 | D-21 | Batas kritis 9,65 m / 5,32 m | `config/thresholds.yaml` | 4, 8 | Ada. Sumber perhitungan tetap perlu konfirmasi tim. |
 | D-23 | Personel, peran, dan PIN awal | layar Pengaturan, tidak di Git | 4 | Akun uji lokal `uji` / PIN `135790` (hash Argon2id di `config/users.yaml`). Bukan personel lapangan. |
+| D-25 | Riwayat span antar survei | belum ada berkas | 8 | Tab Riwayat di kalkulator span menampilkan keadaan kosong. ID D-22 di berkas ini tetap ambang kekeruhan. |
 | — | Jam NTP | — | 4 | Splash memakai jam sistem operasi. `clock_sync=ok` berarti jam terbaca, bukan berarti NTP sudah dicek (Q-UI-5). |
 | D-01 | Spesifikasi PC inspeksi (GPU, VRAM, RAM, OS) | `docs/HARDWARE.md` belum ada | 6 | Jangan mengarang angka. Uji `scripts/gpu_soak_test.py` wajib di PC NVIDIA. Di VM ini skrip berhenti kode 2. |
 | D-10 | Bobot HydroDetect `model.pt` dan `model.onnx` | `models/hydrodetect/exp5/` | 6 | Tidak di Git. Tanpa berkas: MDL-001. Tanpa GPU: MDL-003. |
@@ -26,4 +27,4 @@ Angka teknis yang belum diisi tim tidak dikarang. Uji kode memakai fixture di `t
 | D-16 | Ambang keyakinan per kelas | `config/hydrodetect.yaml` | 6 | USULAN Q-GPU-4: bawaan 0,50, Leakage 0,35. Boleh menyusul. |
 | D-17 | 20–50 gambar uji berlabel | `samples/labeled/` | 6 | Belum ada. `scripts/eval_hydrodetect.py` berhenti kode 2. |
 
-ID D-22 di berkas ini adalah ambang kekeruhan. Dokumen fase berikutnya memakai D-22 untuk riwayat span. Baris kekeruhan tidak ditimpa. Riwayat span dicatat saat fase itu, dengan catatan tabrakan ID ini.
+ID D-22 di berkas ini adalah ambang kekeruhan. Dokumen fase memakai nomor yang sama untuk riwayat span. Baris kekeruhan tidak ditimpa. Riwayat span dicatat sebagai D-25 dan tab Riwayat tetap kosong sampai data itu ada.

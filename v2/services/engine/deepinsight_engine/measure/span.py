@@ -19,6 +19,15 @@ def _message(recommendation: str, months: int) -> str:
     return f"laporan dan survei ulang {months} bulan"
 
 
+def segment_outcome(segment: SegmentIn, limits: MeasureLimits) -> SegmentMeasure | None:
+    try:
+        return _segment_length(segment, limits)
+    except EngineError as exc:
+        if exc.spec.code != "SPAN-001":
+            raise
+        return None
+
+
 def _segment_length(segment: SegmentIn, limits: MeasureLimits) -> SegmentMeasure:
     limit_m = limits.freeze_max_delta_cm / PER_HUNDRED
     chosen: tuple[float, float] | None = None

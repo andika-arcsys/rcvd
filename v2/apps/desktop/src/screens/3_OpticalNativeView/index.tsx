@@ -1,3 +1,5 @@
+import { useSearchParams } from 'react-router-dom';
+import { t } from '../../i18n';
 import { ActionBar } from './ActionBar';
 import { FeatureTabs } from './FeatureTabs';
 import { useLiveInput } from './input';
@@ -7,6 +9,8 @@ import { useCurrentMission, useFindings, useLiveActions, useVideoStatus } from '
 import { VideoStage } from './VideoStage';
 
 export default function OpticalNativeViewScreen() {
+  const [params] = useSearchParams();
+  const segment = params.get('segmen');
   const status = useVideoStatus();
   const mission = useCurrentMission();
   const findings = useFindings();
@@ -14,6 +18,11 @@ export default function OpticalNativeViewScreen() {
   useLiveInput(actions.freeze, actions.mark);
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-4">
+      {segment ? (
+        <p className="rounded border border-line px-3 py-2 text-sm">
+          {t('live.remeasureSegment')} {segment}
+        </p>
+      ) : null}
       <TelemetryBar status={status} />
       <FeatureTabs warning={status?.performance_warning ?? null} />
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
