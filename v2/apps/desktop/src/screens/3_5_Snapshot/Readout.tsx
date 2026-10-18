@@ -5,10 +5,12 @@ export function Readout({
   view,
   edge,
   freezeNo,
+  angles,
 }: {
   view: Preview | null;
   edge: boolean;
   freezeNo: number | null;
+  angles: number[];
 }) {
   return (
     <div className="flex flex-col gap-1 text-sm">
@@ -27,6 +29,16 @@ export function Readout({
           {t('measure.meters')} {meters} {t('common.meter')}
         </p>
       ))}
+      {view && view.meters.length > 1 ? (
+        <p>
+          {t('measure.total')} {total(view.meters)} {t('common.meter')}
+        </p>
+      ) : null}
+      {angles.map((value, index) => (
+        <p key={`s${index}`}>
+          {t('measure.angleValue')} {value.toFixed(1)}°
+        </p>
+      ))}
       {view?.areas.map((value, index) => (
         <p key={`a${index}`}>
           {t('measure.areaValue')} {value} {t('measure.square')}
@@ -34,6 +46,10 @@ export function Readout({
       ))}
     </div>
   );
+}
+
+function total(values: number[]): number {
+  return values.reduce((sum, value) => sum + value, 0);
 }
 
 function Status({ view }: { view: Preview | null }) {

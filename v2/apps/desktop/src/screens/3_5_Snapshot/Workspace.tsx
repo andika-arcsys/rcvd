@@ -1,6 +1,9 @@
 import { MeasureCanvas } from '../../components/MeasureCanvas';
 import { t } from '../../i18n';
+import { angleList } from '../../measure/angle';
 import { nodesOf, type XY } from '../../measure/draft';
+import { detailChoices } from '../../measure/detail';
+import { strokesOf } from '../../measure/strokes';
 import { useSession } from '../../session/SessionContext';
 import { Fields } from './Fields';
 import { LaserBar } from './LaserBar';
@@ -37,22 +40,28 @@ function Board({ saveLabel }: { saveLabel: 'measure.save' | 'measure.saveAs' }) 
   const actions = boardActions(board);
   const frame = board.loaded.frame;
   const laser = board.laserMode === 'ask' ? asPoints(frame?.laser) : [];
+  const nativeLong = Math.max(frame?.width ?? 0, frame?.height ?? 0);
+  const displayMax = board.loaded.thresholds?.video.display_max_side ?? nativeLong;
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
       <MeasureCanvas
         width={frame?.width ?? 1}
         height={frame?.height ?? 1}
+        shownWidth={frame?.shown_width ?? frame?.width ?? 1}
+        shownHeight={frame?.shown_height ?? frame?.height ?? 1}
         jpeg={frame ? `data:image/jpeg;base64,${frame.jpeg_b64}` : null}
         nodes={nodesOf(board.store.draft)}
+        strokes={strokesOf(board.store.draft)}
         zoom={board.zoom}
-        pan={board.pan}
         hitPx={board.view?.hit ?? 0}
         magnifier={board.view?.magnifier ?? 0}
+        detail={board.detail}
+        choices={nativeLong > 0 ? detailChoices(nativeLong, displayMax) : []}
         onPlace={actions.place}
         onBegin={actions.begin}
         onMove={actions.move}
         onZoom={board.setZoom}
-        onPan={(dx) => board.setPan((prev) => ({ x: prev.x + dx, y: prev.y }))}
+        onDetail={board.setDetail}
       />
       <Side
         board={board}
@@ -87,7 +96,28 @@ function Side({
       />
       <Tools draft={board.store.draft} setDraft={board.store.setDraft} />
       <Fields draft={board.store.draft} setDraft={board.store.setDraft} />
-      <Readout view={board.view?.preview ?? null} edge={board.edge} freezeNo={freezeNo} />
+      <Readout
+        view={board.view?.preview ?? null}
+        edge={board.edge}
+        freezeNo={freezeNo}
+        angles={angleList(board.store.draft)}
+      />
+      <SaveRow board={board} actions={actions} saveLabel={saveLabel} />
+    </aside>
+  );
+}
+
+function SaveRow({
+  board,
+  actions,
+  saveLabel,
+}: {
+  board: ReturnType<typeof useBoard>;
+  actions: ReturnType<typeof boardActions>;
+  saveLabel: 'measure.save' | 'measure.saveAs';
+}) {
+  return (
+    <>
       {board.error ? (
         <p role="alert" className="text-sm text-danger">
           {t('measure.saveFailed')} {board.error}
@@ -111,7 +141,7 @@ function Side({
       {board.askResume ? (
         <Resume onStay={() => board.setAskResume(false)} onGo={actions.resume} />
       ) : null}
-    </aside>
+    </>
   );
 }
 

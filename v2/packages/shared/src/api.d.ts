@@ -1230,6 +1230,15 @@ export interface components {
             laser: number[][];
             /** Jpeg B64 */
             jpeg_b64: string;
+            /** Shown Width */
+            shown_width: number;
+            /** Shown Height */
+            shown_height: number;
+            /**
+             * Detail
+             * @enum {string}
+             */
+            detail: "display" | "high" | "native";
         };
         /** ControlsConfig */
         ControlsConfig: {
@@ -3379,7 +3388,9 @@ export interface operations {
     };
     measure_context_measure_context__frame_id__get: {
         parameters: {
-            query?: never;
+            query?: {
+                detail?: "display" | "high" | "native";
+            };
             header?: {
                 "x-deepinsight-token"?: string | null;
             };
