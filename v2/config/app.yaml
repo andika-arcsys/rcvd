@@ -1,0 +1,25 @@
+# Konfigurasi aplikasi. Nilai tak resmi: USULAN – perlu konfirmasi tim.
+schema_version: 1
+
+app:
+  name: DeepInsight
+  version: 0.9.0-rc1
+  env: dev            # dev | prod. Token wajib bila env = prod
+  language: id
+  data_dir: null      # null = lokasi bawaan OS (%LOCALAPPDATA%/DeepInsight di Windows)
+
+engine:
+  host: 127.0.0.1
+  port: 8000
+  cors_origins:
+    - http://localhost:5173
+    - http://127.0.0.1:5173
+
+logging:
+  level: INFO
+  rotate_mb: 10
+  backups: 5
+
+models:
+  dir: models
+  active: null        # null = Optical (tanpa model)

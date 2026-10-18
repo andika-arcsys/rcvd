@@ -1,0 +1,17 @@
+# Core pipeline (wajib)
+opencv-python>=4.8        # gunakan opencv-python-headless di server tanpa GUI
+numpy>=1.26
+
+# Pengembangan / pengujian
+pytest>=8.0
+
+# Opsional: integrasi deteksi/segmentasi YOLO (underwater_enhance.yolo_integration)
+# ultralytics>=8.4
+
+# Opsional: Dashboard Flask lokal (web/app.py)
+Flask>=3.1
+
+# Opsional: depth backend dipasang dari repository resmi, bukan PyPI:
+# git clone https://github.com/ByteDance-Seed/Depth-Anything-3.git
+# pip install -e ./Depth-Anything-3
+# Alternatif: https://github.com/apple/ml-depth-pro

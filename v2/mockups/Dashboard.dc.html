@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}a{color:#7CC4F0}</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="Dashboard" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px">
+      <div><div style="font-size: 13px; color: #93A4B5">Selamat datang, [nama]</div><h1 style="margin: 4px 0 0; font-size: 26px; font-weight: 600">Dashboard</h1></div>
+      <a href="Main.dc.html" style="margin-left: auto; text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 14px 24px; font-weight: 600">Lanjutkan misi aktif</a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+      <div style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px"><div style="font-size: 13px; color: #93A4B5">Misi aktif</div><div style="font-size: 30px; font-weight: 600; margin-top: 6px">[n]</div></div>
+      <a href="Review.dc.html" style="text-decoration: none; color: #E6EDF3; background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px"><div style="font-size: 13px; color: #93A4B5">Temuan menunggu review</div><div style="font-size: 30px; font-weight: 600; margin-top: 6px">[n]</div></a>
+      <a href="Gallery.dc.html" style="text-decoration: none; color: #E6EDF3; background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px"><div style="font-size: 13px; color: #93A4B5">Snapshot hari ini</div><div style="font-size: 30px; font-weight: 600; margin-top: 6px">[n]</div></a>
+      <a href="Span.dc.html" style="text-decoration: none; color: #E6EDF3; background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px"><div style="font-size: 13px; color: #93A4B5">Span terpanjang terukur</div><div style="font-size: 30px; font-weight: 600; margin-top: 6px">[x,xx] m</div><div style="font-size: 12px; color: #93A4B5">batas 9,65 m</div></a>
+    </div>
+    <div style="background: #2A1414; border: 1px solid #E5534B; border-radius: 12px; padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+      <b style="color: #F2A5A0">Peringatan prioritas</b><span>Free span pipa 16" mendekati batas kritis · perlu keputusan Pemeriksa teknik</span>
+      <a href="Review.dc.html" style="margin-left: auto">Buka di Review</a>
+    </div>
+    <section style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px; overflow-x: auto">
+      <b style="font-size: 15px">Misi terakhir</b>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; min-width: 620px">
+        <thead><tr style="color: #93A4B5; text-align: left"><th style="padding: 10px; font-weight: 500">Misi</th><th style="padding: 10px; font-weight: 500">Pipa</th><th style="padding: 10px; font-weight: 500">Tanggal</th><th style="padding: 10px; font-weight: 500">Status</th><th style="padding: 10px; font-weight: 500"></th></tr></thead>
+        <tbody>
+          <tr style="border-top: 1px solid #22313F"><td style="padding: 10px">Sinorang River Crossing</td><td style="padding: 10px">16" &amp; 8"</td><td style="padding: 10px">[tanggal]</td><td style="padding: 10px; color: #7CC4F0">Berjalan</td><td style="padding: 10px"><a href="Main.dc.html">Lanjutkan</a></td></tr>
+          <tr style="border-top: 1px solid #22313F"><td style="padding: 10px">[Misi sebelumnya]</td><td style="padding: 10px">[pipa]</td><td style="padding: 10px">[tanggal]</td><td style="padding: 10px; color: #9FE0BE">Selesai</td><td style="padding: 10px"><a href="Laporan.dc.html">Laporan</a></td></tr>
+          <tr style="border-top: 1px solid #22313F"><td style="padding: 10px">[Misi terjadwal]</td><td style="padding: 10px">[pipa]</td><td style="padding: 10px">[tanggal]</td><td style="padding: 10px; color: #93A4B5">Direncanakan</td><td style="padding: 10px"><a href="Misi.dc.html">Buka</a></td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

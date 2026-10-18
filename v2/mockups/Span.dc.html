@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Kalkulator span</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0B131B}
+a{color:#7CC4F0}a:hover{color:#A9DAF7}
+button{font-family:inherit;cursor:pointer}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #22313F;font-size:13px}
+th{color:#93A4B5;font-weight:500}
+</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="Gallery" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 14px; padding: 20px; box-sizing: border-box">
+  <header style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end">
+    <div>
+      <div style="font-size: 12px; color: #93A4B5; display: flex; gap: 10px; align-items: center"><a href="Gallery.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 6px; padding: 6px 10px">← Gallery</a>Gallery › Kalkulator span</div>
+      <h1 style="margin: 4px 0 0; font-size: 24px; font-weight: 600">Free span pipa 16" · Sinorang River Crossing</h1>
+    </div>
+    <div role="tablist" aria-label="Tampilan" style="margin-left: auto; display: flex; gap: 6px">
+      <button role="tab" aria-selected="true" style="background: #E6EDF3; color: #0B131B; border: 0; border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 600; min-height: 44px">Survei ini</button>
+      <button role="tab" aria-selected="false" style="background: #16232F; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px 16px; font-size: 14px; min-height: 44px">Riwayat (setelah survei ke-2)</button>
+      <button role="tab" aria-selected="false" style="background: #16232F; color: #93A4B5; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px 16px; font-size: 14px; min-height: 44px">Ekspor FEA · Fase 2</button>
+    </div>
+  </header>
+
+  <section aria-label="Skema memanjang pipa" style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 18px">
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 10px">
+      <b style="font-size: 15px">Skema memanjang · klik segmen untuk membuka snapshot asal</b>
+      <span style="font-size: 12px; color: #93A4B5; display: flex; gap: 14px; flex-wrap: wrap">
+        <span><span style="display: inline-block; width: 10px; height: 10px; background: #3FB97C; border-radius: 2px"></span> segmen lolos</span>
+        <span><span style="display: inline-block; width: 10px; height: 10px; background: #E5B33A; border-radius: 2px"></span> perlu freeze ulang</span>
+        <span><span style="display: inline-block; width: 14px; border-top: 2px dashed #E5534B; vertical-align: middle"></span> batas kritis</span>
+      </span>
+    </div>
+    <svg viewBox="0 0 1360 250" role="img" aria-label="Pipa memanjang dari P0 ke PE+2 dengan segmen bebas bentang" style="width: 100%; height: auto; display: block">
+      <rect x="0" y="170" width="1360" height="80" fill="#1A2620"/>
+      <path d="M0 170 L300 170 L330 200 L1000 200 L1030 170 L1360 170" fill="#0B131B" stroke="#3A4A3C" stroke-width="2"/>
+      <rect x="20" y="120" width="1320" height="44" rx="22" fill="#55636B"/>
+      <rect x="20" y="128" width="1320" height="8" fill="#6F7D84"/>
+      <g fill="none" stroke-width="3">
+        <rect x="330" y="116" width="110" height="52" rx="6" stroke="#3FB97C"/>
+        <rect x="444" y="116" width="110" height="52" rx="6" stroke="#3FB97C"/>
+        <rect x="558" y="116" width="110" height="52" rx="6" stroke="#E5B33A"/>
+        <rect x="672" y="116" width="110" height="52" rx="6" stroke="#3FB97C"/>
+        <rect x="786" y="116" width="110" height="52" rx="6" stroke="#3FB97C"/>
+        <rect x="900" y="116" width="100" height="52" rx="6" stroke="#3FB97C"/>
+      </g>
+      <g fill="#E6EDF3" font-family="IBM Plex Mono, monospace" font-size="14" text-anchor="middle">
+        <text x="385" y="148">S1</text><text x="499" y="148">S2</text><text x="613" y="148">S3</text><text x="727" y="148">S4</text><text x="841" y="148">S5</text><text x="950" y="148">S6</text>
+      </g>
+      <g stroke="#7CC4F0" stroke-width="2">
+        <line x1="330" y1="70" x2="1000" y2="70"/><line x1="330" y1="60" x2="330" y2="110"/><line x1="1000" y1="60" x2="1000" y2="110"/>
+        <line x1="330" y1="96" x2="660" y2="96"/><line x1="660" y1="88" x2="660" y2="104"/>
+      </g>
+      <line x1="330" y1="40" x2="1180" y2="40" stroke="#E5534B" stroke-width="2" stroke-dasharray="8 6"/>
+      <g font-family="IBM Plex Sans, sans-serif" font-size="14" fill="#E6EDF3" text-anchor="middle">
+        <text x="665" y="62">L-total [x,xx] m</text>
+        <text x="495" y="90" font-size="12" fill="#93A4B5">L-kiri [x,xx] m</text>
+        <text x="830" y="90" font-size="12" fill="#93A4B5">L-kanan [x,xx] m</text>
+        <text x="1180" y="30" fill="#F2A5A0">batas kritis 9,65 m</text>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="13" fill="#E6EDF3">
+        <circle cx="60" cy="142" r="7" fill="#7CC4F0"/><text x="48" y="104">P0</text>
+        <circle cx="330" cy="190" r="7" fill="#E5B33A"/><text x="300" y="232">G kiri</text>
+        <circle cx="660" cy="142" r="7" fill="#E6EDF3"/><text x="644" y="232" fill="#93A4B5">titik tengah</text>
+        <circle cx="1000" cy="190" r="7" fill="#E5B33A"/><text x="970" y="232">G kanan</text>
+        <circle cx="1240" cy="142" r="7" fill="#7CC4F0"/><text x="1210" y="104">PE+2</text>
+      </g>
+    </svg>
+    <div style="font-size: 12px; color: #93A4B5; margin-top: 6px">Skema tidak berskala sebenarnya untuk panjang pipa di luar span; panjang span digambar proporsional terhadap batas kritis.</div>
+  </section>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; flex: 1">
+    <section aria-label="Tabel segmen" style="flex: 999 1 640px; min-width: 0; background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 14px; overflow-x: auto">
+      <b style="font-size: 15px">Rincian segmen (±2 m per segmen)</b>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 8px; min-width: 620px">
+        <thead><tr><th>Segmen</th><th>Freeze 1</th><th>Freeze 2</th><th>Selisih (≤5 cm)</th><th>Kalibrasi</th><th>Status</th><th>Snapshot</th></tr></thead>
+        <tbody>
+          <tr><td style="font-family: 'IBM Plex Mono', monospace">S1</td><td>[x,xx] m</td><td>[x,xx] m</td><td>[x] cm</td><td>VALID</td><td style="color: #9FE0BE">Lolos</td><td><a href="Snapshot.dc.html">Buka</a></td></tr>
+          <tr><td style="font-family: 'IBM Plex Mono', monospace">S2</td><td>[x,xx] m</td><td>[x,xx] m</td><td>[x] cm</td><td>VALID</td><td style="color: #9FE0BE">Lolos</td><td><a href="Snapshot.dc.html">Buka</a></td></tr>
+          <tr style="background: #2A2410"><td style="font-family: 'IBM Plex Mono', monospace">S3</td><td>[x,xx] m</td><td>[x,xx] m</td><td style="color: #F2D27A">&gt;5 cm</td><td>VALID</td><td style="color: #F2D27A">Freeze ulang</td><td><a href="Snapshot.dc.html">Buka</a></td></tr>
+          <tr><td style="font-family: 'IBM Plex Mono', monospace">S4</td><td>[x,xx] m</td><td>[x,xx] m</td><td>[x] cm</td><td>ESTIMATE_ONLY</td><td style="color: #9FE0BE">Lolos</td><td><a href="Snapshot.dc.html">Buka</a></td></tr>
+          <tr><td style="font-family: 'IBM Plex Mono', monospace">S5</td><td>[x,xx] m</td><td>[x,xx] m</td><td>[x] cm</td><td>VALID</td><td style="color: #9FE0BE">Lolos</td><td><a href="Snapshot.dc.html">Buka</a></td></tr>
+          <tr><td style="font-family: 'IBM Plex Mono', monospace">S6</td><td>[x,xx] m</td><td>[x,xx] m</td><td>[x] cm</td><td>VALID</td><td style="color: #9FE0BE">Lolos</td><td><a href="Snapshot.dc.html">Buka</a></td></tr>
+        </tbody>
+      </table>
+    </section>
+    <aside style="flex: 1 1 340px; display: flex; flex-direction: column; gap: 12px">
+      <div style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 14px">
+        <div style="font-size: 12px; color: #93A4B5; margin-bottom: 8px">Cek silang</div>
+        <div style="display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0"><span>L-total vs tali ukur (≤2%)</span><b style="color: #9FE0BE">[x,x]% · lolos</b></div>
+        <div style="display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0"><span>Uji batang 1 m sore (±3%)</span><b style="color: #9FE0BE">[x,x]% · lolos</b></div>
+        <div style="display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0"><span>Semua segmen sah</span><b style="color: #F2D27A">1 perlu ulang</b></div>
+      </div>
+      <div style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 14px">
+        <div style="font-size: 12px; color: #93A4B5; margin-bottom: 8px">Terhadap batas kritis 9,65 m</div>
+        <div style="height: 14px; background: #22313F; border-radius: 7px; position: relative"><div style="width: 72%; height: 14px; background: #7CC4F0; border-radius: 7px"></div></div>
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #93A4B5; margin-top: 6px"><span>0 m</span><span>[xx]% dari batas</span><span>9,65 m</span></div>
+      </div>
+      <div style="background: #0F2A1E; border: 1px solid #3FB97C; border-radius: 12px; padding: 14px; font-size: 14px; line-height: 1.6">
+        <b>Rekomendasi otomatis</b><br>Di bawah batas kritis: laporan + survei ulang 6 bulan.<br><span style="color: #93A4B5; font-size: 12px">Bila ≥ batas: laporan + kajian FEA + perbaikan penopang.</span>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap">
+        <a href="Review.dc.html" style="flex: 1; text-align: center; text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 16px; font-weight: 600; font-size: 15px">Kirim ke Review<br><span style="font-size: 12px; font-weight: 400">aktif setelah S3 sah</span></a>
+        <a href="Snapshot.dc.html" style="flex: 1; text-align: center; text-decoration: none; border: 1px solid #2A3A4B; color: #E6EDF3; border-radius: 10px; padding: 16px; font-size: 15px">Ukur ulang S3</a>
+      </div>
+    </aside>
+  </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

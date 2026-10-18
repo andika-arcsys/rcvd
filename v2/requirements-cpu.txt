@@ -1,0 +1,3 @@
+# Lingkungan tanpa GPU NVIDIA. Dari folder v2/:
+#   python -m pip install -r requirements-cpu.txt
+-e ./services/engine

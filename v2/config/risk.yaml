@@ -1,0 +1,20 @@
+# Templat prosedur risiko. Engine menyala bila tabel masih kosong.
+# complete: false membuat layar PIMS menampilkan "Data prosedur belum diisi".
+# Jangan mengisi sel, warna, atau posisi S dengan tebakan.
+# sources hanya nama dokumen yang menunggu isian, bukan isi tabel.
+#   PR-06-019 matriks 5×5 dan warna sel (D-30, D-34) -> matrix
+#   PR-06-111 kategori PoF geohazard (D-31) -> pof
+#   PR-06-117 daftar LoIE A–E (D-32) -> loie
+# prior_position adalah posisi risiko terakhir S (D-35). Biarkan null.
+# Bila complete true, matrix, pof, dan loie harus sudah diisi tim. Posisi B
+# tetap tidak dihitung selama complete false.
+schema_version: 1
+complete: false
+sources:
+  - PR-06-019
+  - PR-06-111
+  - PR-06-117
+matrix: null
+pof: null
+loie: null
+prior_position: null

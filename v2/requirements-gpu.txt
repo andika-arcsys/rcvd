@@ -1,0 +1,6 @@
+# Lingkungan dengan GPU NVIDIA. Dari folder v2/:
+#   python -m pip install -r requirements-gpu.txt
+# onnxruntime-gpu memilih CUDA/cuDNN lewat roda yang terpasang.
+# Catat versi itu dari PC inspeksi. Jangan mengunci nomor CUDA di berkas ini (D-01).
+-e ./services/engine[gpu]
+onnxruntime-gpu

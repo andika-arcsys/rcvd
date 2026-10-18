@@ -1,0 +1,29 @@
+# USULAN Q-GPU-4 – perlu konfirmasi tim. Ambang keyakinan, bukan metrik validasi.
+# Nama filter mengikuti 8 kelas resmi Q-AI-1. Urutan indeks model hanya dari classes.json (D-11).
+schema_version: 1
+default_confidence: 0.50
+overrides:
+  Leakage: 0.35
+hidden_by_default:
+  - River bottom
+filter_names:
+  - Leakage
+  - Pipe
+  - Sandbag
+  - Fish
+  - Underwater Trash
+  - Spacer
+  - Trunk/Root
+  - River bottom
+# Warna overlay tampilan. Leakage merah, Sandbag kuning, Pipe biru (SPEC 3.2).
+# Lima warna lain hanya agar kelas terbedakan; bukan data ukur.
+colors:
+  Leakage: "#D64545"
+  Pipe: "#3B82F6"
+  Sandbag: "#E6B325"
+  Fish: "#3DDC97"
+  Underwater Trash: "#C084FC"
+  Spacer: "#22D3EE"
+  Trunk/Root: "#A16207"
+  River bottom: "#78716C"
+max_candidates: 20

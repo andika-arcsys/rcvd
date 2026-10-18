@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>HydroDetect</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}a{color:#7CC4F0}</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="Live Operation" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+      <span style="background: #E6EDF3; color: #0B131B; border-radius: 8px; padding: 10px 16px; font-weight: 600">HydroDetect · model exp-5</span>
+      <span style="font-size: 13px; color: #93A4B5">Kandidat AI wajib dikonfirmasi manusia di Review</span>
+      <a href="Performa.dc.html" style="margin-left: auto; text-decoration: none; font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: #2A2410; border: 1px solid #E5B33A; color: #F2D27A; border-radius: 6px; padding: 6px 10px">[xx] FPS · GPU [xx]% · lambat?</a>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; flex: 1">
+      <section aria-label="Video dengan overlay deteksi" style="flex: 999 1 560px; min-width: 0; position: relative; border-radius: 12px; overflow: hidden; border: 1px solid #22313F; min-height: 560px">
+        <svg viewBox="0 0 800 560" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Overlay segmentasi Pipe, Sandbag, Leakage" style="position: absolute; inset: 0; width: 100%; height: 100%">
+          <rect width="800" height="560" fill="#123640"/><rect y="400" width="800" height="160" fill="#2B3A2E"/>
+          <rect x="-20" y="250" width="840" height="84" rx="42" fill="#55636B"/>
+          <rect x="-20" y="250" width="840" height="84" rx="42" fill="#4EA8DE" fill-opacity=".28" stroke="#4EA8DE" stroke-width="2"/>
+          <rect x="80" y="334" width="110" height="70" fill="#8A7A4A" fill-opacity=".6" stroke="#E5B33A" stroke-width="2"/>
+          <ellipse cx="470" cy="336" rx="36" ry="14" fill="#E5534B" fill-opacity=".55" stroke="#E5534B" stroke-width="2"/>
+          <rect x="400" y="356" width="140" height="24" rx="4" fill="#E5534B"/><text x="470" y="373" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" fill="#fff">Leakage [0,xx]</text>
+          <rect x="80" y="410" width="120" height="24" rx="4" fill="#E5B33A"/><text x="140" y="427" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" fill="#1A1203">Sandbag [0,xx]</text>
+          <rect x="620" y="216" width="100" height="24" rx="4" fill="#4EA8DE"/><text x="670" y="233" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" fill="#05202F">Pipe [0,xx]</text>
+        </svg>
+      </section>
+      <aside style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 12px">
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 12px; color: #93A4B5">Kandidat frame ini</div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; border-bottom: 1px solid #22313F; padding-bottom: 8px"><span><b style="color: #F2A5A0">Leakage</b> · [0,xx]</span><a href="Main.dc.html">Cek di Optical</a></div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; border-bottom: 1px solid #22313F; padding-bottom: 8px"><span><b style="color: #F2D27A">Sandbag</b> · [0,xx]</span><a href="Main.dc.html">Cek di Optical</a></div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px"><span><b style="color: #8CC8EE">Pipe</b> · [0,xx]</span><span style="color: #93A4B5">referensi</span></div>
+        </div>
+        <div style="background: #101B25; border: 1px solid #22313F; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; font-size: 13px">
+          <label style="display: flex; flex-direction: column; gap: 4px">Ambang keyakinan<input type="range" min="0" max="100" value="50"></label>
+          <div>Filter kelas</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px">
+            <label style="border: 1px solid #2A3A4B; border-radius: 6px; padding: 6px 8px"><input type="checkbox" checked> Leakage</label>
+            <label style="border: 1px solid #2A3A4B; border-radius: 6px; padding: 6px 8px"><input type="checkbox" checked> Pipe</label>
+            <label style="border: 1px solid #2A3A4B; border-radius: 6px; padding: 6px 8px"><input type="checkbox" checked> Sandbag</label>
+            <label style="border: 1px solid #2A3A4B; border-radius: 6px; padding: 6px 8px"><input type="checkbox" checked> Spacer</label>
+            <label style="border: 1px solid #2A3A4B; border-radius: 6px; padding: 6px 8px"><input type="checkbox" checked> Trunk/Root</label>
+            <label style="border: 1px solid #2A3A4B; border-radius: 6px; padding: 6px 8px"><input type="checkbox"> Fish</label>
+            <label style="border: 1px solid #2A3A4B; border-radius: 6px; padding: 6px 8px"><input type="checkbox"> Underwater trash</label>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px">
+      <a href="Snapshot.dc.html" style="text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 16px 28px; font-weight: 600; font-size: 16px">FREEZE frame kandidat</a>
+      <a href="Review.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px 20px">Tandai ke Review</a>
+      <a href="GantiWindow.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px 20px">Ganti window</a>
+      <a href="Main.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 16px 20px">Kembali ke Optical</a>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

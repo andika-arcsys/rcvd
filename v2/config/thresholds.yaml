@@ -1,0 +1,93 @@
+# Semua ambang dan batas DeepInsight. Tidak ada angka di kode.
+# Penanda: SUMBER = dari skenario/prosedur/keputusan desain; USULAN = perlu konfirmasi tim.
+schema_version: 1
+
+calibration:
+  rel_uncertainty_basis: 2sigma   # SUMBER: ambang berlaku pada +-2 sigma (angka yang tampil)
+  click_sigma_px: 1.5             # USULAN – perlu konfirmasi tim (galat klik node)
+  valid_max_rel: 0.03             # USULAN – perlu konfirmasi tim (<= 3% VALID)
+  estimate_max_rel: 0.10          # USULAN – perlu konfirmasi tim (3-10% ESTIMATE_ONLY, >10% UNCALIBRATED)
+  diameter_sanity_pct: 10         # USULAN – perlu konfirmasi tim (peringatan saja)
+  edge_risk_px: 5                 # USULAN – perlu konfirmasi tim (DEPTH_EDGE_RISK v1)
+  canny_low: 50                   # USULAN Q-KAL-5 – perlu konfirmasi tim
+  canny_high: 150                 # USULAN Q-KAL-5 – perlu konfirmasi tim
+  camera_file_required_for_valid: true  # SUMBER: tanpa file kamera status maksimal ESTIMATE_ONLY
+  min_baseline_px: 150            # USULAN – perlu konfirmasi tim (jarak minimum dua node kalibrasi)
+
+rod_test:
+  length_m: 1.0                   # SUMBER
+  tolerance_pct: 3                # SUMBER
+
+freeze:
+  max_delta_cm: 5                 # SUMBER: dua freeze per segmen
+
+span:
+  rope_tolerance_pct: 2           # SUMBER
+  segment_target_m: 2.0           # USULAN – perlu konfirmasi tim
+  warning_ratio: 0.8              # USULAN – perlu konfirmasi tim
+  critical_limit_m:               # SUMBER
+    inch_16: 9.65
+    inch_8: 5.32
+  resurvey_months: 6              # SUMBER: rekomendasi bila di bawah batas kritis
+
+measure:
+  heron_rel_tol: 1.0e-9           # SUMBER: cek silang shoelace vs Heron
+  boundary_tol: 1.0e-9            # SUMBER: batas inklusif yang sama di Python dan TypeScript
+  undistort_iterations: 20        # SUMBER: iterasi OpenCV sampai cocok vektor emas
+
+pipe:
+  nominal_od_mm:                  # USULAN – perlu konfirmasi tim (OD nominal)
+    inch_16: 406.4
+    inch_8: 219.1
+
+inspection_interval_years:        # SUMBER: PR-06-117
+  low: 3
+  low_to_moderate: 2
+  moderate_and_above: 1
+
+auth:
+  max_attempts: 5                 # USULAN – perlu konfirmasi tim
+  lock_minutes: 15                # USULAN – perlu konfirmasi tim
+
+performance:
+  watchdog_interval_s: 2          # SUMBER
+  fps_min: 15                     # USULAN – perlu konfirmasi tim
+  fps_window_s: 5                 # USULAN – perlu konfirmasi tim
+  vram_max_pct: 85                # USULAN – perlu konfirmasi tim
+  gpu_max_pct: 95                 # USULAN – perlu konfirmasi tim
+  gpu_window_s: 10                # USULAN – perlu konfirmasi tim
+  vram_baseline_tolerance_mb: 150 # USULAN – perlu konfirmasi tim (target rancangan)
+  unload_timeout_s: 5            # USULAN – perlu konfirmasi tim (lepas lunak sebelum proses dihentikan)
+  load_timeout_s: 8               # USULAN – perlu konfirmasi tim (anggaran ganti model)
+
+video:
+  width: 1920                     # USULAN – perlu konfirmasi tim
+  height: 1080
+  fps: 30
+  lost_signal_s: 2                # USULAN – perlu konfirmasi tim
+  ring_buffer_s: 3                # USULAN – perlu konfirmasi tim
+  display_max_side: 1280          # USULAN – perlu konfirmasi tim
+  display_jpeg_quality: 80        # USULAN – perlu konfirmasi tim
+  fps_sample_s: 1                 # USULAN – perlu konfirmasi tim (jendela hitung fps)
+
+cache:
+  max_mb: 2048                    # USULAN – perlu konfirmasi tim
+
+camera:
+  rms_good_px: 0.5                # USULAN – praktik umum OpenCV. RMS <= nilai ini diterima.
+  rms_max_px: 1.0                 # USULAN – praktik umum OpenCV. Di atas good sampai nilai ini: peringatan. Di atas ini: ditolak.
+
+laser:
+  ref_cm: 10                      # SUMBER: tim. Dua titik laser berjarak 10 cm.
+  # USULAN Q-KAL-5. OpenCV hue 0–180. Belum diukur pada laser lapangan.
+  hue_low: 0
+  hue_high: 10
+  hue_wrap_low: 170
+  hue_wrap_high: 180
+  sat_min: 120
+  val_min: 120
+  min_area_px: 4
+
+interaction:
+  hit_px: 12                      # USULAN – jarak klik untuk menggeser node, bukan ambang ukur
+  magnifier: 4                    # USULAN – pembesaran kaca saat node digeser

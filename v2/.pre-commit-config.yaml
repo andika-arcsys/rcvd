@@ -1,0 +1,28 @@
+# Pasang: pip install pre-commit && pre-commit install  (jalankan dari folder v2/)
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (engine)
+        entry: bash -c 'cd services/engine && ../../.venv/bin/ruff check . && ../../.venv/bin/ruff format --check .'
+        language: system
+        pass_filenames: false
+        files: ^services/engine/
+      - id: mypy
+        name: mypy (engine)
+        entry: bash -c 'cd services/engine && ../../.venv/bin/mypy'
+        language: system
+        pass_filenames: false
+        files: ^services/engine/
+      - id: eslint
+        name: eslint
+        entry: pnpm exec eslint
+        language: system
+        types_or: [ts, tsx, javascript]
+        exclude: ^(services|mockups|archive)/
+      - id: prettier
+        name: prettier
+        entry: pnpm exec prettier --check
+        language: system
+        types_or: [ts, tsx, json, css, html, yaml]
+        exclude: ^(docs|mockups|flowmap|reference|services|config)/

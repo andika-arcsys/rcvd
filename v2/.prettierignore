@@ -1,0 +1,17 @@
+node_modules
+dist
+target
+.venv
+pnpm-lock.yaml
+docs
+mockups
+flowmap
+reference
+packages/shared/src/api.d.ts
+packages/shared/openapi.json
+apps/desktop/src-tauri/gen
+services
+config
+README.md
+tests
+.cursor

@@ -1,0 +1,77 @@
+---
+description: Aturan tetap proyek DeepInsight (selalu berlaku)
+alwaysApply: true
+---
+
+# Aturan tetap DeepInsight
+
+## 0. Root proyek dan lingkungan
+- **Root proyek DeepInsight = folder `v2/`** di repo ini. Semua jalur di aturan ini (`docs/`, `mockups/`, `flowmap/`, `config/`, `apps/`, `services/`, `packages/`, `tests/`) relatif terhadap `v2/`. Jangan mengubah kode di luar `v2/` (kode lama di root repo bukan bagian DeepInsight) dan jangan mengimpor darinya.
+- **Python 3.12** (menggantikan 3.11 di prompt awal). Pin versi di `pyproject.toml` dan di CI.
+- Target produksi Windows 10/11 64-bit. VM pengembangan Linux tanpa GPU: uji VRAM dan uji GPU dijalankan di PC inspeksi lewat `setup.bat` lalu `start.bat`, dan ditandai belum terverifikasi sampai itu. Tidak ada installer Tauri.
+
+## 1. Sumber kebenaran dan urutan prioritas
+Urutan (yang lebih tinggi menang; yang lebih baru dan lebih spesifik menang):
+1. `docs/ANSWERS_OPEN_QUESTIONS.md` dan `docs/DECISIONS.md`
+2. Aturan ini
+3. `docs/SPEC_Fungsional.md`
+4. `mockups/*.dc.html`
+5. `flowmap/*.drawio` untuk alur navigasi bernomor (diperbarui oleh `docs/NAVIGATION_MAP.md` dan `docs/DESIGN_DELTA.md`)
+
+Baca juga `docs/ARCHITECTURE.md`. Jalur: `docs/`, `mockups/`, `flowmap/` di bawah `v2/` (bukan `design/`).
+Format mockup: `<sc-for>` perulangan, `<sc-if>` kondisi, `<dc-import name="Nav">` sidebar, `{{x}}` nilai dari `renderVals()`. `this.state`/`setState`/`props` = state dan props React biasa; `support.js` tidak diperlukan.
+Jangan menambah fitur di luar SPEC dan keputusan. Bila tidak jelas atau bertentangan, tulis di `docs/OPEN_QUESTIONS.md`; jangan menebak. Bila aturan ini bertentangan dengan ANSWERS atau DECISIONS, ikuti keduanya dan perbarui file ini.
+
+## 2. Arsitektur (tidak diubah tanpa catatan di DECISIONS.md)
+- `apps/desktop`: React, TypeScript, Vite, Tailwind. Tampilan di browser; tanpa logika AI dan tanpa angka bukti. Tanpa Tauri.
+- `services/engine`: Python 3.12, FastAPI. Bawaan `127.0.0.1:8000`, menyajikan API dan build React. Video, inferensi, pengukuran, penyimpanan.
+- `packages/shared`: tipe dari OpenAPI; cerminan `measure` TypeScript hanya untuk pratinjau.
+- `config/*.yaml`: semua ambang dan batas. Tidak ada angka di kode. Nilai tak resmi diberi komentar `# USULAN – perlu konfirmasi tim`.
+- Saat misi dimulai, salin ambang ke Mission (`thresholds_snapshot`).
+
+## 3. Struktur kode
+- Satu layar = satu folder, mis. `apps/desktop/src/screens/3_4_Canvas/`.
+- Komponen bersama di `src/components`: Sidebar (status aktif/disabled/abu-abu per `config/roles.yaml`), Header, StatusBadge, MeasureCanvas, ConfirmDialog.
+- Logika murni (geometri, skala, luas, status kalibrasi, span) hanya di `services/engine/measure` dan cerminan `packages/shared/measure`; tanpa UI; wajib unit test dan lolos `tests/golden/measure_vectors.json` di kedua bahasa.
+- File maks ±300 baris, fungsi maks ±50 baris.
+- Nama kode bahasa Inggris; teks pengguna Bahasa Indonesia lewat `i18n/id.json`.
+- Tanpa `any` di TypeScript, tanpa `except` kosong di Python, type hints wajib.
+
+## 4. GPU, memori, cache
+- Hanya satu model AI aktif, lewat satu `ModelManager`. Tiap model berjalan di **proses pekerja** sendiri.
+- Urutan ganti model: hentikan inferensi → tutup sesi model dan hapus referensi/tensor → `gc.collect()` → lepas session ONNX → ukur VRAM → **bila VRAM belum kembali ke garis dasar ± toleransi dalam batas waktu config, matikan proses pekerja** → catat VRAM sebelum dan sesudah → baru mulai pekerja baru.
+- Model dilepas saat window fitur ditutup, saat kembali ke Optical, dan saat Peringatan performa.
+- Runtime produksi: ONNX Runtime (CUDA); PyTorch hanya untuk pengembangan, latih, dan ekspor. Batch 1, FP16 bila didukung, tanpa menyimpan tensor antar frame.
+- Bila TensorFlow terpasang di proses yang sama, aktifkan memory growth sebelum inferensi. TensorFlow tidak dipasang oleh requirements.
+- Watchdog tiap 2 detik: VRAM, utilisasi GPU, FPS. Lewat ambang config → dialog 3.9.
+- Ring buffer video berukuran tetap di RAM. Frame lama dibuang otomatis.
+- `cache/` berbatas ukuran (LRU), dibersihkan saat Penutupan sesi. Bukti tidak pernah masuk cache dan tidak pernah dihapus otomatis.
+- Gallery memakai daftar virtual dan thumbnail kecil; bersihkan object URL dan listener saat layar ditutup.
+
+## 5. Integritas bukti
+- Pengukuran selalu pada frame asli. AquaClear dan overlay hanya tampilan; overlay digambar di UI, bukan di video.
+- FREEZE: UI hanya mengirim `frame_id`; engine mengambil frame dari ring buffer.
+- Frame asli disimpan sebagai **PNG lossless** dengan SHA-256. JPEG q90 dengan overlay hanya untuk laporan.
+- Snapshot = berkas gambar + JSON dengan ID yang sama; tidak boleh ditimpa; koreksi = versi baru (`supersedes_id`).
+- Paket sesi ditutup dengan `manifest.json` (SHA-256 per berkas); hash paket = SHA-256 manifest; Arsip memeriksa ulang.
+- Audit log hanya-tambah dengan hash berantai untuk: login, penguncian, FREEZE, kalibrasi, simpan, keputusan Review, persetujuan Laporan, perubahan Pengaturan, purge, peringatan performa, ekspor/unggah.
+
+## 6. Logika ukur
+- Node disimpan dalam piksel frame asli; tampilan hanya transformasi.
+- Node di-undistort dengan `config/cameras/<id>.yaml` sebelum jarak dihitung (hanya koordinat node; gambar tetap asli). **Tanpa file kalibrasi kamera, status maksimal ESTIMATE_ONLY.**
+- Skala `s = L_ref / jarak(u(n1), u(n2))`. Ketidakpastian `σL = √[(L·σs/s)² + 2·(s·σp)²]`, σp = 1,5 px (config). **Ambang status berlaku pada ±2σ (angka yang tampil)**: ≤ 3% VALID, 3–10% ESTIMATE_ONLY, > 10% atau gagal UNCALIBRATED.
+- Luas memakai **shoelace** pada koordinat terkalibrasi; Heron hanya cek silang untuk 3 titik. Validasi: titik berbeda, poligon tidak bersilangan, luas > 0.
+- Canvas dan Mode Snapshot memakai fungsi status kalibrasi, C2, dan U2 yang sama.
+- Satuan data: meter, m², m/px, titik desimal; tampilan: koma desimal dan cm/mm sesuai konteks.
+
+## 7. Mudah di-troubleshoot
+- Log JSON terstruktur (session_id, layar, aksi, durasi), satu file per sesi, dirotasi.
+- Error ditangani di batas modul, pesan Bahasa Indonesia beserta kode (mis. `GPU-001`), terdaftar di `docs/ERROR_CODES.md`.
+- `/health` dan `/diagnostics` (versi, GPU, VRAM, model aktif, ukuran cache, fps, kamera, jam).
+
+## 8. Cara kerja di repo ini
+1. Sebelum mengubah kode, sebutkan file SPEC/mockup/ADR yang dirujuk dan rencana singkat.
+2. Satu fase per kali; setelah selesai jalankan lint, typecheck, test, lalu ringkas.
+3. Commit kecil dan jelas: `feat(screen-3_4): ...`, `fix(engine-gpu): ...`.
+4. Jangan menghapus atau menulis ulang modul yang sudah lulus test tanpa alasan tertulis.
+5. Perubahan arsitektur atau rumus: catat di `DECISIONS.md`, perbarui vektor emas dan kedua implementasi dalam satu PR.

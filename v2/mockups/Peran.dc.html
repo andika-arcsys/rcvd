@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Pilih peran dan perangkat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; padding: 40px 24px; box-sizing: border-box">
+  <div style="max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px">
+    <div>
+      <div style="font-size: 13px; color: #93A4B5">Masuk sebagai [nama pengguna]</div>
+      <h1 style="margin: 6px 0 0; font-size: 28px; font-weight: 600">Pilih peran untuk sesi ini</h1>
+      <div style="font-size: 14px; color: #93A4B5; margin-top: 6px">Hak akses menu dimuat sesuai peran. Menu tanpa akses tampil abu-abu.</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+      <button aria-pressed="true" style="text-align: left; background: #1C2C3B; border: 2px solid #7CC4F0; color: #E6EDF3; border-radius: 12px; padding: 18px; font-family: inherit"><b style="font-size: 16px">Ketua tim</b><br><span style="font-size: 13px; color: #93A4B5">Semua menu, persetujuan laporan</span></button>
+      <button style="text-align: left; background: #101B25; border: 1px solid #22313F; color: #E6EDF3; border-radius: 12px; padding: 18px; font-family: inherit"><b style="font-size: 16px">Pilot drone</b><br><span style="font-size: 13px; color: #93A4B5">Live Operation, FREEZE, temuan</span></button>
+      <button style="text-align: left; background: #101B25; border: 1px solid #22313F; color: #E6EDF3; border-radius: 12px; padding: 18px; font-family: inherit"><b style="font-size: 16px">Ahli pengukuran</b><br><span style="font-size: 13px; color: #93A4B5">Snapshot, kalibrasi, Kalkulator span</span></button>
+      <button style="text-align: left; background: #101B25; border: 1px solid #22313F; color: #E6EDF3; border-radius: 12px; padding: 18px; font-family: inherit"><b style="font-size: 16px">Pengelola data</b><br><span style="font-size: 13px; color: #93A4B5">Gallery, Arsip, ekspor paket</span></button>
+      <button style="text-align: left; background: #101B25; border: 1px solid #22313F; color: #E6EDF3; border-radius: 12px; padding: 18px; font-family: inherit"><b style="font-size: 16px">Teknisi program</b><br><span style="font-size: 13px; color: #93A4B5">Analisis AI, rilis model, Pengaturan</span></button>
+      <button style="text-align: left; background: #101B25; border: 1px solid #22313F; color: #E6EDF3; border-radius: 12px; padding: 18px; font-family: inherit"><b style="font-size: 16px">Pemeriksa teknik</b><br><span style="font-size: 13px; color: #93A4B5">Review, Laporan, PIMS / RBI</span></button>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 14px">
+      <label style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 6px; font-size: 13px">Perangkat ROV
+        <select style="background: #101B25; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 12px; font-size: 14px; font-family: inherit"><option>[Nama ROV] · kamera utama</option></select>
+      </label>
+      <label style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 6px; font-size: 13px">Preset kamera (terkunci)
+        <select style="background: #101B25; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 12px; font-size: 14px; font-family: inherit"><option>Preset survei · fokus &amp; eksposur terkunci</option></select>
+      </label>
+    </div>
+    <a href="Dashboard.dc.html" style="align-self: flex-start; text-decoration: none; background: #F28C28; color: #1A0F02; border-radius: 10px; padding: 16px 40px; font-weight: 600">Lanjut ke Dashboard</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

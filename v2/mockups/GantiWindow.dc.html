@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Ganti window fitur</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}</style>
+</helmet>
+<div style="min-height: 900px; background: #070C11; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box">
+  <div role="dialog" aria-label="Ganti window fitur" style="width: 100%; max-width: 720px; background: #101B25; border: 1px solid #2A3A4B; border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 18px">
+    <div style="font-size: 22px; font-weight: 600">Ganti window fitur</div>
+    <div style="font-size: 14px; color: #93A4B5">Hanya satu fitur aktif. Model fitur yang sedang berjalan dilepas dulu sebelum fitur baru dimuat.</div>
+    <div style="display: flex; gap: 10px; align-items: center; font-size: 13px; background: #0B131B; border-radius: 10px; padding: 12px">
+      <span>Aktif sekarang:</span><b>Optical (tanpa model)</b><span style="margin-left: auto; color: #93A4B5">GPU [xx]%</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+      <a href="AquaClear.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px"><b style="font-size: 16px">AquaClear</b><span style="font-size: 12px; color: #93A4B5">Muat preset penjernihan</span><span style="font-size: 12px; color: #93A4B5">Beban GPU: rendah–sedang</span></a>
+      <a href="HydroDetect.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px"><b style="font-size: 16px">HydroDetect</b><span style="font-size: 12px; color: #93A4B5">Muat model exp-5</span><span style="font-size: 12px; color: #93A4B5">Beban GPU: tinggi</span></a>
+      <a href="SpatialSight.dc.html" style="text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px"><b style="font-size: 16px">SpatialSight</b><span style="font-size: 12px; color: #93A4B5">Muat model kedalaman</span><span style="font-size: 12px; color: #93A4B5">Beban GPU: tinggi</span></a>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+      <div style="display: flex; justify-content: space-between"><span>1. Melepas model lama</span><b style="color: #9FE0BE">Selesai</b></div>
+      <div style="display: flex; justify-content: space-between"><span>2. Memuat model baru</span><b style="color: #93A4B5">Menunggu pilihan</b></div>
+    </div>
+    <a href="Main.dc.html" style="align-self: flex-end; text-decoration: none; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 10px; padding: 12px 24px">Batal · tetap di Optical</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>
