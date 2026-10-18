@@ -1,4 +1,9 @@
 .venv/
+venv/
+env/
+ENV/
+deepenv/
+.conda/
 __pycache__/
 *.py[cod]
 *.egg-info/

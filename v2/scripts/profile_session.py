@@ -2,7 +2,7 @@
 
 Jalankan dari folder v2:
 
-    .venv/bin/python scripts/profile_session.py
+    deepenv/bin/python scripts/profile_session.py
 """
 
 from __future__ import annotations

@@ -5,8 +5,8 @@ Mesin pengembangan ini tidak punya GPU NVIDIA. Dua skrip berikut **tidak lulus**
 Dari folder `v2`, dengan lingkungan yang sama seperti engine:
 
 ```bash
-.venv/bin/python scripts/gpu_soak_test.py
-.venv/bin/python scripts/eval_hydrodetect.py
+deepenv/bin/python scripts/gpu_soak_test.py
+deepenv/bin/python scripts/eval_hydrodetect.py
 ```
 
 `gpu_soak_test.py` mengganti fitur 50 kali (AquaClear, dan HydroDetect atau SpatialSight bila berkas ONNX ada), lalu Optical. VRAM dibaca sebelum dan sesudah. Gagal bila pemakaian tidak kembali ke garis dasar ditambah `performance.vram_baseline_tolerance_mb`.

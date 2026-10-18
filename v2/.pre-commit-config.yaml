@@ -4,13 +4,13 @@ repos:
     hooks:
       - id: ruff
         name: ruff (engine)
-        entry: bash -c 'cd services/engine && ../../.venv/bin/ruff check . && ../../.venv/bin/ruff format --check .'
+        entry: bash -c 'PY=$(python3 scripts/resolve_env.py --print-python) && cd services/engine && "$PY" -m ruff check . && "$PY" -m ruff format --check .'
         language: system
         pass_filenames: false
         files: ^services/engine/
       - id: mypy
         name: mypy (engine)
-        entry: bash -c 'cd services/engine && ../../.venv/bin/mypy'
+        entry: bash -c 'PY=$(python3 scripts/resolve_env.py --print-python) && cd services/engine && "$PY" -m mypy'
         language: system
         pass_filenames: false
         files: ^services/engine/

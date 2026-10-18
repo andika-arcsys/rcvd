@@ -41,6 +41,15 @@ Unduh diagnostik dari Analisis AI memakai peran Teknisi program. Berkas itu beri
 | Pengaturan menolak simpan | Peran bukan admin (SET-001) | Peran sesi | Ketua tim atau Teknisi program |
 | Arsip "Perlu cek ulang" | SHA-256 berkas tidak sama dengan manifest | Tombol Periksa integritas | Jangan menghapus paket. Salin ulang dari sumber |
 
+## Environment Python
+
+| Gejala | Sebab yang mungkin | Cek | Solusi |
+| --- | --- | --- | --- |
+| `start.bat` berhenti, Python tidak ditemukan | Folder di `env.cfg` belum ada, atau conda tidak di jalur itu | Baris `Dicari:` pada pesan, lalu `type env.cfg` | Jalankan `setup.bat`, atau isi `VENV_DIR` dengan jalur absolut environment. Jangan memakai Python sistem |
+| `setup.bat` menolak dan tidak menimpa | Environment ada tetapi bukan Python 3.12 | `python -c "import sys; print(sys.version)"` di environment itu | Pakai environment 3.12, atau arahkan `env.cfg` ke folder lain. Jangan menghapus environment conda yang masih dipakai |
+| Paket terpasang di Python lain | Perintah dijalankan di luar `deepenv` | `start.py` mencetak `Environment:` yang tidak sama dengan `env.cfg` | `deepenv\Scripts\activate`, atau `conda activate`, lalu ulang pip. Conda Windows: `python.exe` ada di akar folder, bukan di `Scripts` |
+| Environment di luar folder proyek | Dibuat conda di Anaconda | `sys.prefix` | `VENV_DIR=C:\Users\<nama>\anaconda3\envs\deepenv` atau `set DEEPINSIGHT_VENV=jalur` |
+
 ## Disk dan konfigurasi
 
 | Gejala | Sebab yang mungkin | Cek | Solusi |

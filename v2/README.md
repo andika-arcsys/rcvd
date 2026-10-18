@@ -17,7 +17,7 @@ make setup
 make dev
 ```
 
-Di laptop inspeksi: `setup.bat` lalu `start.bat` (Windows) atau `./setup.sh` lalu `python start.py`. Browser terbuka di `http://127.0.0.1:8000/`. Python yang dipakai 3.12. Tanpa GPU, layanan tetap jalan dalam mode terbatas.
+Di laptop inspeksi: `setup.bat` lalu `start.bat` (Windows) atau `./setup.sh` lalu `./start.sh`. Browser terbuka di `http://127.0.0.1:8000/`. Python yang dipakai 3.12, dari environment di `env.cfg` (bawaan folder `deepenv`, venv atau conda). `DEEPINSIGHT_VENV` mengalahkan `env.cfg`. Tanpa GPU, layanan tetap jalan dalam mode terbatas.
 
 `make dev` menyalakan engine di `http://127.0.0.1:8000` dan tampilan pengembangan di `http://127.0.0.1:5173`. `make test` menjalankan pytest dan vitest. `make lint` menjalankan ruff, mypy, eslint, dan prettier.
 

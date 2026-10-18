@@ -4,7 +4,7 @@ Angka di bawah diukur pada VM Linux tanpa GPU NVIDIA pada 18 Oktober 2026. Bukan
 
 ## Mesin
 
-Perintah: `.venv/bin/python scripts/profile_session.py`
+Perintah: `deepenv/bin/python scripts/profile_session.py`
 
 Profil memakai lebar tampilan dari config (`display_max_side` 1280, tinggi mengikuti rasio `video.height` / `video.width`, hasil 1280×720). Dua ratus FREEZE, lalu AquaClear light, medium, dan heavy masing-masing dilepas kembali ke Optical. HydroDetect ditolak (MDL-003). Setelah `ring_buffer_s` ditambah 0,05 detik, satu frame baru masuk agar ring membuang frame lama.
 

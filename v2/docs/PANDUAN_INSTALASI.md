@@ -8,7 +8,7 @@ Semua perintah Windows memakai Command Prompt (`cmd`), bukan PowerShell, kecuali
 
 ## Cara kerjanya
 
-1. `start.bat` memakai Python di dalam `.venv` dan menjalankan `start.py`.
+1. `start.bat` memakai Python di `env.cfg` (bawaan `deepenv`: `Scripts\python.exe` atau, untuk conda, `python.exe`) dan menjalankan `start.py`.
 2. `start.py` menolak jalan bila Python bukan 3.12, atau bila paket inti belum terpasang.
 3. Engine FastAPI dan uvicorn menyajikan antarmuka React dan API di port yang sama. Bawaan `127.0.0.1:8000`.
 4. Konsol menulis mode GPU atau mode terbatas, lalu `Membuka browser http://127.0.0.1:8000/`.
@@ -95,14 +95,31 @@ Antivirus: bila pemasangan paket gagal `Access is denied` atau sangat lambat, ke
 
 ## Environment Python
 
-Environment (venv) adalah Python khusus DeepInsight di `v2\.venv`. Paket aplikasi masuk ke sana, tidak bercampur dengan Python lain di laptop. Bila environment rusak, hapus folder itu dan buat ulang. Data misi tidak ikut terhapus: data ada di `%LOCALAPPDATA%\DeepInsight`.
+Environment adalah Python khusus DeepInsight. Nama dan lokasinya dibaca dari `v2\env.cfg` (bawaan `VENV_DIR=deepenv`, yaitu folder `v2\deepenv`). Variabel lingkungan `DEEPINSIGHT_VENV`, bila diisi, mengalahkan `env.cfg`. Bila keduanya tidak ada, bawaan tetap `deepenv`.
+
+Nilai boleh folder relatif terhadap `v2`, atau jalur absolut. Environment bisa venv (`deepenv\Scripts\python.exe`) atau conda (`deepenv\python.exe` di Windows, `bin/python` di Linux). `setup.bat` memakai yang sudah ada bila Python-nya 3.12 dan mencetak `Memakai environment: ...`. Bila folder belum ada, skrip membuat venv dengan `py -3.12 -m venv`. Bila folder ada tetapi Python-nya bukan 3.12, skrip berhenti dan tidak menimpa.
+
+Contoh environment conda di luar folder proyek:
+
+```bat
+VENV_DIR=C:\Users\<nama>\anaconda3\envs\deepenv
+```
+
+atau, tanpa mengubah berkas:
+
+```bat
+set DEEPINSIGHT_VENV=C:\Users\<nama>\anaconda3\envs\deepenv
+setup.bat
+```
+
+Paket aplikasi masuk ke environment itu, tidak bercampur dengan Python lain di laptop. Bila venv di dalam `v2` rusak, hapus folder itu dan buat ulang. Jangan menghapus environment conda yang masih dipakai untuk hal lain. Data misi tidak ikut terhapus: data ada di `%LOCALAPPDATA%\DeepInsight`.
 
 ### Belum ada environment: buat
 
 ```bat
 cd /d D:\DeepInsight\v2
-py -3.12 -m venv .venv
-dir .venv\Scripts
+py -3.12 -m venv deepenv
+dir deepenv\Scripts
 ```
 
 Perintah pertama tidak menampilkan apa pun bila berhasil. `dir` harus menampilkan `python.exe`, `pip.exe`, `activate.bat`, `Activate.ps1`, dan `deactivate.bat`.
@@ -110,17 +127,17 @@ Perintah pertama tidak menampilkan apa pun bila berhasil. `dir` harus menampilka
 | Bila muncul | Artinya | Tindakan |
 | --- | --- | --- |
 | `Error: [WinError 5] Access is denied` | Folder terkunci atau tidak punya izin tulis | Cmd sebagai Administrator, atau pindahkan proyek ke `D:\` |
-| Folder `.venv` sudah ada dan rusak | Sisa pemasangan lama | `rmdir /s /q .venv`, lalu buat lagi |
+| Folder `deepenv` sudah ada dan rusak | Sisa venv di dalam v2 | `rmdir /s /q deepenv`, lalu buat lagi. Jangan lakukan ini pada environment conda |
 
 ### Aktifkan, setiap jendela cmd baru
 
 | Jendela | Perintah |
 | --- | --- |
-| Command Prompt | `.venv\Scripts\activate` |
-| PowerShell | `.venv\Scripts\Activate.ps1` |
-| Git Bash | `source .venv/Scripts/activate` |
+| Command Prompt | `deepenv\Scripts\activate` |
+| PowerShell | `deepenv\Scripts\Activate.ps1` |
+| Git Bash | `source deepenv/Scripts/activate` |
 
-Tanda aktif: awal baris menjadi `(.venv) D:\DeepInsight\v2>`.
+Tanda aktif: awal baris menjadi `(deepenv) D:\DeepInsight\v2>`.
 
 Di PowerShell, bila muncul `running scripts is disabled on this system`:
 
@@ -141,8 +158,8 @@ python -c "import sys; print(sys.prefix)"
 Hasil yang benar:
 
 - `Python 3.12.x`
-- baris pertama `where python` adalah `D:\DeepInsight\v2\.venv\Scripts\python.exe`
-- `sys.prefix` menunjuk ke `D:\DeepInsight\v2\.venv`
+- baris pertama `where python` adalah `D:\DeepInsight\v2\deepenv\Scripts\python.exe`
+- `sys.prefix` menunjuk ke `D:\DeepInsight\v2\deepenv`
 
 Bila mengarah ke `C:\Users\...\Python312`, environment belum aktif. Ulangi `activate`.
 
@@ -170,8 +187,8 @@ Arti hasil:
 
 | Cek | Hasil yang benar | Bila gagal |
 | --- | --- | --- |
-| `python --version` | 3.12.x dari `.venv` | Aktifkan venv, atau buat ulang dengan `py -3.12` |
-| `pip --version` | pip dari `D:\DeepInsight\v2\.venv` dan python 3.12 | `python -m pip install --upgrade pip` |
+| `python --version` | 3.12.x dari `deepenv` | Aktifkan venv, atau buat ulang dengan `py -3.12` |
+| `pip --version` | pip dari `D:\DeepInsight\v2\deepenv` dan python 3.12 | `python -m pip install --upgrade pip` |
 | `git --version` | `git version 2.x` | Pasang Git, buka cmd baru |
 | `nvidia-smi` | Tabel nama GPU, Driver Version, CUDA Version, memori | Tanpa GPU NVIDIA: lanjut mode terbatas. `nvidia-smi` tidak dikenali berarti driver belum ada |
 | `node` dan `pnpm` | v20+ dan nomor pnpm | Hanya wajib bila `dist\index.html` belum ada |
@@ -194,16 +211,16 @@ Hasil yang benar: paketnya `onnxruntime-gpu`, dan daftar provider memuat `CUDAEx
 | `DLL load failed` | Pasang Visual C++ Redistributable x64, buka cmd baru, aktifkan venv, ulangi impor |
 | `ModuleNotFoundError: torch` atau `tensorflow` | Normal. Keduanya tidak dipasang oleh requirements |
 
-Keluar dari environment: `deactivate`. Awalan `(.venv)` hilang.
+Keluar dari environment: `deactivate`. Awalan `(deepenv)` hilang.
 
 Membuat ulang environment yang rusak:
 
 ```bat
 deactivate
 cd /d D:\DeepInsight\v2
-rmdir /s /q .venv
-py -3.12 -m venv .venv
-.venv\Scripts\activate
+rmdir /s /q deepenv
+py -3.12 -m venv deepenv
+deepenv\Scripts\activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements-gpu.txt
 ```
@@ -283,11 +300,11 @@ cd v2
 
 Semua perintah berikut dari `D:\DeepInsight\v2`.
 
-Langkah 5, buat venv bila belum ada. Lewati bila `.venv\Scripts\python.exe` sudah ada dan langkah 6 lolos.
+Langkah 5, buat venv bila belum ada. Lewati bila `deepenv\Scripts\python.exe` sudah ada dan langkah 6 lolos.
 
 ```bat
-py -3.12 -m venv .venv
-dir .venv\Scripts
+py -3.12 -m venv deepenv
+dir deepenv\Scripts
 ```
 
 Langkah 6, aktifkan dan cek `where python` seperti bagian Environment di atas.
@@ -299,7 +316,7 @@ python -m pip install --upgrade pip
 python -m pip --version
 ```
 
-Hasil yang benar: `Successfully installed pip-...` atau `Requirement already satisfied`, lalu pip dari `.venv` dengan python 3.12.
+Hasil yang benar: `Successfully installed pip-...` atau `Requirement already satisfied`, lalu pip dari `deepenv` dengan python 3.12.
 
 Langkah 8, pasang paket. Lihat dulu isinya:
 
@@ -331,7 +348,7 @@ type logs\pip-install.log | findstr /i "error successfully"
 | `Microsoft Visual C++ 14.0 or greater is required` | Pasang C++ Build Tools, ulangi langkah 8 |
 | `ReadTimeoutError` atau `ProxyError` | Ulangi. Di kantor yang memakai proxy: tambahkan `--proxy` dan `--timeout 120` pada perintah pip |
 | `path too long` | Aktifkan Long Paths, ulangi |
-| `WinError 5` | Tutup Python lain dan antivirus yang mengunci `.venv`, ulangi |
+| `WinError 5` | Tutup Python lain dan antivirus yang mengunci `deepenv`, ulangi |
 
 Langkah 9, periksa pemasangan dengan perintah cek di bagian Environment. Laptop GPU harus melihat `CUDAExecutionProvider`.
 
@@ -415,7 +432,7 @@ Langkah 13, dari venv yang aktif:
 python start.py
 ```
 
-Klik dua kali `start.bat` melakukan hal yang sama, memakai `.venv\Scripts\python.exe`. Bila `.venv` belum ada, `start.bat` berhenti dan menyuruh menjalankan `setup.bat`.
+Klik dua kali `start.bat` melakukan hal yang sama. Skrip mencari `Scripts\python.exe` lalu `python.exe` (conda) di folder `env.cfg`. Bila keduanya tidak ada, `start.bat` mencetak jalur yang dicari dan berhenti. Python sistem tidak dipakai. Jalankan `setup.bat` atau perbaiki `env.cfg`.
 
 Urutan yang harus terlihat:
 
@@ -461,7 +478,7 @@ Langkah 16, hentikan. Tutup sesi lewat menu Keluar. Di konsol pertama tekan Ctrl
 | 1 | Python 3.12.x |
 | 3 | Tabel `nvidia-smi`, atau sengaja mode terbatas |
 | 4 | `setup.bat`, `start.py`, dan `requirements-*.txt` ada di `v2` |
-| 6 | Prompt `(.venv)` dan `where python` menunjuk ke `.venv` |
+| 6 | Prompt `(deepenv)` dan `where python` menunjuk ke `deepenv` |
 | 8 | `Successfully installed` |
 | 9 | `No broken requirements found.` Pada GPU: `CUDAExecutionProvider` |
 | 11 | Empat berkas model ada. Pada GPU, sesi ONNX terbuka |
@@ -471,7 +488,7 @@ Langkah 16, hentikan. Tutup sesi lewat menu Keluar. Di konsol pertama tekan Ctrl
 | 15 | Splash, login, Pengaturan, folder model tersimpan |
 | 16 | Konsol berhenti dengan Ctrl+C. VRAM GPU kembali mendekati angka awal |
 
-Setelah langkah ini berhasil sekali, pemakaian harian: buka cmd di `D:\DeepInsight\v2`, `.venv\Scripts\activate`, `python start.py`. Atau klik dua kali `start.bat`.
+Setelah langkah ini berhasil sekali, pemakaian harian: buka cmd di `D:\DeepInsight\v2`, `deepenv\Scripts\activate`, `python start.py`. Atau klik dua kali `start.bat`.
 
 ## Konfigurasi
 
@@ -504,7 +521,7 @@ Contoh yang dikunci uji: 10 cm pada jarak 200 piksel menghasilkan skala 0,0005 m
 `--squares 9x6` adalah jumlah sudut dalam, kolom kali baris, bukan jumlah kotak. `--square-mm` adalah sisi satu kotak dalam milimeter. Ganti keduanya agar cocok dengan papan yang dipakai. Dari `v2`, venv boleh tidak aktif karena jalur Python ditulis lengkap:
 
 ```bat
-.venv\Scripts\python scripts\calibrate_camera.py --images D:\kalibrasi\foto --squares 9x6 --square-mm 25 --camera-id rov01
+deepenv\Scripts\python scripts\calibrate_camera.py --images D:\kalibrasi\foto --squares 9x6 --square-mm 25 --camera-id rov01
 ```
 
 Hasilnya `config\cameras\rov01.yaml`. Untuk ukur di bawah air, foto papan catur sebaiknya diambil di dalam air atau kolam, karena refraksi mengubah jalur cahaya. Rinciannya ada di `docs\CAMERA_CALIBRATION.md`.
@@ -561,7 +578,7 @@ cd /d D:\DeepInsight
 git fetch --tags
 git checkout <tag-baru>
 cd v2
-.venv\Scripts\activate
+deepenv\Scripts\activate
 python -m pip install -r requirements-gpu.txt
 setup.bat
 ```
@@ -571,8 +588,8 @@ Pakai `requirements-cpu.txt` bila laptop tanpa GPU. `setup.bat` boleh dijalankan
 Uji GPU di laptop inspeksi, sekali dan setiap ganti driver:
 
 ```bat
-.venv\Scripts\python scripts\gpu_soak_test.py
-.venv\Scripts\python scripts\eval_hydrodetect.py
+deepenv\Scripts\python scripts\gpu_soak_test.py
+deepenv\Scripts\python scripts\eval_hydrodetect.py
 ```
 
 Kirim keluaran lengkap, kode keluar, `nvidia-smi`, `logs\pip-freeze.txt`, dan versi driver, `onnxruntime-gpu`, CUDA, serta cuDNN. Di mesin tanpa GPU, soak test berhenti kode 2. Itu bukan kelulusan.
@@ -582,7 +599,7 @@ Kirim keluaran lengkap, kode keluar, `nvidia-smi`, `logs\pip-freeze.txt`, dan ve
 | Gejala | Langkah |
 | --- | --- |
 | `python` tidak dikenali | Pasang ulang Python 3.12, centang Add to PATH, buka cmd baru |
-| `where python` bukan `.venv` | `.venv\Scripts\activate` |
+| `where python` bukan `deepenv` | `deepenv\Scripts\activate` |
 | Mode terbatas padahal ada GPU | `nvidia-smi`, perbarui driver, `python -m pip install -r requirements-gpu.txt` di venv yang aktif |
 | Browser tidak terbuka | Buka `http://127.0.0.1:8000/` manual |
 | Port 8000 sudah dipakai | Tutup konsol lama, atau `start.bat --port 8080` |
@@ -596,7 +613,7 @@ Kirim keluaran lengkap, kode keluar, `nvidia-smi`, `logs\pip-freeze.txt`, dan ve
 
 | Lokasi | Isi |
 | --- | --- |
-| `v2\.venv\` | Python dan paket aplikasi. Boleh dihapus dan dibuat ulang |
+| `v2\deepenv\` | Python dan paket aplikasi. Boleh dihapus dan dibuat ulang |
 | `v2\logs\setup.log` | Catatan `setup.bat` / `setup.sh` |
 | `v2\logs\pip-install.log` dan `pip-freeze.txt` | Dibuat oleh perintah di panduan ini, untuk laporan |
 | `v2\config\` | Ambang dan pengaturan |
@@ -612,8 +629,8 @@ Perintah yang sama, dari folder `v2`, bila environment belum ada:
 ```bash
 cd /jalur/ke/rcvd/v2
 python3.12 --version
-python3.12 -m venv .venv
-. .venv/bin/activate
+python3.12 -m venv deepenv
+. deepenv/bin/activate
 python --version
 python -c "import sys; print(sys.prefix)"
 python -m pip install --upgrade pip
