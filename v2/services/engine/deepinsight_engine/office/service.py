@@ -13,7 +13,7 @@ from typing import NoReturn, cast
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 
-from deepinsight_engine.core.config import Settings
+from deepinsight_engine.core.config import Settings, UserAccount
 from deepinsight_engine.core.errors import EngineError
 from deepinsight_engine.core.ids import mission_id
 from deepinsight_engine.measure import (
@@ -112,6 +112,8 @@ class Office:
             )
             raise EngineError("AUTH-002")
         account = next((item for item in self.settings.users.users if item.id == user_id), None)
+        if account is None:
+            account = self.local_account(user_id)
         if account is None or not _pin_ok(account.pin_hash, pin):
             self._fail_login(user_id)
         self._clear_attempts(user_id)
@@ -124,6 +126,20 @@ class Office:
             detail="masuk",
         )
         return LoginResult(user_id=account.id, name=account.name, roles=list(account.roles))
+
+    def local_account(self, user_id: str) -> UserAccount | None:
+        with self.db.connect() as conn:
+            row = conn.execute("SELECT * FROM local_users WHERE id=?", (user_id,)).fetchone()
+        if row is None:
+            return None
+        loaded = json.loads(str(row["roles_json"]))
+        roles = [str(item) for item in loaded] if isinstance(loaded, list) else []
+        return UserAccount(
+            id=str(row["id"]),
+            name=str(row["name"]),
+            pin_hash=str(row["pin_hash"]),
+            roles=roles,
+        )
 
     def pipelines(self) -> list[PipelineView]:
         limits = limits_from_thresholds(self.settings.thresholds)

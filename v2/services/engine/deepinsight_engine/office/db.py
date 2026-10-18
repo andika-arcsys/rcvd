@@ -83,6 +83,7 @@ class Database:
         with self.connect() as conn:
             conn.executescript(_SCHEMA)
             _migrate_review(conn)
+            _migrate_phase9(conn)
 
     @contextmanager
     def connect(self) -> Iterator[sqlite3.Connection]:
@@ -125,4 +126,64 @@ def _migrate_review(conn: sqlite3.Connection) -> None:
              class_name TEXT,
              created_at TEXT NOT NULL
            )"""
+    )
+
+
+def _migrate_phase9(conn: sqlite3.Connection) -> None:
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS reports (
+          id INTEGER PRIMARY KEY,
+          number TEXT NOT NULL,
+          mission_id TEXT NOT NULL,
+          revision INTEGER NOT NULL,
+          status TEXT NOT NULL,
+          summary TEXT NOT NULL,
+          recommendation TEXT NOT NULL,
+          locked INTEGER NOT NULL,
+          supersedes INTEGER,
+          created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS report_stages (
+          id INTEGER PRIMARY KEY,
+          report_id INTEGER NOT NULL,
+          stage TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          role TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS packages (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          manifest_sha TEXT NOT NULL,
+          upload TEXT NOT NULL,
+          path TEXT NOT NULL,
+          snapshot_count INTEGER NOT NULL,
+          report_count INTEGER NOT NULL,
+          bytes INTEGER NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS settings_override (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS local_users (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          pin_hash TEXT NOT NULL,
+          roles_json TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS model_releases (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL,
+          version TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS retrain_requests (
+          id INTEGER PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+        """
     )

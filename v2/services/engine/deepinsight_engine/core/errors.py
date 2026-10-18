@@ -253,6 +253,27 @@ _SPECS: tuple[ErrorSpec, ...] = (
         "Alasan kosong, atau ubah kelas tanpa nama kelas.",
         "Isi alasan sebelum menyimpan keputusan.",
     ),
+    ErrorSpec(
+        "RPT-001",
+        422,
+        "Satu akun tidak boleh mengisi dua tahap berturut-turut.",
+        "Pemeriksa tahap ini sama dengan tahap sebelumnya.",
+        "Minta akun lain untuk tahap berikutnya.",
+    ),
+    ErrorSpec(
+        "RPT-002",
+        422,
+        "Laporan yang disetujui terkunci.",
+        "Teks atau tahap diminta pada laporan terkunci.",
+        "Buat revisi baru bila isi perlu diubah.",
+    ),
+    ErrorSpec(
+        "SET-001",
+        403,
+        "Pengaturan hanya dapat diubah Ketua tim atau Teknisi program.",
+        "Peran sesi bukan peran yang boleh mengubah pengaturan.",
+        "Masuk dengan peran yang diizinkan.",
+    ),
 )
 
 REGISTRY: dict[str, ErrorSpec] = {spec.code: spec for spec in _SPECS}

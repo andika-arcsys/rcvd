@@ -1,0 +1,5 @@
+# D-41 belum diisi tim. Rumus kosong: KPI jam, biaya, dan emisi tampil "–".
+schema_version: 1
+hours_formula: null
+cost_formula: null
+emission_formula: null

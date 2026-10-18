@@ -2204,6 +2204,1013 @@
           }
         }
       }
+    },
+    "/reports": {
+      "get": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Reports",
+        "operationId": "reports_reports_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReportOut"
+                  },
+                  "title": "Response Reports Reports Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Create Report",
+        "operationId": "create_report_reports_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StageIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/{report_id}": {
+      "put": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Edit Report",
+        "operationId": "edit_report_reports__report_id__put",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Report Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TextIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/{report_id}/stage": {
+      "post": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Stage Report",
+        "operationId": "stage_report_reports__report_id__stage_post",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Report Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StageIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/{report_id}/revise": {
+      "post": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Revise",
+        "operationId": "revise_reports__report_id__revise_post",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Report Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StageIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports/{report_id}/pdf": {
+      "get": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Report Pdf",
+        "operationId": "report_pdf_reports__report_id__pdf_get",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Report Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pims": {
+      "get": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Pims",
+        "operationId": "pims_pims_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PimsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sustainability": {
+      "get": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Sustainability",
+        "operationId": "sustainability_sustainability_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SustainOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/metrics": {
+      "get": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Ai Metrics",
+        "operationId": "ai_metrics_ai_metrics_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/retrain": {
+      "post": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Retrain",
+        "operationId": "retrain_ai_retrain_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "title": "Response Retrain Ai Retrain Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/release": {
+      "post": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Release",
+        "operationId": "release_ai_release_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReleaseIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "title": "Response Release Ai Release Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/archive": {
+      "get": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Archive",
+        "operationId": "archive_archive_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PackageOut"
+                  },
+                  "title": "Response Archive Archive Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/archive/{package_id}/verify": {
+      "post": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Archive Verify",
+        "operationId": "archive_verify_archive__package_id__verify_post",
+        "parameters": [
+          {
+            "name": "package_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Package Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings": {
+      "get": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Settings View",
+        "operationId": "settings_view_settings_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Settings Patch",
+        "operationId": "settings_patch_settings_put",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/settings/users": {
+      "post": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Settings User",
+        "operationId": "settings_user_settings_users_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/summary": {
+      "get": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Session Summary",
+        "operationId": "session_summary_session_summary_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/seal": {
+      "post": {
+        "tags": [
+          "laporan"
+        ],
+        "summary": "Session Seal",
+        "operationId": "session_seal_session_seal_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SealOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2225,6 +3232,44 @@
           "laser_on"
         ],
         "title": "AckInput"
+      },
+      "AiOut": {
+        "properties": {
+          "metrics_ready": {
+            "type": "boolean",
+            "title": "Metrics Ready"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricOut"
+            },
+            "type": "array",
+            "title": "Metrics"
+          },
+          "training": {
+            "type": "integer",
+            "title": "Training"
+          },
+          "release": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metrics_ready",
+          "metrics",
+          "training",
+          "release"
+        ],
+        "title": "AiOut"
       },
       "AnnoIn": {
         "properties": {
@@ -3508,6 +4553,43 @@
         ],
         "title": "FileRequest"
       },
+      "FindingOut": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "class_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Class Name"
+          },
+          "span_m": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Span M"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "class_name",
+          "span_m"
+        ],
+        "title": "FindingOut"
+      },
       "FindingView": {
         "properties": {
           "id": {
@@ -4132,6 +5214,55 @@
         ],
         "title": "Measure"
       },
+      "MetricOut": {
+        "properties": {
+          "class_name": {
+            "type": "string",
+            "title": "Class Name"
+          },
+          "precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precision"
+          },
+          "recall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recall"
+          },
+          "map50": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Map50"
+          }
+        },
+        "type": "object",
+        "required": [
+          "class_name",
+          "precision",
+          "recall",
+          "map50"
+        ],
+        "title": "MetricOut"
+      },
       "MissionEnvelope": {
         "properties": {
           "mission": {
@@ -4367,6 +5498,72 @@
         ],
         "title": "ModelStatus"
       },
+      "MonthOut": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "missions": {
+            "type": "integer",
+            "title": "Missions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "missions"
+        ],
+        "title": "MonthOut"
+      },
+      "PackageOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "manifest_sha": {
+            "type": "string",
+            "title": "Manifest Sha"
+          },
+          "upload": {
+            "type": "string",
+            "title": "Upload"
+          },
+          "snapshot_count": {
+            "type": "integer",
+            "title": "Snapshot Count"
+          },
+          "report_count": {
+            "type": "integer",
+            "title": "Report Count"
+          },
+          "bytes": {
+            "type": "integer",
+            "title": "Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "manifest_sha",
+          "upload",
+          "snapshot_count",
+          "report_count",
+          "bytes"
+        ],
+        "title": "PackageOut"
+      },
       "PairIn": {
         "properties": {
           "a": {
@@ -4400,6 +5597,29 @@
           "b_m"
         ],
         "title": "PairM"
+      },
+      "PatchIn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "key",
+          "value"
+        ],
+        "title": "PatchIn"
       },
       "Performance": {
         "properties": {
@@ -4534,6 +5754,70 @@
           "vram_total_mb"
         ],
         "title": "PerformanceView"
+      },
+      "PimsOut": {
+        "properties": {
+          "procedure_ready": {
+            "type": "boolean",
+            "title": "Procedure Ready"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "prior_position": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prior Position"
+          },
+          "after_position": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After Position"
+          },
+          "interval_low": {
+            "type": "integer",
+            "title": "Interval Low"
+          },
+          "interval_low_to_moderate": {
+            "type": "integer",
+            "title": "Interval Low To Moderate"
+          },
+          "interval_moderate": {
+            "type": "integer",
+            "title": "Interval Moderate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "procedure_ready",
+          "message",
+          "prior_position",
+          "after_position",
+          "interval_low",
+          "interval_low_to_moderate",
+          "interval_moderate"
+        ],
+        "title": "PimsOut"
       },
       "Pipe": {
         "properties": {
@@ -4736,6 +6020,29 @@
         ],
         "title": "QueueItem"
       },
+      "ReleaseIn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "name",
+          "version"
+        ],
+        "title": "ReleaseIn"
+      },
       "RemeasureTask": {
         "properties": {
           "segment": {
@@ -4753,6 +6060,70 @@
           "note"
         ],
         "title": "RemeasureTask"
+      },
+      "ReportOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "number": {
+            "type": "string",
+            "title": "Number"
+          },
+          "mission_id": {
+            "type": "string",
+            "title": "Mission Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "recommendation": {
+            "type": "string",
+            "title": "Recommendation"
+          },
+          "locked": {
+            "type": "boolean",
+            "title": "Locked"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/FindingOut"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "stages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "mission_id",
+          "revision",
+          "status",
+          "summary",
+          "recommendation",
+          "locked",
+          "findings",
+          "stages"
+        ],
+        "title": "ReportOut"
       },
       "ReviewBanner": {
         "properties": {
@@ -5117,6 +6488,44 @@
         ],
         "title": "SaveIn"
       },
+      "SealOut": {
+        "properties": {
+          "recording_stopped": {
+            "type": "boolean",
+            "title": "Recording Stopped"
+          },
+          "packaged": {
+            "type": "boolean",
+            "title": "Packaged"
+          },
+          "hashed": {
+            "type": "boolean",
+            "title": "Hashed"
+          },
+          "upload": {
+            "type": "string",
+            "title": "Upload"
+          },
+          "package_id": {
+            "type": "string",
+            "title": "Package Id"
+          },
+          "package_sha256": {
+            "type": "string",
+            "title": "Package Sha256"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recording_stopped",
+          "packaged",
+          "hashed",
+          "upload",
+          "package_id",
+          "package_sha256"
+        ],
+        "title": "SealOut"
+      },
       "SegIn": {
         "properties": {
           "id": {
@@ -5225,6 +6634,84 @@
           "cache_mb"
         ],
         "title": "SessionClose"
+      },
+      "SettingOut": {
+        "properties": {
+          "laser_ref_cm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Laser Ref Cm"
+          },
+          "rod_length_m": {
+            "type": "number",
+            "title": "Rod Length M"
+          },
+          "rod_tolerance_pct": {
+            "type": "number",
+            "title": "Rod Tolerance Pct"
+          },
+          "freeze_max_delta_cm": {
+            "type": "number",
+            "title": "Freeze Max Delta Cm"
+          },
+          "rope_tolerance_pct": {
+            "type": "number",
+            "title": "Rope Tolerance Pct"
+          },
+          "critical_inch_16": {
+            "type": "number",
+            "title": "Critical Inch 16"
+          },
+          "critical_inch_8": {
+            "type": "number",
+            "title": "Critical Inch 8"
+          },
+          "presets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Presets"
+          },
+          "upload_dir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upload Dir"
+          },
+          "users": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Users"
+          }
+        },
+        "type": "object",
+        "required": [
+          "laser_ref_cm",
+          "rod_length_m",
+          "rod_tolerance_pct",
+          "freeze_max_delta_cm",
+          "rope_tolerance_pct",
+          "critical_inch_16",
+          "critical_inch_8",
+          "presets",
+          "upload_dir",
+          "users"
+        ],
+        "title": "SettingOut"
       },
       "SnapshotOut": {
         "properties": {
@@ -5395,6 +6882,104 @@
         ],
         "title": "Span"
       },
+      "StageIn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "title": "StageIn"
+      },
+      "SummaryOut": {
+        "properties": {
+          "duration_s": {
+            "type": "number",
+            "title": "Duration S"
+          },
+          "snapshots": {
+            "type": "integer",
+            "title": "Snapshots"
+          },
+          "stored_bytes": {
+            "type": "integer",
+            "title": "Stored Bytes"
+          },
+          "findings": {
+            "type": "integer",
+            "title": "Findings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "duration_s",
+          "snapshots",
+          "stored_bytes",
+          "findings"
+        ],
+        "title": "SummaryOut"
+      },
+      "SustainOut": {
+        "properties": {
+          "hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hours"
+          },
+          "cost": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost"
+          },
+          "emission": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emission"
+          },
+          "findings": {
+            "type": "integer",
+            "title": "Findings"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/MonthOut"
+            },
+            "type": "array",
+            "title": "Months"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hours",
+          "cost",
+          "emission",
+          "findings",
+          "months"
+        ],
+        "title": "SustainOut"
+      },
       "SwitchRequest": {
         "properties": {
           "name": {
@@ -5441,6 +7026,24 @@
           "height"
         ],
         "title": "SyntheticRequest"
+      },
+      "TextIn": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "recommendation": {
+            "type": "string",
+            "title": "Recommendation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "recommendation"
+        ],
+        "title": "TextIn"
       },
       "Thresholds": {
         "properties": {
@@ -5508,6 +7111,45 @@
         ],
         "title": "Thresholds"
       },
+      "UserIn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "user_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "User Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "pin": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 6,
+            "title": "Pin"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "user_id",
+          "name",
+          "pin",
+          "roles"
+        ],
+        "title": "UserIn"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -5547,6 +7189,24 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VerifyOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "manifest_sha": {
+            "type": "string",
+            "title": "Manifest Sha"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "manifest_sha"
+        ],
+        "title": "VerifyOut"
       },
       "Video": {
         "properties": {

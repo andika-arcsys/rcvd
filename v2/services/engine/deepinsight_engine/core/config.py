@@ -344,6 +344,26 @@ class RiskClasses(_Strict):
         return self
 
 
+class ProcedureFile(_Strict):
+    """Tabel PR-06. Kosong sampai tim mengisi. Jangan menebak sel matriks."""
+
+    schema_version: int
+    complete: bool
+    matrix: dict[str, str] | None
+    pof: dict[str, str] | None
+    loie: list[str] | None
+    prior_position: str | None
+
+
+class SustainabilityFile(_Strict):
+    """Rumus workbook. Null berarti KPI biaya, emisi, dan jam tampil strip."""
+
+    schema_version: int
+    hours_formula: str | None
+    cost_formula: str | None
+    emission_formula: str | None
+
+
 class Settings(_Strict):
     """Seluruh config yang dimuat saat engine mulai."""
 
@@ -359,6 +379,8 @@ class Settings(_Strict):
     users: UsersFile
     video: VideoFile
     risk: RiskClasses
+    procedure: ProcedureFile
+    sustainability: SustainabilityFile
 
 
 def _load_yaml(path: Path) -> object:
@@ -389,4 +411,6 @@ def load_settings(config_dir: Path) -> Settings:
         users=_validate(UsersFile, config_dir / "users.yaml"),
         video=_validate(VideoFile, config_dir / "video.yaml"),
         risk=_validate(RiskClasses, config_dir / "risk_classes.yaml"),
+        procedure=_validate(ProcedureFile, config_dir / "risk.yaml"),
+        sustainability=_validate(SustainabilityFile, config_dir / "sustainability.yaml"),
     )

@@ -26,5 +26,14 @@ Angka teknis yang belum diisi tim tidak dikarang. Uji kode memakai fixture di `t
 | D-15 | Tiga preset AquaClear dari `aquaclear_test.py` | `config/aquaclear_presets.yaml` | 6 | Angka yang ada masih USULAN. Kunci preset memakai nama `light` / `medium` / `heavy`. |
 | D-16 | Ambang keyakinan per kelas | `config/hydrodetect.yaml` | 6 | USULAN Q-GPU-4: bawaan 0,50, Leakage 0,35. Boleh menyusul. |
 | D-17 | 20–50 gambar uji berlabel | `samples/labeled/` | 6 | Belum ada. `scripts/eval_hydrodetect.py` berhenti kode 2. |
+| D-30 | Tabel warna matriks 5×5 PR-06-019 | `config/risk.yaml` → `matrix` | 9 | Sengaja `null`. Layar menampilkan "Data prosedur belum diisi". |
+| D-31 | Kategori PoF geohazard PR-06-111 | `config/risk.yaml` → `pof` | 9 | Sengaja `null`. Posisi B tidak dihitung. |
+| D-32 | Daftar LoIE A–E PR-06-117 | `config/risk.yaml` → `loie` | 9 | Sengaja `null`. Interval tahun yang sudah ada di `thresholds.yaml` tetap ditampilkan sebagai usulan, bukan posisi matriks. |
+| D-34 | Warna sel sesuai tabel prosedur | `config/risk.yaml` | 9 | Menyusul bersama D-30. |
+| D-35 | Posisi risiko terakhir (S) | `config/risk.yaml` → `prior_position` | 9 | Sengaja `null`. |
+| D-40 | Template laporan resmi | belum ada berkas | 9 | Ekspor memakai PDF satu halaman dari nomor, ringkasan, dan rekomendasi. |
+| D-41 | Rumus biaya dan emisi | `config/sustainability.yaml` | 9 | Rumus `null`. KPI jam, biaya, dan emisi tampil "–". Jumlah temuan dihitung dari keputusan. |
+| D-43 | Folder unggah paket (jaringan atau USB) | pengaturan `upload_dir` | 9 | Kosong. Paket tetap di konsol dan status unggah "pending". |
+| D-44 | Kebijakan simpan dan purge arsip | belum ada berkas | 9 | Tidak ada tombol hapus. Durasi simpan = TIM. |
 
 ID D-22 di berkas ini adalah ambang kekeruhan. Dokumen fase memakai nomor yang sama untuk riwayat span. Baris kekeruhan tidak ditimpa. Riwayat span dicatat sebagai D-25 dan tab Riwayat tetap kosong sampai data itu ada.

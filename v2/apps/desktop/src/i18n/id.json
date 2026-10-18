@@ -27,6 +27,7 @@
     "save": "Simpan rencana",
     "exitTitle": "Keluar dari sesi?",
     "cancel": "Batal",
+    "close": "Tutup",
     "exit": "Keluar",
     "exitBody": "Sesi akan ditutup dan paket bukti disegel.",
     "exitHoldBody": "Ada frame beku atau ukuran yang belum disimpan.",
@@ -416,5 +417,80 @@
     "oneOfTwo": "Menunggu pemeriksa kedua.",
     "uncalibrated": "Konfirmasi nonaktif karena belum terkalibrasi.",
     "shortcut": "Pintasan Y, N, dan E hanya untuk kelas rendah."
+  },
+  "report": {
+    "empty": "Belum ada laporan.",
+    "build": "Susun dari Review",
+    "summary": "Ringkasan",
+    "recommendation": "Rekomendasi",
+    "saveText": "Simpan teks",
+    "reviewStage": "Tandai diperiksa",
+    "approve": "Setujui dan kirim ke PIMS",
+    "revise": "Buat revisi",
+    "pdf": "Ekspor PDF",
+    "close": "Selesai · tutup sesi",
+    "locked": "Laporan terkunci.",
+    "findings": "Temuan terkonfirmasi"
+  },
+  "pims": {
+    "missing": "Data prosedur belum diisi",
+    "prior": "Posisi sebelum (S)",
+    "after": "Posisi setelah (B)",
+    "interval": "Usulan interval",
+    "low": "Low",
+    "mid": "Low to Moderate",
+    "high": "Moderate ke atas",
+    "years": "tahun",
+    "save": "Simpan risiko dan arsipkan paket bukti"
+  },
+  "ai": {
+    "missing": "Metrik resmi belum ada.",
+    "training": "Label dari Review",
+    "retrain": "Mulai pelatihan ulang",
+    "release": "Rilis versi model",
+    "current": "Rilis tercatat"
+  },
+  "sustain": {
+    "hours": "Jam inspeksi",
+    "cost": "Biaya dihemat",
+    "emission": "Emisi dihindari",
+    "findings": "Temuan terkonfirmasi",
+    "trace": "Telusuri KPI ke misi",
+    "chart": "Jam inspeksi per bulan"
+  },
+  "archive": {
+    "empty": "Belum ada paket.",
+    "verify": "Periksa integritas",
+    "open": "Buka paket",
+    "intact": "Utuh",
+    "recheck": "Perlu cek ulang",
+    "note": "Hash dihitung ulang dari berkas paket. Tidak ada hapus atau ubah.",
+    "pending": "Unggah tertunda"
+  },
+  "settings": {
+    "laser": "Jarak dua titik laser (cm)",
+    "rod": "Panjang batang uji (m)",
+    "rodTol": "Uji batang (%)",
+    "freeze": "Selisih dua freeze (cm)",
+    "rope": "Tali ukur (%)",
+    "limit16": "Batas kritis 16 inci (m)",
+    "limit8": "Batas kritis 8 inci (m)",
+    "presets": "Preset AquaClear",
+    "upload": "Lokasi unggah",
+    "users": "Pengguna",
+    "save": "Simpan perubahan",
+    "denied": "Peran ini tidak dapat mengubah pengaturan.",
+    "presetEdit": "Sunting preset",
+    "presetNote": "Nilai preset tetap dari berkas konfigurasi."
+  },
+  "close": {
+    "duration": "Durasi sesi",
+    "snapshots": "Snapshot",
+    "bytes": "Ukuran tersimpan",
+    "findings": "Temuan",
+    "seal": "Susun paket dan buat hash",
+    "leave": "Keluar",
+    "archive": "Lihat di Arsip",
+    "pending": "Unggah tertunda. Paket tetap di konsol."
   }
 }

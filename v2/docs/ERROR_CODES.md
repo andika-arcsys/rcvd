@@ -29,6 +29,9 @@ Jangan diubah manual.
 | REV-002 | 422 | Pemeriksa kedua harus orang lain. | Pemeriksa yang sama mencoba memutuskan temuan kritis dua kali. | Minta pemeriksa lain. |
 | REV-003 | 422 | Sengketa diputus Ketua tim. | Peran yang memutus bukan Ketua tim. | Masuk sebagai Ketua tim dan tulis alasan. |
 | REV-004 | 422 | Alasan keputusan wajib diisi. | Alasan kosong, atau ubah kelas tanpa nama kelas. | Isi alasan sebelum menyimpan keputusan. |
+| RPT-001 | 422 | Satu akun tidak boleh mengisi dua tahap berturut-turut. | Pemeriksa tahap ini sama dengan tahap sebelumnya. | Minta akun lain untuk tahap berikutnya. |
+| RPT-002 | 422 | Laporan yang disetujui terkunci. | Teks atau tahap diminta pada laporan terkunci. | Buat revisi baru bila isi perlu diubah. |
+| SET-001 | 403 | Pengaturan hanya dapat diubah Ketua tim atau Teknisi program. | Peran sesi bukan peran yang boleh mengubah pengaturan. | Masuk dengan peran yang diizinkan. |
 | SNAP-001 | 422 | Kalibrasi belum sah untuk disimpan. | Status masih UNCALIBRATED. | Ulangi dua titik laser dan panjang referensi. |
 | SPAN-001 | 422 | Segmen tidak punya pasangan freeze yang lolos. | Setiap pasangan freeze pada segmen melebihi selisih maksimum. | Ukur ulang segmen tersebut. |
 | SPAN-002 | 422 | Diameter atau rentang G tidak dikenal. | Diameter bukan 16 atau 8, atau G kanan berada sebelum G kiri. | Periksa diameter pipa dan urutan segmen. |
