@@ -26,7 +26,7 @@ Menghapus `.venv` hanya menghapus Python dan paket DeepInsight. Data misi, foto,
 | Nama | Kegunaan |
 | --- | --- |
 | `.venv` | Rumah Python DeepInsight. Berisi `python.exe` dan paket yang dipakai aplikasi. Dibuat sekali. |
-| `setup.bat` | Membuat `.venv`, memilih berkas paket sesuai ada atau tidaknya GPU, dan mencatat hasil di `logs\setup.log`. Dipakai saat pasang, atau saat `.venv` rusak. |
+| `call setup.bat` | Membuat `.venv` bila belum ada, memasang paket dengan `.venv\Scripts\python.exe`, lalu mengaktifkan environment itu di jendela yang sama. |
 | `.venv\Scripts\activate` | Mengubah prompt menjadi `(.venv) D:\DeepInsight\v2>` supaya kata `python` mengarah ke rumah itu. Tidak menyalakan aplikasi. |
 | `start.bat` | Menyalakan aplikasi dengan Python di dalam `.venv`, lalu membuka browser. Dipakai setiap hari. |
 | `python start.py` | Sama dengan `start.bat`, diketik sendiri setelah prompt sudah `(.venv)`. |
@@ -132,19 +132,28 @@ Bila `conda` tidak dikenali, Anda sudah di Command Prompt biasa. Lanjut `cd` saj
 ### 4.4 Buat environment `.venv` dan pasang paket
 
 ```bat
-setup.bat
+call setup.bat
 ```
 
-`setup.bat` membuat `D:\DeepInsight\v2\.venv` dengan Python 3.12, lalu memasang paket ke dalam folder itu. Pemasangan pertama dapat berlangsung lama. Selesai bila baris terakhir `Selesai. Lihat logs\setup.log`.
+Kata `call` wajib. Tanpa `call`, paket tetap dipasang ke `.venv`, tetapi jendela Anda kembali ke `(base)` setelah skrip selesai.
 
-Cek:
+`setup.bat` membuat `D:\DeepInsight\v2\.venv` dengan Python 3.12 bila folder itu belum ada. Pemasangan paket memakai `.venv\Scripts\python.exe`, bukan Python pada `(base)`. Pemasangan pertama dapat berlangsung lama.
+
+Selesai bila prompt menjadi:
+
+```text
+(.venv) D:\DeepInsight\v2>
+```
+
+dan baris terakhir memuat `Environment aktif:`. Cek:
 
 ```bat
-dir .venv\Scripts\python.exe
+where python
+python --version
 type logs\setup.log
 ```
 
-`python.exe` harus ada. Di log harus ada `setup selesai`. Bila log menulis `Perlu Python 3.12` atau `py tidak ada`, ulangi bagian 4.2.
+Baris pertama `where python` adalah `D:\DeepInsight\v2\.venv\Scripts\python.exe`. Versi `Python 3.12.x`. Di log ada `Python: D:\DeepInsight\v2\.venv\Scripts\python.exe` dan `setup selesai`. Bila log menulis `Perlu Python 3.12`, ulangi bagian 4.2.
 
 ### 4.5 Nyalakan aplikasi
 
@@ -206,7 +215,7 @@ Tutup dulu aplikasi. Lalu, di Command Prompt:
 ```bat
 cd /d D:\DeepInsight\v2
 rmdir /s /q .venv
-setup.bat
+call setup.bat
 ```
 
 Perintah `rmdir` hanya menghapus `.venv`. Jalankan hanya untuk folder `D:\DeepInsight\v2\.venv`.
@@ -772,9 +781,9 @@ cd /d D:\DeepInsight
 git fetch --tags
 git checkout <tag-baru>
 cd v2
-.venv\Scripts\activate
+call .venv\Scripts\activate.bat
 python -m pip install -r requirements-gpu.txt
-setup.bat
+call setup.bat
 ```
 
 Pakai `requirements-cpu.txt` bila laptop tanpa GPU. `setup.bat` boleh dijalankan ulang. Data misi di `%LOCALAPPDATA%\DeepInsight` tidak dihapus.
