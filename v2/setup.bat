@@ -1,70 +1,97 @@
 @echo off
+REM ==========================================================
+REM DeepInsight - setup.bat (versi deepenv)
+REM Memasang paket ke environment "deepenv" yang SUDAH ADA.
+REM Tidak membuat environment baru, tidak memakai py launcher.
+REM Jalankan dari folder v2:  setup.bat
+REM ==========================================================
+setlocal EnableDelayedExpansion
+
+REM [1] Pindah ke folder tempat file ini berada (v2)
 cd /d "%~dp0"
+
+REM [2] Siapkan folder dan file log
 if not exist logs mkdir logs
 set "LOG=logs\setup.log"
-set "VENV_PY=%CD%\.venv\Scripts\python.exe"
-echo === setup ===>> "%LOG%"
+echo.>> "%LOG%"
+echo === setup %DATE% %TIME% ===>> "%LOG%"
 
-if exist "%VENV_PY%" goto :use
+REM [3] Cari python.exe di dalam deepenv
+REM     venv  : deepenv\Scripts\python.exe
+REM     conda : deepenv\python.exe
+set "ENV_DIR=%CD%\deepenv"
+set "ENV_PY=%ENV_DIR%\Scripts\python.exe"
+if not exist "%ENV_PY%" set "ENV_PY=%ENV_DIR%\python.exe"
+if not exist "%ENV_PY%" (
+  echo [GAGAL] Environment tidak ditemukan di %ENV_DIR%
+  echo         Buat dulu dengan: python -m venv deepenv  ^(memakai Python 3.12^)
+  echo [GAGAL] deepenv tidak ditemukan: %ENV_DIR%>> "%LOG%"
+  exit /b 1
+)
+echo [OK] Environment: %ENV_DIR%
+echo Environment: %ENV_DIR%>> "%LOG%"
+echo Python: %ENV_PY%>> "%LOG%"
 
-where py >nul 2>&1
+REM [4] Pastikan Python di deepenv adalah 3.12
+"%ENV_PY%" -c "import sys; raise SystemExit(0 if sys.version_info[:2]==(3, 12) else 1)"
 if errorlevel 1 (
-  echo Python launcher py tidak ada. Pasang Python 3.12.
-  echo Python launcher py tidak ada. Pasang Python 3.12.>> "%LOG%"
+  echo [GAGAL] Python di deepenv bukan 3.12. Environment tidak diubah.
+  "%ENV_PY%" --version
+  echo [GAGAL] deepenv bukan Python 3.12>> "%LOG%"
   exit /b 1
 )
-py -3.12 -c "import sys; raise SystemExit(0 if sys.version_info[:2]==(3, 12) else 1)"
-if errorlevel 1 (
-  echo Perlu Python 3.12.
-  echo Perlu Python 3.12.>> "%LOG%"
-  exit /b 1
-)
-echo Membuat environment: %CD%\.venv
-py -3.12 -m venv .venv >> "%LOG%" 2>&1
-if not exist "%VENV_PY%" (
-  echo Gagal membuat .venv. Lihat %LOG%
-  exit /b 1
-)
-echo Environment dibuat: %CD%\.venv>> "%LOG%"
-goto :install
+echo [OK] Versi Python di deepenv:
+"%ENV_PY%" --version
+"%ENV_PY%" --version>> "%LOG%" 2>&1
 
-:use
-echo Memakai environment: %CD%\.venv
-echo Memakai environment: %CD%\.venv>> "%LOG%"
+REM [5] Perbarui pip di dalam deepenv
+echo [..] Memperbarui pip ...
+"%ENV_PY%" -m pip install --upgrade pip >> "%LOG%" 2>&1
+if errorlevel 1 (
+  echo [GAGAL] Pembaruan pip gagal. Lihat %LOG%
+  exit /b 1
+)
+echo [OK] pip diperbarui
 
-:install
-"%VENV_PY%" -c "import sys; raise SystemExit(0 if sys.version_info[:2]==(3, 12) else 1)"
-if errorlevel 1 (
-  echo .venv ada tetapi bukan Python 3.12. Tidak ditimpa: %VENV_PY%
-  echo .venv bukan Python 3.12, tidak ditimpa: %VENV_PY%>> "%LOG%"
-  exit /b 1
-)
-echo Python: %VENV_PY%
-echo Python: %VENV_PY%>> "%LOG%"
-"%VENV_PY%" -c "import sys; print(sys.prefix)" >> "%LOG%" 2>&1
-"%VENV_PY%" -m pip install -U pip >> "%LOG%" 2>&1
-if errorlevel 1 (
-  echo Pemasangan pip gagal. Lihat %LOG%
-  exit /b 1
-)
+REM [6] Pilih requirements: GPU bila nvidia-smi berhasil, selain itu CPU
 nvidia-smi >nul 2>&1
 if errorlevel 1 (
-  echo Requirements: requirements-cpu.txt
-  echo Requirements: requirements-cpu.txt>> "%LOG%"
-  "%VENV_PY%" -m pip install -r requirements-cpu.txt >> "%LOG%" 2>&1
+  set "REQ=requirements-cpu.txt"
+  echo [i] GPU NVIDIA tidak terdeteksi - memakai requirements-cpu.txt
 ) else (
-  echo Requirements: requirements-gpu.txt
-  echo Requirements: requirements-gpu.txt>> "%LOG%"
-  "%VENV_PY%" -m pip install -r requirements-gpu.txt >> "%LOG%" 2>&1
+  set "REQ=requirements-gpu.txt"
+  echo [i] GPU NVIDIA terdeteksi - memakai requirements-gpu.txt
 )
+echo Requirements: !REQ!>> "%LOG%"
+
+REM [7] Pasang paket dari requirements ke deepenv
+echo [..] Memasang paket dari !REQ! (bisa 10-30 menit) ...
+"%ENV_PY%" -m pip install -r "!REQ!" >> "%LOG%" 2>&1
 if errorlevel 1 (
-  echo Pemasangan paket gagal. Lihat %LOG%
+  echo [GAGAL] Pemasangan paket gagal. Lihat %LOG%
   exit /b 1
 )
-where pnpm >nul 2>&1
-if not errorlevel 1 call pnpm install
+echo [OK] Paket terpasang
+
+REM [8] Periksa hasil pemasangan
+"%ENV_PY%" -m pip check >> "%LOG%" 2>&1
+if errorlevel 1 (
+  echo [PERINGATAN] Ada paket yang bentrok. Lihat %LOG%
+) else (
+  echo [OK] Tidak ada paket yang bentrok
+)
+"%ENV_PY%" -c "import fastapi, uvicorn, yaml, cv2, numpy, pydantic, argon2; print('[OK] Paket inti dapat diimpor')"
+if errorlevel 1 (
+  echo [GAGAL] Paket inti belum lengkap. Lihat %LOG%
+  exit /b 1
+)
+"%ENV_PY%" -m pip freeze > logs\pip-freeze.txt
+
 echo setup selesai>> "%LOG%"
-call "%CD%\.venv\Scripts\activate.bat"
-echo Environment aktif: %VIRTUAL_ENV%
-echo Selesai. Bila prompt belum (.venv), jalankan perintah ini dengan call setup.bat
+echo.
+echo Selesai. Jalankan aplikasi dengan:
+echo    start.bat
+echo atau:
+echo    deepenv\Scripts\activate
+echo    python start.py
 exit /b 0

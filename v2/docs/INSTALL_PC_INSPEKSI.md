@@ -1,6 +1,6 @@
 # Menjalankan di laptop inspeksi
 
-Panduan operator ada di `docs/PANDUAN_INSTALASI.md`, bab 1–4: Command Prompt, `D:\DeepInsight\v2`, satu environment `.venv`. Berkas ini untuk tim pengembang: apa yang dikirim balik dari laptop inspeksi.
+Panduan operator ada di `docs/PANDUAN_INSTALASI.md`, bab 1–4: Command Prompt, `D:\DeepInsight\v2`, satu environment `deepenv` yang sudah ada. Berkas ini untuk tim pengembang: apa yang dikirim balik dari laptop inspeksi.
 
 Mesin pengembangan tidak punya GPU NVIDIA. Angka perangkat keras laptop inspeksi belum diisi (D-01). Jangan menyalin nomor CUDA dari dokumen lain sebelum dicatat dari laptop yang dipakai.
 
@@ -18,9 +18,9 @@ Aplikasi adalah layanan web. Python 3.12 menyajikan API dan tampilan. Browser me
 ## Instal
 
 1. Salin folder proyek ke laptop.
-2. Klik dua kali `setup.bat` (Windows) atau jalankan `./setup.sh`. Skrip membuat `.venv`, mendeteksi GPU, memasang `requirements-gpu.txt` atau `requirements-cpu.txt`, dan menulis `logs/setup.log`.
+2. `deepenv` sudah ada dan Python-nya 3.12. Klik dua kali `setup.bat`. Skrip tidak membuat environment. Ia memasang `requirements-gpu.txt` atau `requirements-cpu.txt` ke `deepenv` dan menulis `logs/setup.log`.
 3. Salin bobot model ke sebuah folder di luar proyek, misalnya `D:\DeepInsight\models`, dengan susunan yang sama seperti `config/models.yaml` (`hydrodetect/exp5/model.onnx`, `spatialsight/model.onnx`). Model tidak ikut skrip mulai.
-4. Klik dua kali `start.bat`, atau `python start.py` dari `.venv`. Bila `apps/desktop/dist` belum ada, UI dibangun dulu. Browser terbuka sendiri.
+4. Klik dua kali `start.bat`, atau `deepenv\Scripts\activate` lalu `python start.py`. Bila `apps/desktop/dist` belum ada, UI dibangun dulu. Browser terbuka sendiri.
 5. Buka sebagai Ketua tim atau Teknisi program. Di Pengaturan, isi folder model itu dan simpan. Perubahan masuk audit.
 6. Isi config yang masih kosong hanya dengan data tim: pipa, video, kamera, `risk.yaml`, `sustainability.yaml`, dan ambang RMS kalibrasi. Berkas kosong menampilkan pesan, tidak menjatuhkan aplikasi.
 
@@ -30,14 +30,14 @@ Layar dibuka dari beranda. Alamatnya memakai tanda pagar, misalnya `http://127.0
 
 ## Uji GPU
 
-Dari folder `v2/`, dengan `.venv` yang sama:
+Dari folder `v2/`, dengan `deepenv` yang sama:
 
 ```bat
-.venv\Scripts\python.exe scripts\gpu_soak_test.py
-.venv\Scripts\python.exe scripts\eval_hydrodetect.py
+deepenv\Scripts\python.exe scripts\gpu_soak_test.py
+deepenv\Scripts\python.exe scripts\eval_hydrodetect.py
 ```
 
-Di Linux jalurnya `.venv/bin/python`.
+Di Linux jalurnya `deepenv/bin/python`. Untuk conda di Windows, Python-nya `deepenv\python.exe`.
 
 `gpu_soak_test.py` mengganti fitur 50 kali. Lulus bila VRAM kembali ke garis dasar ditambah toleransi di `config/thresholds.yaml`. Kode keluar 2 berarti GPU tidak terbaca. Itu bukan kelulusan.
 
