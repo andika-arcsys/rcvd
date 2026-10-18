@@ -16,18 +16,25 @@ set "LOG=logs\setup.log"
 echo.>> "%LOG%"
 echo === setup %DATE% %TIME% ===>> "%LOG%"
 
-REM [3] Cari python.exe di dalam deepenv
-REM     venv  : deepenv\Scripts\python.exe
-REM     conda : deepenv\python.exe
+REM [3] Pakai conda env "deepenv" yang sedang aktif.
+REM     Contoh: conda activate deepenv  lalu  setup.bat
+REM     Bila tidak aktif, cari folder v2\deepenv.
+if /I "%CONDA_DEFAULT_ENV%"=="deepenv" if exist "%CONDA_PREFIX%\python.exe" (
+  set "ENV_DIR=%CONDA_PREFIX%"
+  set "ENV_PY=%CONDA_PREFIX%\python.exe"
+  goto :found
+)
 set "ENV_DIR=%CD%\deepenv"
 set "ENV_PY=%ENV_DIR%\Scripts\python.exe"
 if not exist "%ENV_PY%" set "ENV_PY=%ENV_DIR%\python.exe"
 if not exist "%ENV_PY%" (
-  echo [GAGAL] Environment tidak ditemukan di %ENV_DIR%
-  echo         Buat dulu dengan: python -m venv deepenv  ^(memakai Python 3.12^)
-  echo [GAGAL] deepenv tidak ditemukan: %ENV_DIR%>> "%LOG%"
+  echo [GAGAL] Environment deepenv tidak ditemukan.
+  echo         Dari folder v2 jalankan: conda activate deepenv
+  echo         lalu setup.bat lagi.
+  echo [GAGAL] deepenv tidak aktif dan tidak ada di %ENV_DIR%>> "%LOG%"
   exit /b 1
 )
+:found
 echo [OK] Environment: %ENV_DIR%
 echo Environment: %ENV_DIR%>> "%LOG%"
 echo Python: %ENV_PY%>> "%LOG%"

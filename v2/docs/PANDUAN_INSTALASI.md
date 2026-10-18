@@ -4,7 +4,7 @@ Untuk orang yang memasang aplikasi di laptop Windows. DeepInsight 0.9.0-rc1 dibu
 
 Semua perintah di panduan ini diketik di **Command Prompt**. Cara membukanya: tombol Windows, ketik `cmd`, Enter. Jendela itu bilah hitam dengan tulisan di akhirnya, disebut prompt.
 
-Folder kerja hanya satu: `D:\DeepInsight\v2`. Environment hanya satu. Namanya `deepenv`. Folder itu harus sudah ada sebelum `setup.bat`. `setup.bat` tidak membuat environment dan tidak memakai `py` launcher.
+Folder kerja hanya satu: `D:\DeepInsight\v2`. Environment hanya satu, namanya `deepenv`, diaktifkan dengan `conda activate deepenv`. Environment conda itu tidak harus berupa folder `v2\deepenv`. `setup.bat` memakai environment yang sedang aktif.
 
 Bila langkah singkat di bab 4 selesai dan browser terbuka, bab lanjutan (CUDA, model, kalibrasi) tidak perlu dibaca untuk pemakaian pertama.
 
@@ -14,7 +14,7 @@ Bila langkah singkat di bab 4 selesai dan browser terbuka, bab lanjutan (CUDA, m
 | --- | --- |
 | Jendela boleh Anaconda Prompt, setelah `conda deactivate` | Memasang paket selama prompt masih `(base)` |
 | Folder `D:\DeepInsight\v2` | Environment di `C:\`, di folder Anaconda, atau di drive lain |
-| Satu folder `D:\DeepInsight\v2\deepenv` | Environment kedua, atau memasang paket ke `(base)` |
+| `conda activate deepenv`, Python 3.12 | Memasang paket ke `(base)`, atau mengira `deepenv` harus berupa folder `v2\deepenv` |
 | Python 3.12 di dalam `deepenv` | Python 3.11 atau 3.13, termasuk Python pada `(base)` |
 | `setup.bat` hanya memasang paket ke `deepenv` yang sudah ada | Mengharapkan `setup.bat` membuat environment, atau memakai `py` launcher |
 | Data misi di `%LOCALAPPDATA%\DeepInsight` | Menyimpan data misi di dalam `deepenv` |
@@ -112,26 +112,16 @@ Hasil `python --version` harus `Python 3.12.x` sebelum environment dibuat. Bila 
 
 Bila `conda` tidak dikenali, Anda sudah di Command Prompt biasa. Lanjut `cd` dan `python --version`.
 
-### 4.3 Buat `deepenv` sekali, bila folder itu belum ada
-
-Lewati blok ini bila `dir deepenv\Scripts\python.exe` atau `dir deepenv\python.exe` sudah menampilkan berkas.
+### 4.3 Aktifkan `deepenv`, lalu pasang paket
 
 ```bat
 cd /d D:\DeepInsight\v2
-python -m venv deepenv
-dir deepenv\Scripts\python.exe
-```
-
-Perintah `python -m venv deepenv` memakai Python yang sedang aktif. Karena itu versi pada langkah 4.2 harus 3.12. Environment conda yang sudah ada di folder `deepenv` tidak perlu dibuat ulang. `setup.bat` tidak membuat folder ini.
-
-### 4.4 Pasang paket ke `deepenv`
-
-```bat
-cd /d D:\DeepInsight\v2
+conda activate deepenv
+python --version
 setup.bat
 ```
 
-`setup.bat` mencari `deepenv\Scripts\python.exe`, lalu `deepenv\python.exe`. Paket dipasang dengan Python itu. Bila folder tidak ada, skrip berhenti dengan `[GAGAL]` dan tidak membuat environment. Pemasangan pertama dapat berlangsung 10–30 menit. Selesai bila muncul `[OK] Paket inti dapat diimpor` dan `Selesai`.
+Prompt harus `(deepenv)` dan `python --version` harus `Python 3.12.x`, seperti `Python 3.12.15`. `setup.bat` memakai environment conda yang sedang aktif itu. Ia tidak mencari folder `v2\deepenv`. Pemasangan pertama dapat berlangsung 10–30 menit. Selesai bila muncul `[OK] Environment:` dengan jalur conda, lalu `[OK] Paket inti dapat diimpor`.
 
 Cek `logs\setup.log`. Di dalamnya ada `Environment: D:\DeepInsight\v2\deepenv` dan `setup selesai`.
 
@@ -139,10 +129,11 @@ Cek `logs\setup.log`. Di dalamnya ada `Environment: D:\DeepInsight\v2\deepenv` d
 
 ```bat
 cd /d D:\DeepInsight\v2
+conda activate deepenv
 start.bat
 ```
 
-`start.bat` menjalankan `start.py` dengan Python `deepenv`. Python pada `(base)` tidak ikut. Biarkan jendela terbuka. Browser membuka `http://127.0.0.1:8000/`. Menutup aplikasi menampilkan `Aplikasi berhenti` dan menunggu tombol.
+Prompt harus tetap `(deepenv)`. `start.bat` menjalankan `start.py` dengan Python environment itu. Biarkan jendela terbuka. Browser membuka `http://127.0.0.1:8000/`.
 
 ### 4.6 Bila Anda mengetik perintah sendiri
 

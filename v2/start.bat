@@ -6,15 +6,21 @@ REM Argumen diteruskan, misalnya: start.bat --port 8080
 REM ==========================================================
 cd /d "%~dp0"
 
+if /I "%CONDA_DEFAULT_ENV%"=="deepenv" if exist "%CONDA_PREFIX%\python.exe" (
+  set "ENV_PY=%CONDA_PREFIX%\python.exe"
+  goto :run
+)
 set "ENV_DIR=%CD%\deepenv"
 set "ENV_PY=%ENV_DIR%\Scripts\python.exe"
 if not exist "%ENV_PY%" set "ENV_PY=%ENV_DIR%\python.exe"
 if not exist "%ENV_PY%" (
-  echo [GAGAL] Python deepenv tidak ditemukan di %ENV_DIR%
-  echo         Jalankan setup.bat atau buat deepenv terlebih dahulu.
+  echo [GAGAL] Environment deepenv tidak ditemukan.
+  echo         Jalankan dulu: conda activate deepenv
+  echo         lalu start.bat
   pause
   exit /b 1
 )
+:run
 
 "%ENV_PY%" start.py %*
 echo.
