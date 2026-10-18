@@ -14,6 +14,14 @@ from ..core.config import AquaPreset
 from ..core.errors import EngineError
 from .aquaclear import apply_preset
 from .depth_map import relative_from_output
+from .ultralytics_seg import (
+    hydro_source,
+    load_yolo,
+    missing_hydro_detail,
+    names_of,
+    predict_candidates,
+    torch_device,
+)
 from .vision import RELATIVE_LABEL, depth_event, hydro_event
 from .yolo_seg import decode_yolo_seg
 
@@ -35,14 +43,20 @@ def main() -> None:
         elif command == "unload":
             _hold_if_requested()
             state["session"] = None
+            state["yolo"] = None
             state["classes"] = None
             state["hydro"] = None
+            state["runtime"] = None
             _emit({"event": "unloaded"})
 
 
 def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     kind = str(message["kind"])
     root = Path(str(message["models_dir"]))
+    if kind == "hydrodetect":
+        loaded = _load_hydro(state, root, message)
+        if loaded is not None:
+            return loaded
     missing = _missing_file(kind, root, message)
     if missing:
         return {"event": "error", "code": "MDL-001", "detail": missing}
@@ -61,6 +75,38 @@ def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
             return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
     state["kind"] = kind
     return {"event": "ready", "fp16": bool(state.get("meta", {}).get("fp16"))}
+
+
+def _load_hydro(
+    state: dict[str, Any], root: Path, message: dict[str, Any]
+) -> dict[str, Any] | None:
+    weights = None if message.get("weights") is None else str(message.get("weights"))
+    onnx = None if message.get("onnx") is None else str(message.get("onnx"))
+    picked = hydro_source(root, weights, onnx)
+    if picked is None:
+        return {"event": "error", "code": "MDL-001", "detail": missing_hydro_detail(weights, onnx)}
+    runtime, path = picked
+    if runtime != "ultralytics":
+        return None
+    try:
+        model = load_yolo(path)
+        classes = names_of(model)
+        hydro = _hydro_config(message)
+    except EngineError as exc:
+        return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    state["yolo"] = model
+    state["classes"] = classes
+    state["hydro"] = hydro
+    state["device"] = torch_device()
+    state["runtime"] = "ultralytics"
+    state["kind"] = "hydrodetect"
+    return {"event": "ready", "fp16": state["device"] != "cpu"}
+
+
+def _hydro_config(message: dict[str, Any]) -> Any:
+    from ..core.config import HydrodetectConfig
+
+    return HydrodetectConfig.model_validate(message.get("hydro"))
 
 
 def _missing_file(kind: str, root: Path, message: dict[str, Any]) -> str | None:
@@ -129,12 +175,29 @@ def _infer(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
             "enhanced": True,
             "kind": "aquaclear",
         }
+    if state.get("runtime") == "ultralytics":
+        return _infer_ultra(state, message)
     if state["session"] is None:
         return {"event": "error", "code": "MDL-002", "detail": "sesi model kosong"}
     try:
         return _infer_onnx(state, message)
     except EngineError as exc:
         return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+
+
+def _infer_ultra(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
+    np = importlib.import_module("numpy")
+    width, height = int(message["width"]), int(message["height"])
+    image = np.frombuffer(_read_raw(message), dtype=np.uint8).reshape(height, width, 3)
+    try:
+        found = predict_candidates(
+            state["yolo"], image, state["classes"], state["hydro"], str(state["device"])
+        )
+    except EngineError as exc:
+        return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    except Exception as exc:  # noqa: BLE001 - inferensi model tidak boleh mematikan pekerja
+        return {"event": "error", "code": "MDL-002", "detail": str(exc)}
+    return hydro_event(str(message["frame_id"]), found)
 
 
 def _infer_onnx(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:

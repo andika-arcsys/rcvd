@@ -2334,6 +2334,10 @@ export interface components {
             depth: components["schemas"]["DepthView"] | null;
             /** Classes */
             classes: components["schemas"]["ClassChip"][];
+            /** Frame Width */
+            frame_width?: number | null;
+            /** Frame Height */
+            frame_height?: number | null;
         };
     };
     responses: never;

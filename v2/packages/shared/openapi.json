@@ -7577,6 +7577,28 @@
             },
             "type": "array",
             "title": "Classes"
+          },
+          "frame_width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frame Width"
+          },
+          "frame_height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frame Height"
           }
         },
         "type": "object",

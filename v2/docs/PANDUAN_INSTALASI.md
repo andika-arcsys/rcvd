@@ -541,9 +541,21 @@ Hasil yang benar:
 ```text
 D:\DeepInsight-models\hydrodetect\exp5\classes.json
 D:\DeepInsight-models\hydrodetect\exp5\metadata.json
+D:\DeepInsight-models\hydrodetect\exp5\model.pt
 D:\DeepInsight-models\hydrodetect\exp5\model.onnx
 D:\DeepInsight-models\spatialsight\model.onnx
 ```
+
+`model.pt` adalah bobot Ultralytics yang dipakai pelatihan exp-5. Bila berkas itu ada, HydroDetect mendeteksi frame mentah lewat Ultralytics dan tidak menunggu ekspor ONNX. Pasang paketnya di `deepenv` yang sudah aktif:
+
+```bat
+python -m pip install ultralytics
+python -c "import ultralytics, torch; print(ultralytics.__version__, torch.cuda.is_available())"
+```
+
+Bila `torch.cuda.is_available()` false padahal `nvidia-smi` melihat GPU, roda PyTorch yang terpasang adalah CPU. Ganti dengan roda CUDA yang cocok dengan driver, dari pytorch.org, lalu jalankan perintah cek itu lagi. `model.onnx` tetap cadangan bila `model.pt` tidak ada.
+
+SpatialSight tidak memakai Ultralytics. Konsol lama memakai Depth Anything 3. v2 masih membaca `spatialsight\model.onnx` sebagai pratinjau relatif, bukan meter.
 
 Berkas `.onnx` dan `.pt` tidak ada di Git. Laptop GPU dapat membuka berkas HydroDetect:
 

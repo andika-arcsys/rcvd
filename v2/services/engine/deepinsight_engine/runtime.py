@@ -220,9 +220,13 @@ class Runtime:
         with self._lock:
             event = dict(self._vision)
             preset = self.models.preset_name
+            frame = self.pipeline.ring.latest()
         hydro = self._settings.hydrodetect
         spatial = self._settings.spatialsight
-        return assemble_vision(event, preset, hydro, spatial)
+        view = assemble_vision(event, preset, hydro, spatial)
+        view["frame_width"] = None if frame is None else frame.width
+        view["frame_height"] = None if frame is None else frame.height
+        return view
 
     def compare_view(self) -> dict[str, object]:
         from .video.compare import compare_payload

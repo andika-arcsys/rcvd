@@ -40,6 +40,8 @@ class VisionView(BaseModel):
     candidates: list[CandidateView]
     depth: DepthView | None
     classes: list[ClassChip]
+    frame_width: int | None = None
+    frame_height: int | None = None
 
 
 class CompareView(BaseModel):
