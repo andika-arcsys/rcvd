@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { MeasureCanvas } from '../../components/MeasureCanvas';
 import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
-import { VIEW_H, VIEW_W, type XY } from '../../measure/draft';
+import { VIEW_H, VIEW_W } from '../../measure/draft';
 
 type Item = components['schemas']['QueueItem'];
 type Thresholds = components['schemas']['Thresholds'];
@@ -13,7 +13,6 @@ const TABS = ['overlay', 'cal', 'length', 'area'] as const;
 export function ReviewFrame({ item }: { item: Item | null }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>('overlay');
   const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState<XY>({ x: 0, y: 0 });
   const shot = useShot(item?.snapshot_id ?? null);
   return (
     <div className="flex flex-col gap-2">
@@ -38,15 +37,14 @@ export function ReviewFrame({ item }: { item: Item | null }) {
           height={VIEW_H}
           jpeg={shot.url}
           nodes={[]}
+          strokes={[]}
           zoom={zoom}
-          pan={pan}
           hitPx={shot.hit}
           magnifier={shot.magnifier}
           onPlace={() => undefined}
           onBegin={() => undefined}
           onMove={() => undefined}
           onZoom={setZoom}
-          onPan={(dx) => setPan({ x: pan.x + dx, y: pan.y })}
         />
       )}
     </div>

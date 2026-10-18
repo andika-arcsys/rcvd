@@ -1642,6 +1642,21 @@
             }
           },
           {
+            "name": "detail",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "display",
+                "high",
+                "native"
+              ],
+              "type": "string",
+              "default": "display",
+              "title": "Detail"
+            }
+          },
+          {
             "name": "x-deepinsight-token",
             "in": "header",
             "required": false,
@@ -4124,6 +4139,23 @@
           "jpeg_b64": {
             "type": "string",
             "title": "Jpeg B64"
+          },
+          "shown_width": {
+            "type": "integer",
+            "title": "Shown Width"
+          },
+          "shown_height": {
+            "type": "integer",
+            "title": "Shown Height"
+          },
+          "detail": {
+            "type": "string",
+            "enum": [
+              "display",
+              "high",
+              "native"
+            ],
+            "title": "Detail"
           }
         },
         "type": "object",
@@ -4135,7 +4167,10 @@
           "camera_present",
           "freeze_no",
           "laser",
-          "jpeg_b64"
+          "jpeg_b64",
+          "shown_width",
+          "shown_height",
+          "detail"
         ],
         "title": "ContextOut"
       },

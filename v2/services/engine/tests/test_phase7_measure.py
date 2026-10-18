@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -138,6 +139,32 @@ def test_uncalibrated_and_edge_are_rejected(client: TestClient, tmp_path: Path) 
     )
     assert response.status_code == 422
     assert response.json()["code"] == "EDGE-001"
+
+
+def test_frozen_detail_uses_evidence_pixels(client: TestClient, tmp_path: Path) -> None:
+    wide = np.full((1500, 3000, 3), 90, np.uint8)
+    _paint(tmp_path / "evidence" / "frm-res.png", wide)
+    display = client.get("/measure/context/frm-res")
+    high = client.get("/measure/context/frm-res", params={"detail": "high"})
+    native = client.get("/measure/context/frm-res", params={"detail": "native"})
+    assert display.status_code == 200
+    assert (display.json()["shown_width"], display.json()["shown_height"]) == (1280, 640)
+    assert display.json()["detail"] == "display"
+    assert (high.json()["shown_width"], high.json()["shown_height"]) == (2560, 1280)
+    assert (native.json()["shown_width"], native.json()["shown_height"]) == (3000, 1500)
+    assert _jpeg_size(display.json()["jpeg_b64"]) == (1280, 640)
+    assert _jpeg_size(native.json()["jpeg_b64"]) == (3000, 1500)
+    assert native.json()["width"] == 3000
+    _paint(tmp_path / "evidence" / "frm-kecil.png", np.full((60, 80, 3), 20, np.uint8))
+    full = client.get("/measure/context/frm-kecil", params={"detail": "native"})
+    assert _jpeg_size(full.json()["jpeg_b64"]) == (80, 60)
+
+
+def _jpeg_size(payload: str) -> tuple[int, int]:
+    image = cv2.imdecode(np.frombuffer(base64.b64decode(payload), np.uint8), cv2.IMREAD_COLOR)
+    assert image is not None
+    height, width = image.shape[:2]
+    return width, height
 
 
 def test_write_new_refuses_existing_name(tmp_path: Path) -> None:

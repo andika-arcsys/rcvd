@@ -16,13 +16,14 @@ from ..measure.limits import limits_from_thresholds
 from ..measure.persist import build_record, prior_versions, write_new
 from ..measure.types import Camera, Point
 from ..video.decode import decode_png
-from ..video.encode import encode_jpeg
+from ..video.encode import detail_quality, detail_side, encode_jpeg, fitted_size
 from ..video.report_jpeg import report_jpeg
 from .security import require_token
 
 measure = APIRouter(dependencies=[Depends(require_token)], tags=["measure"])
 
 Marker = Literal["P0", "G_kiri", "G_kanan", "PE+2"]
+Detail = Literal["display", "high", "native"]
 Shape = Literal["arrow", "line", "circle"]
 Color = Literal["red", "yellow", "blue", "green", "white"]
 
@@ -86,6 +87,9 @@ class ContextOut(BaseModel):
     freeze_no: int
     laser: list[list[float]]
     jpeg_b64: str
+    shown_width: int
+    shown_height: int
+    detail: Detail
 
 
 class CalView(BaseModel):
@@ -138,12 +142,18 @@ class SnapshotOut(BaseModel):
 
 
 @measure.get("/measure/context/{frame_id}", response_model=ContextOut)
-def measure_context(frame_id: str, request: Request) -> ContextOut:
+def measure_context(
+    frame_id: str,
+    request: Request,
+    detail: Detail = "display",
+) -> ContextOut:
     meta, bgr, width, height = _raw(request, frame_id)
     settings = request.app.state.settings
     points = detect_laser(bgr, width, height, settings.thresholds.laser)
     video = settings.thresholds.video
-    jpeg = encode_jpeg(bgr, width, height, video.display_max_side, video.display_jpeg_quality)
+    side = detail_side(width, height, video.display_max_side, detail)
+    jpeg = encode_jpeg(bgr, width, height, side, detail_quality(video.display_jpeg_quality, detail))
+    shown_w, shown_h = fitted_size(width, height, side)
     priors = prior_versions(_snap_dir(request), frame_id)
     return ContextOut(
         frame_id=frame_id,
@@ -154,6 +164,9 @@ def measure_context(frame_id: str, request: Request) -> ContextOut:
         freeze_no=len(priors) + 1,
         laser=[[point[0], point[1]] for point in points],
         jpeg_b64=base64.b64encode(jpeg).decode("ascii"),
+        shown_width=shown_w,
+        shown_height=shown_h,
+        detail=detail,
     )
 
 

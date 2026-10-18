@@ -6,8 +6,9 @@ import {
   type MeasureLimits,
   type Point,
 } from '@deepinsight/shared';
+export { beginMove, moveNode } from './move';
 
-export type Tool = 'calibrate' | 'length' | 'area' | 'annotate';
+export type Tool = 'calibrate' | 'length' | 'path' | 'area' | 'angle' | 'annotate';
 export const COLORS = ['red', 'yellow', 'blue', 'green', 'white'] as const;
 export type AnnoColor = (typeof COLORS)[number];
 export type AnnoShape = 'arrow' | 'line' | 'circle';
@@ -24,6 +25,12 @@ export interface Pair {
   b: XY;
 }
 
+export interface AngleMark {
+  a: XY;
+  v: XY;
+  c: XY;
+}
+
 export interface Anno {
   shape: AnnoShape;
   color: AnnoColor;
@@ -35,6 +42,7 @@ export interface Geometry {
   cal: Pair | null;
   lengths: Pair[];
   areas: XY[][];
+  angles: AngleMark[];
   notes: Anno[];
 }
 
@@ -67,7 +75,7 @@ export interface Preview {
 export const VIEW_W = 640;
 export const VIEW_H = 360;
 
-const EMPTY: Geometry = { cal: null, lengths: [], areas: [], notes: [] };
+const EMPTY: Geometry = { cal: null, lengths: [], areas: [], angles: [], notes: [] };
 
 export function emptyDraft(): Draft {
   return {
@@ -103,8 +111,16 @@ export function fitZoom(width: number, height: number): number {
 export function place(draft: Draft, point: XY): Draft {
   const pending = [...draft.pending, point];
   if (draft.tool === 'area') return placeArea(draft, pending);
+  if (draft.tool === 'angle') return placeAngle(draft, pending);
+  if (draft.tool === 'path') return { ...draft, pending };
   if (pending.length < 2) return { ...draft, pending };
   return commitPair(draft, pending);
+}
+
+export function finishPath(draft: Draft): Draft {
+  if (draft.tool !== 'path' || draft.pending.length < 2) return draft;
+  const added = segments(draft.pending);
+  return commit(draft, { ...draft.geometry, lengths: [...draft.geometry.lengths, ...added] });
 }
 
 export function closeArea(draft: Draft): Draft {
@@ -150,20 +166,12 @@ export function setTool(draft: Draft, tool: Tool): Draft {
   return { ...draft, tool, pending: [] };
 }
 
-export function beginMove(draft: Draft): Draft {
-  return { ...draft, past: [...draft.past, draft.geometry], future: [] };
-}
-
-export function moveNode(draft: Draft, id: string, point: XY): Draft {
-  if (id.startsWith('pend.')) return movePending(draft, id, point);
-  return { ...draft, geometry: moveGeometry(draft.geometry, id, point) };
-}
-
 export function nodesOf(draft: Draft): NodeRef[] {
   return [
     ...pairNodes(draft.geometry.cal, 'cal'),
     ...draft.geometry.lengths.flatMap((item, index) => pairNodes(item, `len.${index}`)),
     ...draft.geometry.areas.flatMap((poly, index) => polyNodes(poly, index)),
+    ...draft.geometry.angles.flatMap((item, index) => angleNodes(item, index)),
     ...draft.geometry.notes.flatMap((item, index) => pairNodes(item, `note.${index}`)),
     ...draft.pending.map((point, index) => ({ ...point, id: `pend.${index}` })),
   ];
@@ -173,6 +181,7 @@ export function watchedPoints(draft: Draft): XY[] {
   const points: XY[] = [];
   for (const item of draft.geometry.lengths) points.push(item.a, item.b);
   for (const poly of draft.geometry.areas) points.push(...poly);
+  for (const item of draft.geometry.angles) points.push(item.a, item.v, item.c);
   return points;
 }
 
@@ -202,6 +211,12 @@ function placeArea(draft: Draft, pending: XY[]): Draft {
   return commit(draft, { ...draft.geometry, areas: [...draft.geometry.areas, pending] });
 }
 
+function placeAngle(draft: Draft, pending: XY[]): Draft {
+  const mark = angleOf(pending);
+  if (!mark) return { ...draft, pending };
+  return commit(draft, { ...draft.geometry, angles: [...draft.geometry.angles, mark] });
+}
+
 function commitPair(draft: Draft, pending: XY[]): Draft {
   const built = pairOf(pending);
   if (!built) return draft;
@@ -224,6 +239,24 @@ function pairOf(points: readonly XY[]): Pair | null {
   return { a, b };
 }
 
+function angleOf(points: readonly XY[]): AngleMark | null {
+  const a = points[0];
+  const v = points[1];
+  const c = points[2];
+  if (!a || !v || !c) return null;
+  return { a, v, c };
+}
+
+function segments(points: readonly XY[]): Pair[] {
+  const rows: Pair[] = [];
+  for (let index = 1; index < points.length; index += 1) {
+    const a = points[index - 1];
+    const b = points[index];
+    if (a && b) rows.push({ a, b });
+  }
+  return rows;
+}
+
 function pairNodes(pair: Pair | Anno | null, prefix: string): NodeRef[] {
   if (!pair) return [];
   return [
@@ -236,58 +269,12 @@ function polyNodes(poly: XY[], index: number): NodeRef[] {
   return poly.map((point, j) => ({ ...point, id: `area.${index}.${j}` }));
 }
 
-function movePending(draft: Draft, id: string, point: XY): Draft {
-  const index = Number(id.slice('pend.'.length));
-  return { ...draft, pending: draft.pending.map((item, i) => (i === index ? point : item)) };
-}
-
-function moveGeometry(geometry: Geometry, id: string, point: XY): Geometry {
-  if (id === 'cal.a' && geometry.cal) return { ...geometry, cal: { ...geometry.cal, a: point } };
-  if (id === 'cal.b' && geometry.cal) return { ...geometry, cal: { ...geometry.cal, b: point } };
-  return (
-    moveLength(geometry, id, point) ??
-    moveArea(geometry, id, point) ??
-    moveNote(geometry, id, point)
-  );
-}
-
-function moveLength(geometry: Geometry, id: string, point: XY): Geometry | null {
-  const matched = /^len\.(\d+)\.(a|b)$/.exec(id);
-  if (!matched) return null;
-  const index = Number(matched[1]);
-  const side = matched[2];
-  return {
-    ...geometry,
-    lengths: geometry.lengths.map((item, i) =>
-      i === index && side ? { ...item, [side]: point } : item,
-    ),
-  };
-}
-
-function moveArea(geometry: Geometry, id: string, point: XY): Geometry | null {
-  const matched = /^area\.(\d+)\.(\d+)$/.exec(id);
-  if (!matched) return null;
-  const index = Number(matched[1]);
-  const vertex = Number(matched[2]);
-  return {
-    ...geometry,
-    areas: geometry.areas.map((poly, i) =>
-      i === index ? poly.map((item, j) => (j === vertex ? point : item)) : poly,
-    ),
-  };
-}
-
-function moveNote(geometry: Geometry, id: string, point: XY): Geometry {
-  const matched = /^note\.(\d+)\.(a|b)$/.exec(id);
-  if (!matched) return geometry;
-  const index = Number(matched[1]);
-  const side = matched[2];
-  return {
-    ...geometry,
-    notes: geometry.notes.map((item, i) =>
-      i === index && side ? { ...item, [side]: point } : item,
-    ),
-  };
+function angleNodes(item: AngleMark, index: number): NodeRef[] {
+  return [
+    { ...item.a, id: `ang.${index}.a` },
+    { ...item.v, id: `ang.${index}.v` },
+    { ...item.c, id: `ang.${index}.c` },
+  ];
 }
 
 function refMeters(raw: string): number | null {

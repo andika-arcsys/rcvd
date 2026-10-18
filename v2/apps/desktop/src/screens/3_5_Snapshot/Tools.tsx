@@ -2,6 +2,7 @@ import { t } from '../../i18n';
 import {
   clearPoints,
   closeArea,
+  finishPath,
   redo,
   setTool,
   undo,
@@ -11,7 +12,7 @@ import {
   type Tool,
 } from '../../measure/draft';
 
-const TOOLS: Tool[] = ['calibrate', 'length', 'area', 'annotate'];
+const TOOLS: Tool[] = ['calibrate', 'length', 'path', 'area', 'angle', 'annotate'];
 const SHAPES: AnnoShape[] = ['arrow', 'line', 'circle'];
 const COLORS: AnnoColor[] = ['red', 'yellow', 'blue', 'green', 'white'];
 
@@ -38,7 +39,7 @@ export function Tools({ draft, setDraft }: { draft: Draft; setDraft: (next: Draf
             key={tool}
             type="button"
             aria-pressed={draft.tool === tool}
-            className="rounded border border-line px-2 py-1 text-sm"
+            className={pressed(draft.tool === tool)}
             onClick={() => setDraft(setTool(draft, tool))}
           >
             {t(`measure.${tool}`)}
@@ -46,6 +47,7 @@ export function Tools({ draft, setDraft }: { draft: Draft; setDraft: (next: Draf
         ))}
       </div>
       {draft.tool === 'annotate' ? <Shapes draft={draft} setDraft={setDraft} /> : null}
+      <Hint tool={draft.tool} />
       <History draft={draft} setDraft={setDraft} />
     </div>
   );
@@ -59,7 +61,7 @@ function Shapes({ draft, setDraft }: { draft: Draft; setDraft: (next: Draft) => 
           key={shape}
           type="button"
           aria-pressed={draft.shape === shape}
-          className="rounded border border-line px-2 py-1 text-sm"
+          className={pressed(draft.shape === shape)}
           onClick={() => setDraft({ ...draft, shape })}
         >
           {t(SHAPE_LABEL[shape])}
@@ -70,7 +72,7 @@ function Shapes({ draft, setDraft }: { draft: Draft; setDraft: (next: Draft) => 
           key={color}
           type="button"
           aria-pressed={draft.color === color}
-          className="rounded border border-line px-2 py-1 text-sm"
+          className={pressed(draft.color === color)}
           onClick={() => setDraft({ ...draft, color })}
         >
           {t(COLOR_LABEL[color])}
@@ -104,13 +106,37 @@ function History({ draft, setDraft }: { draft: Draft; setDraft: (next: Draft) =>
       >
         {t('measure.clear')}
       </button>
-      <button
-        type="button"
-        className="rounded border border-line px-2 py-1 text-sm"
-        onClick={() => setDraft(closeArea(draft))}
-      >
-        {t('measure.closeArea')}
-      </button>
+      {draft.tool === 'area' ? (
+        <button
+          type="button"
+          className="rounded border border-line px-2 py-1 text-sm"
+          onClick={() => setDraft(closeArea(draft))}
+        >
+          {t('measure.closeArea')}
+        </button>
+      ) : null}
+      {draft.tool === 'path' ? (
+        <button
+          type="button"
+          className="rounded border border-line px-2 py-1 text-sm"
+          disabled={draft.pending.length < 2}
+          onClick={() => setDraft(finishPath(draft))}
+        >
+          {t('measure.finishPath')}
+        </button>
+      ) : null}
     </div>
   );
+}
+
+function Hint({ tool }: { tool: Tool }) {
+  if (tool === 'angle') return <p className="text-xs text-muted">{t('measure.angleHint')}</p>;
+  if (tool === 'path') return <p className="text-xs text-muted">{t('measure.pathHint')}</p>;
+  return <p className="text-xs text-muted">{t('measure.pixelNote')}</p>;
+}
+
+function pressed(on: boolean): string {
+  return on
+    ? 'rounded border border-action bg-active px-2 py-1 text-sm'
+    : 'rounded border border-line px-2 py-1 text-sm';
 }

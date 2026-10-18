@@ -30,6 +30,48 @@ describe('Mode Snapshot', () => {
     expect(save).toBeEnabled();
   });
 
+  it('titik referensi kecil dan geser tampilan tidak ada', async () => {
+    renderApp('/live/snapshot', {
+      role: 'ahli_ukur',
+      frozen: FROZEN,
+      routes: routes([
+        [0, 0],
+        [200, 0],
+      ]),
+    });
+    await userEvent.click(await screen.findByRole('button', { name: 'Terima' }));
+    const node = screen.getAllByRole('button', { name: /Titik/ })[0];
+    if (!node) throw new Error('titik hilang');
+    expect(node).toHaveStyle({ width: '24px', height: '24px' });
+    expect(node.querySelector('[data-dot]')).toHaveStyle({ width: '4px', height: '4px' });
+    expect(screen.queryByRole('button', { name: 'Geser tampilan' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Jalur' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sudut' })).toBeInTheDocument();
+  });
+
+  it('frame beku yang lebih besar menawarkan piksel asli', async () => {
+    renderApp('/live/snapshot', {
+      role: 'ahli_ukur',
+      frozen: FROZEN,
+      routes: {
+        'GET /config/thresholds': thresholds(),
+        [`GET /measure/context/${FROZEN.frameId}`]: {
+          ...context([]),
+          width: 1920,
+          height: 1080,
+          shown_width: 1280,
+          shown_height: 720,
+        },
+        'POST /measure/edge': { risk: false },
+      },
+    });
+    const native = await screen.findByRole('button', { name: 'Asli' });
+    expect(native).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('1280×720 / 1920×1080')).toBeInTheDocument();
+    await userEvent.click(native);
+    expect(native).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('satu titik laser meminta klik manual', async () => {
     renderApp('/live/snapshot', {
       role: 'ahli_ukur',

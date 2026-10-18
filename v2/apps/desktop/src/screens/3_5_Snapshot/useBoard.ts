@@ -17,6 +17,7 @@ import {
   type Preview,
   type XY,
 } from '../../measure/draft';
+import type { Detail } from '../../measure/detail';
 import { toSaved, useMeasureDraft } from '../../measure/store';
 import { useSession } from '../../session/SessionContext';
 import { limitsFromThresholds } from '../2_Misi/preview';
@@ -28,12 +29,16 @@ export function useBoard() {
   const store = useMeasureDraft();
   const navigate = useNavigate();
   const { client } = useEngine();
-  const loaded = useFrameContext(session.frozen?.frameId);
+  const [detail, setDetail] = useState<Detail>('display');
+  const frameId = session.frozen?.frameId;
+  useEffect(() => {
+    setDetail('display');
+  }, [frameId]);
+  const loaded = useFrameContext(frameId, detail);
   const watched = useMemo(() => watchedPoints(store.draft), [store.draft]);
   const edge = useEdge(session.frozen?.frameId, watched);
   const [laserMode, setLaserMode] = useState<'ask' | 'manual'>('ask');
   const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState<XY>({ x: 0, y: 0 });
   const [error, setError] = useState('');
   const [askResume, setAskResume] = useState(false);
   useBoardEffects(
@@ -54,8 +59,8 @@ export function useBoard() {
     setLaserMode,
     zoom,
     setZoom,
-    pan,
-    setPan,
+    detail,
+    setDetail,
     error,
     askResume,
     setAskResume,
