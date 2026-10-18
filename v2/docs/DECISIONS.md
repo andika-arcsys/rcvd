@@ -114,6 +114,13 @@ Pembungkus sidecar pada ADR ini **digantikan oleh ADR-016**. Python 3.12 dan Fas
 - **Alternatif.** Mempertahankan Tauri (installer kecil, tetapi butuh Rust dan uji NSIS). Electron (lebih berat).
 - **Konsekuensi.** Satu bahasa untuk layanan. Tidak ada pemasang. Operator menjalankan `setup.bat` lalu `start.bat`. Layar memakai hash (`/#/dashboard`) karena beberapa jalur (`/gallery`, `/dashboard`, `/pims`) sudah menjadi API. Mode GPU tetap: model dimuat saat fitur dibuka, satu pekerja, pekerja dimatikan bila VRAM tidak kembali ke garis dasar. Bila TensorFlow terpasang, memory growth diaktifkan; TensorFlow bukan runtime produksi.
 
+## ADR-017 Jarak laser 10 cm dan pita RMS kamera
+
+- **Konteks.** D-05 dan D-45 kosong, jadi uji batang menolak dan skrip kalibrasi kamera tidak menulis berkas.
+- **Keputusan.** `laser.ref_cm` = 10. SUMBER tim: dua titik laser berjarak 10 cm. Skala = 0,10 m dibagi jarak piksel kedua titik. `camera.rms_good_px` = 0,5 dan `camera.rms_max_px` = 1,0. USULAN, praktik umum kalibrasi OpenCV, bukan angka prosedur JOB Tomori. RMS ≤ 0,5 diterima. Di atas 0,5 sampai 1,0 diterima dengan peringatan dan berkas tetap ditulis. Di atas 1,0 ditolak dan berkas tidak ditulis. Kalibrasi laser tetap jalan tanpa file kamera. Status maksimal pada kasus itu tetap ESTIMATE_ONLY.
+- **Vektor emas.** `laser_10cm_200px`: dua titik berjarak 200 px dengan referensi 0,10 m menghasilkan skala 0,0005 m/px dan status ESTIMATE_ONLY. Python dan TypeScript membaca vektor yang sama.
+- **Konsekuensi.** Mengubah kedua ambang RMS hanya lewat `config/thresholds.yaml`. Angka itu boleh diganti tim tanpa mengubah kode.
+
 ## Keputusan yang masih terbuka (tidak dapat diputuskan dari sumber)
 
 | ID | Pertanyaan | Dampak |

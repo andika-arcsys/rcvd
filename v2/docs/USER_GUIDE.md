@@ -1,5 +1,7 @@
 # Panduan singkat operator
 
+Pemasangan dan menjalankan ada di `docs/PANDUAN_INSTALASI.md`. Jarak dua titik laser yang dipakai ukuran adalah 10 cm.
+
 Bahasa Indonesia. Alur satu survei. Layar yang datanya belum diisi menampilkan tanda hubung atau pesan kosong, bukan angka perkiraan.
 
 1. Splash. Tunggu cek selesai. Bila tidak ada GPU, pilih lanjut mode terbatas. HydroDetect dan SpatialSight tidak dipakai.

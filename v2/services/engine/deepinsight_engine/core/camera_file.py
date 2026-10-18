@@ -35,13 +35,13 @@ class CameraFile(_Strict):
         return self
 
 
-def rms_decision(rms: float, limit: float | None) -> str:
-    """missing bila ambang belum diisi. reject bila RMS melewati ambang. accept selain itu."""
-    if limit is None:
-        return "missing"
-    if rms > limit:
-        return "reject"
-    return "accept"
+def rms_decision(rms: float, good_px: float, max_px: float) -> str:
+    """accept bila RMS <= good. warn sampai max. reject di atas max."""
+    if rms <= good_px:
+        return "accept"
+    if rms <= max_px:
+        return "warn"
+    return "reject"
 
 
 def camera_ids(folder: Path) -> list[str]:

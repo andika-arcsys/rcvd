@@ -35,7 +35,6 @@ class Calibration(_Strict):
     canny_high: float
     camera_file_required_for_valid: bool
     min_baseline_px: int
-    rms_reprojection_max: float | None = None
 
     @model_validator(mode="after")
     def _ordered(self) -> Calibration:
@@ -111,8 +110,21 @@ class Cache(_Strict):
     max_mb: int
 
 
+class CameraThresholds(_Strict):
+    """Pita RMS reprojeksi. USULAN, praktik umum OpenCV, bukan angka prosedur JOB Tomori."""
+
+    rms_good_px: float
+    rms_max_px: float
+
+    @model_validator(mode="after")
+    def _band(self) -> CameraThresholds:
+        if not 0 < self.rms_good_px <= self.rms_max_px:
+            raise ValueError("rms_good_px harus positif dan tidak di atas rms_max_px")
+        return self
+
+
 class Laser(_Strict):
-    """Jarak dua titik laser. null sampai tim mengisi D-05. Hue mengikuti OpenCV 0–180."""
+    """Jarak dua titik laser, sentimeter. Hue mengikuti OpenCV 0–180."""
 
     ref_cm: float | None = None
     hue_low: int
@@ -155,6 +167,7 @@ class Thresholds(_Strict):
     performance: Performance
     video: Video
     cache: Cache
+    camera: CameraThresholds
     laser: Laser
     interaction: Interaction
 

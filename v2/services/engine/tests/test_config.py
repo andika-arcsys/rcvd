@@ -24,7 +24,9 @@ def test_repo_config_loads(config_dir: Path) -> None:
     assert thr.measure.heron_rel_tol == 1e-9
     assert thr.measure.undistort_iterations == 20
     assert thr.calibration.min_baseline_px == 150
-    assert thr.laser.ref_cm is None
+    assert thr.laser.ref_cm == 10
+    assert thr.camera.rms_good_px == 0.5
+    assert thr.camera.rms_max_px == 1.0
     assert settings.video.source.kind is None
     assert settings.video.recording.enabled is False
     assert settings.video.turbidity.rms_low_max is None

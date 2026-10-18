@@ -3688,17 +3688,6 @@
           "min_baseline_px": {
             "type": "integer",
             "title": "Min Baseline Px"
-          },
-          "rms_reprojection_max": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Rms Reprojection Max"
           }
         },
         "additionalProperties": false,
@@ -3716,6 +3705,26 @@
           "min_baseline_px"
         ],
         "title": "Calibration"
+      },
+      "CameraThresholds": {
+        "properties": {
+          "rms_good_px": {
+            "type": "number",
+            "title": "Rms Good Px"
+          },
+          "rms_max_px": {
+            "type": "number",
+            "title": "Rms Max Px"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rms_good_px",
+          "rms_max_px"
+        ],
+        "title": "CameraThresholds",
+        "description": "Pita RMS reprojeksi. USULAN, praktik umum OpenCV, bukan angka prosedur JOB Tomori."
       },
       "CameraView": {
         "properties": {
@@ -5036,7 +5045,7 @@
           "min_area_px"
         ],
         "title": "Laser",
-        "description": "Jarak dua titik laser. null sampai tim mengisi D-05. Hue mengikuti OpenCV 0–180."
+        "description": "Jarak dua titik laser, sentimeter. Hue mengikuti OpenCV 0–180."
       },
       "LaserOut": {
         "properties": {
@@ -7100,6 +7109,9 @@
           "cache": {
             "$ref": "#/components/schemas/Cache"
           },
+          "camera": {
+            "$ref": "#/components/schemas/CameraThresholds"
+          },
           "laser": {
             "$ref": "#/components/schemas/Laser"
           },
@@ -7122,6 +7134,7 @@
           "performance",
           "video",
           "cache",
+          "camera",
           "laser",
           "interaction"
         ],

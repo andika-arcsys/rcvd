@@ -13,7 +13,6 @@ calibration:
   canny_high: 150                 # USULAN Q-KAL-5 – perlu konfirmasi tim
   camera_file_required_for_valid: true  # SUMBER: tanpa file kamera status maksimal ESTIMATE_ONLY
   min_baseline_px: 150            # USULAN – perlu konfirmasi tim (jarak minimum dua node kalibrasi)
-  rms_reprojection_max: null      # D-45 belum diisi tim. Skrip kalibrasi menolak menulis berkas bila ini kosong.
 
 rod_test:
   length_m: 1.0                   # SUMBER
@@ -74,8 +73,12 @@ video:
 cache:
   max_mb: 2048                    # USULAN – perlu konfirmasi tim
 
+camera:
+  rms_good_px: 0.5                # USULAN – praktik umum OpenCV. RMS <= nilai ini diterima.
+  rms_max_px: 1.0                 # USULAN – praktik umum OpenCV. Di atas good sampai nilai ini: peringatan. Di atas ini: ditolak.
+
 laser:
-  ref_cm: null                    # D-05 belum diisi tim. Jangan diisi dengan angka contoh.
+  ref_cm: 10                      # SUMBER: tim. Dua titik laser berjarak 10 cm.
   # USULAN Q-KAL-5. OpenCV hue 0–180. Belum diukur pada laser lapangan.
   hue_low: 0
   hue_high: 10

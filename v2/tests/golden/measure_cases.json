@@ -36,6 +36,21 @@
       }
     },
     {
+      "name": "laser_10cm_200px",
+      "op": "calibrate",
+      "p1": [0, 0],
+      "p2": [200, 0],
+      "ref_m": 0.1,
+      "click_sigma_px": 1.5,
+      "camera": null,
+      "expect": {
+        "scale_m_per_px": 0.0005,
+        "rel_uncert": 0.021213203435596427,
+        "status": "ESTIMATE_ONLY",
+        "baseline_hint": null
+      }
+    },
+    {
       "name": "kalibrasi_200px_tanpa_kamera_maks_estimate",
       "op": "calibrate",
       "p1": [0, 0],

@@ -9,7 +9,7 @@ Angka teknis yang belum diisi tim tidak dikarang. Uji kode memakai fixture di `t
 | D-07 | Pemetaan akhir kontroler ROV | `config/controls.yaml` | 5 | Usulan keyboard dan gamepad Xbox sudah ada. Tim masih perlu mengonfirmasi kontroler yang dipakai. |
 | D-22 | Ambang kekeruhan (RMS kontras dan varians Laplacian) | `config/video.yaml` → `turbidity` | 5 | Sengaja `null`. Panel kualitas menampilkan "belum diisi", bukan kelas rendah/sedang/tinggi. |
 | D-04 | File kalibrasi kamera (intrinsik + distorsi) | `config/cameras/<id>.yaml` | 4, 7, 8 | Folder ada, berkas yaml tidak ada. Kalibrasi lensa gagal. Status ukur maksimal ESTIMATE_ONLY. |
-| D-05 | Jarak sebenarnya dua titik laser (cm) | `config/thresholds.yaml` → `laser.ref_cm` | 4, 7 | Sengaja `null`. Uji batang menolak dengan LASER-001. Uji otomatis menyalin config dan mengisi 10 cm hanya di folder sementara. |
+| D-05 | Jarak sebenarnya dua titik laser (cm) | `config/thresholds.yaml` → `laser.ref_cm` | 4, 7 | Sudah diisi `10` (SUMBER tim). Dua titik laser berjarak 10 cm. Bila dikosongkan lagi, uji batang menolak dengan LASER-001. |
 | D-06 | Foto batang uji 1 m | `samples/rod/` | 4, 7 | Tidak ada di repositori. Bila ring buffer kosong, FREEZE mendorong satu frame sintetis 32×24 dan UI menandainya sebagai frame uji, bukan foto batang. |
 | D-24 | Ambang HSV laser dan Canny tepi | `config/thresholds.yaml` → `laser.hue_*`, `calibration.canny_*` | 7 | USULAN Q-KAL-5, bukan hasil ukur lapangan. Hue OpenCV 0–180. Satu blob tetap minta klik manual. |
 | D-20 | Daftar pipa lapangan (nama, diameter, OD, KP) | `config/pipelines.yaml` | 4, 8 | Satu pipa fixture `contoh`, diameter 16", tanpa KP dan tanpa OD. Bukan data Sinorang. |
@@ -35,6 +35,6 @@ Angka teknis yang belum diisi tim tidak dikarang. Uji kode memakai fixture di `t
 | D-41 | Rumus biaya dan emisi | `config/sustainability.yaml` | 9 | Rumus `null`. KPI jam, biaya, dan emisi tampil "–". Jumlah temuan dihitung dari keputusan. |
 | D-43 | Folder unggah paket (jaringan atau USB) | pengaturan `upload_dir` | 9 | Kosong. Paket tetap di konsol dan status unggah "pending". |
 | D-44 | Kebijakan simpan dan purge arsip | belum ada berkas | 9 | Tidak ada tombol hapus. Durasi simpan = TIM. |
-| D-45 | Ambang RMS reprojeksi kalibrasi kamera | `config/thresholds.yaml` → `calibration.rms_reprojection_max` | rilis | Sengaja `null`. `scripts/calibrate_camera.py` menolak menulis berkas sampai tim mengisi ambang. |
+| D-45 | Ambang RMS reprojeksi kalibrasi kamera | `config/thresholds.yaml` → `camera.rms_good_px`, `camera.rms_max_px` | rilis | Sudah diisi USULAN: 0,5 px diterima, sampai 1,0 px peringatan, di atas 1,0 px ditolak. Bukan angka prosedur JOB Tomori. |
 
 ID D-22 di berkas ini adalah ambang kekeruhan. Dokumen fase memakai nomor yang sama untuk riwayat span. Baris kekeruhan tidak ditimpa. Riwayat span dicatat sebagai D-25 dan tab Riwayat tetap kosong sampai data itu ada.

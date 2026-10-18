@@ -1,5 +1,7 @@
 # Menjalankan di laptop inspeksi
 
+Panduan operator ada di `docs/PANDUAN_INSTALASI.md`. Berkas ini untuk tim pengembang: apa yang dikirim balik dari laptop inspeksi.
+
 Mesin pengembangan tidak punya GPU NVIDIA. Angka perangkat keras laptop inspeksi belum diisi (D-01). Jangan menyalin nomor CUDA dari dokumen lain sebelum dicatat dari laptop yang dipakai.
 
 Aplikasi adalah layanan web. Python 3.12 menyajikan API dan tampilan. Browser membuka `http://127.0.0.1:8000/`. Tidak ada pemasang, Rust, atau Tauri.

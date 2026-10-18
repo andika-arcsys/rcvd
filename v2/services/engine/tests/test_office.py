@@ -96,7 +96,13 @@ def _draft(client: TestClient, camera_id: str | None) -> None:
 
 
 def test_rod_without_laser_distance_is_rejected(tmp_path: Path) -> None:
-    with _client(tmp_path) as client:
+    cfg = tmp_path / "cfg"
+    shutil.copytree(REPO_CONFIG, cfg)
+    path = cfg / "thresholds.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["laser"]["ref_cm"] = None
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    with _client(tmp_path / "data", cfg) as client:
         _draft(client, None)
         response = client.post(
             "/missions/current/rod-test",

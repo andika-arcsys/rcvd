@@ -33,15 +33,14 @@ def calibrate_folder(
         settings = load_settings(config_dir)
     except EngineError as exc:
         return 2, exc.spec.message_id
-    limit = settings.thresholds.calibration.rms_reprojection_max
-    if limit is None:
-        return 2, "Ambang RMS kalibrasi belum diisi (D-45). Berkas tidak ditulis."
+    camera = settings.thresholds.camera
     found = _calibrate(images, square_mm, corners_cols, corners_rows)
     if isinstance(found, str):
         return 2, found
     rms, matrix, dist, width, height = found
-    if rms_decision(rms, limit) == "reject":
-        return 1, f"RMS {rms:.6f} melewati ambang {limit}. Berkas tidak ditulis."
+    band = rms_decision(rms, camera.rms_good_px, camera.rms_max_px)
+    if band == "reject":
+        return 1, (f"RMS {rms:.6f} melewati ambang {camera.rms_max_px}. Berkas tidak ditulis.")
     _write(
         config_dir,
         camera_id,
@@ -53,7 +52,13 @@ def calibrate_folder(
         matrix,
         dist,
         rms,
+        band == "warn",
     )
+    if band == "warn":
+        return 0, (
+            f"Kalibrasi {camera_id} ditulis dengan peringatan. "
+            f"RMS {rms:.6f} di atas {camera.rms_good_px} dan tidak di atas {camera.rms_max_px}."
+        )
     return 0, f"Kalibrasi {camera_id} ditulis. RMS {rms:.6f}."
 
 
@@ -116,6 +121,7 @@ def _write(
     matrix: list[float],
     dist: list[float],
     rms: float,
+    warn: bool,
 ) -> None:
     payload = CameraFile(
         schema_version=1,
@@ -132,7 +138,8 @@ def _write(
     )
     target = config_dir / "cameras" / f"{camera_id}.yaml"
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        yaml.safe_dump(payload.model_dump(), sort_keys=False, allow_unicode=True),
-        encoding="utf-8",
-    )
+    body = yaml.safe_dump(payload.model_dump(), sort_keys=False, allow_unicode=True)
+    if warn:
+        note = "# RMS pada pita peringatan: di atas rms_good_px, tidak di atas rms_max_px.\n"
+        body = note + body
+    target.write_text(body, encoding="utf-8")

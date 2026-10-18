@@ -1,8 +1,8 @@
 # Templat kalibrasi kamera. Nama berkas diawali garis bawah, jadi tidak muncul sebagai kamera.
 # Salin menjadi config/cameras/<id>.yaml lewat scripts/calibrate_camera.py.
-# Jangan mengisi angka di berkas ini dengan tangan. RMS di atas ambang
-# calibration.rms_reprojection_max membuat skrip menolak menulis hasil.
-# Bila ambang itu masih null (D-45), skrip juga menolak.
+# Jangan mengisi angka di berkas ini dengan tangan.
+# RMS <= camera.rms_good_px diterima. Sampai camera.rms_max_px diterima
+# dengan peringatan. Di atas rms_max_px, skrip menolak menulis hasil.
 schema_version: 1
 id: _template
 square_mm: null

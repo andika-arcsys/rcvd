@@ -1099,8 +1099,16 @@ export interface components {
             camera_file_required_for_valid: boolean;
             /** Min Baseline Px */
             min_baseline_px: number;
-            /** Rms Reprojection Max */
-            rms_reprojection_max?: number | null;
+        };
+        /**
+         * CameraThresholds
+         * @description Pita RMS reprojeksi. USULAN, praktik umum OpenCV, bukan angka prosedur JOB Tomori.
+         */
+        CameraThresholds: {
+            /** Rms Good Px */
+            rms_good_px: number;
+            /** Rms Max Px */
+            rms_max_px: number;
         };
         /** CameraView */
         CameraView: {
@@ -1493,7 +1501,7 @@ export interface components {
         };
         /**
          * Laser
-         * @description Jarak dua titik laser. null sampai tim mengisi D-05. Hue mengikuti OpenCV 0–180.
+         * @description Jarak dua titik laser, sentimeter. Hue mengikuti OpenCV 0–180.
          */
         Laser: {
             /** Ref Cm */
@@ -2190,6 +2198,7 @@ export interface components {
             performance: components["schemas"]["Performance"];
             video: components["schemas"]["Video"];
             cache: components["schemas"]["Cache"];
+            camera: components["schemas"]["CameraThresholds"];
             laser: components["schemas"]["Laser"];
             interaction: components["schemas"]["Interaction"];
         };
