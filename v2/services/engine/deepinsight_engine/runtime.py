@@ -70,6 +70,7 @@ class Runtime:
         self.watchdog = Watchdog(perf, probe, self._display_fps, time.monotonic)
 
     def start(self) -> None:
+        self._stop.clear()
         self._thread = threading.Thread(target=self._loop, name="di-watchdog", daemon=True)
         self._thread.start()
         self._open_configured_source()
@@ -232,6 +233,10 @@ class Runtime:
         }, jpeg
 
     def close_session(self) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=1)
+            self._thread = None
         self._capture.stop()
         self.models.close()
         self.cache.clear()

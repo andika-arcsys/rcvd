@@ -169,5 +169,8 @@ describe('Fase 9', () => {
       'href',
       '/pengaturan',
     );
+    expect(
+      screen.getByRole('button', { name: 'Unduh diagnostik hanya untuk Teknisi program.' }),
+    ).toBeDisabled();
   });
 });

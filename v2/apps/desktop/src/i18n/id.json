@@ -448,7 +448,9 @@
     "training": "Label dari Review",
     "retrain": "Mulai pelatihan ulang",
     "release": "Rilis versi model",
-    "current": "Rilis tercatat"
+    "current": "Rilis tercatat",
+    "exportDiag": "Unduh diagnostik",
+    "exportDiagDenied": "Unduh diagnostik hanya untuk Teknisi program."
   },
   "sustain": {
     "hours": "Jam inspeksi",

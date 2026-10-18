@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import threading
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -62,3 +63,5 @@ def test_synthetic_freeze_is_raw_png_outside_cache(client: TestClient, tmp_path:
     assert closed.json()["state"] == "optical"
     assert closed.json()["cache_mb"] == 0
     assert png.is_file()
+    names = [item.name for item in threading.enumerate()]
+    assert "di-watchdog" not in names
