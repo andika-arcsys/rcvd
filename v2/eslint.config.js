@@ -10,8 +10,6 @@ export default tseslint.config(
       '**/dist/**',
       '**/target/**',
       '.venv/**',
-      'deepenv/**',
-      'venv/**',
       'services/**',
       'mockups/**',
       'packages/shared/src/api.d.ts',

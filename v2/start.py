@@ -9,29 +9,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "services" / "engine"))
 
-from deepinsight_engine.envloc import configured_dir, same_env  # noqa: E402
 from deepinsight_engine.launch import prepare, serve  # noqa: E402
 
 
 def main() -> None:
     args = _args()
-    _report_python()
     settings, _label = prepare(ROOT, lan=args.lan)
     host = "0.0.0.0" if args.lan else settings.app.engine.host
     port = args.port if args.port is not None else settings.app.engine.port
     serve(host, port, ROOT / "config", open_browser=not args.no_browser)
-
-
-def _report_python() -> None:
-    print(f"Python: {sys.executable}")
-    print(f"Environment: {sys.prefix}")
-    if same_env(Path(sys.prefix), ROOT):
-        return
-    expected = configured_dir(ROOT)
-    print(
-        "Peringatan: Python ini bukan environment di env.cfg "
-        f"({expected}). Tetap dilanjutkan bila Python 3.12 dan paket lengkap."
-    )
 
 
 def _args() -> argparse.Namespace:

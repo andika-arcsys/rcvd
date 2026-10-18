@@ -7,13 +7,13 @@ Berkas ini menjelaskan cara mengisi `config/cameras/<id>.yaml`. Tanpa berkas itu
 Dari folder `v2`, setelah foto papan catur dikumpulkan. Di Windows:
 
 ```bat
-deepenv\Scripts\python scripts\calibrate_camera.py --images D:\kalibrasi\foto --squares 9x6 --square-mm 25 --camera-id rov01
+.venv\Scripts\python scripts\calibrate_camera.py --images D:\kalibrasi\foto --squares 9x6 --square-mm 25 --camera-id rov01
 ```
 
 Di Linux, dari folder yang sama:
 
 ```bash
-deepenv/bin/python scripts/calibrate_camera.py \
+.venv/bin/python scripts/calibrate_camera.py \
   --images /jalur/foto \
   --squares 9x6 \
   --square-mm 25 \

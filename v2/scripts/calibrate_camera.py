@@ -2,7 +2,7 @@
 
 Dari folder v2. `--squares` adalah jumlah sudut dalam, bukan jumlah kotak:
 
-    deepenv\\Scripts\\python scripts\\calibrate_camera.py --images D:\\kalibrasi\\foto ^
+    .venv\\Scripts\\python scripts\\calibrate_camera.py --images D:\\kalibrasi\\foto ^
         --squares 9x6 --square-mm 25 --camera-id rov01
 """
 

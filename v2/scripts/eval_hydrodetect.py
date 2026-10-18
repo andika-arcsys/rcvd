@@ -2,7 +2,7 @@
 
 Jalankan di PC inspeksi NVIDIA, dari folder v2:
 
-    deepenv/bin/python scripts/eval_hydrodetect.py
+    .venv/bin/python scripts/eval_hydrodetect.py
 
 Butuh D-10 (model.onnx), D-12 (metadata.json), dan D-17 (samples/labeled).
 Tanpa data itu skrip berhenti dengan kode 2 dan tidak menulis angka mAP.

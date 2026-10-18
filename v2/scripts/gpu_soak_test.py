@@ -2,7 +2,7 @@
 
 Jalankan di PC inspeksi NVIDIA, dari folder v2:
 
-    deepenv/bin/python scripts/gpu_soak_test.py
+    .venv/bin/python scripts/gpu_soak_test.py
 
 Tanpa GPU skrip berhenti dengan kode 2. Itu bukan kelulusan.
 """
