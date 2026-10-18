@@ -62,7 +62,7 @@ def test_ensure_ui_uses_existing_build(tmp_path: Path) -> None:
 
 def test_ensure_ui_explains_missing_pnpm(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("deepinsight_engine.launch.shutil.which", lambda _name: None)
-    with pytest.raises(SystemExit, match="pnpm tidak ditemukan"):
+    with pytest.raises(SystemExit, match="pnpm tidak dipakai"):
         ensure_ui(tmp_path)
 
 

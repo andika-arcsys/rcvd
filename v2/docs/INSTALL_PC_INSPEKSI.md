@@ -20,7 +20,7 @@ Aplikasi adalah layanan web. Python 3.12 menyajikan API dan tampilan. Browser me
 1. Salin folder proyek ke laptop.
 2. `deepenv` sudah ada dan Python-nya 3.12. Klik dua kali `setup.bat`. Skrip tidak membuat environment. Ia memasang `requirements-gpu.txt` atau `requirements-cpu.txt` ke `deepenv` dan menulis `logs/setup.log`.
 3. Salin bobot model ke sebuah folder di luar proyek, misalnya `D:\DeepInsight\models`, dengan susunan yang sama seperti `config/models.yaml` (`hydrodetect/exp5/model.onnx`, `spatialsight/model.onnx`). Model tidak ikut skrip mulai.
-4. Klik dua kali `start.bat`, atau `deepenv\Scripts\activate` lalu `python start.py`. Bila `apps/desktop/dist` belum ada, UI dibangun dulu. Browser terbuka sendiri.
+4. Klik dua kali `start.bat`, atau dari prompt `(deepenv)`: `python start.py`. Tampilan ada di `apps/desktop/dist`. Browser terbuka sendiri. `pnpm` tidak diperlukan di laptop.
 5. Buka sebagai Ketua tim atau Teknisi program. Di Pengaturan, isi folder model itu dan simpan. Perubahan masuk audit.
 6. Isi config yang masih kosong hanya dengan data tim: pipa, video, kamera, `risk.yaml`, `sustainability.yaml`, dan ambang RMS kalibrasi. Berkas kosong menampilkan pesan, tidak menjatuhkan aplikasi.
 

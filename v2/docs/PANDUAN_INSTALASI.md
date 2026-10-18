@@ -133,7 +133,7 @@ conda activate deepenv
 start.bat
 ```
 
-Prompt harus tetap `(deepenv)`. `start.bat` menjalankan `start.py` dengan Python environment itu. Biarkan jendela terbuka. Browser membuka `http://127.0.0.1:8000/`.
+Prompt harus tetap `(deepenv)`. `start.bat` menjalankan `start.py` dengan Python environment itu. Tampilan dibuka dari `apps\desktop\dist`. Tidak perlu `pnpm` dan tidak perlu Node. Biarkan jendela terbuka. Browser membuka `http://127.0.0.1:8000/`.
 
 ### 4.6 Bila Anda mengetik perintah sendiri
 
@@ -751,7 +751,7 @@ Kirim keluaran lengkap, kode keluar, `nvidia-smi`, `logs\pip-freeze.txt`, dan ve
 
 | Gejala | Langkah |
 | --- | --- |
-| `FileNotFoundError` pada `pnpm` saat `start.bat` | Tampilan belum dibangun. `pnpm` di Windows bernama `pnpm.cmd`. Pasang Node.js 20, `corepack enable`, lalu dari `v2`: `pnpm install` dan `pnpm --filter @deepinsight/desktop build`. Program lama di folder `web` tidak memakai langkah ini |
+| `'pnpm' is not recognized` | Tidak perlu `pnpm` di laptop. Paket Python dipasang `setup.bat` lewat pip. Tampilan sudah ada di `apps\desktop\dist`. `git pull`, lalu `start.bat` |
 | Prompt diawali `(base)` dan `python --version` 3.13 | Itu Anaconda. `conda deactivate`. Aplikasi memakai Python 3.12 di `deepenv` |
 | `cd v2` tidak menemukan folder | Masih di cabang `main`. `git fetch origin` lalu `git checkout cursor/panduan-environment-awam-ddf4` |
 | Prompt tidak diawali `(deepenv)` saat memasang paket | Berhenti. `cd /d D:\DeepInsight\v2` lalu `deepenv\Scripts\activate`. Jangan memasang paket |

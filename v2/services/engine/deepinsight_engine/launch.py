@@ -79,14 +79,9 @@ def _run_ui(cmd: list[str], root: Path) -> None:
 
 def _pnpm_missing() -> str:
     return (
-        "UI belum ada: apps\\desktop\\dist\\index.html. pnpm tidak ditemukan.\n"
-        "Program lama di folder web tidak memakai pnpm. Tampilan v2 dibangun sekali.\n"
-        "Pasang Node.js 20, lalu dari folder v2:\n"
-        "  corepack enable\n"
-        "  corepack prepare pnpm@10.33.4 --activate\n"
-        "  pnpm install\n"
-        "  pnpm --filter @deepinsight/desktop build\n"
-        "Setelah itu jalankan start.bat lagi."
+        "UI belum ada: apps\\desktop\\dist\\index.html.\n"
+        "Tampilan sudah ikut di dalam kode. Dari folder v2 jalankan git pull, lalu start.bat.\n"
+        "Paket Python dipasang dengan setup.bat (pip). pnpm tidak dipakai di laptop."
     )
 
 
