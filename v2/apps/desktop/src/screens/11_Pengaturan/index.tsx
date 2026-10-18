@@ -10,6 +10,18 @@ const ADMIN = new Set(['ketua_tim', 'teknisi_program']);
 const ACTION =
   'rounded bg-action px-3 py-2 text-sm font-semibold text-bg disabled:bg-line disabled:text-muted';
 
+function putSetting(
+  client: ReturnType<typeof useEngine>['client'],
+  role: string,
+  key: string,
+  value: string,
+  apply: (body: View) => void,
+) {
+  void client.PUT('/settings', { body: { role, key, value } }).then(({ data: body }) => {
+    if (body) apply(body);
+  });
+}
+
 export default function PengaturanScreen() {
   const { client } = useEngine();
   const { role } = useSession();
@@ -32,13 +44,12 @@ export default function PengaturanScreen() {
         laser={laser}
         allowed={allowed}
         onChange={setLaser}
-        onSave={() => {
-          void client
-            .PUT('/settings', { body: { role, key: 'laser.ref_cm', value: laser } })
-            .then(({ data: body }) => {
-              if (body) setData(body);
-            });
-        }}
+        onSave={() => putSetting(client, role, 'laser.ref_cm', laser, setData)}
+      />
+      <ModelsPath
+        allowed={allowed}
+        current={data.models_dir}
+        onSave={(value) => putSetting(client, role, 'models_dir', value, setData)}
       />
       <p className="text-sm">
         {t('settings.upload')}: {data.upload_dir ?? t('common.dash')}
@@ -81,6 +92,38 @@ function Laser({
         {t('settings.save')}
       </button>
     </>
+  );
+}
+
+function ModelsPath({
+  allowed,
+  current,
+  onSave,
+}: {
+  allowed: boolean;
+  current: string;
+  onSave: (value: string) => void;
+}) {
+  const [value, setValue] = useState(current);
+  return (
+    <label className="text-xs text-muted">
+      {t('settings.models')}
+      <input
+        aria-label={t('settings.models')}
+        className="ml-2 rounded border border-line bg-bg px-2 py-1"
+        value={value}
+        disabled={!allowed}
+        onChange={(event) => setValue(event.target.value)}
+      />
+      <button
+        type="button"
+        className="ml-2 text-info disabled:text-muted"
+        disabled={!allowed || value.trim() === ''}
+        onClick={() => onSave(value.trim())}
+      >
+        {t('settings.saveModels')}
+      </button>
+    </label>
   );
 }
 

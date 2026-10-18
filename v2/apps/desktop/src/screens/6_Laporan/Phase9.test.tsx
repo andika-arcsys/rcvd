@@ -26,6 +26,7 @@ const SETTINGS = {
   critical_inch_8: 5.32,
   presets: ['light'],
   upload_dir: null,
+  models_dir: 'models',
   users: ['uji'],
 };
 

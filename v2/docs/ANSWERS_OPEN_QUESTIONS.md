@@ -134,7 +134,7 @@ Simpan sebagai `config/roles.yaml`. Komponen Nav harus mendukung status `disable
 | ID | Jawaban | Status |
 | --- | --- | --- |
 | Q-UI-1 | Target 1920×1080; minimum 1366×768. Layout fleksibel (flex/grid) seperti mockup; mockup 1440×900 adalah acuan proporsi. | Keputusan |
-| Q-UI-2 | Aplikasi **desktop Tauri**. Tidak ada versi web pada versi 1. Abaikan sebutan "desktop/web" di README awal. | Keputusan |
+| Q-UI-2 | Digantikan ADR-016: layanan Python 3.12 di laptop, antarmuka React di browser. Bukan Tauri, bukan installer NSIS. | Keputusan |
 | Q-UI-3 | Kekeruhan = kontras RMS + nilai variansi Laplacian; ambang rendah/sedang/tinggi di config. | USULAN |
 | Q-UI-4 | Agregasi per bulan kalender dari data misi tertutup; periode bawaan 12 bulan terakhir. | Keputusan |
 | Q-UI-5 | Antarmuka Bahasa Indonesia. Zona waktu mengikuti sistem operasi (WITA untuk lokasi Sulawesi), disimpan UTC di data. | Keputusan |

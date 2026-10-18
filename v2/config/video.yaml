@@ -1,4 +1,13 @@
-# D-02 sumber video lapangan belum diisi. null = engine tidak membuka perangkat saat mulai.
+# Templat sumber video. Engine memvalidasi berkas ini saat mulai.
+# kind null = tidak membuka kamera, berkas, atau RTSP saat mulai. Itu bukan kegagalan.
+# D-02: isi salah satu sumber bila tim sudah memberi jalur lapangan.
+#   kind: file    dan path: jalur berkas video
+#   kind: camera  dan device_index: indeks USB
+#   kind: rtsp    dan rtsp_url: alamat aliran
+# Kolom yang tidak dipakai tetap null. Jangan mengisi angka contoh.
+# recording.enabled: rekaman video penuh di luar paket bukti. Biarkan false sampai diminta.
+# turbidity: D-22. Keempat batas null menampilkan "belum diisi", bukan kelas rendah.
+# Isi keempatnya bersama-sama, atau biarkan kosong. Batas bawah harus lebih kecil dari atas.
 schema_version: 1
 source:
   kind: null
@@ -7,7 +16,6 @@ source:
   rtsp_url: null
 recording:
   enabled: false
-# Q-UI-3 ambang kekeruhan (RMS kontras dan varians Laplacian) belum diisi tim.
 turbidity:
   rms_low_max: null
   rms_medium_max: null

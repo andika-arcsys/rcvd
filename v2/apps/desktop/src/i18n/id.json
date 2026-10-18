@@ -478,6 +478,8 @@
     "limit16": "Batas kritis 16 inci (m)",
     "limit8": "Batas kritis 8 inci (m)",
     "presets": "Preset AquaClear",
+    "models": "Folder model",
+    "saveModels": "Simpan folder model",
     "upload": "Lokasi unggah",
     "users": "Pengguna",
     "save": "Simpan perubahan",

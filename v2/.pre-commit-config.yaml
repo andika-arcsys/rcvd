@@ -19,7 +19,7 @@ repos:
         entry: pnpm exec eslint
         language: system
         types_or: [ts, tsx, javascript]
-        exclude: ^(services|mockups|apps/desktop/src-tauri)/
+        exclude: ^(services|mockups|archive)/
       - id: prettier
         name: prettier
         entry: pnpm exec prettier --check

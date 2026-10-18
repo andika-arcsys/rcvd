@@ -55,6 +55,9 @@ class ModelManager:
         self.state = "optical"
         self.killed_for_vram = False
 
+    def set_models_dir(self, models_dir: Path) -> None:
+        self._models_dir = models_dir
+
     @property
     def gpu_available(self) -> bool:
         return self._baseline is not None

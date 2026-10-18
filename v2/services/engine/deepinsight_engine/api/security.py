@@ -1,4 +1,4 @@
-"""Token localhost: dibuat Rust per peluncuran, dikirim UI di header."""
+"""Token opsional. Bila diisi, UI mengirimnya di header. Wajib saat env=prod."""
 
 from __future__ import annotations
 

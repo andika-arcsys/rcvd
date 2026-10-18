@@ -68,7 +68,9 @@ def _config_with_laser(tmp_path: Path, camera: bool) -> Path:
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
     if camera:
         (cfg / "cameras").mkdir(exist_ok=True)
-        (cfg / "cameras" / "contoh.yaml").write_text("id: contoh\n", encoding="utf-8")
+        (cfg / "cameras" / "contoh.yaml").write_text(
+            "schema_version: 1\nid: contoh\n", encoding="utf-8"
+        )
     return cfg
 
 

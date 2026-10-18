@@ -3,19 +3,17 @@ schema_version: 1
 
 app:
   name: DeepInsight
-  version: 0.1.0
+  version: 0.9.0-rc1
   env: dev            # dev | prod. Token wajib bila env = prod
   language: id
   data_dir: null      # null = lokasi bawaan OS (%LOCALAPPDATA%/DeepInsight di Windows)
 
 engine:
   host: 127.0.0.1
-  port: 8765
+  port: 8000
   cors_origins:
     - http://localhost:5173
     - http://127.0.0.1:5173
-    - tauri://localhost
-    - http://tauri.localhost
 
 logging:
   level: INFO

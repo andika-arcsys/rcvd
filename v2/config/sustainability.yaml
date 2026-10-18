@@ -1,4 +1,10 @@
-# D-41 belum diisi tim. Rumus kosong: KPI jam, biaya, dan emisi tampil "–".
+# Templat rumus sustainability (D-41). Null menampilkan "–", bukan nol dan bukan angka contoh.
+# Engine tidak mengevaluasi teks rumus. Isi nanti adalah rumus yang disepakati tim,
+# bukan ekspresi yang dijalankan sebagai kode.
+# hours_formula: jam inspeksi
+# cost_formula: biaya yang dihemat
+# emission_formula: emisi yang dihindari
+# Jumlah temuan terkonfirmasi dihitung dari keputusan Review, bukan dari rumus ini.
 schema_version: 1
 hours_formula: null
 cost_formula: null

@@ -154,10 +154,9 @@ class Office:
         ]
 
     def cameras(self) -> list[str]:
-        folder = self.config_dir / "cameras"
-        if not folder.is_dir():
-            return []
-        return sorted(path.stem for path in folder.glob("*.yaml"))
+        from ..core.camera_file import camera_ids
+
+        return camera_ids(self.config_dir / "cameras")
 
     def current(self) -> MissionView | None:
         with self.db.connect() as conn:

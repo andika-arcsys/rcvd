@@ -45,16 +45,16 @@ Aturan ini juga menjelaskan cara membaca format mockup: `<sc-for>` adalah perula
 
 | Bagian | Teknologi | Tugas |
 | --- | --- | --- |
-| `apps/desktop` | Tauri 2, React, TypeScript, Vite, Tailwind | Tampilan saja. Tidak ada logika AI. |
-| `services/engine` | Python 3.11, FastAPI, berjalan lokal di 127.0.0.1 | Video, inferensi AI, pengukuran, penyimpanan. |
+| `apps/desktop` | React, TypeScript, Vite, Tailwind | Tampilan di browser. Tidak ada logika AI. |
+| `services/engine` | Python 3.12, FastAPI, bawaan 127.0.0.1:8000 | Video, inferensi AI, pengukuran, penyimpanan, dan file statis UI. |
 | `packages/shared` | Tipe dari OpenAPI ke TypeScript | Satu definisi data yang dipakai bersama, tidak diduplikasi. |
 | `config/thresholds.yaml` | YAML | Semua ambang dan batas. |
 
 **Contoh ambang yang wajib di config, bukan di kode:** uji batang ±3%, dua freeze ≤5 cm, tali ukur ≤2%, batas kritis 9,65 m dan 5,32 m, interval inspeksi 1/2/3 tahun, ambang FPS dan GPU.
 
 **Mengapa:**
-- **Tauri** dipilih karena jauh lebih ringan daripada Electron (installer dan pemakaian RAM lebih kecil).
-- **Engine Python terpisah** karena ekosistem AI (PyTorch, ONNX, OpenCV) ada di Python, dan bila engine bermasalah, tampilan tidak ikut macet.
+- **Browser biasa** dipilih (ADR-016) karena sama dengan versi lama yang terbukti, tanpa Rust dan tanpa installer.
+- **Engine Python 3.12** karena ekosistem AI (PyTorch, ONNX, OpenCV) ada di Python. UI React hanya tampilan.
 - **Ambang di satu file config** agar tim bisa mengubah nilai tanpa mengubah kode, dan tidak ada angka yang tersebar di banyak tempat.
 - Arsitektur tidak boleh diubah tanpa mencatat alasannya di `DECISIONS.md`.
 

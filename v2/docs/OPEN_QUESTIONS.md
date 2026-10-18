@@ -111,7 +111,7 @@ Prioritas: **P1** menghalangi Fase 1–3 (arsitektur, GPU, logika ukur). **P2** 
 | ID | Pertanyaan | Prioritas |
 | --- | --- | --- |
 | Q-UI-1 | Resolusi dan layar target (mockup 1440×900). Perilaku responsif/skala | P2 |
-| Q-UI-2 | Penanganan ukuran keseluruhan layar di aplikasi desktop (Tauri) versus web. Prompt menyebut Tauri 2; README awal menyebut “desktop/web” | P2 |
+| Q-UI-2 | Ditutup ADR-016: layanan web Python 3.12 dan browser, bukan Tauri. | selesai |
 | Q-UI-3 | Kekeruhan: algoritma dari kontras dan ambangnya (rendah, sedang, tinggi) | P3 |
 | Q-UI-4 | Grafik Sustainability: agregasi data bulanan dan periode | P3 |
 | Q-UI-5 | Bahasa dan zona waktu: antarmuka Bahasa Indonesia; jam WITA tertulis di header. Apakah zona waktu dapat diatur | P3 |

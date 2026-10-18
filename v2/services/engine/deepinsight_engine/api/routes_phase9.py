@@ -133,6 +133,7 @@ class SettingOut(BaseModel):
     critical_inch_8: float
     presets: list[str]
     upload_dir: str | None
+    models_dir: str
     users: list[str]
 
 
@@ -327,6 +328,7 @@ def settings_view(request: Request) -> SettingOut:
         critical_inch_8=thresholds.span.critical_limit_m.inch_8,
         presets=sorted(settings.aquaclear.presets),
         upload_dir=upload,
+        models_dir=settings.app.models.dir,
         users=names,
     )
 
@@ -346,6 +348,8 @@ def settings_patch(body: PatchIn, request: Request) -> SettingOut:
         )
     request.app.state.settings = updated
     office.settings = updated
+    if body.key == "models_dir":
+        request.app.state.runtime.set_models_dir(office.config_dir, body.value.strip())
     old = "null" if previous is None else previous
     _audit(request, "settings_changed", f"{body.key}|lama={old}|baru={body.value}")
     return settings_view(request)

@@ -1099,6 +1099,8 @@ export interface components {
             camera_file_required_for_valid: boolean;
             /** Min Baseline Px */
             min_baseline_px: number;
+            /** Rms Reprojection Max */
+            rms_reprojection_max?: number | null;
         };
         /** CameraView */
         CameraView: {
@@ -2067,6 +2069,8 @@ export interface components {
             presets: string[];
             /** Upload Dir */
             upload_dir: string | null;
+            /** Models Dir */
+            models_dir: string;
             /** Users */
             users: string[];
         };

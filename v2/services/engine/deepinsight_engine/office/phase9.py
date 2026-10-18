@@ -177,7 +177,7 @@ def patch_setting(
 ) -> tuple[Settings, str | None]:
     if role not in ADMIN or role not in roles_of.get(user_id, []):
         raise EngineError("SET-001", role)
-    if key not in {"laser.ref_cm", "upload_dir"}:
+    if key not in {"laser.ref_cm", "upload_dir", "models_dir"}:
         raise EngineError("API-002", key)
     previous = _override(conn, key)
     conn.execute(
@@ -191,6 +191,12 @@ def patch_setting(
 
 def apply_override(settings: Settings, key: str, previous: str | None, value: str) -> Settings:
     del previous
+    if key == "models_dir":
+        if not value.strip():
+            raise EngineError("API-002", key)
+        models = settings.app.models.model_copy(update={"dir": value.strip()})
+        app = settings.app.model_copy(update={"models": models})
+        return settings.model_copy(update={"app": app})
     if key != "laser.ref_cm":
         return settings
     if value in {"", "null"}:

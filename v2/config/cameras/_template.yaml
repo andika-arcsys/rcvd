@@ -1,0 +1,16 @@
+# Templat kalibrasi kamera. Nama berkas diawali garis bawah, jadi tidak muncul sebagai kamera.
+# Salin menjadi config/cameras/<id>.yaml lewat scripts/calibrate_camera.py.
+# Jangan mengisi angka di berkas ini dengan tangan. RMS di atas ambang
+# calibration.rms_reprojection_max membuat skrip menolak menulis hasil.
+# Bila ambang itu masih null (D-45), skrip juga menolak.
+schema_version: 1
+id: _template
+square_mm: null
+image_width: null
+image_height: null
+corners_cols: null
+corners_rows: null
+camera_matrix: null
+dist_coeffs: null
+rms: null
+calibrated_at: null

@@ -35,5 +35,6 @@ Angka teknis yang belum diisi tim tidak dikarang. Uji kode memakai fixture di `t
 | D-41 | Rumus biaya dan emisi | `config/sustainability.yaml` | 9 | Rumus `null`. KPI jam, biaya, dan emisi tampil "–". Jumlah temuan dihitung dari keputusan. |
 | D-43 | Folder unggah paket (jaringan atau USB) | pengaturan `upload_dir` | 9 | Kosong. Paket tetap di konsol dan status unggah "pending". |
 | D-44 | Kebijakan simpan dan purge arsip | belum ada berkas | 9 | Tidak ada tombol hapus. Durasi simpan = TIM. |
+| D-45 | Ambang RMS reprojeksi kalibrasi kamera | `config/thresholds.yaml` → `calibration.rms_reprojection_max` | rilis | Sengaja `null`. `scripts/calibrate_camera.py` menolak menulis berkas sampai tim mengisi ambang. |
 
 ID D-22 di berkas ini adalah ambang kekeruhan. Dokumen fase memakai nomor yang sama untuk riwayat span. Baris kekeruhan tidak ditimpa. Riwayat span dicatat sebagai D-25 dan tab Riwayat tetap kosong sampai data itu ada.

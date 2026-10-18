@@ -8,7 +8,7 @@ alwaysApply: true
 ## 0. Root proyek dan lingkungan
 - **Root proyek DeepInsight = folder `v2/`** di repo ini. Semua jalur di aturan ini (`docs/`, `mockups/`, `flowmap/`, `config/`, `apps/`, `services/`, `packages/`, `tests/`) relatif terhadap `v2/`. Jangan mengubah kode di luar `v2/` (kode lama di root repo bukan bagian DeepInsight) dan jangan mengimpor darinya.
 - **Python 3.12** (menggantikan 3.11 di prompt awal). Pin versi di `pyproject.toml` dan di CI.
-- Target produksi Windows 10/11 64-bit. VM pengembangan Linux tanpa GPU: uji VRAM, build installer Tauri, dan uji GPU dijalankan di mesin Windows dan ditandai belum terverifikasi sampai itu.
+- Target produksi Windows 10/11 64-bit. VM pengembangan Linux tanpa GPU: uji VRAM dan uji GPU dijalankan di PC inspeksi lewat `setup.bat` lalu `start.bat`, dan ditandai belum terverifikasi sampai itu. Tidak ada installer Tauri.
 
 ## 1. Sumber kebenaran dan urutan prioritas
 Urutan (yang lebih tinggi menang; yang lebih baru dan lebih spesifik menang):
@@ -23,8 +23,8 @@ Format mockup: `<sc-for>` perulangan, `<sc-if>` kondisi, `<dc-import name="Nav">
 Jangan menambah fitur di luar SPEC dan keputusan. Bila tidak jelas atau bertentangan, tulis di `docs/OPEN_QUESTIONS.md`; jangan menebak. Bila aturan ini bertentangan dengan ANSWERS atau DECISIONS, ikuti keduanya dan perbarui file ini.
 
 ## 2. Arsitektur (tidak diubah tanpa catatan di DECISIONS.md)
-- `apps/desktop`: Tauri 2, React, TypeScript, Vite, Tailwind. Tampilan saja; tanpa logika AI dan tanpa angka bukti.
-- `services/engine`: Python 3.12, FastAPI di 127.0.0.1 dengan token per peluncuran. Video, inferensi, pengukuran, penyimpanan.
+- `apps/desktop`: React, TypeScript, Vite, Tailwind. Tampilan di browser; tanpa logika AI dan tanpa angka bukti. Tanpa Tauri.
+- `services/engine`: Python 3.12, FastAPI. Bawaan `127.0.0.1:8000`, menyajikan API dan build React. Video, inferensi, pengukuran, penyimpanan.
 - `packages/shared`: tipe dari OpenAPI; cerminan `measure` TypeScript hanya untuk pratinjau.
 - `config/*.yaml`: semua ambang dan batas. Tidak ada angka di kode. Nilai tak resmi diberi komentar `# USULAN – perlu konfirmasi tim`.
 - Saat misi dimulai, salin ambang ke Mission (`thresholds_snapshot`).
@@ -42,6 +42,7 @@ Jangan menambah fitur di luar SPEC dan keputusan. Bila tidak jelas atau bertenta
 - Urutan ganti model: hentikan inferensi → tutup sesi model dan hapus referensi/tensor → `gc.collect()` → lepas session ONNX → ukur VRAM → **bila VRAM belum kembali ke garis dasar ± toleransi dalam batas waktu config, matikan proses pekerja** → catat VRAM sebelum dan sesudah → baru mulai pekerja baru.
 - Model dilepas saat window fitur ditutup, saat kembali ke Optical, dan saat Peringatan performa.
 - Runtime produksi: ONNX Runtime (CUDA); PyTorch hanya untuk pengembangan, latih, dan ekspor. Batch 1, FP16 bila didukung, tanpa menyimpan tensor antar frame.
+- Bila TensorFlow terpasang di proses yang sama, aktifkan memory growth sebelum inferensi. TensorFlow tidak dipasang oleh requirements.
 - Watchdog tiap 2 detik: VRAM, utilisasi GPU, FPS. Lewat ambang config → dialog 3.9.
 - Ring buffer video berukuran tetap di RAM. Frame lama dibuang otomatis.
 - `cache/` berbatas ukuran (LRU), dibersihkan saat Penutupan sesi. Bukti tidak pernah masuk cache dan tidak pernah dihapus otomatis.

@@ -70,6 +70,9 @@ class Runtime:
         self.watchdog = Watchdog(perf, probe, self._display_fps, time.monotonic)
 
     def start(self) -> None:
+        from .gpu.tensorflow_mem import enable_memory_growth
+
+        enable_memory_growth()
         self._stop.clear()
         self._thread = threading.Thread(target=self._loop, name="di-watchdog", daemon=True)
         self._thread.start()
@@ -232,6 +235,9 @@ class Runtime:
             "enhanced": bool(shown and shown.enhanced),
         }, jpeg
 
+    def set_models_dir(self, config_dir: Path, configured: str) -> None:
+        self.models.set_models_dir(resolve_models_dir(config_dir, configured))
+
     def close_session(self) -> None:
         self._stop.set()
         if self._thread is not None:
@@ -302,14 +308,18 @@ class Runtime:
             self.poll()
 
 
+def resolve_models_dir(config_dir: Path, configured: str) -> Path:
+    path = Path(configured)
+    return path if path.is_absolute() else config_dir.parent / path
+
+
 def build_runtime(
     settings: Settings,
     config_dir: Path,
     data_dir: Path,
     on_error: Callable[[str, str | None], None],
 ) -> Runtime:
-    configured = Path(settings.app.models.dir)
-    models_dir = configured if configured.is_absolute() else config_dir.parent / configured
+    models_dir = resolve_models_dir(config_dir, settings.app.models.dir)
     return Runtime(settings, models_dir, data_dir, on_error, VramProbe())
 
 

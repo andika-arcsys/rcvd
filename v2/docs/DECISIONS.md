@@ -4,17 +4,21 @@ Status semua ADR: **Diusulkan**, menunggu persetujuan. Format: Konteks → Keput
 
 ## ADR-001 Shell desktop: Tauri 2 (bukan Electron) [J]
 
+**Digantikan oleh ADR-016.** Teks di bawah disimpan sebagai riwayat.
+
 - **Konteks.** Aplikasi desktop Windows 10/11, offline-first, mesin AI berjalan di proses terpisah. Browser hanya dipakai sebagai kanvas UI.
 - **Keputusan.** Tauri 2 (Rust + WebView2) untuk shell, supervisi sidecar, token localhost, dan pembacaan kontroler.
 - **Alternatif.** Electron (ekosistem lebih luas, ±100 MB lebih besar dan lebih banyak RAM). Web murni (tidak sesuai Q-UI-2).
 - **Konsekuensi.** Installer dan RAM lebih kecil, sisa RAM/VRAM untuk model. Perlu kehati-hatian dengan perbedaan WebView2, dan keterampilan Rust untuk modul kecil (supervisor, gamepad). Logika bisnis tidak berada di Rust.
 
-## ADR-002 Mesin: Python 3.12 + FastAPI sebagai sidecar
+## ADR-002 Mesin: Python 3.12 + FastAPI
+
+Pembungkus sidecar pada ADR ini **digantikan oleh ADR-016**. Python 3.12 dan FastAPI tetap.
 
 - **Konteks.** Model (Ultralytics, ONNX Runtime), OpenCV (AquaClear), dan pengukuran paling matang di Python. UI harus tetap responsif.
-- **Keputusan.** Engine FastAPI/uvicorn dalam satu proses, dibungkus bersama installer. Kontrak lewat OpenAPI; UI memakai tipe yang dihasilkan. WebSocket untuk video biner dan event.
+- **Keputusan.** Engine FastAPI/uvicorn dalam satu proses. Kontrak lewat OpenAPI; UI memakai tipe yang dihasilkan. WebSocket untuk video biner dan event.
 - **Alternatif.** Seluruhnya di Rust (tidak ada ekosistem OpenCV/ONNX yang setara untuk tim ini); engine dalam proses UI (memblok UI).
-- **Konsekuensi.** Dua bahasa. Perlu packaging sidecar (PyInstaller atau Python tertanam) dan uji installer di Fase 10.
+- **Konsekuensi.** UI dan engine berbagi kontrak OpenAPI. ADR-016 meniadakan sidecar dan installer.
 
 ## ADR-003 Runtime inferensi: ONNX Runtime (CUDA) untuk produksi; PyTorch hanya untuk latih/ekspor [J]
 
@@ -102,6 +106,13 @@ Status semua ADR: **Diusulkan**, menunggu persetujuan. Format: Konteks → Keput
 
 - **Keputusan.** `ANSWERS_OPEN_QUESTIONS.md` dan `DECISIONS.md` > `.cursor/rules/deepinsight.mdc` > `SPEC_Fungsional.md` > mockup. Yang lebih baru dan lebih spesifik menang. Konflik ditulis di `OPEN_QUESTIONS.md`; file di bawahnya diperbarui, bukan diabaikan.
 - **Konsekuensi.** `deepinsight.mdc` wajib mengikuti ADR (proses pekerja, PNG, shoelace, undistort). Versi yang diperbarui ada di `.cursor/rules/deepinsight.mdc`.
+
+## ADR-016 Layanan web biasa, tanpa Tauri
+
+- **Konteks.** ADR-001 memakai Tauri 2, Rust, sidecar PyInstaller, dan pemasang NSIS. Rantai itu gagal dibangun di mesin tanpa Rust 1.90, menambah bahasa, dan tidak sama dengan cara versi lama yang sudah terbukti: layanan Python dan halaman di browser.
+- **Keputusan.** Aplikasi dijalankan sebagai web service. Python 3.12 menjalankan FastAPI di laptop. Antarmuka React (Vite) dibuka di browser pada port yang sama, bawaan `127.0.0.1:8000`. `start.py` mengecek Python, paket, dan GPU, membangun UI bila `dist/` belum ada, lalu membuka browser. `setup.bat` / `setup.sh` memilih `requirements-cpu.txt` atau `requirements-gpu.txt`. `--lan` mendengar di `0.0.0.0` dan menolak jalan bila tidak ada akun PIN. Model tidak ikut skrip mulai; folder model dipilih di Pengaturan. Tauri, Rust, dan installer NSIS tidak dipakai. Kode lamanya ada di `archive/src-tauri/`.
+- **Alternatif.** Mempertahankan Tauri (installer kecil, tetapi butuh Rust dan uji NSIS). Electron (lebih berat).
+- **Konsekuensi.** Satu bahasa untuk layanan. Tidak ada pemasang. Operator menjalankan `setup.bat` lalu `start.bat`. Layar memakai hash (`/#/dashboard`) karena beberapa jalur (`/gallery`, `/dashboard`, `/pims`) sudah menjadi API. Mode GPU tetap: model dimuat saat fitur dibuka, satu pekerja, pekerja dimatikan bila VRAM tidak kembali ke garis dasar. Bila TensorFlow terpasang, memory growth diaktifkan; TensorFlow bukan runtime produksi.
 
 ## Keputusan yang masih terbuka (tidak dapat diputuskan dari sumber)
 

@@ -8,6 +8,7 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
+from .camera_file import validate_camera_files
 from .errors import EngineError
 from .video_config import VideoFile
 
@@ -34,6 +35,7 @@ class Calibration(_Strict):
     canny_high: float
     camera_file_required_for_valid: bool
     min_baseline_px: int
+    rms_reprojection_max: float | None = None
 
     @model_validator(mode="after")
     def _ordered(self) -> Calibration:
@@ -349,6 +351,7 @@ class ProcedureFile(_Strict):
 
     schema_version: int
     complete: bool
+    sources: list[str] = []
     matrix: dict[str, str] | None
     pof: dict[str, str] | None
     loie: list[str] | None
@@ -398,6 +401,7 @@ def _validate[T: BaseModel](model: type[T], path: Path) -> T:
 
 
 def load_settings(config_dir: Path) -> Settings:
+    validate_camera_files(config_dir / "cameras", _validate)
     return Settings(
         app=_validate(AppConfig, config_dir / "app.yaml"),
         thresholds=_validate(Thresholds, config_dir / "thresholds.yaml"),

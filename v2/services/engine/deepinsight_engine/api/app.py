@@ -26,6 +26,7 @@ from ..office import Office
 from ..runtime import build_runtime
 from .routes import router
 from .security import TOKEN_HEADER
+from .spa import mount_ui, ui_dist
 
 TOKEN_ENV = "DEEPINSIGHT_TOKEN"
 _log = get_logger("api")
@@ -93,6 +94,7 @@ def create_app(
     data_dir: Path | None = None,
     token: str | None = None,
     settings: Settings | None = None,
+    ui_dir: Path | None = None,
 ) -> FastAPI:
     cfg_dir = config_dir or default_config_dir()
     cfg = settings or load_settings(cfg_dir)
@@ -129,6 +131,7 @@ def create_app(
     )
     _install_handlers(app)
     app.include_router(router)
+    mount_ui(app, ui_dist(cfg_dir, ui_dir))
     _log.info(
         "Engine siap", extra={"ctx": {"env": cfg.app.app.env, "data_dir": str(resolved_data)}}
     )

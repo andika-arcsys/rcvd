@@ -13,6 +13,7 @@ calibration:
   canny_high: 150                 # USULAN Q-KAL-5 – perlu konfirmasi tim
   camera_file_required_for_valid: true  # SUMBER: tanpa file kamera status maksimal ESTIMATE_ONLY
   min_baseline_px: 150            # USULAN – perlu konfirmasi tim (jarak minimum dua node kalibrasi)
+  rms_reprojection_max: null      # D-45 belum diisi tim. Skrip kalibrasi menolak menulis berkas bila ini kosong.
 
 rod_test:
   length_m: 1.0                   # SUMBER

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "DeepInsight Engine",
-    "version": "0.1.0"
+    "version": "0.9.0-rc1"
   },
   "paths": {
     "/health": {
@@ -3688,6 +3688,17 @@
           "min_baseline_px": {
             "type": "integer",
             "title": "Min Baseline Px"
+          },
+          "rms_reprojection_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rms Reprojection Max"
           }
         },
         "additionalProperties": false,
@@ -6690,6 +6701,10 @@
             ],
             "title": "Upload Dir"
           },
+          "models_dir": {
+            "type": "string",
+            "title": "Models Dir"
+          },
           "users": {
             "items": {
               "type": "string"
@@ -6709,6 +6724,7 @@
           "critical_inch_8",
           "presets",
           "upload_dir",
+          "models_dir",
           "users"
         ],
         "title": "SettingOut"

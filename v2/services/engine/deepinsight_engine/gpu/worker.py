@@ -19,6 +19,9 @@ from .yolo_seg import decode_yolo_seg
 
 
 def main() -> None:
+    from .tensorflow_mem import enable_memory_growth
+
+    enable_memory_growth()
     state: dict[str, Any] = {"kind": None, "preset": None, "session": None}
     for line in sys.stdin:
         message = json.loads(line)

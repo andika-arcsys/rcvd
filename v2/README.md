@@ -1,6 +1,6 @@
 # DeepInsight (v2) – root proyek
 
-Aplikasi desktop Windows untuk inspeksi pipa bawah air dengan ROV: Tauri 2 (React + TypeScript) sebagai tampilan, engine Python 3.12 (FastAPI) untuk video, AI, pengukuran, dan penyimpanan.
+Aplikasi inspeksi pipa bawah air untuk laptop Windows: antarmuka React di browser, engine Python 3.12 (FastAPI) untuk video, AI, pengukuran, dan penyimpanan. Keduanya berjalan pada port yang sama.
 
 Folder ini adalah **root proyek DeepInsight**. Kode lama di root repo (`underwater_enhance/`, `web/`, dan seterusnya) bukan bagian proyek ini.
 
@@ -17,15 +17,17 @@ make setup
 make dev
 ```
 
-`make dev` menyalakan engine di `http://127.0.0.1:8765` dan tampilan di `http://127.0.0.1:5173`. `make test` menjalankan pytest dan vitest. `make lint` menjalankan ruff, mypy, eslint, dan prettier.
+Di laptop inspeksi: `setup.bat` lalu `start.bat` (Windows) atau `./setup.sh` lalu `python start.py`. Browser terbuka di `http://127.0.0.1:8000/`. Python yang dipakai 3.12. Tanpa GPU, layanan tetap jalan dalam mode terbatas.
 
-Shell Tauri (`make tauri-dev`) butuh Rust dan dependensi sistem Tauri (di Linux: webkit2gtk 4.1). Target produksi tetap Windows 10/11.
+`make dev` menyalakan engine di `http://127.0.0.1:8000` dan tampilan pengembangan di `http://127.0.0.1:5173`. `make test` menjalankan pytest dan vitest. `make lint` menjalankan ruff, mypy, eslint, dan prettier.
+
+Tauri, Rust, dan pemasang NSIS tidak dipakai. Kode percobaan itu ada di `archive/src-tauri/`.
 
 ## Peta folder
 
 | Folder | Isi |
 | --- | --- |
-| `apps/desktop/` | Tampilan Tauri 2 + React + TypeScript + Vite |
+| `apps/desktop/` | Tampilan React + TypeScript + Vite, dibuka di browser |
 | `services/engine/` | Engine Python 3.12 (FastAPI) |
 | `packages/shared/` | Tipe klien dari OpenAPI |
 | `config/` | Ambang, peran, kontrol, dan `app.yaml` |

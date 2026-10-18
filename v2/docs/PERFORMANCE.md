@@ -27,13 +27,11 @@ Target "memori engine setelah 200 FREEZE tidak tumbuh lebih dari 5%" **tidak ter
 
 VRAM sebelum dan sesudah unload tidak ada angkanya. `scripts/gpu_soak_test.py` tetap berhenti kode 2 tanpa GPU. Itu bukan kelulusan.
 
-Waktu buka sampai Splash (jendela Tauri) tidak diukur. Yang terukur hanya bangun engine, 0,064 detik, di bawah target 5 detik untuk bagian itu. Pemeriksaan tipe desktop (`tsc --noEmit`) 2,79 detik. Bundel web produksi (`vite build`, 1,19 detik) berukuran 300,35 kB JavaScript dan 12,85 kB CSS. Itu bukan installer.
+Waktu buka sampai Splash di browser tidak diukur pada audit itu. Yang terukur hanya bangun engine, 0,064 detik, di bawah target 5 detik untuk bagian itu. Pemeriksaan tipe desktop (`tsc --noEmit`) 2,79 detik. Bundel web produksi (`vite build`, 1,19 detik) berukuran 300,35 kB JavaScript dan 12,85 kB CSS.
 
-## Installer
+## Tanpa installer
 
-`src-tauri/tauri.conf.json` menargetkan bundel `nsis` (Windows). VM ini Linux. `rustc` dan `cargo` di VM adalah 1.83.0. `cargo check` mengunci Tauri 2.12 yang membutuhkan Rust 1.90 dan fitur Cargo `edition2024`, lalu gagal sebelum kompilasi. Berkas kunci tidak disimpan karena tidak bisa dibangun dengan toolchain ini.
-
-Ukuran installer **tidak dicatat** karena berkas installer tidak dihasilkan.
+ADR-016 mengganti pemasang NSIS. Aplikasi dibuka lewat `start.py` di browser. Ukuran installer tidak dicatat karena installer tidak dibuat. Percobaan Tauri ada di `archive/src-tauri/` dan tidak dibangun.
 
 ## Yang diperbaiki pada audit ini
 

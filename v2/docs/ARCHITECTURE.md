@@ -19,11 +19,10 @@ Tanda **[J]** = angka atau perilaku dari `ANSWERS_OPEN_QUESTIONS.md`. Tanda **[T
 
 ```mermaid
 flowchart LR
-  subgraph Desktop["Tauri 2 (Rust shell + WebView)"]
+  subgraph Browser["Browser"]
     UI["React UI<br/>24 layar, Sidebar, MeasureCanvas"]
-    RS["Rust: supervisor sidecar,<br/>token, jendela, kontroler"]
   end
-  subgraph Engine["Engine (Python 3.12, FastAPI, sidecar)"]
+  subgraph Engine["Engine (Python 3.12, FastAPI, port yang sama)"]
     API["REST + WebSocket<br/>OpenAPI"]
     VS["VideoSource<br/>USB / RTSP / file"]
     RB["FramePipeline<br/>ring buffer 3 dtk"]
@@ -47,7 +46,6 @@ flowchart LR
   API --> STO
   API --> MEAS
   WD --> API
-  RS -. "spawn/stop, token localhost" .-> Engine
   RB --> AQ --> API
 ```
 
@@ -60,10 +58,10 @@ Prinsip batas:
 ## 3. Struktur monorepo (Fase 1)
 
 ```text
-apps/desktop/            Tauri 2 + React + TS + Vite + Tailwind + React Router
+apps/desktop/            React + TS + Vite + Tailwind + React Router
   src/screens/           satu komponen per layar (kode layar di nama berkas)
   src/components/        Sidebar, Header, StatusBadge, MeasureCanvas, dialog bersama
-  src-tauri/             Rust: supervisor engine, token, kontroler (gamepad)
+archive/src-tauri/       arsip percobaan Tauri; tidak dipakai (ADR-016)
 services/engine/
   api/                   FastAPI router, skema pydantic, OpenAPI
   video/                 VideoSource (usb, rtsp, file), FramePipeline
@@ -191,7 +189,7 @@ flowchart TB
 - **Audit log** (SQLite, hanya-tambah): setiap baris menyimpan hash baris sebelumnya; pemeriksaan rantai menjadi bagian dari cek integritas Arsip. **Log operasional** terpisah: JSON berotasi per sesi.
 - **Cache** (`CacheManager`): batas ukuran LRU dari config; `clear_session()` saat Penutupan; bukti tidak pernah di cache.
 - **Unggah v1**: salin paket ke folder jaringan atau USB yang dipilih di Pengaturan; tanpa server **[J]**. Status antrian tampil di Arsip.
-- **Keamanan**: engine hanya mendengarkan `127.0.0.1` dengan token acak per peluncuran yang diteruskan Rust ke UI; PIN di-hash Argon2id **[J]**; SSO tampil nonaktif “Segera”.
+- **Keamanan**: bawaan engine mendengar `127.0.0.1`. `--lan` mendengar `0.0.0.0` hanya bila ada akun PIN. PIN di-hash Argon2id **[J]**; SSO tampil nonaktif “Segera”.
 
 ## 8. Mesin status utama
 
@@ -261,4 +259,4 @@ Mode gagal yang dirancang: sumber video putus (LOST SIGNAL), model gagal dimuat 
 | Kalibrasi kamera tidak ada atau tidak cocok | ukuran bias di tepi frame | status maksimal ESTIMATE_ONLY; peringatan di pre-check |
 | Sumber desain hanya sebagian (prosedur, workbook) | layar 7 dan 9 tampil “–” | stub dan config; TIM mengisi |
 | Depth Anything V2 Small (relatif) | tidak dipakai sebagai ukuran | label “Preview relatif, bukan ukuran”; angka tidak pernah diambil dari layar ini |
-| Packaging sidecar Python di Windows | ukuran installer besar | PyInstaller/embedded + uji di Fase 10 |
+| Operator menjalankan salinan sumber, bukan installer | langkah pasang terlihat | `setup.bat` lalu `start.bat`; ADR-016 |
