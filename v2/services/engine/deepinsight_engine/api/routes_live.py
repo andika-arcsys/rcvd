@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, File, Request, UploadFile
 from pydantic import BaseModel
 
 from ..core.errors import EngineError
@@ -141,6 +142,22 @@ def push_file(body: FileRequest, request: Request) -> FrameList:
 @live.post("/video/device", response_model=VideoStatus)
 def open_device(body: DeviceRequest, request: Request) -> VideoStatus:
     request.app.state.runtime.open_device(body.kind, body.path, body.device_index, body.rtsp_url)
+    return video_status(request)
+
+
+_VIDEO_SUFFIXES = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v", ".wmv"}
+
+
+@live.post("/video/upload", response_model=VideoStatus)
+async def upload_video(request: Request, file: Annotated[UploadFile, File()]) -> VideoStatus:
+    suffix = Path(file.filename or "video.mp4").suffix.lower()
+    if suffix not in _VIDEO_SUFFIXES:
+        raise EngineError("API-002", suffix or "berkas")
+    payload = await file.read()
+    if not payload:
+        raise EngineError("VID-003", "berkas kosong")
+    stored = request.app.state.runtime.save_upload(suffix, payload)
+    request.app.state.runtime.open_device("file", str(stored), None, None)
     return video_status(request)
 
 

@@ -191,6 +191,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/video/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Video */
+        post: operations["upload_video_video_upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/video/status": {
         parameters: {
             query?: never;
@@ -1042,6 +1059,11 @@ export interface components {
             max_attempts: number;
             /** Lock Minutes */
             lock_minutes: number;
+        };
+        /** Body_upload_video_video_upload_post */
+        Body_upload_video_video_upload_post: {
+            /** File */
+            file: string;
         };
         /** Cache */
         Cache: {
@@ -2645,6 +2667,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["DeviceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_video_video_upload_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_video_video_upload_post"];
             };
         };
         responses: {

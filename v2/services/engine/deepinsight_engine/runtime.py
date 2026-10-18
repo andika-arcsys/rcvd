@@ -47,6 +47,7 @@ class Runtime:
         self._audit: Callable[[str, str, str, str], None] = _noop_audit
         self._capture = CaptureLoop(self._ingest, settings.thresholds.video.fps)
         self._marks = data_dir / "marks"
+        self._uploads = data_dir / "uploads"
         self._vision: dict[str, object] = {}
         self.models = ModelManager(
             settings.models,
@@ -129,6 +130,12 @@ class Runtime:
         now = time.monotonic()
         stored = [StoredFrame(uuid7(), now, width, height, bgr) for width, height, bgr in frames]
         return self._push_many(stored)
+
+    def save_upload(self, suffix: str, payload: bytes) -> Path:
+        self._uploads.mkdir(parents=True, exist_ok=True)
+        target = self._uploads / f"{uuid7()}{suffix}"
+        target.write_bytes(payload)
+        return target
 
     def open_device(
         self,

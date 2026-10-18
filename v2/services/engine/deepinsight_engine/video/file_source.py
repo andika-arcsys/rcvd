@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -50,7 +51,7 @@ def open_live(
     rtsp_url: str | None = None,
 ) -> Any:
     """Buka VideoCapture. Melempar VID-003 bila target kosong atau tidak dapat dibuka."""
-    capture = _cv2().VideoCapture(_target(kind, path, device_index, rtsp_url))
+    capture = _open(kind, _target(kind, path, device_index, rtsp_url))
     if not capture.isOpened():
         capture.release()
         raise EngineError("VID-003", kind)
@@ -65,6 +66,13 @@ def read_one(capture: Any) -> tuple[int, int, bytes] | None:
         return None
     height, width = int(image.shape[0]), int(image.shape[1])
     return width, height, bytes(image.tobytes())
+
+
+def _open(kind: str, target: str | int) -> Any:
+    cv2 = _cv2()
+    if kind == "camera" and sys.platform == "win32":
+        return cv2.VideoCapture(target, cv2.CAP_DSHOW)
+    return cv2.VideoCapture(target)
 
 
 def _target(

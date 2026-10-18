@@ -1,7 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { renderApp } from '../../test/renderApp';
+import { jsonResponse, renderApp } from '../../test/renderApp';
 
 const CONTROLS = {
   schema_version: 1,
@@ -56,6 +56,33 @@ function routes(status = LIVE) {
 }
 
 describe('Optical Native View', () => {
+  it('membuka kamera laptop lewat nomor perangkat', async () => {
+    let body: { kind?: string; device_index?: number } = {};
+    renderApp('/live', {
+      role: 'pilot_drone',
+      routes: {
+        ...routes(),
+        'POST /video/device': (request: Request) =>
+          request.json().then((payload: { kind?: string; device_index?: number }) => {
+            body = payload;
+            return jsonResponse(200, LIVE);
+          }),
+      },
+    });
+    await userEvent.click(await screen.findByRole('button', { name: 'Kamera laptop' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Buka' }));
+    expect(await screen.findByText('Sumber video dibuka.')).toBeInTheDocument();
+    expect(body).toEqual({ kind: 'camera', device_index: 0 });
+  });
+
+  it('menampilkan pilihan RTSP dan berkas video', async () => {
+    renderApp('/live', { role: 'pilot_drone', routes: routes() });
+    expect(await screen.findByRole('button', { name: 'Video RTSP' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Berkas video' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Video RTSP' }));
+    expect(screen.getByLabelText('Alamat RTSP')).toBeInTheDocument();
+  });
+
   it('menampilkan telemetri kosong, kualitas belum diisi, dan video asli', async () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
     expect(await screen.findByText('Belum diisi')).toBeInTheDocument();
