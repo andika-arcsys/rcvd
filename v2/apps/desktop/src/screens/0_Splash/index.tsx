@@ -1,5 +1,6 @@
 import { screenTitle, t } from '../../i18n';
 import { StatusBadge } from '../../components/StatusBadge';
+import { SourcePicker } from '../3_OpticalNativeView/SourcePicker';
 import { progressOf, useEnter, useSystemReport } from './useChecks';
 
 function CheckList({
@@ -35,12 +36,12 @@ function CheckList({
 }
 
 export default function SplashScreen() {
-  const { model, report, items, ready } = useSystemReport();
+  const { model, report, items, ready, reload } = useSystemReport();
   const enter = useEnter(model ? model.gpu_available : null);
   const version = report?.app_version ?? '…';
   return (
-    <main className="flex h-full items-center justify-center p-6">
-      <div className="flex w-full max-w-xl flex-col gap-6">
+    <main className="flex h-full justify-center overflow-y-auto p-6">
+      <div className="my-auto flex w-full max-w-xl flex-col gap-6">
         <header>
           <h1 className="text-4xl font-semibold">{screenTitle('0')}</h1>
           <p className="mt-1 text-sm text-muted">{t('app.tagline')}</p>
@@ -49,6 +50,7 @@ export default function SplashScreen() {
           </p>
         </header>
         <CheckList items={items} progress={progressOf(items)} />
+        <SourcePicker title={t('splash.sourceTitle')} onOpened={reload} />
         <div className="flex flex-wrap gap-2">
           <button
             type="button"

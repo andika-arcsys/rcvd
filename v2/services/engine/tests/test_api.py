@@ -28,9 +28,11 @@ def test_diagnostics_has_required_fields(client: TestClient) -> None:
         "cache",
         "disk",
         "clock_sync",
+        "camera_state",
         "last_errors",
     ):
         assert key in body
+    assert body["camera_state"] == "not_configured"
     assert body["model"] == {"active": None, "state": "optical"}
     assert body["gpu"]["available"] in (True, False)
     if not body["gpu"]["available"]:

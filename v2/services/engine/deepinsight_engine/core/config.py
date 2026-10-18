@@ -200,6 +200,7 @@ class Models(_Strict):
 class ModelEntry(_Strict):
     requires_gpu: bool
     onnx: str | None = None
+    weights: str | None = None
     classes: str | None = None
     metadata: str | None = None
 

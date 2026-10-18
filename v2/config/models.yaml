@@ -6,10 +6,13 @@ entries:
   aquaclear:
     requires_gpu: false
   hydrodetect:
+    # Bobot pelatihan Ultralytics. Dipakai lebih dulu bila berkasnya ada.
+    weights: hydrodetect/exp5/model.pt
     onnx: hydrodetect/exp5/model.onnx
     classes: hydrodetect/exp5/classes.json
     metadata: hydrodetect/exp5/metadata.json
     requires_gpu: true
+  # Bukan Ultralytics. Konsol lama memakai Depth Anything 3; v2 menunggu ONNX relatif.
   spatialsight:
     onnx: spatialsight/model.onnx
     requires_gpu: true

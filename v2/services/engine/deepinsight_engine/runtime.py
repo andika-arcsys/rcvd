@@ -47,6 +47,7 @@ class Runtime:
         self._audit: Callable[[str, str, str, str], None] = _noop_audit
         self._capture = CaptureLoop(self._ingest, settings.thresholds.video.fps)
         self._marks = data_dir / "marks"
+        self._uploads = data_dir / "uploads"
         self._vision: dict[str, object] = {}
         self.models = ModelManager(
             settings.models,
@@ -130,6 +131,12 @@ class Runtime:
         stored = [StoredFrame(uuid7(), now, width, height, bgr) for width, height, bgr in frames]
         return self._push_many(stored)
 
+    def save_upload(self, suffix: str, payload: bytes) -> Path:
+        self._uploads.mkdir(parents=True, exist_ok=True)
+        target = self._uploads / f"{uuid7()}{suffix}"
+        target.write_bytes(payload)
+        return target
+
     def open_device(
         self,
         kind: str,
@@ -138,6 +145,9 @@ class Runtime:
         rtsp_url: str | None = None,
     ) -> None:
         capture = open_live(kind, path, device_index, rtsp_url)
+        with self._lock:
+            if self.pipeline.state == "not_configured":
+                self.pipeline.state = "connecting"
         self._capture.start(capture)
 
     def freeze(self, frame_id: str, session: str) -> dict[str, object]:
@@ -210,9 +220,13 @@ class Runtime:
         with self._lock:
             event = dict(self._vision)
             preset = self.models.preset_name
+            frame = self.pipeline.ring.latest()
         hydro = self._settings.hydrodetect
         spatial = self._settings.spatialsight
-        return assemble_vision(event, preset, hydro, spatial)
+        view = assemble_vision(event, preset, hydro, spatial)
+        view["frame_width"] = None if frame is None else frame.width
+        view["frame_height"] = None if frame is None else frame.height
+        return view
 
     def compare_view(self) -> dict[str, object]:
         from .video.compare import compare_payload

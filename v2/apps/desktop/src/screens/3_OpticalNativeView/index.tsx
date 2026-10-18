@@ -6,6 +6,7 @@ import { useLiveInput } from './input';
 import { SideColumn } from './SideColumn';
 import { TelemetryBar } from './TelemetryBar';
 import { useCurrentMission, useFindings, useLiveActions, useVideoStatus } from './useLive';
+import { SourcePicker } from './SourcePicker';
 import { VideoStage } from './VideoStage';
 
 export default function OpticalNativeViewScreen() {
@@ -26,7 +27,10 @@ export default function OpticalNativeViewScreen() {
       <TelemetryBar status={status} />
       <FeatureTabs warning={status?.performance_warning ?? null} />
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <VideoStage frameId={status?.frame_id ?? null} lost={Boolean(status?.lost)} />
+        <div className="flex min-h-0 flex-col gap-3">
+          <SourcePicker />
+          <VideoStage frameId={status?.frame_id ?? null} lost={Boolean(status?.lost)} />
+        </div>
         <SideColumn status={status} mission={mission} findings={findings} />
       </div>
       <ActionBar

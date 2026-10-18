@@ -30,7 +30,12 @@ export default function HydroDetectScreen() {
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="relative h-fit">
           <VideoStage frameId={status?.frame_id ?? null} lost={Boolean(status?.lost)} />
-          <MaskOverlay items={shown} colors={vision?.classes ?? []} />
+          <MaskOverlay
+            items={shown}
+            colors={vision?.classes ?? []}
+            frameWidth={vision?.frame_width ?? null}
+            frameHeight={vision?.frame_height ?? null}
+          />
         </div>
         <aside className="flex flex-col gap-3">
           {vision?.kind !== 'hydrodetect' ? (

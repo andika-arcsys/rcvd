@@ -140,6 +140,13 @@ class LiveStatus(BaseModel):
     performance_detail: str | None = None
 
 
+def camera_state_for(video_state: str | None) -> str:
+    """Sumber yang sudah dibuka, hidup, atau putus tetap terhitung terhubung."""
+    if video_state in {"connecting", "live", "lost"}:
+        return "connected"
+    return "not_configured"
+
+
 def build_report(
     settings: Settings,
     data_dir: Path,
@@ -171,7 +178,7 @@ def build_report(
             ring_buffer_s=settings.thresholds.video.ring_buffer_s,
             frame_count=0 if live is None else live.frame_count,
         ),
-        camera_state="not_configured",
+        camera_state=camera_state_for(None if live is None else live.video_state),
         # Jam OS. NTP tidak dicek (Q-UI-5); clock_sync=ok berarti jam sistem terbaca.
         clock_sync="ok",
         clock_utc=datetime.now(UTC).isoformat(),

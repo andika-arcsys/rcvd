@@ -163,6 +163,7 @@ class ModelManager:
             "kind": name,
             "models_dir": str(self._models_dir),
             "onnx": entry.onnx,
+            "weights": entry.weights,
             "classes": entry.classes,
             "preset": chosen.model_dump(),
             "hydro": None if self._hydro is None else self._hydro.model_dump(),

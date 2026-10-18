@@ -89,7 +89,7 @@ _SPECS: tuple[ErrorSpec, ...] = (
         "MDL-001",
         404,
         "Berkas model tidak ditemukan.",
-        "model.onnx atau classes.json belum ada di folder models.",
+        "model.pt, model.onnx, atau classes.json belum ada di folder models.",
         "Salin berkas ke jalur di config/models.yaml. Bobot besar tidak disimpan di Git.",
     ),
     ErrorSpec(

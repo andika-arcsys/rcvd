@@ -1,5 +1,5 @@
 import type { DiagnosticsReport, components } from '@deepinsight/shared';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEngine } from '../../engine/EngineProvider';
 import { useSession } from '../../session/SessionContext';
@@ -11,6 +11,8 @@ export function useSystemReport() {
   const { client, status } = useEngine();
   const [model, setModel] = useState<ModelStatus | null>(null);
   const [report, setReport] = useState<DiagnosticsReport | null>(null);
+  const [tick, setTick] = useState(0);
+  const reload = useCallback(() => setTick((value) => value + 1), []);
   useEffect(() => {
     if (status !== 'online') return;
     let cancel = false;
@@ -23,9 +25,9 @@ export function useSystemReport() {
     return () => {
       cancel = true;
     };
-  }, [client, status]);
+  }, [client, status, tick]);
   const items = systemChecks({ model, report });
-  return { model, report, items, ready: readyToEnter(items) };
+  return { model, report, items, ready: readyToEnter(items), reload };
 }
 
 export function useEnter(gpuAvailable: boolean | null) {

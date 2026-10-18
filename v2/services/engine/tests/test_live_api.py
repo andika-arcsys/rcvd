@@ -22,6 +22,15 @@ def test_gpu_model_without_weights_stays_optical(client: TestClient) -> None:
     assert client.get("/models").json()["state"] == "optical"
 
 
+def test_diagnostics_camera_follows_live_video(client: TestClient) -> None:
+    assert client.get("/diagnostics").json()["camera_state"] == "not_configured"
+    pushed = client.post("/video/synthetic", json={"count": 1, "width": 8, "height": 8})
+    assert pushed.status_code == 200
+    body = client.get("/diagnostics").json()
+    assert body["video"]["state"] == "live"
+    assert body["camera_state"] == "connected"
+
+
 def test_missing_camera_is_vid_003(client: TestClient) -> None:
     response = client.post("/video/device", json={"kind": "camera"})
     assert response.status_code == 503
