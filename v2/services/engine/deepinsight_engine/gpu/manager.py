@@ -47,6 +47,10 @@ class ModelManager:
         self._worker_env = dict(worker_env or {})
         self._hydro = hydro
         self._spatial = spatial
+        self._hydro_tune: dict[str, float | int] = {
+            "confidence": 0.5 if hydro is None else hydro.default_confidence,
+            "imgsz": 640,
+        }
         self._baseline = probe.snapshot()
         self._worker: WorkerHandle | None = None
         self.active: str | None = None
@@ -90,10 +94,18 @@ class ModelManager:
         self.last_result = None
         self.state = "ready"
 
+    def hydro_tune(self) -> dict[str, float | int]:
+        return dict(self._hydro_tune)
+
+    def set_hydro_tune(self, confidence: float, imgsz: int) -> dict[str, float | int]:
+        self._hydro_tune = {"confidence": confidence, "imgsz": imgsz}
+        return self.hydro_tune()
+
     def infer(self, frame: StoredFrame) -> bytes | None:
         if self.state != "ready" or self._worker is None:
             return None
-        raw = self._worker.infer(frame)
+        extra = self._hydro_tune if self.active == "hydrodetect" else None
+        raw = self._worker.infer(frame, extra)
         self.last_result = self._worker.last_event
         return raw
 

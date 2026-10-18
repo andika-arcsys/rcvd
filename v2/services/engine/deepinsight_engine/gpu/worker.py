@@ -15,6 +15,8 @@ from ..core.errors import EngineError
 from .aquaclear import apply_preset
 from .depth_map import relative_from_output
 from .ultralytics_seg import (
+    IMGSZ,
+    QUALITY_SIZES,
     hydro_source,
     load_yolo,
     missing_hydro_detail,
@@ -191,7 +193,13 @@ def _infer_ultra(state: dict[str, Any], message: dict[str, Any]) -> dict[str, An
     image = np.frombuffer(_read_raw(message), dtype=np.uint8).reshape(height, width, 3)
     try:
         found = predict_candidates(
-            state["yolo"], image, state["classes"], state["hydro"], str(state["device"])
+            state["yolo"],
+            image,
+            state["classes"],
+            state["hydro"],
+            str(state["device"]),
+            confidence=_tune_confidence(message),
+            imgsz=_tune_imgsz(message),
         )
     except EngineError as exc:
         return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
@@ -215,6 +223,20 @@ def _infer_onnx(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any
     depth = relative_from_output(outputs[0], int(state["spatial"]["preview_max_side"]))
     del outputs
     return depth_event(frame_id, depth)
+
+
+def _tune_confidence(message: dict[str, Any]) -> float | None:
+    value = message.get("confidence")
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return None
+    return float(value)
+
+
+def _tune_imgsz(message: dict[str, Any]) -> int:
+    value = message.get("imgsz")
+    if isinstance(value, int) and value in QUALITY_SIZES:
+        return value
+    return IMGSZ
 
 
 def _read_raw(message: dict[str, Any]) -> bytes:

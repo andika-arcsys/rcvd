@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FILL_ALPHA, paintRegion } from './overlay';
+import { FILL_ALPHA, paintLabel, paintRegion } from './overlay';
 
 describe('paintRegion', () => {
   it('mengisi poligon dengan warna kelas dan menjaga garis tepi', () => {
@@ -24,6 +24,41 @@ describe('paintRegion', () => {
     expect(seen.stroked).toEqual([{ color: '#3B82F6', alpha: 1 }]);
   });
 
+  it('menggambar garis saja bila isi dimatikan', () => {
+    const seen = fakeContext();
+    paintRegion(
+      seen.ctx,
+      [
+        [0, 0],
+        [4, 0],
+        [4, 4],
+      ],
+      '#3B82F6',
+      { width: 40, height: 40 },
+      { maxX: 4, maxY: 4 },
+      { fill: false, line: true, label: false },
+    );
+    expect(seen.filled).toEqual([]);
+    expect(seen.stroked).toEqual([{ color: '#3B82F6', alpha: 1 }]);
+  });
+
+  it('menulis nama kelas dan keyakinan di tepi kotak', () => {
+    const seen = fakeContext();
+    paintLabel(
+      seen.ctx,
+      'Pipe 88%',
+      '#3B82F6',
+      [2, 4, 6, 6],
+      { width: 100, height: 50 },
+      {
+        maxX: 10,
+        maxY: 8,
+      },
+    );
+    expect(seen.texts).toEqual(['Pipe 88%']);
+    expect(seen.rects[0]?.color).toBe('#3B82F6');
+  });
+
   it('melewati poligon yang belum membentuk wilayah', () => {
     const seen = fakeContext();
     paintRegion(
@@ -46,6 +81,8 @@ function fakeContext() {
   const lines: { x: number; y: number }[] = [];
   const filled: { color: string; alpha: number }[] = [];
   const stroked: { color: string; alpha: number }[] = [];
+  const texts: string[] = [];
+  const rects: { color: string }[] = [];
   const ctx = {
     fillStyle: '',
     strokeStyle: '',
@@ -70,6 +107,15 @@ function fakeContext() {
     stroke() {
       stroked.push({ color: String(ctx.strokeStyle), alpha: ctx.globalAlpha });
     },
+    measureText(text: string) {
+      return { width: text.length * 6 };
+    },
+    fillRect() {
+      rects.push({ color: String(ctx.fillStyle) });
+    },
+    fillText(text: string) {
+      texts.push(text);
+    },
   };
   return {
     ctx: ctx as unknown as CanvasRenderingContext2D,
@@ -77,5 +123,7 @@ function fakeContext() {
     lines,
     filled,
     stroked,
+    texts,
+    rects,
   };
 }

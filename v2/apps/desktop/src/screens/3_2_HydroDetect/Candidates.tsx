@@ -7,10 +7,12 @@ export function CandidateList({
   items,
   concealed,
   onMark,
+  note,
 }: {
   items: Candidate[];
   concealed: number;
   onMark: (name: string) => void;
+  note: string | null;
 }) {
   return (
     <section className="flex flex-col gap-2">
@@ -18,6 +20,8 @@ export function CandidateList({
       <p className="text-xs text-muted">
         {concealed} {t('feature.hiddenCount')}
       </p>
+      <p className="text-xs text-muted">{t('feature.markHint')}</p>
+      {note ? <p className="text-xs text-info">{note}</p> : null}
       {items.length === 0 ? (
         <p className="text-sm text-muted">{t('feature.noCandidates')}</p>
       ) : null}

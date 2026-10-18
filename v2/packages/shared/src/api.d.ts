@@ -465,6 +465,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/vision/tune": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tune Hydro */
+        post: operations["tune_hydro_vision_tune_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/video/compare": {
         parameters: {
             query?: never;
@@ -1505,6 +1522,16 @@ export interface components {
             /** Uptime S */
             uptime_s: number;
         };
+        /** HydroTune */
+        HydroTune: {
+            /** Confidence */
+            confidence: number;
+            /**
+             * Imgsz
+             * @enum {integer}
+             */
+            imgsz: 640 | 960 | 1280;
+        };
         /** Interaction */
         Interaction: {
             /** Hit Px */
@@ -2338,6 +2365,10 @@ export interface components {
             frame_width?: number | null;
             /** Frame Height */
             frame_height?: number | null;
+            /** Confidence */
+            confidence: number;
+            /** Imgsz */
+            imgsz: number;
         };
     };
     responses: never;
@@ -3267,6 +3298,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VisionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tune_hydro_vision_tune_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HydroTune"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HydroTune"];
                 };
             };
             /** @description Validation Error */

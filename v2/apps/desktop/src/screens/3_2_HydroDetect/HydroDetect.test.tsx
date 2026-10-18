@@ -86,6 +86,32 @@ describe('HydroDetect', () => {
     ).toBeInTheDocument();
   });
 
+  it('mengirim keyakinan dan mutu ke model', async () => {
+    const seen: { confidence?: number; imgsz?: number } = {};
+    renderApp('/live/hydrodetect', {
+      role: 'pilot_drone',
+      routes: {
+        ...routes(),
+        'POST /vision/tune': async (request: Request) => {
+          const body = (await request.json()) as { confidence?: number; imgsz?: number };
+          seen.confidence = body.confidence;
+          seen.imgsz = body.imgsz;
+          return jsonResponse(200, body);
+        },
+      },
+    });
+    expect(await screen.findByRole('button', { name: 'Isi' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: 'Garis' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Anotasi' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/Masuk antrian Review, bukan Gallery/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Teliti' }));
+    expect(seen.imgsz).toBe(1280);
+    expect(seen.confidence).toBe(0.5);
+  });
+
   it('menandai kandidat ke review', async () => {
     const seen: { class_name?: string } = {};
     renderApp('/live/hydrodetect', {

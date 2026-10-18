@@ -95,3 +95,17 @@ def test_freeze_records_preset_and_keeps_raw_png(client: TestClient) -> None:
     assert vision.json()["preset"] == "light"
     assert len(vision.json()["classes"]) == 8
     assert vision.json()["classes"][-1]["hidden_by_default"] is True
+    assert vision.json()["confidence"] == 0.5
+    assert vision.json()["imgsz"] == 640
+
+
+def test_hydro_tune_changes_the_next_vision_read(client: TestClient) -> None:
+    updated = client.post("/vision/tune", json={"confidence": 0.8, "imgsz": 1280})
+    assert updated.status_code == 200
+    assert updated.json() == {"confidence": 0.8, "imgsz": 1280}
+    vision = client.get("/vision").json()
+    assert vision["confidence"] == 0.8
+    assert vision["imgsz"] == 1280
+    rejected = client.post("/vision/tune", json={"confidence": 0.01, "imgsz": 640})
+    assert rejected.status_code == 422
+    assert rejected.json()["code"] == "API-002"

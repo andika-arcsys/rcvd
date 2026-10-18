@@ -8,8 +8,9 @@ import { VideoStage } from '../3_OpticalNativeView/VideoStage';
 import { useVision, type Vision } from '../features/poll';
 import { useReleaseModel } from '../features/release';
 import { CandidateList } from './Candidates';
+import { DetectControls } from './DetectControls';
 import { ClassFilter } from './Filter';
-import { MaskOverlay } from './overlay';
+import { MaskOverlay, type MaskStyle } from './overlay';
 
 type Chip = Vision['classes'][number];
 
@@ -18,7 +19,9 @@ export default function HydroDetectScreen() {
   const status = useVideoStatus();
   const vision = useVision();
   const hidden = useHidden(vision?.classes);
-  const mark = useMark(status?.frame_id ?? null);
+  const marked = useMark(status?.frame_id ?? null);
+  const draw = useDraw();
+  const tune = useTune(vision);
   const shown = (vision?.candidates ?? []).filter(
     (item) => !hidden.names.includes(item.class_name),
   );
@@ -28,28 +31,133 @@ export default function HydroDetectScreen() {
       <FeatureTabs warning={status?.performance_warning ?? null} active="F3" />
       <PerformanceLink fps={status?.fps ?? null} gpu={status?.gpu_util_pct ?? null} />
       <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="relative h-fit">
-          <VideoStage frameId={status?.frame_id ?? null} lost={Boolean(status?.lost)} />
-          <MaskOverlay
-            items={shown}
-            colors={vision?.classes ?? []}
-            frameWidth={vision?.frame_width ?? null}
-            frameHeight={vision?.frame_height ?? null}
-          />
-        </div>
-        <aside className="flex flex-col gap-3">
-          {vision?.kind !== 'hydrodetect' ? (
-            <p className="text-sm text-warn">{t('feature.weightsMissing')}</p>
-          ) : null}
-          <ClassFilter vision={vision} hidden={hidden.names} onToggle={hidden.toggle} />
-          <CandidateList items={shown} concealed={concealed} onMark={mark} />
-          <Link to="/live" className="text-sm text-info">
-            {t('feature.checkOptical')}
-          </Link>
-        </aside>
+        <Frame
+          frameId={status?.frame_id ?? null}
+          lost={Boolean(status?.lost)}
+          vision={vision}
+          shown={shown}
+          style={draw.style}
+        />
+        <Aside
+          vision={vision}
+          hidden={hidden.names}
+          onToggle={hidden.toggle}
+          style={draw.style}
+          onStyle={draw.toggle}
+          confidence={tune.confidence}
+          imgsz={tune.imgsz}
+          onTune={tune.send}
+          shown={shown}
+          concealed={concealed}
+          onMark={marked.mark}
+          note={marked.note}
+        />
       </div>
     </div>
   );
+}
+
+function Frame({
+  frameId,
+  lost,
+  vision,
+  shown,
+  style,
+}: {
+  frameId: string | null;
+  lost: boolean;
+  vision: Vision | null;
+  shown: Vision['candidates'];
+  style: MaskStyle;
+}) {
+  return (
+    <div className="relative h-fit">
+      <VideoStage frameId={frameId} lost={lost} />
+      <MaskOverlay
+        items={shown}
+        colors={vision?.classes ?? []}
+        frameWidth={vision?.frame_width ?? null}
+        frameHeight={vision?.frame_height ?? null}
+        style={style}
+      />
+    </div>
+  );
+}
+
+function Aside({
+  vision,
+  hidden,
+  onToggle,
+  style,
+  onStyle,
+  confidence,
+  imgsz,
+  onTune,
+  shown,
+  concealed,
+  onMark,
+  note,
+}: {
+  vision: Vision | null;
+  hidden: string[];
+  onToggle: (name: string) => void;
+  style: MaskStyle;
+  onStyle: (key: keyof MaskStyle) => void;
+  confidence: number;
+  imgsz: number;
+  onTune: (confidence: number, imgsz: number) => void;
+  shown: Vision['candidates'];
+  concealed: number;
+  onMark: (name: string) => void;
+  note: string | null;
+}) {
+  return (
+    <aside className="flex flex-col gap-3">
+      {vision?.kind !== 'hydrodetect' ? (
+        <p className="text-sm text-warn">{t('feature.weightsMissing')}</p>
+      ) : null}
+      <DetectControls
+        style={style}
+        onStyle={onStyle}
+        confidence={confidence}
+        imgsz={imgsz}
+        onTune={onTune}
+      />
+      <ClassFilter vision={vision} hidden={hidden} onToggle={onToggle} />
+      <CandidateList items={shown} concealed={concealed} onMark={onMark} note={note} />
+      <Link to="/live" className="text-sm text-info">
+        {t('feature.checkOptical')}
+      </Link>
+    </aside>
+  );
+}
+
+function useDraw() {
+  const [style, setStyle] = useState<MaskStyle>({ fill: true, line: true, label: true });
+  const toggle = (key: keyof MaskStyle) => {
+    setStyle((current) => ({ ...current, [key]: !current[key] }));
+  };
+  return { style, toggle };
+}
+
+function useTune(vision: Vision | null) {
+  const { client } = useEngine();
+  const [local, setLocal] = useState<{ confidence: number; imgsz: number } | null>(null);
+  const confidence = local?.confidence ?? vision?.confidence ?? 0.5;
+  const imgsz = local?.imgsz ?? vision?.imgsz ?? 640;
+  const send = (nextConfidence: number, nextSize: number) => {
+    setLocal({ confidence: nextConfidence, imgsz: nextSize });
+    void client.POST('/vision/tune', {
+      body: { confidence: nextConfidence, imgsz: asSize(nextSize) },
+    });
+  };
+  return { confidence, imgsz, send };
+}
+
+function asSize(value: number): 640 | 960 | 1280 {
+  if (value === 960) return 960;
+  if (value === 1280) return 1280;
+  return 640;
 }
 
 function useHidden(classes: Chip[] | undefined) {
@@ -65,10 +173,16 @@ function useHidden(classes: Chip[] | undefined) {
 
 function useMark(frameId: string | null) {
   const { client } = useEngine();
-  return (className: string) => {
+  const [note, setNote] = useState<string | null>(null);
+  const mark = (className: string) => {
     if (!frameId) return;
-    void client.POST('/findings', { body: { frame_id: frameId, class_name: className } });
+    void client
+      .POST('/findings', { body: { frame_id: frameId, class_name: className } })
+      .then((result) => {
+        if (result.data) setNote(t('feature.markedReview'));
+      });
   };
+  return { mark, note };
 }
 
 function PerformanceLink({ fps, gpu }: { fps: number | null; gpu: number | null }) {

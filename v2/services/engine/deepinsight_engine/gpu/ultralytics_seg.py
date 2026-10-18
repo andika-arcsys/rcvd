@@ -15,6 +15,7 @@ from ..core.errors import EngineError
 from .vision import rle_encode, trim_candidates
 
 IMGSZ = 640
+QUALITY_SIZES = (640, 960, 1280)
 _RLE_SIDE = 160
 
 
@@ -73,18 +74,31 @@ def predict_candidates(
     classes: list[str],
     cfg: HydrodetectConfig,
     device: str,
+    confidence: float | None = None,
+    imgsz: int = IMGSZ,
 ) -> list[dict[str, object]]:
-    """Deteksi pada array BGR uint8. Ambang awal adalah ambang kelas terendah."""
+    """Deteksi pada array BGR uint8.
+
+    Tanpa angka keyakinan, ambang awal adalah ambang kelas terendah di berkas.
+    Angka dari layar menggantikan ambang semua kelas dan ukuran gambar model.
+    """
+    gate = _floor(cfg) if confidence is None else confidence
+    size = imgsz if imgsz in QUALITY_SIZES else IMGSZ
     result = model.predict(
         image_bgr,
-        conf=_floor(cfg),
-        imgsz=IMGSZ,
+        conf=gate,
+        imgsz=size,
         device=device,
         retina_masks=True,
         verbose=False,
     )[0]
     height, width = int(image_bgr.shape[0]), int(image_bgr.shape[1])
-    return trim_candidates(_rows(result, classes, width, height), cfg)
+    active = cfg if confidence is None else _uniform(cfg, confidence)
+    return trim_candidates(_rows(result, classes, width, height), active)
+
+
+def _uniform(cfg: HydrodetectConfig, confidence: float) -> HydrodetectConfig:
+    return cfg.model_copy(update={"default_confidence": confidence, "overrides": {}})
 
 
 def _floor(cfg: HydrodetectConfig) -> float:
