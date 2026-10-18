@@ -69,6 +69,16 @@ describe('Sidebar', () => {
     expect(screen.getByRole('button', { name: 'Keluar' })).toBeEnabled();
   });
 
+  it('ciutkan menu menyisakan ikon dan bisa dibuka lagi', async () => {
+    renderSidebar(FULL, 'gallery');
+    await userEvent.click(screen.getByRole('button', { name: 'Ciutkan menu' }));
+    const gallery = screen.getByRole('link', { name: 'Gallery' });
+    expect(gallery.querySelector('.sr-only')).toHaveTextContent('Gallery');
+    expect(gallery).toHaveAttribute('aria-current', 'page');
+    await userEvent.click(screen.getByRole('button', { name: 'Tampilkan keterangan' }));
+    expect(screen.getByRole('button', { name: 'Ciutkan menu' })).toBeInTheDocument();
+  });
+
   it('Keluar memanggil handler konfirmasi', async () => {
     const onExit = renderSidebar(FULL);
     await userEvent.click(screen.getByRole('button', { name: 'Keluar' }));

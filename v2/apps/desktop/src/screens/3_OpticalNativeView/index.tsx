@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
+import { WorkColumns } from '../../components/WorkColumns';
 import { t } from '../../i18n';
 import { ActionBar } from './ActionBar';
 import { FeatureTabs } from './FeatureTabs';
@@ -26,13 +27,15 @@ export default function OpticalNativeViewScreen() {
       ) : null}
       <TelemetryBar status={status} />
       <FeatureTabs warning={status?.performance_warning ?? null} />
-      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <div className="flex min-h-0 flex-col gap-3">
-          <SourcePicker />
-          <VideoStage frameId={status?.frame_id ?? null} lost={Boolean(status?.lost)} />
-        </div>
-        <SideColumn status={status} mission={mission} findings={findings} />
-      </div>
+      <WorkColumns
+        main={
+          <div className="flex min-w-0 flex-col gap-3">
+            <SourcePicker />
+            <VideoStage frameId={status?.frame_id ?? null} lost={Boolean(status?.lost)} />
+          </div>
+        }
+        side={<SideColumn status={status} mission={mission} findings={findings} />}
+      />
       <ActionBar
         lost={Boolean(status?.lost)}
         note={actions.note}

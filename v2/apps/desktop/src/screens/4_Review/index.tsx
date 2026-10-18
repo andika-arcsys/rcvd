@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { t } from '../../i18n';
 import { useSession } from '../../session/SessionContext';
+import { WorkColumns } from '../../components/WorkColumns';
 import { DecisionBar } from './Actions';
 import { verificationRows } from './checks';
 import { ReviewFrame } from './Frame';
@@ -94,12 +95,17 @@ function Work({
   onDecide: (action: Action) => void;
 }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div>
-        <Queue items={review.items ?? []} selected={item.id} onSelect={review.setSelected} />
-        <ReviewFrame item={item} />
-      </div>
-      <div className="flex flex-col gap-3">
+    <WorkColumns
+      mainMin="40rem"
+      className="gap-4"
+      main={
+        <div>
+          <Queue items={review.items ?? []} selected={item.id} onSelect={review.setSelected} />
+          <ReviewFrame item={item} />
+        </div>
+      }
+      side={
+        <div className="flex flex-col gap-3">
         <Checks detail={review.detail} />
         <DecisionBar
           item={item}
@@ -110,8 +116,9 @@ function Work({
           setClassName={setClassName}
           onDecide={onDecide}
         />
-      </div>
-    </div>
+        </div>
+      }
+    />
   );
 }
 

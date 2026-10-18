@@ -1,4 +1,5 @@
 import { MeasureCanvas } from '../../components/MeasureCanvas';
+import { WorkColumns } from '../../components/WorkColumns';
 import { t } from '../../i18n';
 import { angleList } from '../../measure/angle';
 import { nodesOf, type XY } from '../../measure/draft';
@@ -43,34 +44,40 @@ function Board({ saveLabel }: { saveLabel: 'measure.save' | 'measure.saveAs' }) 
   const nativeLong = Math.max(frame?.width ?? 0, frame?.height ?? 0);
   const displayMax = board.loaded.thresholds?.video.display_max_side ?? nativeLong;
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-      <MeasureCanvas
-        width={frame?.width ?? 1}
-        height={frame?.height ?? 1}
-        shownWidth={frame?.shown_width ?? frame?.width ?? 1}
-        shownHeight={frame?.shown_height ?? frame?.height ?? 1}
-        jpeg={frame ? `data:image/jpeg;base64,${frame.jpeg_b64}` : null}
-        nodes={nodesOf(board.store.draft)}
-        strokes={strokesOf(board.store.draft)}
-        zoom={board.zoom}
-        hitPx={board.view?.hit ?? 0}
-        magnifier={board.view?.magnifier ?? 0}
-        detail={board.detail}
-        choices={nativeLong > 0 ? detailChoices(nativeLong, displayMax) : []}
-        onPlace={actions.place}
-        onBegin={actions.begin}
-        onMove={actions.move}
-        onZoom={board.setZoom}
-        onDetail={board.setDetail}
-      />
-      <Side
-        board={board}
-        actions={actions}
-        laser={laser}
-        freezeNo={frame?.freeze_no ?? null}
-        saveLabel={saveLabel}
-      />
-    </div>
+    <WorkColumns
+      mainMin="40rem"
+      className="gap-4"
+      main={
+        <MeasureCanvas
+          width={frame?.width ?? 1}
+          height={frame?.height ?? 1}
+          shownWidth={frame?.shown_width ?? frame?.width ?? 1}
+          shownHeight={frame?.shown_height ?? frame?.height ?? 1}
+          jpeg={frame ? `data:image/jpeg;base64,${frame.jpeg_b64}` : null}
+          nodes={nodesOf(board.store.draft)}
+          strokes={strokesOf(board.store.draft)}
+          zoom={board.zoom}
+          hitPx={board.view?.hit ?? 0}
+          magnifier={board.view?.magnifier ?? 0}
+          detail={board.detail}
+          choices={nativeLong > 0 ? detailChoices(nativeLong, displayMax) : []}
+          onPlace={actions.place}
+          onBegin={actions.begin}
+          onMove={actions.move}
+          onZoom={board.setZoom}
+          onDetail={board.setDetail}
+        />
+      }
+      side={
+        <Side
+          board={board}
+          actions={actions}
+          laser={laser}
+          freezeNo={frame?.freeze_no ?? null}
+          saveLabel={saveLabel}
+        />
+      }
+    />
   );
 }
 

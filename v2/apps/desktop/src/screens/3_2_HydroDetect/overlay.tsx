@@ -24,7 +24,9 @@ export function MaskOverlay({
   useEffect(() => {
     draw(ref.current, items, colors, frameWidth, frameHeight, style);
   }, [items, colors, frameWidth, frameHeight, style]);
-  return <canvas ref={ref} className="pointer-events-none absolute inset-0 h-full w-full" />;
+  return (
+    <canvas ref={ref} className="pointer-events-none absolute inset-0 h-full w-full object-contain" />
+  );
 }
 
 function draw(
@@ -38,10 +40,10 @@ function draw(
   if (!node || import.meta.env.MODE === 'test') return;
   const ctx = node.getContext('2d');
   if (!ctx) return;
-  node.width = node.clientWidth || 1;
-  node.height = node.clientHeight || 1;
-  ctx.clearRect(0, 0, node.width, node.height);
   const box = extent(items, frameWidth, frameHeight);
+  node.width = Math.max(1, Math.round(box.maxX));
+  node.height = Math.max(1, Math.round(box.maxY));
+  ctx.clearRect(0, 0, node.width, node.height);
   for (const item of items) {
     const color = colorOf(colors, item.class_name);
     paintRegion(ctx, item.polygon, color, node, box, style);

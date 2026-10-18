@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { StageFrame } from '../../components/StageFrame';
 import { t } from '../../i18n';
 import type { Compare } from '../features/poll';
 
@@ -18,16 +19,20 @@ export function ComparePane({
     paint(view.current, pair?.view_jpeg_b64 ?? null);
   }, [pair]);
   return (
-    <div className="flex min-h-64 flex-col gap-2">
-      <div className="relative min-h-64 flex-1 overflow-hidden rounded-xl border border-line bg-black">
-        <canvas ref={raw} className="h-full w-full" aria-label={t('feature.raw')} />
+    <div className="flex min-w-0 flex-col gap-2">
+      <StageFrame>
+        <canvas
+          ref={raw}
+          className="absolute inset-0 h-full w-full object-contain"
+          aria-label={t('feature.raw')}
+        />
         <canvas
           ref={view}
-          className="absolute inset-0 h-full w-full"
+          className="absolute inset-0 h-full w-full object-contain"
           style={{ clipPath: `inset(0 0 0 ${split}%)` }}
           aria-label={t('feature.enhanced')}
         />
-      </div>
+      </StageFrame>
       <input
         type="range"
         min={0}
