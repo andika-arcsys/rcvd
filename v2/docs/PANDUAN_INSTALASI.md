@@ -1,26 +1,29 @@
 # Panduan instalasi dan penggunaan DeepInsight
 
-DeepInsight 0.9.0-rc1 berjalan sebagai layanan web Python 3.12 di laptop. Browser membuka `http://127.0.0.1:8000/`. Tidak ada installer. Pemasangan cukup `setup.bat` sekali, lalu aplikasi dijalankan dengan `start.bat`.
+DeepInsight 0.9.0-rc1 berjalan sebagai layanan web Python 3.12 di laptop. Kode ada di repositori `rcvd`, folder `v2`. Browser membuka `http://127.0.0.1:8000/`. Tidak ada installer.
 
-Perintah di bawah dijalankan dari folder `v2` di dalam salinan repositori.
+Pemasangan harian cukup `setup.bat` sekali, lalu `start.bat`. Bagian di bawah memecah pekerjaan yang sama menjadi langkah yang terlihat, mulai dari laptop yang belum punya environment. Jangan lanjut ke langkah berikutnya bila hasil cek belum sesuai.
+
+Semua perintah Windows memakai Command Prompt (`cmd`), bukan PowerShell, kecuali disebut lain. Buka dengan: tekan tombol Windows, ketik `cmd`, Enter. Perintah aplikasi dijalankan dari `D:\DeepInsight\v2`.
 
 ## Cara kerjanya
 
-1. `start.bat` menjalankan `start.py`, yang memeriksa Python 3.12, paket, dan GPU.
-2. Engine Python (FastAPI + uvicorn) menyajikan antarmuka dan API di port yang sama.
-3. Browser terbuka ke halaman aplikasi. Konsol menulis `Membuka browser http://127.0.0.1:8000/`.
-4. Model AI dimuat ke GPU ketika fiturnya dibuka (AquaClear, HydroDetect, SpatialSight), satu model pada satu waktu, dan dilepas saat fitur ditutup.
+1. `start.bat` memakai Python di dalam `.venv` dan menjalankan `start.py`.
+2. `start.py` menolak jalan bila Python bukan 3.12, atau bila paket inti belum terpasang.
+3. Engine FastAPI dan uvicorn menyajikan antarmuka React dan API di port yang sama. Bawaan `127.0.0.1:8000`.
+4. Konsol menulis mode GPU atau mode terbatas, lalu `Membuka browser http://127.0.0.1:8000/`.
+5. Model AI dimuat ke GPU hanya ketika fiturnya dibuka (AquaClear, HydroDetect, SpatialSight). Satu model pada satu waktu. Model dilepas saat fitur ditutup. Bila VRAM tidak kembali ke garis dasar, proses pekerja dimatikan.
 
 Dua mode:
 
-- Mode GPU: laptop punya GPU NVIDIA dan driver yang terbaca `nvidia-smi`. Semua fitur AI dapat dimuat.
-- Mode terbatas: GPU tidak terdeteksi (`GPU-001`). AquaClear berjalan di CPU. HydroDetect dan SpatialSight nonaktif. Pengukuran, snapshot, Gallery, Review, dan laporan tetap berjalan.
+- Mode GPU: `nvidia-smi` menampilkan GPU NVIDIA. `requirements-gpu.txt` terpasang. HydroDetect dan SpatialSight dapat dimuat.
+- Mode terbatas: GPU tidak terbaca. Kode `GPU-001`. AquaClear berjalan di CPU (OpenCV). HydroDetect dan SpatialSight nonaktif. Pengukuran, snapshot, Gallery, Review, dan laporan tetap berjalan.
 
-Alamat layar memakai tanda pagar, misalnya `http://127.0.0.1:8000/#/dashboard`.
+Alamat layar memakai tanda pagar, misalnya `http://127.0.0.1:8000/#/dashboard`. Jalur tanpa tanda pagar seperti `/dashboard` dan `/gallery` adalah API, bukan halaman.
 
 ## Kebutuhan laptop
 
-Angka di tabel ini usulan awal. Angka yang diukur baru ada setelah `gpu_soak_test.py` di laptop inspeksi (D-01).
+Angka di tabel ini usulan awal. Angka yang diukur baru ada setelah `gpu_soak_test.py` di laptop inspeksi (D-01). Jangan menyalin nomor CUDA dari dokumen lain.
 
 | Komponen | Minimum (usulan) | Disarankan (usulan) |
 | --- | --- | --- |
@@ -30,166 +33,606 @@ Angka di tabel ini usulan awal. Angka yang diukur baru ada setelah `gpu_soak_tes
 | Penyimpanan | SSD 256 GB, sisa minimal 50 GB | SSD 512 GB |
 | Layar | 1366×768 | 1920×1080 |
 
-Perangkat lunak yang dipasang lebih dulu:
+## Perangkat lunak yang dipakai aplikasi
 
-- Python 3.12 64-bit. Saat instalasi, centang “Add python.exe to PATH”.
-- Git.
-- Driver NVIDIA terbaru, hanya untuk mode GPU. `nvidia-smi` harus menampilkan tabel GPU.
-- Chrome atau Edge.
-- Node.js dan pnpm hanya bila folder `apps/desktop/dist` belum ada. `start.py` membangun antarmuka pada saat itu.
+Ini daftar yang benar-benar dipakai kode di `v2`, bukan daftar umum “software AI”.
 
-## Instalasi
+| Perangkat | Wajib? | Dipakai untuk |
+| --- | --- | --- |
+| Python 3.12 64-bit, dengan `py` launcher dan pip | Wajib | Engine, pengukuran, OpenCV, API |
+| Git for Windows | Wajib | Mengambil kode |
+| Microsoft Visual C++ Redistributable x64 (2015–2022) | Wajib | DLL OpenCV dan ONNX di Windows |
+| Driver NVIDIA | Wajib hanya untuk mode GPU | `nvidia-smi` dan CUDA |
+| CUDA Toolkit dan cuDNN | Hanya bila ONNX Runtime tidak melihat GPU | Harus cocok dengan roda `onnxruntime-gpu` yang terpasang. Nomornya tidak dikunci di repo |
+| Node.js 20 atau lebih baru | Hanya bila `apps\desktop\dist\index.html` belum ada | Membangun tampilan React |
+| pnpm 10 (repo memakai 10.33.4 lewat Corepack) | Bersama Node.js | Memasang paket tampilan |
+| Chrome atau Edge | Wajib | Membuka aplikasi |
+| Microsoft C++ Build Tools | Hanya bila pip meminta “Microsoft Visual C++ 14.0 or greater” | Mengompilasi paket yang tidak punya roda |
+| Notepad++ atau VS Code | Disarankan | Menyunting `config\*.yaml` |
 
-1. Ambil kode dan masuk ke folder aplikasi:
+Paket Python yang dipasang `requirements-cpu.txt` (dari `services/engine/pyproject.toml`):
+
+- fastapi, uvicorn, websockets, pydantic, pyyaml, psutil, numpy, opencv-python-headless, argon2-cffi
+
+`requirements-gpu.txt` memasang daftar yang sama, ditambah `nvidia-ml-py` dan `onnxruntime-gpu`.
+
+`start.py` memeriksa impor ini sebelum layanan jalan: `fastapi`, `uvicorn`, `yaml`, `cv2`, `numpy`, `pydantic`, `argon2`.
+
+PyTorch dan TensorFlow tidak ada di requirements. `ModuleNotFoundError` untuk keduanya adalah keadaan normal. Bila suatu saat terpasang di environment yang sama, aplikasi mengaktifkan memory growth TensorFlow. Runtime produksi model tetap ONNX Runtime.
+
+Yang tidak dipakai: Rust, Tauri, Electron, dan pemasang NSIS.
+
+## Memasang perangkat lunak
+
+Pasang berurutan. Setelah setiap pemasangan, tutup Command Prompt lalu buka lagi, supaya PATH yang baru terbaca.
+
+| No | Perangkat lunak | Sumber | Pilihan saat memasang | Cek |
+| --- | --- | --- | --- | --- |
+| 1 | Python 3.12 64-bit | python.org, Windows installer (64-bit) versi 3.12.x | Centang Add python.exe to PATH. Customize installation: pip, py launcher, dan for all users. Di akhir, Disable path length limit bila tombol itu muncul | `py -3.12 --version` menampilkan `Python 3.12.x` |
+| 2 | Git for Windows | git-scm.com | Pada Adjusting your PATH pilih Git from the command line and also from 3rd-party software | `git --version` |
+| 3 | Driver NVIDIA | nvidia.com, seri GPU laptop itu | Saat memperbarui driver lama: Custom, Clean installation | `nvidia-smi` menampilkan tabel GPU |
+| 4 | Visual C++ Redistributable x64 | learn.microsoft.com, “Latest supported Visual C++ Redistributable”, berkas `vc_redist.x64.exe` | Tidak ada pilihan. Restart bila diminta | Settings, Apps, “Microsoft Visual C++ 2015-2022 Redistributable (x64)” |
+| 5 | CUDA dan cuDNN | developer.nvidia.com | Hanya bila langkah cek ONNX di bawah tidak menampilkan `CUDAExecutionProvider`. Versi mengikuti tabel kompatibilitas ONNX Runtime untuk roda yang terpasang | `nvcc --version` setelah toolkit dipasang. Catat angkanya. Jangan menyalin nomor dari dokumen lain |
+| 6 | Node.js LTS | nodejs.org | Biarkan pilihan bawaan. Centang “Automatically install the necessary tools” tidak diperlukan | `node --version` menampilkan v20 atau lebih baru |
+| 7 | pnpm lewat Corepack | Ikut Node.js | Di cmd Administrator: `corepack enable` | `pnpm --version` |
+| 8 | Chrome atau Edge | google.com/chrome, atau Edge bawaan Windows | — | `chrome://version` atau `edge://version` |
+| 9 | C++ Build Tools | visualstudio.microsoft.com, Build Tools | Hanya bila pip meminta Visual C++ 14.0. Pilih beban kerja Desktop development with C++ | Ulangi pemasangan paket |
+| 10 | Notepad++ atau VS Code | notepad-plus-plus.org atau code.visualstudio.com | — | Untuk menyunting YAML |
+
+### Pengaturan Windows yang disarankan
+
+Long paths, cmd sebagai Administrator:
+
+```bat
+reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f
+```
+
+Hasil yang benar: `The operation completed successfully.`
+
+Mode daya: colok charger dan pilih Best performance. Di NVIDIA Control Panel, Manage 3D settings, Global, pilih High-performance NVIDIA processor.
+
+Antivirus: bila pemasangan paket gagal `Access is denied` atau sangat lambat, kecualikan folder `D:\DeepInsight`.
+
+## Environment Python
+
+Environment (venv) adalah Python khusus DeepInsight di `v2\.venv`. Paket aplikasi masuk ke sana, tidak bercampur dengan Python lain di laptop. Bila environment rusak, hapus folder itu dan buat ulang. Data misi tidak ikut terhapus: data ada di `%LOCALAPPDATA%\DeepInsight`.
+
+### Belum ada environment: buat
+
+```bat
+cd /d D:\DeepInsight\v2
+py -3.12 -m venv .venv
+dir .venv\Scripts
+```
+
+Perintah pertama tidak menampilkan apa pun bila berhasil. `dir` harus menampilkan `python.exe`, `pip.exe`, `activate.bat`, `Activate.ps1`, dan `deactivate.bat`.
+
+| Bila muncul | Artinya | Tindakan |
+| --- | --- | --- |
+| `Error: [WinError 5] Access is denied` | Folder terkunci atau tidak punya izin tulis | Cmd sebagai Administrator, atau pindahkan proyek ke `D:\` |
+| Folder `.venv` sudah ada dan rusak | Sisa pemasangan lama | `rmdir /s /q .venv`, lalu buat lagi |
+
+### Aktifkan, setiap jendela cmd baru
+
+| Jendela | Perintah |
+| --- | --- |
+| Command Prompt | `.venv\Scripts\activate` |
+| PowerShell | `.venv\Scripts\Activate.ps1` |
+| Git Bash | `source .venv/Scripts/activate` |
+
+Tanda aktif: awal baris menjadi `(.venv) D:\DeepInsight\v2>`.
+
+Di PowerShell, bila muncul `running scripts is disabled on this system`:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+Jawab `Y`, lalu ulangi aktivasi.
+
+### Cek environment yang benar
+
+```bat
+python --version
+where python
+python -c "import sys; print(sys.prefix)"
+```
+
+Hasil yang benar:
+
+- `Python 3.12.x`
+- baris pertama `where python` adalah `D:\DeepInsight\v2\.venv\Scripts\python.exe`
+- `sys.prefix` menunjuk ke `D:\DeepInsight\v2\.venv`
+
+Bila mengarah ke `C:\Users\...\Python312`, environment belum aktif. Ulangi `activate`.
+
+### Cek perangkat lunak di dalam environment
+
+Jalankan ini setelah venv aktif. Catat keluarannya bila melapor ke tim pengembang.
+
+```bat
+python --version
+python -m pip --version
+python -c "import sys; print(sys.version); print(sys.prefix)"
+where python
+where git
+git --version
+nvidia-smi
+node --version
+pnpm --version
+python -m pip check
+python -c "import fastapi, uvicorn, yaml, cv2, numpy, pydantic, argon2; print('Paket inti OK', cv2.__version__)"
+python -m pip list
+python -m pip freeze > logs\pip-freeze.txt
+```
+
+Arti hasil:
+
+| Cek | Hasil yang benar | Bila gagal |
+| --- | --- | --- |
+| `python --version` | 3.12.x dari `.venv` | Aktifkan venv, atau buat ulang dengan `py -3.12` |
+| `pip --version` | pip dari `D:\DeepInsight\v2\.venv` dan python 3.12 | `python -m pip install --upgrade pip` |
+| `git --version` | `git version 2.x` | Pasang Git, buka cmd baru |
+| `nvidia-smi` | Tabel nama GPU, Driver Version, CUDA Version, memori | Tanpa GPU NVIDIA: lanjut mode terbatas. `nvidia-smi` tidak dikenali berarti driver belum ada |
+| `node` dan `pnpm` | v20+ dan nomor pnpm | Hanya wajib bila `dist\index.html` belum ada |
+| impor paket inti | `Paket inti OK` dan versi OpenCV 4.x | Ulangi pemasangan requirements |
+| `pip check` | `No broken requirements found.` | Baca nama paket yang bentrok, ulangi install |
+
+Laptop GPU, tambahan:
+
+```bat
+python -c "import onnxruntime as ort; print(ort.__version__); print(ort.get_available_providers())"
+python -m pip list | findstr onnxruntime
+```
+
+Hasil yang benar: paketnya `onnxruntime-gpu`, dan daftar provider memuat `CUDAExecutionProvider` selain `CPUExecutionProvider`. `TensorrtExecutionProvider` boleh ada, tidak wajib.
+
+| Bila muncul | Tindakan |
+| --- | --- |
+| Hanya `CPUExecutionProvider` | `pip list` harus menunjukkan `onnxruntime-gpu`, bukan `onnxruntime`. Bila nama sudah benar, cocokkan CUDA/cuDNN dengan tabel kompatibilitas roda itu. Catat versi driver, `onnxruntime-gpu`, CUDA, dan cuDNN |
+| `ModuleNotFoundError: cv2` | Install requirements belum tuntas. Lihat `logs\pip-install.log` |
+| `DLL load failed` | Pasang Visual C++ Redistributable x64, buka cmd baru, aktifkan venv, ulangi impor |
+| `ModuleNotFoundError: torch` atau `tensorflow` | Normal. Keduanya tidak dipasang oleh requirements |
+
+Keluar dari environment: `deactivate`. Awalan `(.venv)` hilang.
+
+Membuat ulang environment yang rusak:
+
+```bat
+deactivate
+cd /d D:\DeepInsight\v2
+rmdir /s /q .venv
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements-gpu.txt
+```
+
+Ganti berkas terakhir dengan `requirements-cpu.txt` bila laptop tidak punya GPU NVIDIA.
+
+## Instalasi manual, langkah demi langkah
+
+`setup.bat` menjalankan pembuatan venv, pilihan requirements, dan `pnpm install` secara otomatis, lalu menulis `logs\setup.log`. Panduan ini memecahnya supaya tiap hasil terlihat. Selalu pakai `python -m pip`, bukan `pip` saja, agar paket masuk ke environment yang aktif.
+
+### Bagian A — cek prasyarat
+
+Langkah 1, Python 3.12:
+
+```bat
+py -0p
+py -3.12 --version
+```
+
+Hasil yang benar memuat `-V:3.12` dan jalur `python.exe`, lalu `Python 3.12.x`.
+
+| Bila muncul | Tindakan |
+| --- | --- |
+| `'py' is not recognized` | Pasang Python 3.12 64-bit. Centang Add python.exe to PATH dan py launcher |
+| `No suitable Python runtime found` | Yang ada bukan 3.12. Pasang 3.12. Versi 3.11 dan 3.13 tidak dipakai |
+| Baris `-32` | Hapus Python 32-bit. Pasang 64-bit |
+
+Langkah 2, Git:
+
+```bat
+git --version
+```
+
+Hasil yang benar: `git version 2.x.x.windows.x`. Bila tidak dikenali, pasang Git for Windows dan buka cmd baru.
+
+Langkah 3, GPU:
+
+```bat
+nvidia-smi
+```
+
+Catat nama GPU, Driver Version, CUDA Version, dan memori. Angka itu dikirim saat melapor.
+
+| Bila muncul | Tindakan |
+| --- | --- |
+| `'nvidia-smi' is not recognized` | Driver belum ada, atau laptop tanpa GPU NVIDIA. Aplikasi tetap jalan mode terbatas |
+| `NVIDIA-SMI has failed` | Pasang ulang driver. Di NVIDIA Control Panel pilih High performance |
+
+Langkah 4, ambil kode:
 
 ```bat
 cd /d D:\
 git clone https://github.com/andika-arcsys/rcvd.git DeepInsight
-cd DeepInsight\v2
+cd DeepInsight
+git branch -a
+git log -1 --oneline
+cd v2
+dir
 ```
 
-Bila repositori privat, Git meminta login GitHub. Setelah cabang digabung ke `main` dan tag dibuat, versi rilis diambil dengan `git checkout v0.9.0-rc1`. Tag itu belum dibuat pada saat panduan ini ditulis.
+Hasil yang benar: `Cloning into 'DeepInsight'...`, `Receiving objects: 100%`, satu baris `git log`, dan `dir` menampilkan `setup.bat`, `start.bat`, `start.py`, `requirements-gpu.txt`, `requirements-cpu.txt`, serta folder `config`, `scripts`, `services`, `apps`.
 
-2. Jalankan `setup.bat` (klik dua kali, atau ketik `setup.bat`). Di Linux: `./setup.sh`. Skrip ini:
+| Bila muncul | Tindakan |
+| --- | --- |
+| `Repository not found` atau minta login | Repo privat. Login GitHub saat diminta, atau pakai GitHub Desktop |
+| Berkas di `v2` tidak lengkap | Cabang yang terambil belum berisi kode ini. Checkout cabang atau tag yang diberi tim, lalu ulangi `dir` |
 
-- membuat lingkungan Python di `.venv`;
-- mendeteksi GPU NVIDIA;
-- memasang `requirements-gpu.txt` bila GPU ada, atau `requirements-cpu.txt` bila tidak;
-- menulis `logs/setup.log`.
+Tag `v0.9.0-rc1` belum dibuat. Setelah tag ada, dari folder `DeepInsight` (bukan `v2`):
 
-Pasang pertama mengikuti kecepatan internet. Buka `logs/setup.log`. Baris terakhir harus menyatakan setup selesai, dan baris sebelumnya menyebut `requirements-gpu.txt` atau `requirements-cpu.txt`.
+```bat
+git fetch --tags
+git checkout v0.9.0-rc1
+cd v2
+```
 
-3. Siapkan folder model di luar repo, misalnya `D:\DeepInsight-models\`, dengan susunan:
+### Bagian B — environment dan paket
+
+Semua perintah berikut dari `D:\DeepInsight\v2`.
+
+Langkah 5, buat venv bila belum ada. Lewati bila `.venv\Scripts\python.exe` sudah ada dan langkah 6 lolos.
+
+```bat
+py -3.12 -m venv .venv
+dir .venv\Scripts
+```
+
+Langkah 6, aktifkan dan cek `where python` seperti bagian Environment di atas.
+
+Langkah 7, perbarui pip:
+
+```bat
+python -m pip install --upgrade pip
+python -m pip --version
+```
+
+Hasil yang benar: `Successfully installed pip-...` atau `Requirement already satisfied`, lalu pip dari `.venv` dengan python 3.12.
+
+Langkah 8, pasang paket. Lihat dulu isinya:
+
+```bat
+type requirements-gpu.txt
+type requirements-cpu.txt
+mkdir logs
+```
+
+Pilih satu, sesuai langkah 3:
+
+```bat
+REM Laptop dengan GPU NVIDIA, nvidia-smi berhasil:
+python -m pip install -r requirements-gpu.txt > logs\pip-install.log 2>&1
+
+REM Laptop tanpa GPU NVIDIA:
+python -m pip install -r requirements-cpu.txt > logs\pip-install.log 2>&1
+```
+
+Selama proses, log berisi `Collecting`, `Downloading`, `Installing collected packages`, dan diakhiri `Successfully installed`. Pasang pertama bisa 10–30 menit. Paket GPU berukuran ratusan MB.
+
+```bat
+type logs\pip-install.log | findstr /i "error successfully"
+```
+
+| Bila muncul | Tindakan |
+| --- | --- |
+| `No matching distribution` | Python bukan 3.12, atau roda tidak ada untuk Windows. Ulangi langkah 6 |
+| `Microsoft Visual C++ 14.0 or greater is required` | Pasang C++ Build Tools, ulangi langkah 8 |
+| `ReadTimeoutError` atau `ProxyError` | Ulangi. Di kantor yang memakai proxy: tambahkan `--proxy` dan `--timeout 120` pada perintah pip |
+| `path too long` | Aktifkan Long Paths, ulangi |
+| `WinError 5` | Tutup Python lain dan antivirus yang mengunci `.venv`, ulangi |
+
+Langkah 9, periksa pemasangan dengan perintah cek di bagian Environment. Laptop GPU harus melihat `CUDAExecutionProvider`.
+
+### Bagian C — tampilan, model, dan config
+
+Langkah 10, cek antarmuka sudah dibangun:
+
+```bat
+dir apps\desktop\dist\index.html
+```
+
+Bila berkas ada, lanjut. Bila `File Not Found`, `start.py` akan membangunnya, dan itu membutuhkan Node serta pnpm:
+
+```bat
+node --version
+corepack enable
+pnpm --version
+```
+
+`corepack enable` dijalankan sekali di cmd Administrator. Bila `node` tidak dikenali, pasang Node.js LTS, buka cmd baru, aktifkan venv lagi.
+
+Langkah 11, folder model di luar repo:
+
+```bat
+mkdir D:\DeepInsight-models\hydrodetect\exp5
+mkdir D:\DeepInsight-models\spatialsight
+```
+
+Salin berkas dari tim, lalu:
+
+```bat
+dir /s /b D:\DeepInsight-models
+```
+
+Hasil yang benar:
 
 ```text
-hydrodetect\exp5\model.onnx
-hydrodetect\exp5\classes.json
-hydrodetect\exp5\metadata.json
-spatialsight\model.onnx
+D:\DeepInsight-models\hydrodetect\exp5\classes.json
+D:\DeepInsight-models\hydrodetect\exp5\metadata.json
+D:\DeepInsight-models\hydrodetect\exp5\model.onnx
+D:\DeepInsight-models\spatialsight\model.onnx
 ```
 
-Berkas `.onnx` dan `.pt` tidak disimpan di Git.
+Berkas `.onnx` dan `.pt` tidak ada di Git. Laptop GPU dapat membuka berkas HydroDetect:
 
-4. Setelah aplikasi jalan, buka Pengaturan sebagai Ketua tim atau Teknisi program dan simpan folder model itu.
+```bat
+python -c "import onnxruntime as ort; s=ort.InferenceSession(r'D:\DeepInsight-models\hydrodetect\exp5\model.onnx', providers=['CUDAExecutionProvider','CPUExecutionProvider']); print('Provider:', s.get_providers()); print('Input:', [(i.name, i.shape) for i in s.get_inputs()])"
+```
 
-## Konfigurasi yang sudah diisi
+Provider pertama yang diharapkan pada laptop GPU adalah `CUDAExecutionProvider`. `NO_SUCHFILE` atau `InvalidProtobuf` berarti berkas salah atau rusak saat disalin. Bentuk input mengikuti model yang diberikan tim. Jangan mengarang ukurannya bila perintah itu belum dijalankan.
 
-`config/thresholds.yaml` sudah memuat jarak laser dan pita RMS. Jangan menaruh angka lain di kode.
+Di laptop tanpa GPU, lewati perintah ONNX itu. HydroDetect akan ditolak aplikasi dengan `MDL-003`. Itu benar untuk mode terbatas.
+
+Langkah 12, cek laser dan RMS. Nilai ini sudah diisi di repo:
+
+```bat
+findstr /i "ref_cm rms_good_px rms_max_px min_baseline_px valid_max_rel estimate_max_rel" config\thresholds.yaml
+```
+
+Hasil yang benar memuat:
+
+- `ref_cm: 10` — dua titik laser berjarak 10 cm (SUMBER tim)
+- `rms_good_px: 0.5` dan `rms_max_px: 1.0` — USULAN, praktik umum OpenCV
+- `min_baseline_px: 150`
+- `valid_max_rel: 0.03` dan `estimate_max_rel: 0.10`
+
+Kunci di berkas adalah `valid_max_rel` dan `estimate_max_rel`, bukan `valid_pct`. Bila jarak laser di ROV yang dipakai bukan 10 cm, ubah hanya `ref_cm` dengan editor teks, lalu catat di audit lewat Pengaturan bila nilai itu diubah dari layar.
+
+```bat
+type config\video.yaml
+type config\pipelines.yaml
+```
+
+`video.yaml` dengan sumber kosong berarti kamera ROV tidak dibuka saat aplikasi mulai. Aplikasi tetap dapat diuji. `pipelines.yaml` berisi pipa fixture `contoh`, bukan data lapangan.
+
+### Bagian D — menjalankan dan memverifikasi
+
+Langkah 13, dari venv yang aktif:
+
+```bat
+python start.py
+```
+
+Klik dua kali `start.bat` melakukan hal yang sama, memakai `.venv\Scripts\python.exe`. Bila `.venv` belum ada, `start.bat` berhenti dan menyuruh menjalankan `setup.bat`.
+
+Urutan yang harus terlihat:
+
+1. Tidak ada kalimat `Perlu Python 3.12` dan tidak ada `Paket belum lengkap`.
+2. Satu baris mode: `Mode GPU: model dimuat saat fitur dibuka, satu pekerja.` atau `Mode terbatas: GPU tidak terbaca (GPU-001). AquaClear di CPU.`
+3. Bila `dist` belum ada: pembangunan UI lewat pnpm. Itu bisa beberapa menit.
+4. `Membuka browser http://127.0.0.1:8000/`.
+
+Biarkan jendela ini terbuka. Uvicorn di sini tidak mencetak log akses (`log_config` dimatikan). Tidak adanya baris `Uvicorn running` bukan tanda gagal, selama `/health` menjawab.
+
+| Bila muncul | Tindakan |
+| --- | --- |
+| `Perlu Python 3.12` | Langkah 5–6. Venv harus dibuat dengan `py -3.12` |
+| `Paket belum lengkap` | Ulangi langkah 8–9. Nama paket yang hilang tertulis di pesan |
+| Mode terbatas padahal ONNX melihat CUDA | Pemeriksaan mode memakai `nvidia-ml-py` (`nvidia-smi` / NVML), bukan provider ONNX. Laporkan kedua keluaran ke tim |
+| `address already in use` atau port 8000 dipakai | Tutup konsol DeepInsight yang lama, atau `python start.py --port 8080` |
+| Build UI gagal | Langkah 10 |
+
+Langkah 14, buka cmd kedua. Venv tidak wajib untuk curl:
+
+```bat
+curl http://127.0.0.1:8000/health
+curl http://127.0.0.1:8000/diagnostics
+```
+
+`/health` berisi `"status":"ok"` dan `session_id` berbentuk `SES-YYYYMMDD-HHMM`. `/diagnostics` berisi `app_version` `0.9.0-rc1`, `python` `3.12.x`, `model.state` `optical` saat baru mulai, `workers` 0, dan GPU. `gpu.error_code` `GPU-001` berarti mode terbatas. Tidak adanya kode error GPU berarti GPU terbaca.
+
+Langkah 15, di browser:
+
+1. `http://127.0.0.1:8000/` menampilkan Splash dan cek sistem. Tanpa GPU, tombol “Lanjut mode terbatas” yang dipakai.
+2. Login memakai akun uji lokal di `docs/DATA_NEEDED.md`. Itu bukan personel lapangan. Akun administrator tidak dibuat otomatis saat instalasi.
+3. Pilih peran Ketua tim, lalu “Lanjut ke Dashboard”.
+4. Buka `http://127.0.0.1:8000/#/pengaturan`. Isi folder model `D:\DeepInsight-models` dan simpan. Tombolnya “Simpan folder model”.
+5. Tekan F12, tab Console. Pindah layar lewat menu. Tidak boleh ada error merah.
+6. Di Live Operation, AquaClear dapat dibuka di CPU. HydroDetect pada laptop GPU berpindah ke siap bila berkas model benar. Pada laptop tanpa GPU, HydroDetect ditolak `MDL-003`.
+
+Langkah 16, hentikan. Tutup sesi lewat menu Keluar. Di konsol pertama tekan Ctrl+C. Pada laptop GPU, `nvidia-smi` setelah berhenti harus mendekati pemakaian memori pada langkah 3, karena tidak ada model yang masih dimuat.
+
+### Titik periksa
+
+| Langkah | Tanda berhasil |
+| --- | --- |
+| 1 | Python 3.12.x |
+| 3 | Tabel `nvidia-smi`, atau sengaja mode terbatas |
+| 4 | `setup.bat`, `start.py`, dan `requirements-*.txt` ada di `v2` |
+| 6 | Prompt `(.venv)` dan `where python` menunjuk ke `.venv` |
+| 8 | `Successfully installed` |
+| 9 | `No broken requirements found.` Pada GPU: `CUDAExecutionProvider` |
+| 11 | Empat berkas model ada. Pada GPU, sesi ONNX terbuka |
+| 12 | `ref_cm: 10`, `rms_good_px: 0.5`, `rms_max_px: 1.0` |
+| 13 | `Membuka browser http://127.0.0.1:8000/` |
+| 14 | `/health` ok, `/diagnostics` versi `0.9.0-rc1` |
+| 15 | Splash, login, Pengaturan, folder model tersimpan |
+| 16 | Konsol berhenti dengan Ctrl+C. VRAM GPU kembali mendekati angka awal |
+
+Setelah langkah ini berhasil sekali, pemakaian harian: buka cmd di `D:\DeepInsight\v2`, `.venv\Scripts\activate`, `python start.py`. Atau klik dua kali `start.bat`.
+
+## Konfigurasi
+
+Nilai ambang ada di `config\`. Jangan menulis angka ambang di kode.
+
+### Laser
 
 ```yaml
 laser:
   ref_cm: 10
-camera:
-  rms_good_px: 0.5
-  rms_max_px: 1.0
+calibration:
+  min_baseline_px: 150
+  valid_max_rel: 0.03
+  estimate_max_rel: 0.10
+  camera_file_required_for_valid: true
 ```
 
-Dua titik laser berjarak 10 cm (SUMBER tim). Setelah FREEZE, skala = 0,10 m dibagi jarak piksel kedua titik. Agar ketidakpastian bisa masuk pita VALID, kedua titik juga perlu berjarak minimal 150 piksel di gambar dan file kalibrasi kamera harus ada. Tanpa file kamera, pengukuran laser tetap jalan dan status maksimal ESTIMATE_ONLY. Ukur ulang jarak 10 cm secara berkala dengan jangka sorong.
+Setelah FREEZE, skala = 0,10 m dibagi jarak piksel dua titik laser. Dua titik harus minimal 150 piksel agar petunjuk “dekatkan ROV” tidak muncul. Status VALID juga membutuhkan file kalibrasi kamera. Tanpa file itu, pengukuran laser tetap jalan dan status maksimal ESTIMATE_ONLY. Ukur ulang jarak 10 cm secara berkala dengan jangka sorong.
 
-Pita RMS (USULAN, praktik umum OpenCV):
+Contoh yang dikunci uji: 10 cm pada jarak 200 piksel menghasilkan skala 0,0005 m/px.
+
+### Kamera dan RMS
 
 | RMS | Tindakan |
 | --- | --- |
-| ≤ 0,5 px | Diterima |
-| di atas 0,5 px sampai 1,0 px | Diterima dengan peringatan |
-| di atas 1,0 px | Ditolak, ulangi foto |
+| ≤ 0,5 px | Diterima. Berkas ditulis |
+| di atas 0,5 px sampai 1,0 px | Diterima dengan peringatan. Berkas tetap ditulis |
+| di atas 1,0 px | Ditolak. Berkas tidak ditulis. Ulangi foto |
 
-Perintah kalibrasi kamera, dari folder `v2`. `--squares 9x6` adalah jumlah sudut dalam, bukan jumlah kotak. `--square-mm` adalah sisi satu kotak dalam milimeter. Ganti keduanya agar cocok dengan papan yang dipakai:
+`--squares 9x6` adalah jumlah sudut dalam, kolom kali baris, bukan jumlah kotak. `--square-mm` adalah sisi satu kotak dalam milimeter. Ganti keduanya agar cocok dengan papan yang dipakai. Dari `v2`, venv boleh tidak aktif karena jalur Python ditulis lengkap:
 
 ```bat
 .venv\Scripts\python scripts\calibrate_camera.py --images D:\kalibrasi\foto --squares 9x6 --square-mm 25 --camera-id rov01
 ```
 
-Hasilnya `config/cameras/rov01.yaml`. Untuk ukur bawah air, foto papan catur sebaiknya diambil di dalam air atau kolam, karena refraksi mengubah jalur cahaya. Rinciannya ada di `docs/CAMERA_CALIBRATION.md`.
+Hasilnya `config\cameras\rov01.yaml`. Untuk ukur di bawah air, foto papan catur sebaiknya diambil di dalam air atau kolam, karena refraksi mengubah jalur cahaya. Rinciannya ada di `docs\CAMERA_CALIBRATION.md`.
 
-Berkas lain yang masih diisi tim:
+### Berkas lain
 
-| Berkas | Isi |
-| --- | --- |
-| `config/pipelines.yaml` | Daftar pipa. Fixture `contoh` bukan data lapangan. |
-| `config/video.yaml` | Sumber video ROV. Kosong berarti perangkat tidak dibuka saat mulai. |
-| `config/risk.yaml` | PR-06-019, PR-06-111, PR-06-117. Kosong: layar PIMS berkata data belum diisi. |
-| `config/sustainability.yaml` | Rumus biaya dan emisi. Kosong: jam, biaya, dan emisi tampil tanda hubung. |
+| Berkas | Isi | Bila kosong |
+| --- | --- | --- |
+| `config\pipelines.yaml` | Daftar pipa | Fixture `contoh` tetap ada. Itu bukan data lapangan |
+| `config\video.yaml` | USB, capture card, atau RTSP | Aplikasi tidak membuka perangkat saat mulai |
+| `config\risk.yaml` | PR-06-019, PR-06-111, PR-06-117 | Layar PIMS berkata data belum diisi |
+| `config\sustainability.yaml` | Rumus biaya dan emisi | Jam, biaya, dan emisi tampil tanda hubung |
 
-## Menjalankan
+Folder model dipilih di Pengaturan setelah aplikasi jalan.
 
-1. Klik dua kali `start.bat`. Konsol menampilkan pemeriksaan Python, paket, GPU, dan mode.
+## Menjalankan sehari-hari
+
+1. Klik dua kali `start.bat`, atau dari cmd yang venv-nya aktif: `python start.py`.
 2. Browser terbuka ke `http://127.0.0.1:8000/`. Bila tidak, salin alamat itu ke Chrome atau Edge.
-3. Biarkan jendela konsol terbuka selama aplikasi dipakai. Jendela itu adalah layanan web-nya.
-
-Dari Command Prompt di folder `v2`:
+3. Biarkan jendela konsol terbuka. Jendela itu adalah layanan web-nya.
+4. Pakai satu tab browser.
 
 | Perintah | Kegunaan |
 | --- | --- |
 | `start.bat --port 8080` | Port lain bila 8000 sudah dipakai |
-| `start.bat --lan` | Dibuka dari perangkat lain di jaringan yang sama. Wajib sudah ada akun PIN. Tanpa PIN, aplikasi menolak jalan. |
+| `start.bat --lan` | Perangkat lain di jaringan yang sama membuka `http://<IP-laptop>:8000/`. Wajib sudah ada akun PIN di `config\users.yaml`. Tanpa PIN, aplikasi menolak jalan |
 
-Cek di browser:
+Cek kapan saja:
 
-- `http://127.0.0.1:8000/health` — status dan ID sesi.
-- `http://127.0.0.1:8000/diagnostics` — versi, GPU, model aktif, cache. `GPU-001` berarti mode terbatas.
+- `http://127.0.0.1:8000/health`
+- `http://127.0.0.1:8000/diagnostics`
 
-Menghentikan: tutup sesi lewat menu Keluar, lalu tutup jendela konsol atau tekan Ctrl+C. Pakai satu tab browser saja.
-
-Akun uji lokal ada di `docs/DATA_NEEDED.md` (bukan personel lapangan). Personel dan PIN lapangan masih diisi tim.
+Menghentikan: menu Keluar, lalu tutup konsol atau Ctrl+C.
 
 ## Penggunaan pertama
 
-1. Splash. Bila GPU tidak ada, pilih “Lanjut mode terbatas”.
-2. Login dengan ID dan PIN.
-3. Pilih peran, lalu “Lanjut ke Dashboard”.
-4. Misi. Pilih pipa. Diameter 16" memakai batas 9,65 m. Diameter 8" memakai batas 5,32 m.
-5. Pre-check. Uji batang 1 m: FREEZE, kalibrasi dua titik laser 10 cm, ukur dua ujung batang, hasil dalam ±3%. Setelah pre-check lolos, mulai misi.
-6. Optical. AquaClear, HydroDetect, atau SpatialSight, satu fitur pada satu waktu.
-7. FREEZE (Spasi). Terima titik laser. Status VALID atau ESTIMATE_ONLY. Ukur, simpan, ulangi dua kali per segmen (selisih ≤ 5 cm).
-8. Gallery dan kalkulator span. Tali ukur ≤ 2%. Uji batang sore ±3%.
+1. Splash. Tanpa GPU, pilih “Lanjut mode terbatas”.
+2. Login dengan akun di `docs\DATA_NEEDED.md`.
+3. Pilih peran dan “Lanjut ke Dashboard”.
+4. Misi. Diameter 16 inci memakai batas 9,65 m. Diameter 8 inci memakai batas 5,32 m.
+5. Pre-check. Uji batang 1 m: FREEZE, dua titik laser 10 cm, ukur dua ujung batang, hasil dalam ±3%. Setelah pre-check lolos, mulai misi.
+6. Optical. Satu fitur AI pada satu waktu.
+7. FREEZE dengan Spasi. Status VALID atau ESTIMATE_ONLY. Simpan. Dua freeze per segmen, selisih paling besar 5 cm.
+8. Gallery dan kalkulator span. Tali ukur paling besar 2%. Uji batang sore ±3%.
 9. Review, laporan, PIMS, arsip.
 10. Penutupan menyusun paket dan hash SHA-256.
 
-Alur layar yang lebih pendek ada di `docs/USER_GUIDE.md`.
+Alur layar yang lebih pendek ada di `docs\USER_GUIDE.md`.
 
-## Memperbarui dan uji GPU
+## Memperbarui
 
 ```bat
 cd /d D:\DeepInsight
 git fetch --tags
 git checkout <tag-baru>
 cd v2
+.venv\Scripts\activate
+python -m pip install -r requirements-gpu.txt
 setup.bat
 ```
 
-`setup.bat` boleh dijalankan ulang. Data misi di folder data pengguna tidak ikut terhapus.
+Pakai `requirements-cpu.txt` bila laptop tanpa GPU. `setup.bat` boleh dijalankan ulang. Data misi di `%LOCALAPPDATA%\DeepInsight` tidak dihapus.
 
-Di laptop inspeksi, sekali dan setiap ganti driver:
+Uji GPU di laptop inspeksi, sekali dan setiap ganti driver:
 
 ```bat
 .venv\Scripts\python scripts\gpu_soak_test.py
 .venv\Scripts\python scripts\eval_hydrodetect.py
 ```
 
-Soak test memeriksa VRAM kembali ke garis dasar. Kirim keluaran lengkap, kode keluar, `nvidia-smi`, dan versi driver serta `onnxruntime-gpu` ke tim pengembang. Di mesin tanpa GPU skrip berhenti kode 2. Itu bukan kelulusan.
+Kirim keluaran lengkap, kode keluar, `nvidia-smi`, `logs\pip-freeze.txt`, dan versi driver, `onnxruntime-gpu`, CUDA, serta cuDNN. Di mesin tanpa GPU, soak test berhenti kode 2. Itu bukan kelulusan.
 
 ## Masalah umum
 
 | Gejala | Langkah |
 | --- | --- |
-| `python` tidak dikenali | Pasang ulang Python 3.12 dan centang “Add to PATH”. |
-| Mode terbatas padahal ada GPU | `nvidia-smi`, perbarui driver, jalankan ulang `setup.bat`. |
-| Browser tidak terbuka | Buka `http://127.0.0.1:8000/` manual. |
-| Port 8000 sudah dipakai | Tutup konsol lama, atau `start.bat --port 8080`. |
-| HydroDetect `MDL-003` | GPU tidak ada, atau folder model di Pengaturan belum benar. Lihat `/diagnostics`. |
-| Status selalu ESTIMATE_ONLY | Belum ada `config/cameras/<id>.yaml`. Jalankan perintah kalibrasi di atas. Pengukuran laser 10 cm tetap jalan. |
-| Status UNCALIBRATED | Titik laser lebih dekat dari 150 px atau tidak terdeteksi. Dekatkan ROV atau klik titik manual. |
-| Video tidak muncul | Periksa `config/video.yaml`. Sumber kosong tidak membuka perangkat. |
-| Pesan berkode | Catat kode dan ID sesi dari `/health`. Lihat `docs/ERROR_CODES.md` dan `docs/TROUBLESHOOTING.md`. |
+| `python` tidak dikenali | Pasang ulang Python 3.12, centang Add to PATH, buka cmd baru |
+| `where python` bukan `.venv` | `.venv\Scripts\activate` |
+| Mode terbatas padahal ada GPU | `nvidia-smi`, perbarui driver, `python -m pip install -r requirements-gpu.txt` di venv yang aktif |
+| Browser tidak terbuka | Buka `http://127.0.0.1:8000/` manual |
+| Port 8000 sudah dipakai | Tutup konsol lama, atau `start.bat --port 8080` |
+| HydroDetect `MDL-003` | Tidak ada GPU, atau folder model di Pengaturan salah. Lihat `/diagnostics` |
+| Status selalu ESTIMATE_ONLY | Belum ada `config\cameras\<id>.yaml`. Pengukuran laser 10 cm tetap jalan |
+| Status UNCALIBRATED | Titik laser lebih dekat dari 150 piksel, atau tidak terdeteksi |
+| Video tidak muncul | `config\video.yaml` masih kosong, atau alamat sumber salah |
+| Pesan berkode | Catat kode dan `session_id` dari `/health`. Lihat `docs\ERROR_CODES.md` dan `docs\TROUBLESHOOTING.md` |
 
 ## Lokasi berkas
 
 | Lokasi | Isi |
 | --- | --- |
-| `v2/logs/setup.log` | Catatan pemasangan |
-| `v2/config/` | Ambang dan pengaturan |
-| Folder data aplikasi (bawaan `%LOCALAPPDATA%\DeepInsight` di Windows) | Sesi, snapshot, log JSON sesi, cache, paket |
-| Folder model yang dipilih di Pengaturan | Bobot `.onnx`, di luar repo |
+| `v2\.venv\` | Python dan paket aplikasi. Boleh dihapus dan dibuat ulang |
+| `v2\logs\setup.log` | Catatan `setup.bat` / `setup.sh` |
+| `v2\logs\pip-install.log` dan `pip-freeze.txt` | Dibuat oleh perintah di panduan ini, untuk laporan |
+| `v2\config\` | Ambang dan pengaturan |
+| `%LOCALAPPDATA%\DeepInsight` | Sesi, snapshot PNG dan JSON, log JSON sesi, cache, paket bukti |
+| Folder model di Pengaturan | Bobot `.onnx`, di luar repo |
 
-Saat melapor, sertakan kode error, ID sesi dari `/health`, dan log sesi dari folder data.
+Log sesi tidak berada di `v2\logs\`. Log sesi berada di bawah folder data, pada `sessions\<SES-id>\logs`. Saat melapor, sertakan kode error, ID sesi dari `/health`, `logs\setup.log`, dan `logs\pip-freeze.txt`.
+
+## Linux
+
+Perintah yang sama, dari folder `v2`, bila environment belum ada:
+
+```bash
+cd /jalur/ke/rcvd/v2
+python3.12 --version
+python3.12 -m venv .venv
+. .venv/bin/activate
+python --version
+python -c "import sys; print(sys.prefix)"
+python -m pip install --upgrade pip
+python -m pip install -r requirements-cpu.txt
+```
+
+Bila `nvidia-smi` berhasil, ganti berkas terakhir dengan `requirements-gpu.txt`. `./setup.sh` melakukan pembuatan venv, aktivasi, dan pilihan requirements itu, lalu menulis `logs/setup.log`.
+
+Cek paket:
+
+```bash
+python -m pip check
+python -c "import fastapi, uvicorn, yaml, cv2, numpy, pydantic, argon2; print('Paket inti OK', cv2.__version__)"
+```
+
+Menjalankan:
+
+```bash
+python start.py
+```
+
+Browser yang sama: `http://127.0.0.1:8000/`. `--port` dan `--lan` berlaku seperti di Windows.
