@@ -12,7 +12,7 @@ Bila langkah singkat di bab 4 selesai dan browser terbuka, bab lanjutan (CUDA, m
 
 | Yang dipakai | Di luar batas aplikasi ini |
 | --- | --- |
-| Command Prompt (`cmd`) | Anaconda Prompt, dan PowerShell, kecuali satu perintah di bab lanjutan yang menulis “PowerShell” |
+| Jendela boleh Anaconda Prompt, setelah `conda deactivate` | Memasang paket selama prompt masih `(base)` |
 | Folder `D:\DeepInsight\v2` | Environment di `C:\`, di folder Anaconda, atau di drive lain |
 | Satu folder bernama `.venv` di dalam `v2` | Folder atau conda bernama `deepenv`, `env`, atau `envs` |
 | Python 3.12 yang ada di dalam `.venv` | Python lain di laptop, termasuk Python 3.11 dan 3.13 |
@@ -60,93 +60,144 @@ Hasil yang benar:
 - baris pertama `where python` adalah `D:\DeepInsight\v2\.venv\Scripts\python.exe`
 - `sys.prefix` adalah `D:\DeepInsight\v2\.venv`
 
-## 4. Dari nol sampai aplikasi menyala
+## 4. Dari drive D: sampai aplikasi menyala
 
-### 4.1 Siapkan tiga hal
+Mulai dari prompt yang sekarang ada di layar. Contoh yang sudah terjadi:
 
-Pasang berurutan. Setelah masing-masing, tutup Command Prompt dan buka lagi.
-
-| No | Apa | Cek di cmd baru |
-| --- | --- | --- |
-| 1 | Python 3.12 64-bit dari python.org. Saat memasang, centang Add python.exe to PATH, pip, dan py launcher | `py -3.12 --version` menampilkan `Python 3.12.x` |
-| 2 | Git for Windows dari git-scm.com. Pada PATH pilih Git from the command line | `git --version` |
-| 3 | Chrome atau Edge | Untuk membuka aplikasi |
-
-Detail pilihan pemasangan, driver NVIDIA, dan Node ada di bab “Perangkat lunak”. Untuk percobaan pertama, tiga baris di atas cukup. Tanpa GPU NVIDIA, aplikasi tetap menyala dalam mode terbatas.
-
-### 4.2 Ambil kode ke drive D
-
-```bat
-cd /d D:\
-git clone https://github.com/andika-arcsys/rcvd.git DeepInsight
-cd /d D:\DeepInsight\v2
-dir setup.bat
+```text
+(base) D:\>
 ```
 
-`dir setup.bat` harus menampilkan berkas `setup.bat`. Bila folder proyek sudah ada, cukup:
+`(base)` adalah environment Anaconda. Python di situ versi 3.13. DeepInsight tidak memakai Python itu. Paket aplikasi tidak dipasang selama prompt masih bertuliskan `(base)`.
+
+`D:\DeepInsight` sudah ada. Jangan menjalankan `git clone` lagi. Pesan `destination path 'DeepInsight' already exists` berarti folder itu sudah terisi.
+
+Folder `v2` belum ada karena cabang yang aktif masih `main`. `main` hanya berisi berkas awal, tanpa aplikasi. Itu sebab `cd v2` menjawab `The system cannot find the path specified`.
+
+Kerjakan berurutan. Setiap blok selesai bila hasilnya sesuai kalimat di bawah perintah.
+
+### 4.1 Masuk ke folder yang sudah ada, lalu ambil cabang aplikasi
 
 ```bat
+cd /d D:\DeepInsight
+git status
+git branch
+git fetch origin
+git checkout cursor/panduan-environment-awam-ddf4
+dir v2\setup.bat
+```
+
+Hasil yang benar:
+
+- `git branch` semula menandai `main`
+- setelah checkout, cabang aktif `cursor/panduan-environment-awam-ddf4`
+- `dir v2\setup.bat` menampilkan berkas `setup.bat`, bukan `File Not Found`
+
+| Bila muncul | Tindakan |
+| --- | --- |
+| `The system cannot find the path specified` pada `cd D:\DeepInsight` | Folder belum ada. Dari `D:\` jalankan `git clone https://github.com/andika-arcsys/rcvd.git DeepInsight`, lalu ulangi blok ini |
+| `destination path already exists` | Folder sudah ada. Jangan clone. Lanjut `cd /d D:\DeepInsight` |
+| `did not match any file` saat checkout | Ulangi `git fetch origin`, lalu checkout lagi |
+| `Please commit your changes or stash them` | Di folder ini jalankan `git status`. Jangan dihapus. Kirim daftar berkasnya ke tim sebelum melanjutkan |
+
+### 4.2 Pastikan Python 3.12 terpasang, terpisah dari Anaconda
+
+Masih boleh di prompt `(base)`:
+
+```bat
+py -3.12 --version
+```
+
+Hasil yang benar: `Python 3.12.x`.
+
+Bila muncul `'py' is not recognized` atau `No suitable Python runtime found`, Anaconda 3.13 tidak menggantikan Python 3.12. Pasang Python 3.12 64-bit dari python.org. Saat memasang, centang Add python.exe to PATH, pip, dan py launcher. Jangan mencentang menghapus Python lain. Tutup jendela, buka lagi, ulangi `py -3.12 --version`.
+
+### 4.3 Keluar dari `(base)`, masuk ke folder v2
+
+```bat
+conda deactivate
 cd /d D:\DeepInsight\v2
 ```
 
-### 4.3 Buat environment dan pasang paket
+Prompt yang benar sesudah itu:
 
-Masih di `D:\DeepInsight\v2`:
+```text
+D:\DeepInsight\v2>
+```
+
+Awalan `(base)` sudah hilang. Belum ada `(.venv)`. Itu benar pada langkah ini: environment DeepInsight belum dibuat.
+
+Bila `conda` tidak dikenali, Anda sudah di Command Prompt biasa. Lanjut `cd` saja.
+
+### 4.4 Buat environment `.venv` dan pasang paket
 
 ```bat
 setup.bat
 ```
 
-`setup.bat` membuat folder `.venv`, lalu memasang paket ke dalamnya. Selesai bila baris terakhir berisi `Selesai` dan berkas `logs\setup.log` ada. Pemasangan pertama dapat berlangsung lama.
+`setup.bat` membuat `D:\DeepInsight\v2\.venv` dengan Python 3.12, lalu memasang paket ke dalam folder itu. Pemasangan pertama dapat berlangsung lama. Selesai bila baris terakhir `Selesai. Lihat logs\setup.log`.
 
-Bila Anda ingin melihat pembuatannya sendiri, lewati `setup.bat` dan ketik:
+Cek:
+
+```bat
+dir .venv\Scripts\python.exe
+type logs\setup.log
+```
+
+`python.exe` harus ada. Di log harus ada `setup selesai`. Bila log menulis `Perlu Python 3.12` atau `py tidak ada`, ulangi bagian 4.2.
+
+### 4.5 Nyalakan aplikasi
+
+Prompt masih `D:\DeepInsight\v2>`, tanpa `(base)`:
+
+```bat
+start.bat
+```
+
+`start.bat` memakai `D:\DeepInsight\v2\.venv\Scripts\python.exe`. Python 3.13 di Anaconda tidak ikut. Biarkan jendela terbuka. Browser membuka `http://127.0.0.1:8000/`.
+
+### 4.6 Bila Anda mengetik perintah sendiri
+
+Hanya setelah `setup.bat` berhasil:
 
 ```bat
 cd /d D:\DeepInsight\v2
-py -3.12 -m venv .venv
 .venv\Scripts\activate
-python -m pip install --upgrade pip
+where python
+python --version
 ```
 
-Prompt sekarang harus `(.venv) D:\DeepInsight\v2>`. Baru kemudian pasang paket. Pilih satu berkas:
+Prompt menjadi:
+
+```text
+(.venv) D:\DeepInsight\v2>
+```
+
+`where python` baris pertama: `D:\DeepInsight\v2\.venv\Scripts\python.exe`. Versi: `Python 3.12.x`. Bila masih `3.13` atau jalur Anaconda, `(.venv)` belum aktif. Jangan `pip`. Ulangi `activate`.
+
+Memasang ulang paket, hanya di prompt `(.venv)`:
 
 ```bat
 python -m pip install -r requirements-gpu.txt
 ```
 
-Laptop tanpa GPU NVIDIA memakai berkas yang lain:
-
-```bat
-python -m pip install -r requirements-cpu.txt
-```
-
-### 4.4 Nyalakan
-
-Cara sehari-hari, dari folder `v2`, tanpa mengaktifkan apa pun:
-
-```bat
-cd /d D:\DeepInsight\v2
-start.bat
-```
-
-`start.bat` sendiri yang memakai `D:\DeepInsight\v2\.venv\Scripts\python.exe`. Bila `.venv` belum ada, jendela berhenti dan menyuruh menjalankan `setup.bat`.
-
-Cara mengetik sendiri, hanya bila prompt sudah `(.venv) D:\DeepInsight\v2>`:
+Laptop yang `nvidia-smi` tidak menampilkan GPU memakai `requirements-cpu.txt`. Menyalakan aplikasi dari prompt ini:
 
 ```bat
 python start.py
 ```
 
-Biarkan jendela itu terbuka. Browser membuka `http://127.0.0.1:8000/`.
+### 4.7 Setiap hari berikutnya
 
-### 4.5 Setiap hari berikutnya
+Buka jendela baru. Keluar dari Anaconda bila `(base)` muncul, lalu:
 
 ```bat
+conda deactivate
 cd /d D:\DeepInsight\v2
 start.bat
 ```
 
-Environment tidak dibuat ulang.
+`.venv` tidak dibuat ulang.
 
 ## 5. Environment rusak
 
@@ -741,7 +792,9 @@ Kirim keluaran lengkap, kode keluar, `nvidia-smi`, `logs\pip-freeze.txt`, dan ve
 
 | Gejala | Langkah |
 | --- | --- |
-| Prompt tidak diawali `(.venv)` | Berhenti. `cd /d D:\DeepInsight\v2` lalu `.venv\Scripts\activate`. Jangan memasang paket |
+| Prompt diawali `(base)` dan `python --version` 3.13 | Itu Anaconda. `conda deactivate`. Aplikasi memakai Python 3.12 di `.venv` |
+| `cd v2` tidak menemukan folder | Masih di cabang `main`. `git fetch origin` lalu `git checkout cursor/panduan-environment-awam-ddf4` |
+| Prompt tidak diawali `(.venv)` saat memasang paket | Berhenti. `cd /d D:\DeepInsight\v2` lalu `.venv\Scripts\activate`. Jangan memasang paket |
 | `python` tidak dikenali | Pasang ulang Python 3.12, centang Add to PATH, buka cmd baru |
 | `where python` bukan `.venv` | `.venv\Scripts\activate` |
 | Mode terbatas padahal ada GPU | `nvidia-smi`, perbarui driver, `python -m pip install -r requirements-gpu.txt` di venv yang aktif |

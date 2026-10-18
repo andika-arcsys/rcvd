@@ -17,7 +17,7 @@ make setup
 make dev
 ```
 
-Di laptop inspeksi, ikuti bab 1–4 `docs/PANDUAN_INSTALASI.md`: Command Prompt, folder `D:\DeepInsight\v2`, satu environment `.venv`. Lalu `setup.bat` sekali dan `start.bat` setiap hari. Browser terbuka di `http://127.0.0.1:8000/`. Python yang dipakai 3.12 dari `.venv`. Tanpa GPU, layanan tetap jalan dalam mode terbatas. Linux: `./setup.sh` lalu `python start.py` dari `.venv` yang sama.
+Di laptop inspeksi, ikuti bab 4 `docs/PANDUAN_INSTALASI.md` dari prompt `D:\`. Cabang `main` belum berisi folder `v2`. Checkout `cursor/panduan-environment-awam-ddf4`, keluar dari Anaconda `(base)`, lalu `setup.bat` sekali dan `start.bat`. Browser terbuka di `http://127.0.0.1:8000/`. Python aplikasi 3.12 ada di `.venv`, bukan Python 3.13 pada `(base)`. Linux: `./setup.sh` lalu `python start.py` dari `.venv` yang sama.
 
 `make dev` menyalakan engine di `http://127.0.0.1:8000` dan tampilan pengembangan di `http://127.0.0.1:5173`. `make test` menjalankan pytest dan vitest. `make lint` menjalankan ruff, mypy, eslint, dan prettier.
 
