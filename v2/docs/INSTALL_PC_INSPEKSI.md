@@ -1,6 +1,6 @@
 # Menjalankan di laptop inspeksi
 
-Panduan operator ada di `docs/PANDUAN_INSTALASI.md`. Berkas ini untuk tim pengembang: apa yang dikirim balik dari laptop inspeksi.
+Panduan operator ada di `docs/PANDUAN_INSTALASI.md`, bab 1–4: Command Prompt, `D:\DeepInsight\v2`, satu environment `.venv`. Berkas ini untuk tim pengembang: apa yang dikirim balik dari laptop inspeksi.
 
 Mesin pengembangan tidak punya GPU NVIDIA. Angka perangkat keras laptop inspeksi belum diisi (D-01). Jangan menyalin nomor CUDA dari dokumen lain sebelum dicatat dari laptop yang dipakai.
 

@@ -1,12 +1,170 @@
-# Panduan instalasi dan penggunaan DeepInsight
+# Panduan instalasi DeepInsight
 
-DeepInsight 0.9.0-rc1 berjalan sebagai layanan web Python 3.12 di laptop. Kode ada di repositori `rcvd`, folder `v2`. Browser membuka `http://127.0.0.1:8000/`. Tidak ada installer.
+Untuk orang yang memasang aplikasi di laptop Windows. DeepInsight 0.9.0-rc1 dibuka di browser, alamat `http://127.0.0.1:8000/`. Tidak ada file installer.
 
-Pemasangan harian cukup `setup.bat` sekali, lalu `start.bat`. Bagian di bawah memecah pekerjaan yang sama menjadi langkah yang terlihat, mulai dari laptop yang belum punya environment. Jangan lanjut ke langkah berikutnya bila hasil cek belum sesuai.
+Semua perintah di panduan ini diketik di **Command Prompt**. Cara membukanya: tombol Windows, ketik `cmd`, Enter. Jendela itu bilah hitam dengan tulisan di akhirnya, disebut prompt.
 
-Semua perintah Windows memakai Command Prompt (`cmd`), bukan PowerShell, kecuali disebut lain. Buka dengan: tekan tombol Windows, ketik `cmd`, Enter. Perintah aplikasi dijalankan dari `D:\DeepInsight\v2`.
+Folder kerja hanya satu: `D:\DeepInsight\v2`. Environment hanya satu. Namanya `.venv`.
 
-## Cara kerjanya
+Bila langkah singkat di bab 4 selesai dan browser terbuka, bab lanjutan (CUDA, model, kalibrasi) tidak perlu dibaca untuk pemakaian pertama.
+
+## 1. Batasan
+
+| Yang dipakai | Di luar batas aplikasi ini |
+| --- | --- |
+| Command Prompt (`cmd`) | Anaconda Prompt, dan PowerShell, kecuali satu perintah di bab lanjutan yang menulis “PowerShell” |
+| Folder `D:\DeepInsight\v2` | Environment di `C:\`, di folder Anaconda, atau di drive lain |
+| Satu folder bernama `.venv` di dalam `v2` | Folder atau conda bernama `deepenv`, `env`, atau `envs` |
+| Python 3.12 yang ada di dalam `.venv` | Python lain di laptop, termasuk Python 3.11 dan 3.13 |
+| Paket dari `requirements-gpu.txt` atau `requirements-cpu.txt` | Memasang paket sebelum prompt berawalan `(.venv)` |
+| Data misi di `%LOCALAPPDATA%\DeepInsight` | Menyimpan data misi di dalam `.venv` |
+
+Menghapus `.venv` hanya menghapus Python dan paket DeepInsight. Data misi, foto, dan laporan tidak ikut terhapus.
+
+## 2. Kegunaan tiap nama
+
+| Nama | Kegunaan |
+| --- | --- |
+| `.venv` | Rumah Python DeepInsight. Berisi `python.exe` dan paket yang dipakai aplikasi. Dibuat sekali. |
+| `setup.bat` | Membuat `.venv`, memilih berkas paket sesuai ada atau tidaknya GPU, dan mencatat hasil di `logs\setup.log`. Dipakai saat pasang, atau saat `.venv` rusak. |
+| `.venv\Scripts\activate` | Mengubah prompt menjadi `(.venv) D:\DeepInsight\v2>` supaya kata `python` mengarah ke rumah itu. Tidak menyalakan aplikasi. |
+| `start.bat` | Menyalakan aplikasi dengan Python di dalam `.venv`, lalu membuka browser. Dipakai setiap hari. |
+| `python start.py` | Sama dengan `start.bat`, diketik sendiri setelah prompt sudah `(.venv)`. |
+| Browser | Tempat memakai aplikasi, di `http://127.0.0.1:8000/`. Menutup browser tidak mematikan aplikasi. Tutup dulu jendela Command Prompt yang menjalankan `start.bat`. |
+
+## 3. Prompt yang benar
+
+Setelah aktivasi, baris tempat Anda mengetik harus diawali persis seperti ini:
+
+```text
+(.venv) D:\DeepInsight\v2>
+```
+
+Tiga bagian itu punya arti tetap:
+
+1. `(.venv)` — environment DeepInsight sedang aktif.
+2. `D:` — Anda di drive D.
+3. `\DeepInsight\v2` — Anda di folder aplikasi.
+
+Bila `(.venv)` tidak ada, berhenti. Jangan menjalankan `pip`. Ulangi aktivasi di bab 4.
+
+Cek singkat, masih di prompt yang sama:
+
+```bat
+where python
+python -c "import sys; print(sys.prefix)"
+```
+
+Hasil yang benar:
+
+- baris pertama `where python` adalah `D:\DeepInsight\v2\.venv\Scripts\python.exe`
+- `sys.prefix` adalah `D:\DeepInsight\v2\.venv`
+
+## 4. Dari nol sampai aplikasi menyala
+
+### 4.1 Siapkan tiga hal
+
+Pasang berurutan. Setelah masing-masing, tutup Command Prompt dan buka lagi.
+
+| No | Apa | Cek di cmd baru |
+| --- | --- | --- |
+| 1 | Python 3.12 64-bit dari python.org. Saat memasang, centang Add python.exe to PATH, pip, dan py launcher | `py -3.12 --version` menampilkan `Python 3.12.x` |
+| 2 | Git for Windows dari git-scm.com. Pada PATH pilih Git from the command line | `git --version` |
+| 3 | Chrome atau Edge | Untuk membuka aplikasi |
+
+Detail pilihan pemasangan, driver NVIDIA, dan Node ada di bab “Perangkat lunak”. Untuk percobaan pertama, tiga baris di atas cukup. Tanpa GPU NVIDIA, aplikasi tetap menyala dalam mode terbatas.
+
+### 4.2 Ambil kode ke drive D
+
+```bat
+cd /d D:\
+git clone https://github.com/andika-arcsys/rcvd.git DeepInsight
+cd /d D:\DeepInsight\v2
+dir setup.bat
+```
+
+`dir setup.bat` harus menampilkan berkas `setup.bat`. Bila folder proyek sudah ada, cukup:
+
+```bat
+cd /d D:\DeepInsight\v2
+```
+
+### 4.3 Buat environment dan pasang paket
+
+Masih di `D:\DeepInsight\v2`:
+
+```bat
+setup.bat
+```
+
+`setup.bat` membuat folder `.venv`, lalu memasang paket ke dalamnya. Selesai bila baris terakhir berisi `Selesai` dan berkas `logs\setup.log` ada. Pemasangan pertama dapat berlangsung lama.
+
+Bila Anda ingin melihat pembuatannya sendiri, lewati `setup.bat` dan ketik:
+
+```bat
+cd /d D:\DeepInsight\v2
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+python -m pip install --upgrade pip
+```
+
+Prompt sekarang harus `(.venv) D:\DeepInsight\v2>`. Baru kemudian pasang paket. Pilih satu berkas:
+
+```bat
+python -m pip install -r requirements-gpu.txt
+```
+
+Laptop tanpa GPU NVIDIA memakai berkas yang lain:
+
+```bat
+python -m pip install -r requirements-cpu.txt
+```
+
+### 4.4 Nyalakan
+
+Cara sehari-hari, dari folder `v2`, tanpa mengaktifkan apa pun:
+
+```bat
+cd /d D:\DeepInsight\v2
+start.bat
+```
+
+`start.bat` sendiri yang memakai `D:\DeepInsight\v2\.venv\Scripts\python.exe`. Bila `.venv` belum ada, jendela berhenti dan menyuruh menjalankan `setup.bat`.
+
+Cara mengetik sendiri, hanya bila prompt sudah `(.venv) D:\DeepInsight\v2>`:
+
+```bat
+python start.py
+```
+
+Biarkan jendela itu terbuka. Browser membuka `http://127.0.0.1:8000/`.
+
+### 4.5 Setiap hari berikutnya
+
+```bat
+cd /d D:\DeepInsight\v2
+start.bat
+```
+
+Environment tidak dibuat ulang.
+
+## 5. Environment rusak
+
+Tutup dulu aplikasi. Lalu, di Command Prompt:
+
+```bat
+cd /d D:\DeepInsight\v2
+rmdir /s /q .venv
+setup.bat
+```
+
+Perintah `rmdir` hanya menghapus `.venv`. Jalankan hanya untuk folder `D:\DeepInsight\v2\.venv`.
+
+## Lanjutan untuk teknisi
+
+Bab 1 sampai 5 sudah cukup untuk memasang dan menyalakan aplikasi. Bagian di bawah menjelaskan perangkat, cek, dan gangguan. Jangan membuat environment lain saat membaca bagian ini.
+
+## Cara kerjanya, setelah terpasang
 
 1. `start.bat` memakai Python di dalam `.venv` dan menjalankan `start.py`.
 2. `start.py` menolak jalan bila Python bukan 3.12, atau bila paket inti belum terpasang.
@@ -95,7 +253,9 @@ Antivirus: bila pemasangan paket gagal `Access is denied` atau sangat lambat, ke
 
 ## Environment Python
 
-Environment (venv) adalah Python khusus DeepInsight di `v2\.venv`. Paket aplikasi masuk ke sana, tidak bercampur dengan Python lain di laptop. Bila environment rusak, hapus folder itu dan buat ulang. Data misi tidak ikut terhapus: data ada di `%LOCALAPPDATA%\DeepInsight`.
+Rincian bab 1 sampai 5. Environment tetap satu: `D:\DeepInsight\v2\.venv`. Bagian ini tidak meminta environment kedua.
+
+Jendela resmi adalah Command Prompt. Dua baris lain di tabel aktivasi hanya dipakai bila jendela yang terbuka kebetulan PowerShell atau Git Bash. Prompt yang sah tetap diawali `(.venv)` dan folder tetap `D:\DeepInsight\v2`.
 
 ### Belum ada environment: buat
 
@@ -212,7 +372,7 @@ Ganti berkas terakhir dengan `requirements-cpu.txt` bila laptop tidak punya GPU 
 
 ## Instalasi manual, langkah demi langkah
 
-`setup.bat` menjalankan pembuatan venv, pilihan requirements, dan `pnpm install` secara otomatis, lalu menulis `logs\setup.log`. Panduan ini memecahnya supaya tiap hasil terlihat. Selalu pakai `python -m pip`, bukan `pip` saja, agar paket masuk ke environment yang aktif.
+Ini pemecahan bab 4 bila `setup.bat` berhenti atau Anda perlu melihat tiap hasil. Bila bab 4 sudah menyalakan browser, lewati bagian ini. Tetap di `D:\DeepInsight\v2` dan di environment `.venv`. Pakai `python -m pip`, setelah prompt `(.venv)`, agar paket masuk ke environment itu. Catatan otomatis `setup.bat` ada di `logs\setup.log`.
 
 ### Bagian A — cek prasyarat
 
@@ -581,6 +741,7 @@ Kirim keluaran lengkap, kode keluar, `nvidia-smi`, `logs\pip-freeze.txt`, dan ve
 
 | Gejala | Langkah |
 | --- | --- |
+| Prompt tidak diawali `(.venv)` | Berhenti. `cd /d D:\DeepInsight\v2` lalu `.venv\Scripts\activate`. Jangan memasang paket |
 | `python` tidak dikenali | Pasang ulang Python 3.12, centang Add to PATH, buka cmd baru |
 | `where python` bukan `.venv` | `.venv\Scripts\activate` |
 | Mode terbatas padahal ada GPU | `nvidia-smi`, perbarui driver, `python -m pip install -r requirements-gpu.txt` di venv yang aktif |
