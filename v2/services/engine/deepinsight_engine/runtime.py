@@ -145,6 +145,9 @@ class Runtime:
         rtsp_url: str | None = None,
     ) -> None:
         capture = open_live(kind, path, device_index, rtsp_url)
+        with self._lock:
+            if self.pipeline.state == "not_configured":
+                self.pipeline.state = "connecting"
         self._capture.start(capture)
 
     def freeze(self, frame_id: str, session: str) -> dict[str, object]:

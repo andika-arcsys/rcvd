@@ -103,6 +103,7 @@
     "clockNote": "Jam sistem. NTP tidak dicek.",
     "gpuMissing": "GPU tidak tersedia",
     "cameraMissing": "Kamera belum dikonfigurasi",
+    "sourceTitle": "Konfigurasi sumber kamera",
     "diskMissing": "Ruang simpan tidak cukup",
     "ready": "Sistem siap · Lanjut",
     "limited": "Lanjut mode terbatas",

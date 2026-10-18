@@ -711,7 +711,7 @@ Menghentikan: menu Keluar, lalu tutup konsol atau Ctrl+C.
 
 ## Penggunaan pertama
 
-1. Splash. Tanpa GPU, pilih “Lanjut mode terbatas”.
+1. Splash di `http://127.0.0.1:8000/#/splash`. Di kartu “Konfigurasi sumber kamera”, pilih Kamera laptop (nomor 0 untuk USB pertama), Video RTSP, atau Berkas video, lalu Buka. Setelah “Kamera ROV terhubung” menjadi OK, pilih “Sistem siap · Lanjut”. Tanpa GPU, “Lanjut mode terbatas” tetap bisa dipakai.
 2. Login dengan akun di `docs\DATA_NEEDED.md`.
 3. Pilih peran dan “Lanjut ke Dashboard”.
 4. Misi. Diameter 16 inci memakai batas 9,65 m. Diameter 8 inci memakai batas 5,32 m.
@@ -763,7 +763,8 @@ Kirim keluaran lengkap, kode keluar, `nvidia-smi`, `logs\pip-freeze.txt`, dan ve
 | HydroDetect `MDL-003` | Tidak ada GPU, atau folder model di Pengaturan salah. Lihat `/diagnostics` |
 | Status selalu ESTIMATE_ONLY | Belum ada `config\cameras\<id>.yaml`. Pengukuran laser 10 cm tetap jalan |
 | Status UNCALIBRATED | Titik laser lebih dekat dari 150 piksel, atau tidak terdeteksi |
-| Video tidak muncul | `config\video.yaml` masih kosong, atau alamat sumber salah |
+| “Kamera belum dikonfigurasi” dan tombol lanjut mati | Di halaman `#/splash`, pilih Kamera laptop, Video RTSP, atau Berkas video, lalu Buka. Tutup `start.bat` lama, `git pull`, lalu jalankan `start.bat` lagi bila pilihan itu belum ada |
+| Video tidak muncul | Sumber di halaman awal belum dibuka, atau alamat RTSP salah |
 | Pesan berkode | Catat kode dan `session_id` dari `/health`. Lihat `docs\ERROR_CODES.md` dan `docs\TROUBLESHOOTING.md` |
 
 ## Lokasi berkas

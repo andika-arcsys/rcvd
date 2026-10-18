@@ -1,3 +1,4 @@
+import type { EngineClient } from '@deepinsight/shared';
 import { useState } from 'react';
 import { resolveEngineConnection } from '../../engine/config';
 import { useEngine } from '../../engine/EngineProvider';
@@ -11,7 +12,7 @@ const MODES: { id: Mode; label: string }[] = [
   { id: 'file', label: 'live.sourceFile' },
 ];
 
-export function SourcePicker() {
+export function SourcePicker({ onOpened, title }: { onOpened?: () => void; title?: string }) {
   const { client } = useEngine();
   const [mode, setMode] = useState<Mode>('camera');
   const [index, setIndex] = useState(0);
@@ -23,26 +24,16 @@ export function SourcePicker() {
   const open = () => {
     setBusy(true);
     setNote(null);
-    const done = (ok: boolean, detail?: string) => {
+    void requestOpen(client, mode, index, url, file).then((detail) => {
       setBusy(false);
-      setNote(ok ? t('live.sourceOpened') : (detail ?? t('live.sourceFailed')));
-    };
-    if (mode === 'file') {
-      void sendFile(file).then((detail) => done(detail === null, detail ?? undefined));
-      return;
-    }
-    const body =
-      mode === 'camera'
-        ? { kind: 'camera' as const, device_index: index }
-        : { kind: 'rtsp' as const, rtsp_url: url.trim() };
-    void client.POST('/video/device', { body }).then((result) => {
-      done(Boolean(result.data), messageOf(result.error));
+      setNote(detail ?? t('live.sourceOpened'));
+      if (detail === null) onOpened?.();
     });
   };
 
   return (
     <section className="rounded-xl border border-line p-3">
-      <p className="mb-2 text-sm font-semibold">{t('live.sourceTitle')}</p>
+      <p className="mb-2 text-sm font-semibold">{title ?? t('live.sourceTitle')}</p>
       <ModeButtons mode={mode} onPick={setMode} />
       <SourceFields
         mode={mode}
@@ -149,6 +140,22 @@ function FileBrowse({ onFile }: { onFile: (file: File | null) => void }) {
       />
     </label>
   );
+}
+
+async function requestOpen(
+  client: EngineClient,
+  mode: Mode,
+  index: number,
+  url: string,
+  file: File | null,
+): Promise<string | null> {
+  if (mode === 'file') return sendFile(file);
+  const body =
+    mode === 'camera'
+      ? { kind: 'camera' as const, device_index: index }
+      : { kind: 'rtsp' as const, rtsp_url: url.trim() };
+  const result = await client.POST('/video/device', { body });
+  return result.data ? null : (messageOf(result.error) ?? t('live.sourceFailed'));
 }
 
 async function sendFile(file: File | null): Promise<string | null> {

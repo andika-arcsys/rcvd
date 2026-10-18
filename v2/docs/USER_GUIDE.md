@@ -4,7 +4,7 @@ Pemasangan dan menjalankan ada di `docs/PANDUAN_INSTALASI.md`. Jarak dua titik l
 
 Bahasa Indonesia. Alur satu survei. Layar yang datanya belum diisi menampilkan tanda hubung atau pesan kosong, bukan angka perkiraan.
 
-1. Splash. Tunggu cek selesai. Bila tidak ada GPU, pilih lanjut mode terbatas. HydroDetect dan SpatialSight tidak dipakai.
+1. Splash (`/#/splash`). Pilih sumber kamera: laptop/USB, alamat RTSP, atau berkas video, lalu Buka. Setelah “Kamera ROV terhubung” menjadi OK, pilih Sistem siap. Bila tidak ada GPU, lanjut mode terbatas tetap bisa dipakai. HydroDetect dan SpatialSight tidak dipakai pada mode itu.
 2. Login dengan ID dan PIN enam digit. SSO belum aktif.
 3. Pilih peran. Menu yang tidak berhak tidak bisa dibuka.
 4. Dashboard menunjukkan ringkasan. Misi yang belum ada tetap kosong.

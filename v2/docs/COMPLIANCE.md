@@ -10,7 +10,7 @@ Transisi mengikuti `apps/desktop/src/navigation/transitions.ts`. KONFLIK-N4 (uku
 
 | Kode | Layar | Status | Catatan |
 | --- | --- | --- | --- |
-| 0 | Splash | sesuai | Memanggil health, models, dan diagnostics. Mode terbatas aktif bila GPU tidak ada. NTP tidak dicek (Q-UI-5); jam yang tampil adalah jam OS. |
+| 0 | Splash | sesuai | Memanggil health, models, dan diagnostics. Sumber kamera (USB, RTSP, berkas) dipilih di halaman ini. Mode terbatas aktif bila GPU tidak ada. NTP tidak dicek (Q-UI-5); jam yang tampil adalah jam OS. |
 | 0.1 | Login | sesuai | PIN lokal Argon2id. SSO nonaktif dengan label Segera. Akun terkunci setelah batas di config. |
 | 0.2 | Peran | sesuai | Tujuh peran. Menu abu-abu mengikuti `config/roles.yaml`. |
 | 1 | Dashboard | sebagian | KPI, banner, dan tugas ukur ulang ada. Angka misi kosong tampil sebagai tanda hubung, bukan angka contoh. |
