@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .security import require_token
 
@@ -42,6 +44,13 @@ class VisionView(BaseModel):
     classes: list[ClassChip]
     frame_width: int | None = None
     frame_height: int | None = None
+    confidence: float
+    imgsz: int
+
+
+class HydroTune(BaseModel):
+    confidence: float = Field(ge=0.05, le=0.95)
+    imgsz: Literal[640, 960, 1280]
 
 
 class CompareView(BaseModel):
@@ -53,6 +62,12 @@ class CompareView(BaseModel):
 @vision.get("/vision", response_model=VisionView)
 def vision_status(request: Request) -> VisionView:
     return VisionView.model_validate(request.app.state.runtime.vision_view())
+
+
+@vision.post("/vision/tune", response_model=HydroTune)
+def tune_hydro(body: HydroTune, request: Request) -> HydroTune:
+    saved = request.app.state.runtime.set_hydro_tune(body.confidence, body.imgsz)
+    return HydroTune.model_validate(saved)
 
 
 @vision.get("/video/compare", response_model=CompareView)

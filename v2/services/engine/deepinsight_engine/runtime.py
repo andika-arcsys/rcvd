@@ -226,7 +226,13 @@ class Runtime:
         view = assemble_vision(event, preset, hydro, spatial)
         view["frame_width"] = None if frame is None else frame.width
         view["frame_height"] = None if frame is None else frame.height
+        tune = self.models.hydro_tune()
+        view["confidence"] = tune["confidence"]
+        view["imgsz"] = tune["imgsz"]
         return view
+
+    def set_hydro_tune(self, confidence: float, imgsz: int) -> dict[str, float | int]:
+        return self.models.set_hydro_tune(confidence, imgsz)
 
     def compare_view(self) -> dict[str, object]:
         from .video.compare import compare_payload

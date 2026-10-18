@@ -61,12 +61,15 @@ class WorkerHandle:
         loaded: dict[str, Any] = json.loads(line)
         return loaded
 
-    def infer(self, frame: StoredFrame) -> bytes | None:
+    def infer(self, frame: StoredFrame, extra: Mapping[str, Any] | None = None) -> bytes | None:
         shared = SharedMemory(create=True, size=len(frame.bgr))
         try:
             view: Any = shared.buf
             view[: len(frame.bgr)] = frame.bgr
-            self.request(_infer_payload(frame, shared.name))
+            payload = _infer_payload(frame, shared.name)
+            if extra:
+                payload.update(extra)
+            self.request(payload)
             event = self.read_event()
             self.last_event = event
             _raise_if_error(event)

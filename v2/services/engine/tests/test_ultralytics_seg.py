@@ -83,6 +83,31 @@ def test_ultralytics_result_keeps_trained_class_on_raw_frame() -> None:
     assert found[0]["rle"]
 
 
+def test_live_confidence_and_quality_reach_ultralytics() -> None:
+    settings = load_settings(REPO)
+    seen: dict[str, object] = {}
+
+    class _Recording(_Model):
+        def predict(self, image: np.ndarray, **kwargs: object) -> list[_Result]:
+            seen.update(kwargs)
+            return super().predict(image, **kwargs)
+
+    image = np.zeros((12, 16, 3), dtype=np.uint8)
+    found = predict_candidates(
+        _Recording(),
+        image,
+        list(settings.hydrodetect.filter_names),
+        settings.hydrodetect,
+        "cpu",
+        confidence=0.8,
+        imgsz=1280,
+    )
+    assert seen["conf"] == 0.8
+    assert seen["imgsz"] == 1280
+    assert len(found) == 1
+    assert found[0]["class_name"] == "Leakage"
+
+
 def test_present_pt_asks_for_ultralytics(tmp_path: Path) -> None:
     settings = load_settings(REPO)
     target = tmp_path / "hydrodetect" / "exp5" / "model.pt"

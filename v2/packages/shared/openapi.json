@@ -1516,6 +1516,65 @@
         }
       }
     },
+    "/vision/tune": {
+      "post": {
+        "tags": [
+          "vision"
+        ],
+        "summary": "Tune Hydro",
+        "operationId": "tune_hydro_vision_tune_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HydroTune"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HydroTune"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/video/compare": {
       "get": {
         "tags": [
@@ -5021,6 +5080,31 @@
         ],
         "title": "HealthResponse"
       },
+      "HydroTune": {
+        "properties": {
+          "confidence": {
+            "type": "number",
+            "maximum": 0.95,
+            "minimum": 0.05,
+            "title": "Confidence"
+          },
+          "imgsz": {
+            "type": "integer",
+            "enum": [
+              640,
+              960,
+              1280
+            ],
+            "title": "Imgsz"
+          }
+        },
+        "type": "object",
+        "required": [
+          "confidence",
+          "imgsz"
+        ],
+        "title": "HydroTune"
+      },
       "Interaction": {
         "properties": {
           "hit_px": {
@@ -7599,6 +7683,14 @@
               }
             ],
             "title": "Frame Height"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "imgsz": {
+            "type": "integer",
+            "title": "Imgsz"
           }
         },
         "type": "object",
@@ -7608,7 +7700,9 @@
           "preset",
           "candidates",
           "depth",
-          "classes"
+          "classes",
+          "confidence",
+          "imgsz"
         ],
         "title": "VisionView"
       }
