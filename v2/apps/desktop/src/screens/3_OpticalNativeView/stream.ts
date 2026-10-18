@@ -8,7 +8,10 @@ export function streamUrl(baseUrl: string, token?: string): string {
   return url.toString();
 }
 
-export function useVideoStream(canvas: RefObject<HTMLCanvasElement | null>): void {
+export function useVideoStream(
+  canvas: RefObject<HTMLCanvasElement | null>,
+  guide: RefObject<HTMLCanvasElement | null>,
+): void {
   useEffect(() => {
     if (import.meta.env.MODE === 'test') return;
     const conn = resolveEngineConnection();
@@ -16,21 +19,10 @@ export function useVideoStream(canvas: RefObject<HTMLCanvasElement | null>): voi
     socket.binaryType = 'blob';
     socket.onmessage = (event: MessageEvent) => {
       const data: unknown = event.data;
-      if (data instanceof Blob) void paintFrame(canvas.current, data);
+      if (data instanceof Blob) void paintFrame(canvas.current, guide.current, data);
     };
     return () => socket.close();
-  }, [canvas]);
-}
-
-export function useGuide(canvas: RefObject<HTMLCanvasElement | null>): void {
-  useEffect(() => {
-    const node = canvas.current;
-    if (!node) return;
-    const paint = () => drawGuide(node);
-    paint();
-    window.addEventListener('resize', paint);
-    return () => window.removeEventListener('resize', paint);
-  }, [canvas]);
+  }, [canvas, guide]);
 }
 
 function context2d(node: HTMLCanvasElement): CanvasRenderingContext2D | null {
@@ -38,7 +30,11 @@ function context2d(node: HTMLCanvasElement): CanvasRenderingContext2D | null {
   return node.getContext('2d');
 }
 
-async function paintFrame(node: HTMLCanvasElement | null, blob: Blob): Promise<void> {
+async function paintFrame(
+  node: HTMLCanvasElement | null,
+  guide: HTMLCanvasElement | null,
+  blob: Blob,
+): Promise<void> {
   if (!node) return;
   const bitmap = await createImageBitmap(blob);
   const ctx = context2d(node);
@@ -46,16 +42,17 @@ async function paintFrame(node: HTMLCanvasElement | null, blob: Blob): Promise<v
   node.width = bitmap.width;
   node.height = bitmap.height;
   ctx.drawImage(bitmap, 0, 0);
+  if (guide) drawGuide(guide, bitmap.width, bitmap.height);
 }
 
-function drawGuide(node: HTMLCanvasElement): void {
+function drawGuide(node: HTMLCanvasElement, width: number, height: number): void {
   const ctx = context2d(node);
   if (!ctx) return;
-  node.width = node.clientWidth;
-  node.height = node.clientHeight;
+  node.width = width;
+  node.height = height;
   ctx.setLineDash([6, 6]);
   ctx.strokeStyle = '#F28C28';
-  const width = node.width * 0.5;
-  const height = node.height * 0.6;
-  ctx.strokeRect((node.width - width) / 2, (node.height - height) / 2, width, height);
+  const boxW = width * 0.5;
+  const boxH = height * 0.6;
+  ctx.strokeRect((width - boxW) / 2, (height - boxH) / 2, boxW, boxH);
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
+import { WorkColumns } from '../../components/WorkColumns';
 import { Detail, ReviewLink } from './Detail';
 import { filterCards, segmentsOf, type Card, type GalleryQuery } from './filter';
 import { Filters } from './Filters';
@@ -66,34 +67,53 @@ function GalleryBody(props: {
 }) {
   useThumbs(props.visible, props.thumbs, props.setThumbs, props.cacheLimit);
   return (
-    <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-      <div className="flex flex-col gap-3">
-        <Filters
-          query={props.query}
-          setQuery={props.setQuery}
-          segments={props.segments}
-          pipes={props.pipes}
-          risk={props.risk}
+    <WorkColumns
+      mainMin="20rem"
+      className="gap-4 p-4"
+      main={<GalleryMain {...props} />}
+      side={props.card ? <Detail card={props.card} /> : <ReviewLink card={null} />}
+    />
+  );
+}
+
+function GalleryMain(props: {
+  visible: Card[];
+  matched: number;
+  start: number;
+  setStart: (start: number) => void;
+  query: GalleryQuery;
+  setQuery: (next: GalleryQuery) => void;
+  segments: string[];
+  pipes: ReturnType<typeof useGalleryData>['pipes'];
+  risk: NonNullable<ReturnType<typeof useGalleryData>['risk']>;
+  thumbs: Map<string, string>;
+  card: Card | null;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <Filters
+        query={props.query}
+        setQuery={props.setQuery}
+        segments={props.segments}
+        pipes={props.pipes}
+        risk={props.risk}
+      />
+      {props.matched === 0 ? (
+        <p className="text-sm text-muted">
+          {props.query.segment || props.query.status ? t('gallery.noMatch') : t('gallery.empty')}
+        </p>
+      ) : (
+        <CardGrid
+          cards={props.visible}
+          thumbs={props.thumbs}
+          selected={props.card?.id ?? null}
+          onSelect={props.onSelect}
+          start={props.start}
+          total={props.matched}
+          onStart={props.setStart}
         />
-        {props.matched === 0 ? (
-          <p className="text-sm text-muted">
-            {props.query.segment || props.query.status ? t('gallery.noMatch') : t('gallery.empty')}
-          </p>
-        ) : (
-          <CardGrid
-            cards={props.visible}
-            thumbs={props.thumbs}
-            selected={props.card?.id ?? null}
-            onSelect={props.onSelect}
-            start={props.start}
-            total={props.matched}
-            onStart={props.setStart}
-          />
-        )}
-      </div>
-      <div className="flex flex-col gap-3">
-        {props.card ? <Detail card={props.card} /> : <ReviewLink card={null} />}
-      </div>
+      )}
     </div>
   );
 }

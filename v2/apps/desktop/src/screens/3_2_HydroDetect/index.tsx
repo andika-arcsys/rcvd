@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
+import { WorkColumns } from '../../components/WorkColumns';
 import { FeatureTabs } from '../3_OpticalNativeView/FeatureTabs';
 import { useVideoStatus } from '../3_OpticalNativeView/useLive';
 import { VideoStage } from '../3_OpticalNativeView/VideoStage';
@@ -30,15 +31,18 @@ export default function HydroDetectScreen() {
     <div className="flex h-full min-h-0 flex-col gap-3 p-4">
       <FeatureTabs warning={status?.performance_warning ?? null} active="F3" />
       <PerformanceLink fps={status?.fps ?? null} gpu={status?.gpu_util_pct ?? null} />
-      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <Frame
-          frameId={status?.frame_id ?? null}
-          lost={Boolean(status?.lost)}
-          vision={vision}
-          shown={shown}
-          style={draw.style}
-        />
-        <Aside
+      <WorkColumns
+        main={
+          <Frame
+            frameId={status?.frame_id ?? null}
+            lost={Boolean(status?.lost)}
+            vision={vision}
+            shown={shown}
+            style={draw.style}
+          />
+        }
+        side={
+          <Aside
           vision={vision}
           hidden={hidden.names}
           onToggle={hidden.toggle}
@@ -52,7 +56,8 @@ export default function HydroDetectScreen() {
           onMark={marked.mark}
           note={marked.note}
         />
-      </div>
+        }
+      />
     </div>
   );
 }
@@ -71,8 +76,7 @@ function Frame({
   style: MaskStyle;
 }) {
   return (
-    <div className="relative h-fit">
-      <VideoStage frameId={frameId} lost={lost} />
+    <VideoStage frameId={frameId} lost={lost}>
       <MaskOverlay
         items={shown}
         colors={vision?.classes ?? []}
@@ -80,7 +84,7 @@ function Frame({
         frameHeight={vision?.frame_height ?? null}
         style={style}
       />
-    </div>
+    </VideoStage>
   );
 }
 

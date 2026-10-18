@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
 import { useSession } from '../../session/SessionContext';
+import { WorkColumns } from '../../components/WorkColumns';
 import { FeatureTabs } from '../3_OpticalNativeView/FeatureTabs';
 import { useVideoStatus } from '../3_OpticalNativeView/useLive';
 import { useCompare, useVision } from '../features/poll';
@@ -23,10 +24,10 @@ export default function AquaClearScreen() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-4">
       <FeatureTabs warning={status?.performance_warning ?? null} active="F2" />
-      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_16rem]">
-        <ComparePane pair={pair} split={split} onSplit={setSplit} />
-        <PresetPanel active={vision?.preset ?? null} />
-      </div>
+      <WorkColumns
+        main={<ComparePane pair={pair} split={split} onSplit={setSplit} />}
+        side={<PresetPanel active={vision?.preset ?? null} />}
+      />
       <AquaActions lost={lost} frameId={frameId} />
     </div>
   );

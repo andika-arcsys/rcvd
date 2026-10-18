@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
 import { useSession } from '../../session/SessionContext';
+import { WorkColumns } from '../../components/WorkColumns';
 import { FeatureTabs } from '../3_OpticalNativeView/FeatureTabs';
 import { useVideoStatus } from '../3_OpticalNativeView/useLive';
 import { VideoStage } from '../3_OpticalNativeView/VideoStage';
@@ -22,17 +23,20 @@ export default function SpatialSightScreen() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-4">
       <FeatureTabs warning={status?.performance_warning ?? null} active="F4" />
-      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_16rem]">
-        <div className="relative h-fit">
-          <VideoStage frameId={frameId} lost={lost} />
-          <DepthLegend depth={vision?.depth ?? null} opacity={opacity} />
-        </div>
-        <SpatialNotes
-          depthReady={Boolean(vision?.depth)}
-          opacity={opacity}
-          onOpacity={setOpacity}
-        />
-      </div>
+      <WorkColumns
+        main={
+          <VideoStage frameId={frameId} lost={lost}>
+            <DepthLegend depth={vision?.depth ?? null} opacity={opacity} />
+          </VideoStage>
+        }
+        side={
+          <SpatialNotes
+            depthReady={Boolean(vision?.depth)}
+            opacity={opacity}
+            onOpacity={setOpacity}
+          />
+        }
+      />
       <FreezeButton lost={lost} frameId={frameId} />
     </div>
   );

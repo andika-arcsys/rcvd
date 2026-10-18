@@ -1,7 +1,9 @@
 import type { Access } from '@deepinsight/shared';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { t } from '../i18n';
 import { MENU_ITEMS, type MenuId } from '../navigation/registry';
+import { MenuIcon, PanelIcon } from './menuIcons';
 
 export type AccessMap = Partial<Record<MenuId, Access>>;
 
@@ -14,7 +16,7 @@ interface SidebarProps {
   onExit: () => void;
 }
 
-const BASE = 'block rounded-lg px-2.5 py-2.5 text-sm';
+const KEY = 'di.sidebar';
 
 function isDisabled(id: MenuId, access: AccessMap | null): boolean {
   if (id === 'keluar') return false;
@@ -22,70 +24,184 @@ function isDisabled(id: MenuId, access: AccessMap | null): boolean {
   return (access[id] ?? 'none') === 'none';
 }
 
+export function Sidebar({ active, access, roleLabel, missionName, onExit }: SidebarProps) {
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const toggle = () => storeCollapsed(!collapsed, setCollapsed);
+  return (
+    <nav
+      aria-label="Menu utama"
+      className={`relative z-20 flex shrink-0 flex-col gap-1 border-r border-line bg-panel py-4 ${
+        collapsed ? 'w-16 px-2' : 'w-[220px] px-3'
+      }`}
+    >
+      <CollapseButton collapsed={collapsed} onToggle={toggle} />
+      <Brand collapsed={collapsed} missionName={missionName} roleLabel={roleLabel} />
+      {MENU_ITEMS.map((item) => (
+        <MenuEntry
+          key={item.id}
+          id={item.id}
+          active={active}
+          access={access}
+          collapsed={collapsed}
+          onExit={onExit}
+        />
+      ))}
+    </nav>
+  );
+}
+
+function CollapseButton({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  const label = collapsed ? t('menu.showDescriptions') : t('menu.collapse');
+  return (
+    <button
+      type="button"
+      aria-pressed={collapsed}
+      aria-label={label}
+      title={label}
+      className="mb-2 flex items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-muted hover:text-ink"
+      onClick={onToggle}
+    >
+      <PanelIcon />
+      {collapsed ? null : <span>{label}</span>}
+    </button>
+  );
+}
+
+function Brand({
+  collapsed,
+  missionName,
+  roleLabel,
+}: {
+  collapsed: boolean;
+  missionName: string | null;
+  roleLabel: string;
+}) {
+  return (
+    <div className={collapsed ? 'sr-only' : 'px-2.5 pb-4'}>
+      <div className="text-lg font-semibold">{t('app.name')}</div>
+      <div className="pt-1 text-xs text-muted">
+        {t('common.mission')}: {missionName ?? t('common.noMission')}
+        <br />
+        {t('common.role')}: {roleLabel}
+      </div>
+    </div>
+  );
+}
+
 function MenuEntry({
   id,
   active,
   access,
+  collapsed,
   onExit,
 }: {
   id: MenuId;
   active: MenuId | null;
   access: AccessMap | null;
+  collapsed: boolean;
   onExit: () => void;
 }) {
   const label = t(`menu.${id}`);
   const path = MENU_ITEMS.find((item) => item.id === id)?.path ?? '/';
-  if (isDisabled(id, access)) {
-    const reason = access === null ? t('common.waitingEngine') : t('common.noAccess');
-    return (
-      <span
-        role="link"
-        aria-disabled="true"
-        title={reason}
-        className={`${BASE} cursor-not-allowed text-muted/50`}
-      >
+  const disabled = isDisabled(id, access);
+  const reason = access === null ? t('common.waitingEngine') : t('common.noAccess');
+  const body = <EntryBody id={id} label={label} collapsed={collapsed} reason={disabled ? reason : undefined} />;
+  const row = rowClass(collapsed);
+  if (disabled) return <DisabledEntry row={row} reason={reason} body={body} />;
+  if (id === 'keluar') return <ExitEntry row={row} label={label} collapsed={collapsed} onExit={onExit} body={body} />;
+  return <NavEntry row={row} path={path} label={label} collapsed={collapsed} active={active === id} body={body} />;
+}
+
+function EntryBody({
+  id,
+  label,
+  collapsed,
+  reason,
+}: {
+  id: MenuId;
+  label: string;
+  collapsed: boolean;
+  reason: string | undefined;
+}) {
+  return (
+    <>
+      <MenuIcon id={id} />
+      <span className={collapsed ? 'sr-only' : ''} title={reason} aria-disabled={reason ? true : undefined}>
         {label}
       </span>
-    );
-  }
-  if (id === 'keluar') {
-    return (
-      <button
-        type="button"
-        onClick={onExit}
-        className={`${BASE} text-left text-muted hover:text-ink`}
-      >
-        {label}
-      </button>
-    );
-  }
-  const isActive = active === id;
+    </>
+  );
+}
+
+function rowClass(collapsed: boolean): string {
+  return `flex items-center gap-2 rounded-lg px-2 py-2.5 text-sm ${collapsed ? 'justify-center' : ''}`;
+}
+
+function DisabledEntry({ row, reason, body }: { row: string; reason: string; body: ReactNode }) {
+  return (
+    <span role="link" aria-disabled="true" title={reason} className={`${row} cursor-not-allowed text-muted/50`}>
+      {body}
+    </span>
+  );
+}
+
+function ExitEntry({
+  row,
+  label,
+  collapsed,
+  onExit,
+  body,
+}: {
+  row: string;
+  label: string;
+  collapsed: boolean;
+  onExit: () => void;
+  body: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={collapsed ? label : undefined}
+      onClick={onExit}
+      className={`${row} text-left text-muted hover:text-ink`}
+    >
+      {body}
+    </button>
+  );
+}
+
+function NavEntry({
+  row,
+  path,
+  label,
+  collapsed,
+  active,
+  body,
+}: {
+  row: string;
+  path: string;
+  label: string;
+  collapsed: boolean;
+  active: boolean;
+  body: ReactNode;
+}) {
   return (
     <Link
       to={path}
-      aria-current={isActive ? 'page' : undefined}
-      className={`${BASE} ${isActive ? 'bg-active font-semibold text-ink' : 'text-muted hover:text-ink'}`}
+      title={collapsed ? label : undefined}
+      aria-current={active ? 'page' : undefined}
+      className={`${row} ${active ? 'bg-active font-semibold text-ink' : 'text-muted hover:text-ink'}`}
     >
-      {label}
+      {body}
     </Link>
   );
 }
 
-export function Sidebar({ active, access, roleLabel, missionName, onExit }: SidebarProps) {
-  return (
-    <nav
-      aria-label="Menu utama"
-      className="flex w-[220px] shrink-0 flex-col gap-1 border-r border-line bg-panel px-3 py-5"
-    >
-      <div className="px-2.5 pb-1 text-lg font-semibold">{t('app.name')}</div>
-      <div className="px-2.5 pb-4 text-xs text-muted">
-        {t('common.mission')}: {missionName ?? t('common.noMission')}
-        <br />
-        {t('common.role')}: {roleLabel}
-      </div>
-      {MENU_ITEMS.map((item) => (
-        <MenuEntry key={item.id} id={item.id} active={active} access={access} onExit={onExit} />
-      ))}
-    </nav>
-  );
+function readCollapsed(): boolean {
+  return sessionStorage.getItem(KEY) === 'icons';
+}
+
+function storeCollapsed(collapsed: boolean, setCollapsed: (value: boolean) => void): void {
+  sessionStorage.setItem(KEY, collapsed ? 'icons' : 'descriptions');
+  setCollapsed(collapsed);
 }

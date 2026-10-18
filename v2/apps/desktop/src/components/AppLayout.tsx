@@ -33,9 +33,9 @@ export function AppLayout() {
         missionName={missionName}
         onExit={() => setConfirmExit(true)}
       />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative z-0 flex min-w-0 flex-1 flex-col">
         <Header screen={screen} />
-        <main className="min-h-0 flex-1 overflow-auto">
+        <main className="min-h-0 min-w-0 flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>

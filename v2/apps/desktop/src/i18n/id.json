@@ -46,7 +46,9 @@
     "sustainability": "Sustainability",
     "arsip": "Arsip",
     "pengaturan": "Pengaturan",
-    "keluar": "Keluar"
+    "keluar": "Keluar",
+    "collapse": "Ciutkan menu",
+    "showDescriptions": "Tampilkan keterangan"
   },
   "roles": {
     "ketua_tim": "Ketua tim",
@@ -211,6 +213,7 @@
     "tabHydro": "HydroDetect",
     "tabSpatial": "SpatialSight",
     "tabCanvas": "Canvas",
+    "ratio": "Rasio jendela",
     "sourceTitle": "Sumber video",
     "sourceCamera": "Kamera laptop",
     "sourceRtsp": "Video RTSP",

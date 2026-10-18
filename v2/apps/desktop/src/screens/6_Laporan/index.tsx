@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
 import { useSession } from '../../session/SessionContext';
+import { WorkColumns } from '../../components/WorkColumns';
 import { Editor } from './Editor';
 import { Preview } from './Preview';
 
@@ -24,8 +25,11 @@ export default function LaporanScreen() {
   const report = rows[rows.length - 1] ?? null;
   const reload = () => setTick((n) => n + 1);
   return (
-    <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-      <Preview report={report} />
+    <WorkColumns
+      mainMin="20rem"
+      className="gap-4 p-4"
+      main={<Preview report={report} />}
+      side={
       <aside className="flex flex-col gap-2">
         <button
           type="button"
@@ -41,6 +45,7 @@ export default function LaporanScreen() {
           {t('report.close')}
         </Link>
       </aside>
-    </div>
+      }
+    />
   );
 }
