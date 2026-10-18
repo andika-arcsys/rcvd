@@ -37,7 +37,9 @@ function draw(
   node.height = node.clientHeight || 1;
   ctx.clearRect(0, 0, node.width, node.height);
   const box = extent(items, frameWidth, frameHeight);
-  for (const item of items) stroke(ctx, item, box, colorOf(colors, item.class_name), node);
+  for (const item of items) {
+    paintRegion(ctx, item.polygon, colorOf(colors, item.class_name), node, box);
+  }
 }
 
 function extent(
@@ -61,22 +63,32 @@ function colorOf(colors: Chip[], name: string): string {
   return colors.find((item) => item.name === name)?.color ?? '#ffffff';
 }
 
-function stroke(
+export const FILL_ALPHA = 0.42;
+
+/** Isi wilayah terdeteksi dengan warna kelas. Garis tepi tetap warna yang sama. */
+export function paintRegion(
   ctx: CanvasRenderingContext2D,
-  item: Item,
-  box: { maxX: number; maxY: number },
+  polygon: number[][],
   color: string,
-  node: HTMLCanvasElement,
+  node: { width: number; height: number },
+  box: { maxX: number; maxY: number },
 ): void {
-  if (item.polygon.length < 2) return;
+  if (polygon.length < 3) return;
   ctx.beginPath();
-  item.polygon.forEach((point, index) => {
+  polygon.forEach((point, index) => {
     const x = ((point[0] ?? 0) / box.maxX) * node.width;
     const y = ((point[1] ?? 0) / box.maxY) * node.height;
     if (index === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   });
   ctx.closePath();
+  ctx.save();
+  ctx.globalAlpha = FILL_ALPHA;
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
   ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
   ctx.stroke();
 }
