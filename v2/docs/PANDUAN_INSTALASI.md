@@ -751,6 +751,7 @@ Kirim keluaran lengkap, kode keluar, `nvidia-smi`, `logs\pip-freeze.txt`, dan ve
 
 | Gejala | Langkah |
 | --- | --- |
+| `FileNotFoundError` pada `pnpm` saat `start.bat` | Tampilan belum dibangun. `pnpm` di Windows bernama `pnpm.cmd`. Pasang Node.js 20, `corepack enable`, lalu dari `v2`: `pnpm install` dan `pnpm --filter @deepinsight/desktop build`. Program lama di folder `web` tidak memakai langkah ini |
 | Prompt diawali `(base)` dan `python --version` 3.13 | Itu Anaconda. `conda deactivate`. Aplikasi memakai Python 3.12 di `deepenv` |
 | `cd v2` tidak menemukan folder | Masih di cabang `main`. `git fetch origin` lalu `git checkout cursor/panduan-environment-awam-ddf4` |
 | Prompt tidak diawali `(deepenv)` saat memasang paket | Berhenti. `cd /d D:\DeepInsight\v2` lalu `deepenv\Scripts\activate`. Jangan memasang paket |

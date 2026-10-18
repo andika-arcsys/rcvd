@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import shutil
 import subprocess
 import sys
 import threading
@@ -58,10 +59,35 @@ def ensure_ui(root: Path, build: bool = True) -> Path:
         if not index.is_file():
             raise SystemExit("UI belum dibangun. Jalankan build desktop.")
         return dist
-    subprocess.run(["pnpm", "--filter", UI_FILTER, "build"], cwd=root, check=True)
+    pnpm = shutil.which("pnpm")
+    if pnpm is None:
+        raise SystemExit(_pnpm_missing())
+    if not (root / "node_modules").is_dir():
+        _run_ui([pnpm, "install"], root)
+    _run_ui([pnpm, "--filter", UI_FILTER, "build"], root)
     if not index.is_file():
         raise SystemExit("Build UI selesai tetapi index.html tidak ada.")
     return dist
+
+
+def _run_ui(cmd: list[str], root: Path) -> None:
+    try:
+        subprocess.run(cmd, cwd=root, check=True)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise SystemExit(f"Build UI gagal ({cmd[0]}): {exc}") from exc
+
+
+def _pnpm_missing() -> str:
+    return (
+        "UI belum ada: apps\\desktop\\dist\\index.html. pnpm tidak ditemukan.\n"
+        "Program lama di folder web tidak memakai pnpm. Tampilan v2 dibangun sekali.\n"
+        "Pasang Node.js 20, lalu dari folder v2:\n"
+        "  corepack enable\n"
+        "  corepack prepare pnpm@10.33.4 --activate\n"
+        "  pnpm install\n"
+        "  pnpm --filter @deepinsight/desktop build\n"
+        "Setelah itu jalankan start.bat lagi."
+    )
 
 
 def pin_hashes(settings: Settings) -> list[str]:
