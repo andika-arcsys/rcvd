@@ -1,7 +1,9 @@
-# USULAN Q-GPU-4 – perlu konfirmasi tim. Ambang keyakinan, bukan metrik validasi.
+# Ambang live mengikuti konsol yang sudah jalan: predict conf=0.7.
+# Slider panel mengganti angka ini untuk semua kelas. Bukan metrik validasi.
+# Override Leakage hanya dipakai bila inferensi tidak mengirim angka slider.
 # Nama filter mengikuti 8 kelas resmi Q-AI-1. Urutan indeks model hanya dari classes.json (D-11).
 schema_version: 1
-default_confidence: 0.50
+default_confidence: 0.70
 overrides:
   Leakage: 0.35
 hidden_by_default:

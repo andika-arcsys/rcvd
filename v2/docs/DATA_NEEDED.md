@@ -18,7 +18,7 @@ Angka teknis yang belum diisi tim tidak dikarang. Uji kode memakai fixture di `t
 | D-25 | Riwayat span antar survei | belum ada berkas | 8 | Tab Riwayat di kalkulator span menampilkan keadaan kosong. ID D-22 di berkas ini tetap ambang kekeruhan. |
 | — | Jam NTP | — | 4 | Splash memakai jam sistem operasi. `clock_sync=ok` berarti jam terbaca, bukan berarti NTP sudah dicek (Q-UI-5). |
 | D-01 | Spesifikasi PC inspeksi (GPU, VRAM, RAM, OS) | `docs/HARDWARE.md` belum ada | 6 | Jangan mengarang angka. Uji `scripts/gpu_soak_test.py` wajib di PC NVIDIA. Di VM ini skrip berhenti kode 2. |
-| D-10 | Bobot HydroDetect `model.pt` dan `model.onnx` | `models/hydrodetect/exp5/` | 6 | Tidak di Git. v2 membuka `model.pt` lewat Ultralytics bila berkas itu ada (domain mentah, sama seperti konsol lama). Tanpa `model.pt` dan tanpa `model.onnx`: MDL-001. Tanpa GPU: MDL-003. |
+| D-10 | Bobot HydroDetect `model.pt` dan `model.onnx` | `models/hydrodetect/exp5/` | 6 | Tidak di Git. v2 membuka `model.pt` lewat Ultralytics pada GPU 0, fp16, keyakinan bawaan 0,70, bila berkas itu ada (domain mentah, sama seperti konsol lama). Tanpa `model.pt` dan tanpa `model.onnx`: MDL-001. Tanpa GPU: MDL-003. |
 | D-11 | `classes.json` urutan indeks 8 kelas | `models/hydrodetect/exp5/classes.json` | 6 | Diminta ada di Git, tetapi urutan indeks resmi model belum diterima. Nama filter di `config/hydrodetect.yaml` mengikuti Q-AI-1 dan **bukan** urutan indeks. |
 | D-12 | `metadata.json` (ukuran input, versi, metrik) | `models/hydrodetect/exp5/metadata.json` | 6, 9 | Belum ada. Metrik tidak dikarang. |
 | D-13 | Precision, recall, mAP50 mask per kelas | di dalam D-12 | 9 | Menyusul bersama D-12. |

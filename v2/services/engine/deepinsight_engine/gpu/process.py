@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from collections.abc import Mapping
 from multiprocessing.shared_memory import SharedMemory
 from queue import Empty, Queue
@@ -57,12 +58,19 @@ class WorkerHandle:
             raise EngineError("MDL-002", "pekerja terputus") from exc
 
     def read_event(self, timeout: float | None = None) -> dict[str, Any]:
-        try:
-            line = self._queue.get(timeout=self._timeout if timeout is None else timeout)
-        except Empty as exc:
-            raise EngineError("MDL-002", "pekerja tidak menjawab") from exc
-        loaded: dict[str, Any] = json.loads(line)
-        return loaded
+        wait = self._timeout if timeout is None else timeout
+        deadline = time.monotonic() + wait
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise EngineError("MDL-002", "pekerja tidak menjawab")
+            try:
+                line = self._queue.get(timeout=remaining)
+            except Empty as exc:
+                raise EngineError("MDL-002", "pekerja tidak menjawab") from exc
+            event = _json_event(line)
+            if event is not None:
+                return event
 
     def infer(self, frame: StoredFrame, extra: Mapping[str, Any] | None = None) -> bytes | None:
         with self._io:
@@ -162,6 +170,22 @@ class WorkerHandle:
             return
         for line in proc.stdout:
             self._queue.put(line)
+
+
+def _json_event(line: str) -> dict[str, Any] | None:
+    """Baris log Ultralytics di stdout tidak boleh memutus protokol JSON."""
+    text = line.strip()
+    if not text.startswith("{"):
+        sys.stderr.write(line if line.endswith("\n") else f"{line}\n")
+        return None
+    try:
+        loaded = json.loads(text)
+    except json.JSONDecodeError:
+        sys.stderr.write(line if line.endswith("\n") else f"{line}\n")
+        return None
+    if not isinstance(loaded, dict):
+        return None
+    return loaded
 
 
 def _raise_if_error(event: dict[str, Any]) -> None:

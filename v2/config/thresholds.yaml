@@ -59,7 +59,7 @@ performance:
   gpu_window_s: 10                # USULAN – perlu konfirmasi tim
   vram_baseline_tolerance_mb: 150 # USULAN – perlu konfirmasi tim (target rancangan)
   unload_timeout_s: 5            # USULAN – perlu konfirmasi tim (lepas lunak sebelum proses dihentikan)
-  load_timeout_s: 8               # USULAN – perlu konfirmasi tim (anggaran ganti model)
+  load_timeout_s: 45              # muat pertama Ultralytics CUDA (fuse + fp16) lebih lama dari 8 dtk
 
 video:
   width: 1920                     # USULAN – perlu konfirmasi tim

@@ -46,16 +46,37 @@ from ultralytics import YOLO
 self.yolo_model = YOLO(self.model_path)
 ```
 
-Bobot bawaan argumen adalah `D:\rcvd\exp-5.pt`. Inferensi memakai `predict` pada frame yang diperkecil, `conf=0.7`, `device` GPU 0, `retina_masks=True`, lalu `result.plot`. Deteksi berjalan pada citra mentah, bukan pada hasil AquaClear.
+Bobot bawaan argumen adalah `D:\rcvd\exp-5.pt`. Inferensi:
 
-v2 sudah membuka `models/hydrodetect/exp5/model.pt` lewat Ultralytics pada pekerja yang sama, dengan cadangan ONNX. Ambang dan ukuran gambar dapat diubah dari panel. Instalasi yang sama dengan yang sudah jalan:
+```text
+self.yolo_model.predict(stream, conf=0.7, device=self.device, verbose=False, retina_masks=True)
+```
+
+`device` bawaan adalah `"0"`. Stream konsol diperkecil ke sisi 640 sebelum `predict`, lalu `result.plot` menggambar di gambar yang sama. Deteksi berjalan pada citra mentah, bukan pada hasil AquaClear.
+
+v2 membuka `models/hydrodetect/exp5/model.pt` pada pekerja yang sama, dengan cadangan ONNX. Panggilan live menyamai konsol, dengan dua penyesuaian agar koordinat poligon tetap pada frame asli dan kartu 8 GB terpakai di dalam anggaran 6 GB:
+
+| Pengaturan | Konsol yang sudah jalan | v2 |
+| --- | --- | --- |
+| Keyakinan | `conf=0.7` tetap | Bawaan 0,70. Slider 5–95% mengganti semua kelas |
+| Perangkat | GPU 0 | GPU 0, `half=True` (fp16) |
+| Mask | `retina_masks=True` | sama |
+| Ukuran model | stream sisi 640 | Cepat 640, Seimbang 960, Teliti 1280 |
+| Frame | diperkecil dulu | frame kamera utuh; Ultralytics yang menyesuaikan ke imgsz |
+| VRAM | tidak dibatasi di kode | alokator proses di anggaran 6144 MB, beban 90% |
+
+Saat model dimuat, pekerja memasang `set_per_process_memory_fraction` dari memori yang sudah terpakai, lalu satu `predict` pemanasan pada imgsz aktif dengan `device=0` dan `half=True`. Bobot tidak dipindahkan lewat `model.to` sebelum itu: fuse Ultralytics berjalan pada fp32, dan `model.to` plus `half=True` melempar `expected scalar type Half but found Float`. Galat itu membuat `/models/switch` gagal, lalu dialog mengembalikan operator ke Optical. Bila pemanasan fp16 gagal, model tetap dibuka pada fp32 di GPU yang sama. Jendela `start.bat` menulis `HydroDetect: cuda ... cap=... half` atau `fp32`. Bilah di bawah video menampilkan beban, memori, dan catatan itu. Anggaran tunggu muat model adalah 45 detik, karena fuse CUDA pertama sering melewati 8 detik dan pekerja yang diputus juga mengembalikan dialog ke Optical.
+
+Teliti (1280) adalah cara memakai lebih banyak dari kartu 8 GB. Cepat tetap 640 agar sama dengan stream konsol. Anggaran tetap 6144 MB supaya sekitar 2 GB tinggal untuk desktop. Tidak ada blok VRAM kosong yang dialokasikan hanya agar angka memori terlihat penuh.
+
+Instalasi yang sama dengan yang sudah jalan:
 
 ```bat
 conda activate deepenv
 python -m pip install ultralytics
 ```
 
-`torch` tetap `2.13.0+cu132`. Berkas `model.pt` diletakkan di `D:\DeepInsight\v2\models\hydrodetect\exp5\model.pt`.
+`torch` tetap `2.13.0+cu132`. Berkas `model.pt` diletakkan di `D:\DeepInsight\v2\models\hydrodetect\exp5\model.pt`. Tutup jendela lalu jalankan `start.bat` lagi agar pekerja memuat jalur fp16.
 
 ## SpatialSight
 

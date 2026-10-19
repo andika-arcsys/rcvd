@@ -95,7 +95,7 @@ def test_freeze_records_preset_and_keeps_raw_png(client: TestClient) -> None:
     assert vision.json()["preset"] == "light"
     assert len(vision.json()["classes"]) == 8
     assert vision.json()["classes"][-1]["hidden_by_default"] is True
-    assert vision.json()["confidence"] == 0.5
+    assert vision.json()["confidence"] == 0.7
     assert vision.json()["imgsz"] == 640
 
 

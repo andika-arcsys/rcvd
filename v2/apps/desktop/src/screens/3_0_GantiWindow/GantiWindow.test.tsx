@@ -47,19 +47,23 @@ describe('Ganti window', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'AquaClear' })).toBeInTheDocument();
   });
 
-  it('kembali ke Optical bila pemuatan gagal', async () => {
+  it('tetap di dialog dan menampilkan pesan bila pemuatan gagal', async () => {
     renderApp('/live/ganti-window', {
       role: 'ketua_tim',
       routes: {
         'GET /models': READY,
         'GET /video/performance': PERF,
         'POST /models/switch': () =>
-          jsonResponse(503, { code: 'MDL-003', message: 'Fitur ini membutuhkan GPU NVIDIA.' }),
+          jsonResponse(503, {
+            code: 'MDL-003',
+            message: 'Fitur ini membutuhkan GPU NVIDIA.',
+            detail: 'CUDA',
+          }),
       },
     });
-    await userEvent.click(await screen.findByRole('button', { name: /AquaClear/ }));
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Optical Native View' }),
-    ).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: /HydroDetect/ }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('MDL-003: CUDA');
+    expect(screen.getByRole('heading', { level: 2, name: /Ganti/ })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 1, name: 'Optical Native View' })).toBeNull();
   });
 });

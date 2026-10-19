@@ -5,8 +5,8 @@ import { t } from '../../i18n';
 import { useSession } from '../../session/SessionContext';
 import { WorkColumns } from '../../components/WorkColumns';
 import { FeatureTabs } from '../3_OpticalNativeView/FeatureTabs';
+import { GpuBudgetLine } from '../3_OpticalNativeView/GpuBudgetLine';
 import { useVideoStatus } from '../3_OpticalNativeView/useLive';
-import { dash, memoryText } from '../3_OpticalNativeView/format';
 import { useVision } from '../features/poll';
 import { useReleaseModel } from '../features/release';
 import { ComparePane } from './Compare';
@@ -28,16 +28,7 @@ export default function AquaClearScreen() {
         main={<ComparePane split={split} onSplit={setSplit} />}
         side={<PresetPanel active={vision?.preset ?? null} />}
       />
-      <p className="font-mono text-xs text-muted">
-        {t('live.gpu')} {dash(status?.gpu_util_pct, '%')}
-        {status?.gpu_max_pct == null ? '' : ` / ${dash(status.gpu_max_pct, '%')}`}
-        {' · '}
-        {t('live.memory')} {memoryText(status?.vram_used_mb, status?.vram_total_mb)}
-        {status?.vram_budget_mb == null
-          ? ''
-          : ` · ${t('live.cap')} ${dash(status.vram_budget_mb)} MB`}
-        {status?.gpu_device ? ` · ${status.gpu_device}` : ''}
-      </p>
+      <GpuBudgetLine status={status} />
       <AquaActions lost={lost} frameId={frameId} />
     </div>
   );

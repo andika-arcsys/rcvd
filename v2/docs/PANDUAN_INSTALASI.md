@@ -556,6 +556,8 @@ python -c "import ultralytics, torch; print(ultralytics.__version__, torch.cuda.
 
 Bila `torch.cuda.is_available()` false padahal `nvidia-smi` melihat GPU, roda PyTorch yang terpasang adalah CPU. Ganti dengan roda CUDA yang cocok dengan driver, dari pytorch.org, lalu jalankan perintah cek itu lagi. `model.onnx` tetap cadangan bila `model.pt` tidak ada.
 
+Pada laptop GPU, HydroDetect memanggil `predict` di GPU 0 dengan `half=True`, `retina_masks=True`, dan keyakinan bawaan 0,70. Tombol Cepat / Seimbang / Teliti mengatur `imgsz` 640, 960, atau 1280. Alokator proses berhenti di 6144 MB. Jendela `start.bat` menulis baris `HydroDetect: cuda ...`.
+
 SpatialSight memakai Apple Depth Pro pada `deepenv` yang sama dengan Ultralytics: Python 3.12 dan `torch 2.13.0+cu132`. Letakkan `depth_pro.pt` di `spatialsight\`. Perintah pasang yang menjaga roda CUDA ada di `docs/KAJIAN_PARITAS_SPATIAL_V2.md`. `model.onnx` tetap cadangan pratinjau relatif bila checkpoint belum ada. Layar live menampilkan kedekatan, dan angka meter dihitung di kanvas frame beku.
 
 Berkas `.onnx` dan `.pt` tidak ada di Git. Laptop GPU dapat membuka berkas HydroDetect:
