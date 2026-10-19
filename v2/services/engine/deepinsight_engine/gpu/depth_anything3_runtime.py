@@ -19,6 +19,14 @@ _INSTALL = (
     "paket depth_anything_3 belum terpasang. "
     "Clone ByteDance-Seed/Depth-Anything-3 lalu pip install -e ."
 )
+# Depth Anything 3 mengimpor addict, tetapi pyproject.toml tidak mencantumkannya.
+_KNOWN_GAPS = {
+    "addict": (
+        "ketergantungan addict belum terpasang. "
+        "Depth Anything 3 mengimpornya, tetapi pip install -e . tidak memasangnya. "
+        "Di deepenv yang sama: python -m pip install addict"
+    ),
+}
 
 PROCESS_SIZES = (378, 504, 672)
 DEFAULT_RES = 504
@@ -102,10 +110,16 @@ def _prepare_resolver() -> None:
     omega: Any = getattr(module, "OmegaConf", None)
     if omega is None or getattr(omega, "_deepinsight_eval_guard", False):
         return
-    omega.register_new_resolver = _guard_register(
-        omega.register_new_resolver,
-        getattr(omega, "has_resolver", None),
-    )
+    modern = getattr(omega, "register_resolver", None)
+    legacy = getattr(omega, "register_new_resolver", None)
+    target = modern if modern is not None else legacy
+    if target is None:
+        return
+    guarded = _guard_register(target, getattr(omega, "has_resolver", None))
+    if modern is not None:
+        omega.register_resolver = guarded
+    if legacy is not None:
+        omega.register_new_resolver = guarded
     omega._deepinsight_eval_guard = True
 
 
@@ -134,6 +148,8 @@ def _already_registered(exc: Exception) -> bool:
 
 def _import_detail(exc: ImportError) -> str:
     missing = exc.name or _name_from_message(str(exc))
+    if missing in _KNOWN_GAPS:
+        return _KNOWN_GAPS[missing]
     if missing in {"", "depth_anything_3"}:
         return _INSTALL
     if missing.startswith("depth_anything_3."):

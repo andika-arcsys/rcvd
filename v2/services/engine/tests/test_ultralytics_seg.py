@@ -111,7 +111,8 @@ def test_live_confidence_and_quality_reach_ultralytics() -> None:
     assert seen["conf"] == 0.8
     assert seen["imgsz"] == 1280
     assert seen["device"] == "cpu"
-    assert seen["half"] is False
+    assert seen["quantize"] is None
+    assert "half" not in seen
     assert len(found) == 1
     assert found[0]["class_name"] == "Leakage"
 
@@ -138,7 +139,8 @@ def test_cuda_device_keeps_the_original_frame_and_asks_for_fp16() -> None:
     )
     assert seen["shape"] == (12, 16, 3)
     assert seen["device"] == "0"
-    assert seen["half"] is True
+    assert seen["quantize"] == 16
+    assert "half" not in seen
     assert seen["conf"] == 0.7
     assert seen["imgsz"] == 1280
     assert seen["retina_masks"] is True
@@ -196,6 +198,29 @@ def test_library_banner_on_stdout_does_not_drop_the_ready_event() -> None:
     event = handle.read_event()
     assert event["event"] == "ready"
     assert event["fp16"] is True
+
+
+def test_old_ultralytics_without_quantize_uses_half() -> None:
+    settings = load_settings(REPO)
+    seen: dict[str, object] = {}
+
+    class _Legacy(_Model):
+        def predict(self, image: np.ndarray, **kwargs: object) -> list[_Result]:
+            if "quantize" in kwargs:
+                raise TypeError("unexpected keyword argument 'quantize'")
+            seen.update(kwargs)
+            return super().predict(image, **kwargs)
+
+    image = np.zeros((12, 16, 3), dtype=np.uint8)
+    predict_candidates(
+        _Legacy(),
+        image,
+        list(settings.hydrodetect.filter_names),
+        settings.hydrodetect,
+        "0",
+    )
+    assert seen["half"] is True
+    assert "quantize" not in seen
 
 
 def test_present_pt_asks_for_ultralytics(tmp_path: Path) -> None:

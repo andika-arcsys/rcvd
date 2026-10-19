@@ -89,8 +89,9 @@ def prepare_detector(
     """Batasi VRAM, lalu panaskan lewat predict. Jangan pindahkan bobot sendiri.
 
     Ultralytics melakukan fuse pada bobot fp32. ``model.to("cuda")`` sebelum
-    ``half=True`` membuat fuse gagal (Half vs Float) dan dialog kembali ke Optical.
-    ``predict(device=..., half=True)`` yang mengatur perangkat dan fp16.
+    fp16 membuat fuse gagal (Half vs Float) dan dialog kembali ke Optical.
+    ``predict(device=..., quantize=16)`` yang mengatur perangkat dan fp16,
+    sama dengan ``yolo_integration.py``. Argumen ``half`` sudah usang.
     Kegagalan pemanasan tetap membuka model; frame berikutnya yang mencoba lagi.
     """
     torch = importlib.import_module("torch")
@@ -139,15 +140,24 @@ def _predict(
     device: str,
     half: bool,
 ) -> Any:
-    return model.predict(
-        image_bgr,
-        conf=gate,
-        imgsz=size,
-        device=device,
-        half=half,
-        retina_masks=True,
-        verbose=False,
-    )[0]
+    """fp16 lewat ``quantize=16``. Ultralytics 8.4 menolak argumen ``half``."""
+    fp16 = bool(half) and device != "cpu"
+    kwargs: dict[str, Any] = {
+        "conf": gate,
+        "imgsz": size,
+        "device": device,
+        "retina_masks": True,
+        "verbose": False,
+        "quantize": 16 if fp16 else None,
+    }
+    try:
+        return model.predict(image_bgr, **kwargs)[0]
+    except TypeError as exc:
+        if "quantize" not in str(exc):
+            raise
+        kwargs.pop("quantize")
+        kwargs["half"] = fp16
+        return model.predict(image_bgr, **kwargs)[0]
 
 
 def _ampere_flags(torch: Any) -> None:

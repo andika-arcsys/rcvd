@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import threading
 from collections.abc import Callable
 from typing import Any
@@ -42,6 +43,10 @@ class CaptureLoop:
                 if self._stop.wait(self._interval):
                     return
                 continue
-            self._push(*sample)
+            try:
+                self._push(*sample)
+            except Exception as exc:  # noqa: BLE001 - satu frame buruk tidak mematikan pembaca
+                sys.stderr.write(f"Frame video dilewati: {exc}\n")
+                sys.stderr.flush()
             if self._stop.wait(self._interval):
                 return

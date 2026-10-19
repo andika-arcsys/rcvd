@@ -285,6 +285,18 @@ def test_missing_package_keeps_the_install_sentence(monkeypatch: pytest.MonkeyPa
     assert "pip install -e ." in detail
 
 
+def test_missing_addict_asks_for_that_package(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "deepinsight_engine.gpu.depth_anything3_runtime.importlib.import_module",
+        _reject("addict"),
+    )
+    with pytest.raises(EngineError) as info:
+        _open(object(), "depth-anything/DA3METRIC-LARGE")
+    detail = info.value.detail or ""
+    assert "python -m pip install addict" in detail
+    assert "Clone ByteDance-Seed/Depth-Anything-3 lalu pip install -e ." not in detail
+
+
 def test_missing_dependency_names_the_module(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "depth_anything_3", types.ModuleType("depth_anything_3"))
     monkeypatch.setattr(
@@ -331,19 +343,25 @@ def test_eval_resolver_registration_is_idempotent() -> None:
     assert OmegaConf.names == {"eval"}
 
 
-def test_prepare_resolver_patches_a_second_registration(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_prepare_resolver_uses_register_resolver(monkeypatch: pytest.MonkeyPatch) -> None:
     class OmegaConf:
         names: set[str] = set()
+        legacy_calls = 0
 
         @staticmethod
         def has_resolver(name: str) -> bool:
             return name in OmegaConf.names
 
         @staticmethod
-        def register_new_resolver(name: str, _resolver: object) -> None:
+        def register_resolver(name: str, _resolver: object) -> None:
             if name in OmegaConf.names:
                 raise ValueError("Resolver 'eval' is already registered")
             OmegaConf.names.add(name)
+
+        @staticmethod
+        def register_new_resolver(name: str, _resolver: object) -> None:
+            OmegaConf.legacy_calls += 1
+            raise AssertionError("register_new_resolver")
 
     module = types.ModuleType("omegaconf")
     module.OmegaConf = OmegaConf  # type: ignore[attr-defined]
@@ -351,7 +369,8 @@ def test_prepare_resolver_patches_a_second_registration(monkeypatch: pytest.Monk
     _prepare_resolver()
     OmegaConf.register_new_resolver("eval", eval)
     OmegaConf.register_new_resolver("eval", eval)
-    assert "eval" in OmegaConf.names
+    assert OmegaConf.names == {"eval"}
+    assert OmegaConf.legacy_calls == 0
 
 
 def _reject(missing: str) -> Any:
