@@ -314,11 +314,16 @@
     "opacity": "Transparansi overlay",
     "noLength": "Angka panjang tidak boleh diambil dari layar ini.",
     "legend": "Legenda kedalaman relatif",
-    "depthMissing": "Peta kedalaman belum ada karena berkas model belum dimuat."
+    "depthMissing": "Peta kedalaman belum ada. Depth Anything 3 belum dimuat di GPU.",
+    "process": "Resolusi proses",
+    "processFast": "Ringan",
+    "processConsole": "Konsol",
+    "processCareful": "Teliti",
+    "processHint": "504 sama dengan konsol. 672 memakai lebih banyak dari anggaran 6 GB pada kartu 8 GB. Layar ini tetap pratinjau relatif."
   },
   "spatial": {
     "title": "Estimasi kedalaman",
-    "hint": "Angka ini dihitung dari tensor Depth Pro pada PNG frame beku. Simpan 2D tetap memakai skala piksel.",
+    "hint": "Angka ini dihitung dari tensor kedalaman pada PNG frame beku. Bawaan konsol adalah Depth Anything 3. Simpan 2D tetap memakai skala piksel.",
     "run": "Hitung estimasi kedalaman",
     "busy": "Menghitung…",
     "failed": "Estimasi gagal",

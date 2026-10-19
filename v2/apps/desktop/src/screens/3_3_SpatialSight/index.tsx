@@ -5,11 +5,13 @@ import { t } from '../../i18n';
 import { useSession } from '../../session/SessionContext';
 import { WorkColumns } from '../../components/WorkColumns';
 import { FeatureTabs } from '../3_OpticalNativeView/FeatureTabs';
+import { GpuBudgetLine } from '../3_OpticalNativeView/GpuBudgetLine';
 import { useVideoStatus } from '../3_OpticalNativeView/useLive';
 import { VideoStage } from '../3_OpticalNativeView/VideoStage';
 import { useVision } from '../features/poll';
 import { useReleaseModel } from '../features/release';
 import { DepthLegend } from './Legend';
+import { ProcessRes, useProcess } from './ProcessRes';
 
 const ACTION = 'rounded px-4 py-2 text-sm disabled:bg-line disabled:text-muted';
 
@@ -18,11 +20,13 @@ export default function SpatialSightScreen() {
   const status = useVideoStatus();
   const vision = useVision();
   const [opacity, setOpacity] = useState(60);
+  const tune = useProcess(vision);
   const lost = Boolean(status?.lost);
   const frameId = status?.frame_id ?? null;
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-4">
       <FeatureTabs warning={status?.performance_warning ?? null} active="F4" />
+      <GpuBudgetLine status={status} />
       <WorkColumns
         main={
           <VideoStage frameId={frameId} lost={lost}>
@@ -34,6 +38,8 @@ export default function SpatialSightScreen() {
             depthReady={Boolean(vision?.depth)}
             opacity={opacity}
             onOpacity={setOpacity}
+            processRes={tune.processRes}
+            onProcess={tune.send}
           />
         }
       />
@@ -46,16 +52,21 @@ function SpatialNotes({
   depthReady,
   opacity,
   onOpacity,
+  processRes,
+  onProcess,
 }: {
   depthReady: boolean;
   opacity: number;
   onOpacity: (value: number) => void;
+  processRes: number;
+  onProcess: (size: 378 | 504 | 672) => void;
 }) {
   return (
     <aside className="flex flex-col gap-3 text-sm">
       <p className="font-semibold">{t('feature.relativeLabel')}</p>
       <p className="text-danger">{t('feature.noLength')}</p>
       {depthReady ? null : <p className="text-warn">{t('feature.depthMissing')}</p>}
+      <ProcessRes processRes={processRes} onProcess={onProcess} />
       <label className="flex flex-col gap-1">
         {t('feature.opacity')}
         <input
