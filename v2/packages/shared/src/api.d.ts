@@ -533,6 +533,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/measure/assist/{frame_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Measure Assist */
+        get: operations["measure_assist_measure_assist__frame_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/measure/edge": {
         parameters: {
             query?: never;
@@ -1112,6 +1129,35 @@ export interface components {
             tape_passed: boolean | null;
             /** Rod Passed */
             rod_passed: boolean | null;
+        };
+        /** AssistOut */
+        AssistOut: {
+            /** Frame Id */
+            frame_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "optical" | "aquaclear" | "hydrodetect" | "spatialsight";
+            /** Ready */
+            ready: boolean;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Shown Width */
+            shown_width: number;
+            /** Shown Height */
+            shown_height: number;
+            /** Jpeg B64 */
+            jpeg_b64: string | null;
+            /** Candidates */
+            candidates: components["schemas"]["CandidateView"][];
+            depth: components["schemas"]["DepthView"] | null;
+            /** Classes */
+            classes: components["schemas"]["ClassChip"][];
+            /** Note */
+            note: string;
         };
         /** Auth */
         Auth: {
@@ -3595,6 +3641,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContextOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    measure_assist_measure_assist__frame_id__get: {
+        parameters: {
+            query?: {
+                view?: "optical" | "aquaclear" | "hydrodetect" | "spatialsight";
+            };
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                frame_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistOut"];
                 };
             };
             /** @description Validation Error */

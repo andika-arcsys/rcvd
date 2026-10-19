@@ -6,6 +6,9 @@ import { nodesOf, type XY } from '../../measure/draft';
 import { detailChoices } from '../../measure/detail';
 import { strokesOf } from '../../measure/strokes';
 import { useSession } from '../../session/SessionContext';
+import { GpuBudgetLine } from '../3_OpticalNativeView/GpuBudgetLine';
+import { useVideoStatus } from '../3_OpticalNativeView/useLive';
+import { AssistBar, AssistOverlay, assistNote, shownJpeg, useAssist } from './CanvasAssist';
 import { DepthEstimate } from './DepthEstimate';
 import { Fields } from './Fields';
 import { LaserBar } from './LaserBar';
@@ -18,11 +21,14 @@ const ACTION =
 
 export function MeasureWorkspace({ saveLabel }: { saveLabel: 'measure.save' | 'measure.saveAs' }) {
   const { frozen } = useSession();
+  const status = useVideoStatus();
   return (
     <section className="flex flex-col gap-3 p-4">
       <p className="font-mono">
+        {frozen ? <span className="font-semibold">{t('measure.frozenBadge')} </span> : null}
         {t('live.frame')} {frozen?.frameId ?? t('common.dash')}
       </p>
+      <GpuBudgetLine status={status} />
       {frozen?.preset ? (
         <p className="text-sm">
           {t('feature.presetRecorded')}: {frozen.preset}
@@ -41,34 +47,13 @@ function Board({ saveLabel }: { saveLabel: 'measure.save' | 'measure.saveAs' }) 
   const board = useBoard();
   const actions = boardActions(board);
   const frame = board.loaded.frame;
+  const assist = useAssist(board.session.frozen?.frameId);
   const laser = board.laserMode === 'ask' ? asPoints(frame?.laser) : [];
-  const nativeLong = Math.max(frame?.width ?? 0, frame?.height ?? 0);
-  const displayMax = board.loaded.thresholds?.video.display_max_side ?? nativeLong;
   return (
     <WorkColumns
       mainMin="40rem"
       className="gap-4"
-      main={
-        <MeasureCanvas
-          width={frame?.width ?? 1}
-          height={frame?.height ?? 1}
-          shownWidth={frame?.shown_width ?? frame?.width ?? 1}
-          shownHeight={frame?.shown_height ?? frame?.height ?? 1}
-          jpeg={frame ? `data:image/jpeg;base64,${frame.jpeg_b64}` : null}
-          nodes={nodesOf(board.store.draft)}
-          strokes={strokesOf(board.store.draft)}
-          zoom={board.zoom}
-          hitPx={board.view?.hit ?? 0}
-          magnifier={board.view?.magnifier ?? 0}
-          detail={board.detail}
-          choices={nativeLong > 0 ? detailChoices(nativeLong, displayMax) : []}
-          onPlace={actions.place}
-          onBegin={actions.begin}
-          onMove={actions.move}
-          onZoom={board.setZoom}
-          onDetail={board.setDetail}
-        />
-      }
+      main={<CanvasColumn board={board} actions={actions} assist={assist} />}
       side={
         <Side
           board={board}
@@ -79,6 +64,54 @@ function Board({ saveLabel }: { saveLabel: 'measure.save' | 'measure.saveAs' }) 
         />
       }
     />
+  );
+}
+
+function CanvasColumn({
+  board,
+  actions,
+  assist,
+}: {
+  board: ReturnType<typeof useBoard>;
+  actions: ReturnType<typeof boardActions>;
+  assist: ReturnType<typeof useAssist>;
+}) {
+  const frame = board.loaded.frame;
+  const nativeLong = Math.max(frame?.width ?? 0, frame?.height ?? 0);
+  const displayMax = board.loaded.thresholds?.video.display_max_side ?? nativeLong;
+  const width = frame?.width ?? 1;
+  const height = frame?.height ?? 1;
+  const optical = frame ? `data:image/jpeg;base64,${frame.jpeg_b64}` : null;
+  return (
+    <div className="flex flex-col gap-2">
+      <AssistBar
+        picked={assist.picked}
+        note={assistNote(assist.picked, assist.row)}
+        onPick={assist.choose}
+      />
+      <MeasureCanvas
+        width={width}
+        height={height}
+        shownWidth={frame?.shown_width ?? width}
+        shownHeight={frame?.shown_height ?? height}
+        jpeg={shownJpeg(optical, assist.picked, assist.row)}
+        nodes={nodesOf(board.store.draft)}
+        strokes={strokesOf(board.store.draft)}
+        zoom={board.zoom}
+        hitPx={board.view?.hit ?? 0}
+        magnifier={board.view?.magnifier ?? 0}
+        detail={board.detail}
+        choices={nativeLong > 0 ? detailChoices(nativeLong, displayMax) : []}
+        onPlace={actions.place}
+        onBegin={actions.begin}
+        onMove={actions.move}
+        onZoom={board.setZoom}
+        onDetail={board.setDetail}
+        overlay={
+          <AssistOverlay picked={assist.picked} row={assist.row} width={width} height={height} />
+        }
+      />
+    </div>
   );
 }
 
