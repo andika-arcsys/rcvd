@@ -96,7 +96,9 @@ python -m pip install -e .
 python -c "import torch, depth_anything_3; print(torch.__version__, torch.cuda.is_available(), depth_anything_3.__file__)"
 ```
 
-Perintah `pip install -e .` mengikuti README konsol lama. Setelahnya `torch.__version__` harus tetap `2.13.0+cu132` dan CUDA tetap `True`. Bila roda torch berubah, pasang kembali `torch==2.13.0+cu132` dan `torchvision==0.28.0+cu132` dari indeks `cu132` sebelum `start.bat`. Bobot diunduh Hugging Face pada pemakaian pertama: `depth-anything/DA3METRIC-LARGE`.
+Perintah `pip install -e .` mengikuti README konsol lama. Jangan memakai ekstra `.[gs]`. Setelahnya `torch.__version__` harus tetap `2.13.0+cu132` dan CUDA tetap `True`. Bila roda torch berubah, pasang kembali `torch==2.13.0+cu132` dan `torchvision==0.28.0+cu132` dari indeks `cu132` sebelum `start.bat`. Bobot diunduh Hugging Face pada pemakaian pertama: `depth-anything/DA3METRIC-LARGE`.
+
+`depth_anything_3/cfg.py` menjalankan `OmegaConf.register_new_resolver("eval", eval)` pada saat impor. Konsol lama tidak menangkap pendaftaran kedua. Pekerja v2 membuat pendaftaran itu idempoten sebelum impor. Bila modul yang hilang adalah `depth_anything_3`, detail tetap kalimat clone di atas. Bila yang hilang modul lain, detail menyebut nama modul itu. Peringatan `MDL-002` pada `POST /models/switch` dicatat sebagai JSON dan jendela tetap terbuka.
 
 Pekerja v2 memuat `depth_anything_3` pada CUDA di dalam anggaran 6144 MB dan 90% GPU, sama seperti AquaClear dan HydroDetect. `from_pretrained` lalu `to(cuda).eval()`, inferensi `process_res` dan `export_format="mini_npz"`. Bawaan 504. Tombol layar memakai 378, 504, atau 672 tanpa memuat ulang model. Pratinjau live tetap relatif. Estimasi pada frame beku memakai tensor yang sama, fokus kosong, dan skala referensi. `config/spatialsight.yaml` yang `backend`-nya `depth_pro` tetap memakai `depth_pro.pt`.
 
