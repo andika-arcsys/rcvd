@@ -100,6 +100,12 @@ Perintah `pip install -e .` mengikuti README konsol lama. Setelahnya `torch.__ve
 
 Pekerja v2 memuat `depth_anything_3` pada CUDA di dalam anggaran 6144 MB dan 90% GPU, sama seperti AquaClear dan HydroDetect. `from_pretrained` lalu `to(cuda).eval()`, inferensi `process_res` dan `export_format="mini_npz"`. Bawaan 504. Tombol layar memakai 378, 504, atau 672 tanpa memuat ulang model. Pratinjau live tetap relatif. Estimasi pada frame beku memakai tensor yang sama, fokus kosong, dan skala referensi. `config/spatialsight.yaml` yang `backend`-nya `depth_pro` tetap memakai `depth_pro.pt`.
 
+## Kanvas ukur
+
+Kanvas beku tetap satu jendela. Tombol Frame asli, AquaClear, HydroDetect, dan SpatialSight hanya mengganti gambar bantuan. Permintaan `GET /measure/assist/{frame_id}?view=` menjalankan model GPU yang sudah dimuat pada PNG bukti, di dalam anggaran 6144 MB dan 90%. Bila model itu belum dimuat, kanvas tetap menampilkan frame asli.
+
+Titik, kalibrasi, panjang, jalur, luas, dan sudut disimpan dalam piksel frame asli. Angka 2D tidak diambil dari JPEG bantuan. Angka 3D tetap lewat `POST /spatial/estimate` pada PNG yang sama, setelah skala referensi. Satu model pada satu waktu.
+
 ## Yang tetap dari UI v2
 
 Satu jendela, tab fitur, sidebar, dan kanvas ukur tetap. AquaClear tetap perbandingan kiri-kanan dan tiga tombol preset. Freeze tetap mengunci nama preset ke snapshot. Hasil enhancement tidak mengganti berkas bukti mentah.

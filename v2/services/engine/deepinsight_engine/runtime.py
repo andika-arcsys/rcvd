@@ -246,6 +246,17 @@ class Runtime:
     def set_spatial_tune(self, process_res: int) -> dict[str, int]:
         return self.models.set_spatial_tune(process_res)
 
+    def canvas_assist(self, frame_id: str, view: str) -> dict[str, object]:
+        """Gambar bantuan dari model GPU yang sedang dimuat. Bukan sumber angka."""
+        from .measure.canvas_assist import assist_frame
+        from .video.decode import decode_png
+
+        path = self._evidence / f"{frame_id}.png"
+        if not path.is_file():
+            raise EngineError("VID-002", frame_id)
+        width, height, raw = decode_png(path.read_bytes())
+        return assist_frame(self.models, self._settings, frame_id, raw, width, height, view)
+
     def estimate_spatial(self, frame_id: str, spec: dict[str, object]) -> dict[str, object]:
         """Inferensi pada PNG bukti. Hasilnya tidak ditulis ke span 2D."""
         path = self._evidence / f"{frame_id}.png"

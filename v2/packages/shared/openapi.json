@@ -1756,6 +1756,80 @@
         }
       }
     },
+    "/measure/assist/{frame_id}": {
+      "get": {
+        "tags": [
+          "measure"
+        ],
+        "summary": "Measure Assist",
+        "operationId": "measure_assist_measure_assist__frame_id__get",
+        "parameters": [
+          {
+            "name": "frame_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Frame Id"
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "optical",
+                "aquaclear",
+                "hydrodetect",
+                "spatialsight"
+              ],
+              "type": "string",
+              "default": "optical",
+              "title": "View"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/measure/edge": {
       "post": {
         "tags": [
@@ -3804,6 +3878,99 @@
           "rod_passed"
         ],
         "title": "AssessOut"
+      },
+      "AssistOut": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "optical",
+              "aquaclear",
+              "hydrodetect",
+              "spatialsight"
+            ],
+            "title": "Kind"
+          },
+          "ready": {
+            "type": "boolean",
+            "title": "Ready"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "shown_width": {
+            "type": "integer",
+            "title": "Shown Width"
+          },
+          "shown_height": {
+            "type": "integer",
+            "title": "Shown Height"
+          },
+          "jpeg_b64": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jpeg B64"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateView"
+            },
+            "type": "array",
+            "title": "Candidates"
+          },
+          "depth": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DepthView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "classes": {
+            "items": {
+              "$ref": "#/components/schemas/ClassChip"
+            },
+            "type": "array",
+            "title": "Classes"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "kind",
+          "ready",
+          "width",
+          "height",
+          "shown_width",
+          "shown_height",
+          "jpeg_b64",
+          "candidates",
+          "depth",
+          "classes",
+          "note"
+        ],
+        "title": "AssistOut"
       },
       "Auth": {
         "properties": {

@@ -18,12 +18,14 @@ from ..measure.types import Camera, Point
 from ..video.decode import decode_png
 from ..video.encode import detail_quality, detail_side, encode_jpeg, fitted_size
 from ..video.report_jpeg import report_jpeg
+from .routes_vision import CandidateView, ClassChip, DepthView
 from .security import require_token
 
 measure = APIRouter(dependencies=[Depends(require_token)], tags=["measure"])
 
 Marker = Literal["P0", "G_kiri", "G_kanan", "PE+2"]
 Detail = Literal["display", "high", "native"]
+AssistView = Literal["optical", "aquaclear", "hydrodetect", "spatialsight"]
 Shape = Literal["arrow", "line", "circle"]
 Color = Literal["red", "yellow", "blue", "green", "white"]
 
@@ -76,6 +78,21 @@ class EdgeOut(BaseModel):
 
 class LaserOut(BaseModel):
     points: list[list[float]]
+
+
+class AssistOut(BaseModel):
+    frame_id: str
+    kind: AssistView
+    ready: bool
+    width: int
+    height: int
+    shown_width: int
+    shown_height: int
+    jpeg_b64: str | None
+    candidates: list[CandidateView]
+    depth: DepthView | None
+    classes: list[ClassChip]
+    note: str
 
 
 class ContextOut(BaseModel):
@@ -168,6 +185,12 @@ def measure_context(
         shown_height=shown_h,
         detail=detail,
     )
+
+
+@measure.get("/measure/assist/{frame_id}", response_model=AssistOut)
+def measure_assist(frame_id: str, request: Request, view: AssistView = "optical") -> AssistOut:
+    payload = request.app.state.runtime.canvas_assist(frame_id, view)
+    return AssistOut.model_validate(payload)
 
 
 @measure.post("/measure/edge", response_model=EdgeOut)
