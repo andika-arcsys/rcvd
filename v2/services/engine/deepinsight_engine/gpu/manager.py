@@ -35,6 +35,8 @@ class ModelManager:
         hydro: HydrodetectConfig | None = None,
         spatial: SpatialSightConfig | None = None,
         display_max_side: int = 0,
+        vram_budget_mb: float = 0,
+        gpu_max_pct: float = 90,
     ) -> None:
         self._catalog = catalog
         self._models_dir = models_dir
@@ -49,6 +51,8 @@ class ModelManager:
         self._hydro = hydro
         self._spatial = spatial
         self._display_max_side = display_max_side
+        self._vram_budget_mb = vram_budget_mb
+        self._gpu_max_pct = gpu_max_pct
         self._hydro_tune: dict[str, float | int] = {
             "confidence": 0.5 if hydro is None else hydro.default_confidence,
             "imgsz": 640,
@@ -197,6 +201,8 @@ class ModelManager:
             "hydro": None if self._hydro is None else self._hydro.model_dump(),
             "spatial": None if self._spatial is None else self._spatial.model_dump(),
             "display_max_side": self._display_max_side,
+            "vram_budget_mb": self._vram_budget_mb,
+            "gpu_max_pct": self._gpu_max_pct,
         }
 
     def _preset(self, name: str | None) -> AquaPreset:

@@ -13,8 +13,13 @@ from ..enhance.pipeline import UnderwaterEnhancer
 Enhancer = UnderwaterEnhancer | CudaUnderwaterVideoEnhancer
 
 
-def open_enhancer(preset: AquaPreset, max_side: int = 0) -> tuple[Enhancer, str]:
-    cuda, note = open_cuda_enhancer(preset.pipeline, max_side)
+def open_enhancer(
+    preset: AquaPreset,
+    max_side: int = 0,
+    vram_budget_mb: float = 0,
+    gpu_max_pct: float = 90,
+) -> tuple[Enhancer, str]:
+    cuda, note = open_cuda_enhancer(preset.pipeline, max_side, vram_budget_mb, gpu_max_pct)
     if cuda is not None:
         return cuda, note
     return UnderwaterEnhancer.from_preset(preset.pipeline), note

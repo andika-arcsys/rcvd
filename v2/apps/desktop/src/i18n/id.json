@@ -264,6 +264,7 @@
     "reasonVram": "Memori GPU di atas ambang",
     "reasonGpu": "Beban GPU di atas ambang",
     "memory": "Memori GPU",
+    "cap": "maks",
     "turnOff": "Matikan fitur",
     "lightPreset": "Preset ringan",
     "frame": "Frame",

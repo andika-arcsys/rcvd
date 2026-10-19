@@ -6152,6 +6152,10 @@
             "type": "number",
             "title": "Vram Max Pct"
           },
+          "vram_budget_mb": {
+            "type": "number",
+            "title": "Vram Budget Mb"
+          },
           "gpu_max_pct": {
             "type": "number",
             "title": "Gpu Max Pct"
@@ -6180,6 +6184,7 @@
           "fps_min",
           "fps_window_s",
           "vram_max_pct",
+          "vram_budget_mb",
           "gpu_max_pct",
           "gpu_window_s",
           "vram_baseline_tolerance_mb",
@@ -7911,6 +7916,28 @@
               }
             ],
             "title": "Vram Total Mb"
+          },
+          "vram_budget_mb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vram Budget Mb"
+          },
+          "gpu_max_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gpu Max Pct"
           },
           "gpu_device": {
             "anyOf": [

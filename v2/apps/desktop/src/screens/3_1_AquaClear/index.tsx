@@ -30,8 +30,12 @@ export default function AquaClearScreen() {
       />
       <p className="font-mono text-xs text-muted">
         {t('live.gpu')} {dash(status?.gpu_util_pct, '%')}
+        {status?.gpu_max_pct == null ? '' : ` / ${dash(status.gpu_max_pct, '%')}`}
         {' · '}
         {t('live.memory')} {memoryText(status?.vram_used_mb, status?.vram_total_mb)}
+        {status?.vram_budget_mb == null
+          ? ''
+          : ` · ${t('live.cap')} ${dash(status.vram_budget_mb)} MB`}
         {status?.gpu_device ? ` · ${status.gpu_device}` : ''}
       </p>
       <AquaActions lost={lost} frameId={frameId} />

@@ -76,7 +76,14 @@ def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     if kind == "aquaclear":
         state["preset"] = AquaPreset.model_validate(message["preset"])
         state["max_side"] = int(message.get("display_max_side") or 0)
-        state["enhancer"], note = open_enhancer(state["preset"], state["max_side"])
+        state["vram_budget_mb"] = float(message.get("vram_budget_mb") or 0)
+        state["gpu_max_pct"] = float(message.get("gpu_max_pct") or 90)
+        state["enhancer"], note = open_enhancer(
+            state["preset"],
+            state["max_side"],
+            state["vram_budget_mb"],
+            state["gpu_max_pct"],
+        )
         state["meta"] = {"fp16": bool(getattr(state["enhancer"], "uses_cuda", False))}
         state["device_note"] = note
         preset_name = state["preset"].pipeline
@@ -388,7 +395,12 @@ def _write_aquaclear(state: dict[str, Any], message: dict[str, Any]) -> tuple[in
         raw = bytes(view[: width * height * 3])
         enhancer = state.get("enhancer")
         if enhancer is None:
-            enhancer, _note = open_enhancer(state["preset"], int(state.get("max_side") or 0))
+            enhancer, _note = open_enhancer(
+                state["preset"],
+                int(state.get("max_side") or 0),
+                float(state.get("vram_budget_mb") or 0),
+                float(state.get("gpu_max_pct") or 90),
+            )
             state["enhancer"] = enhancer
         out, out_w, out_h = enhance_live(
             enhancer, raw, width, height, int(state.get("max_side") or 0)

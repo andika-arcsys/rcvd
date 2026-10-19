@@ -46,6 +46,8 @@ class Watchdog:
         reading = self._probe.snapshot()
         if reading is None or reading.total_mb <= 0:
             return None
+        if reading.used_mb > self._perf.vram_budget_mb:
+            return "vram"
         used_pct = 100.0 * reading.used_mb / reading.total_mb
         if used_pct > self._perf.vram_max_pct:
             return "vram"

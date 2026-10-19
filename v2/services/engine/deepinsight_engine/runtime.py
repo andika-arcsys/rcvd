@@ -62,6 +62,8 @@ class Runtime:
             hydro=settings.hydrodetect,
             spatial=settings.spatialsight,
             display_max_side=settings.thresholds.video.display_max_side,
+            vram_budget_mb=perf.vram_budget_mb,
+            gpu_max_pct=perf.gpu_max_pct,
         )
         self.cache = CacheManager(data_dir / "cache", settings.thresholds.cache.max_mb)
         self.pipeline = FramePipeline(
@@ -198,6 +200,8 @@ class Runtime:
             "gpu_util_pct": gpu.utilization_pct,
             "vram_used_mb": gpu.vram_used_mb,
             "vram_total_mb": gpu.vram_total_mb,
+            "vram_budget_mb": self._settings.thresholds.performance.vram_budget_mb,
+            "gpu_max_pct": self._settings.thresholds.performance.gpu_max_pct,
             "gpu_device": self.models.device_note,
             "lost": state == "lost",
             "snapshot_count": serial,

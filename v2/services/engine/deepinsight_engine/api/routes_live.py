@@ -60,6 +60,8 @@ class VideoStatus(BaseModel):
     gpu_util_pct: float | None
     vram_used_mb: float | None = None
     vram_total_mb: float | None = None
+    vram_budget_mb: float | None = None
+    gpu_max_pct: float | None = None
     gpu_device: str | None = None
     lost: bool
     snapshot_count: int

@@ -33,7 +33,7 @@ Video terasa kasar dan berat bila setiap frame penuh melewati pipeline OpenCV di
 
 v2 memakai langkah itu pada `enhance/cuda_video.py` saat `torch.cuda.is_available()` benar. Frame diperkecil di GPU ke `display_max_side` (1280; pada 16:9 menjadi 1280×720, ukuran keluaran skrip) sebelum filter, supaya perhitungan tidak mengulang piksel yang JPEG akan buang. Tombol Ringan memakai angka skrip. Balanced menaikkan campuran temporal ke 0,45. Inspection ke 0,55. Gamma dan saturasi tetap 0,96 dan 1,05.
 
-Gambar AquaClear dikirim lewat WebSocket `/video/compare-stream` setiap frame, bukan sekali per detik. Bilah status membaca memori dan beban GPU lewat NVML, atau `nvidia-smi` bila paket `nvidia-ml-py` belum ada. Jendela `start.bat` menulis `AquaClear enhancer: cuda ...` atau alasan CPU.
+Gambar AquaClear dikirim lewat WebSocket `/video/compare-stream` setiap frame, bukan sekali per detik. Bilah status membaca memori dan beban GPU lewat NVML, atau `nvidia-smi` bila paket `nvidia-ml-py` belum ada. Pada kartu 8 GB, proses CUDA dibatasi 6 GB (`vram_budget_mb: 6144`) dan beban 90%. Di bawah batas itu filter berjalan pada ukuran kamera, lalu GPU mengecilkan ke tampilan. Di atas batas, frame diperkecil lebih dulu. Jendela `start.bat` menulis `AquaClear enhancer: cuda ... cap=...` atau alasan CPU.
 
 Bila CUDA tidak ada, pekerja kembali ke `UnderwaterEnhancer` OpenCV pada ukuran tampilan yang sama. `deepenv` yang sudah memuat `torch==2.13.0+cu132` tidak perlu paket baru. Tutup jendela lalu jalankan `start.bat` lagi agar pekerja memuat jalur CUDA.
 

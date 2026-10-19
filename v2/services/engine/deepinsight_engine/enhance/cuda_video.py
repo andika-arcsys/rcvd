@@ -6,13 +6,15 @@ Shades-of-Gray, stretch ringan, gamma, denoise yang menjaga tepi, dan campuran
 temporal hanya pada area diam. CLAHE tidak dipakai, karena skrip itu menyebut
 CLAHE sebagai sumber grain.
 
-Ukuran frame tidak diubah. Skrip berkas menulis 1280×720; tampilan v2 sudah
-mengecilkan JPEG lewat display_max_side.
+Saat anggaran VRAM longgar, filter berjalan pada ukuran kamera lalu GPU
+mengecilkan ke display_max_side. Di atas 6 GB atau beban di atas 90%, frame
+diperkecil lebih dulu dan denoise dilonggarkan.
 """
 
 from __future__ import annotations
 
 import importlib
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -42,22 +44,40 @@ class CudaUnderwaterVideoEnhancer:
 
     uses_cuda = True
 
-    def __init__(self, pipeline: str, device: str = "cuda:0", max_side: int = 0) -> None:
+    def __init__(
+        self,
+        pipeline: str,
+        device: str = "cuda:0",
+        max_side: int = 0,
+        vram_budget_mb: float = 0,
+        gpu_max_pct: float = 90,
+    ) -> None:
         torch = importlib.import_module("torch")
         chosen = CUDA_PRESETS[pipeline]
         self.torch = torch
         self.nnf = torch.nn.functional
         self.device = torch.device(device)
         self.max_side = max_side
+        self.vram_budget_mb = vram_budget_mb
+        self.gpu_max_pct = gpu_max_pct
         self.denoise = chosen.denoise
+        self._denoise = chosen.denoise
         self.temporal_alpha = chosen.temporal_alpha
         self.gamma = chosen.gamma
         self.saturation = chosen.saturation
         self.gaussian = _gaussian_kernel(torch, 5, 1.15, self.device)
         self.prev: Any = None
+        self._eased = False
+        self._util: float | None = None
+        self._util_at = 0.0
 
     def process(self, frame_bgr: np.ndarray) -> np.ndarray:
         torch = self.torch
+        over = self._over_budget()
+        if over and not self._eased:
+            torch.cuda.empty_cache()
+        self._eased = over
+        self.denoise = self._denoise * (0.5 if over else 1.0)
         image = (
             torch.from_numpy(np.ascontiguousarray(frame_bgr))
             .to(self.device, non_blocking=True)
@@ -67,11 +87,40 @@ class CudaUnderwaterVideoEnhancer:
             / 255.0
         )
         with torch.amp.autocast("cuda", dtype=torch.float16):
-            image = self._fit(image)
+            if over or self.vram_budget_mb <= 0:
+                image = self._fit(image)
             image = _color(torch, image, self.gamma, self.saturation)
             image = self._edge_aware_denoise(image)
             image = self._motion_adaptive_temporal(image)
+            if not over and self.vram_budget_mb > 0:
+                image = self._fit(image)
+        self.denoise = self._denoise
         return (image[0].permute(1, 2, 0).clamp(0, 1) * 255.0).byte().cpu().numpy()
+
+    def _over_budget(self) -> bool:
+        if self.vram_budget_mb <= 0:
+            return False
+        free, total = self.torch.cuda.mem_get_info()
+        used_mb = (total - free) / (1024 * 1024)
+        if used_mb > self.vram_budget_mb:
+            return True
+        util = self._gpu_util()
+        return util is not None and util > self.gpu_max_pct
+
+    def _gpu_util(self) -> float | None:
+        now = time.monotonic()
+        if now - self._util_at < 0.5:
+            return self._util
+        self._util_at = now
+        reader = getattr(self.torch.cuda, "utilization", None)
+        if reader is None:
+            self._util = None
+            return None
+        try:
+            self._util = float(reader(self.device))
+        except Exception:  # noqa: BLE001 - pembacaan beban tidak boleh menghentikan frame
+            self._util = None
+        return self._util
 
     def _fit(self, image: Any) -> Any:
         if self.max_side <= 0:
@@ -115,7 +164,10 @@ class CudaUnderwaterVideoEnhancer:
 
 
 def open_cuda_enhancer(
-    pipeline: str, max_side: int = 0
+    pipeline: str,
+    max_side: int = 0,
+    vram_budget_mb: float = 0,
+    gpu_max_pct: float = 90,
 ) -> tuple[CudaUnderwaterVideoEnhancer | None, str]:
     try:
         torch = importlib.import_module("torch")
@@ -123,15 +175,33 @@ def open_cuda_enhancer(
         return None, "cpu torch tidak terpasang pada Python start.bat"
     if not bool(torch.cuda.is_available()):
         return None, "cpu torch.cuda.is_available() false"
+    cap = _limit_memory(torch, vram_budget_mb)
     try:
-        enhancer = CudaUnderwaterVideoEnhancer(pipeline, max_side=max_side)
+        enhancer = CudaUnderwaterVideoEnhancer(
+            pipeline,
+            max_side=max_side,
+            vram_budget_mb=vram_budget_mb,
+            gpu_max_pct=gpu_max_pct,
+        )
     except (RuntimeError, AssertionError) as exc:
         return None, f"cpu CUDA gagal: {exc}"
     free, total = torch.cuda.mem_get_info()
     used = (total - free) / (1024 * 1024)
     whole = total / (1024 * 1024)
     name = str(torch.cuda.get_device_name(enhancer.device))
-    return enhancer, f"cuda {name} vram={used:.0f}/{whole:.0f}MB side={max_side}"
+    return enhancer, f"cuda {name} vram={used:.0f}/{whole:.0f}MB {cap} gpu<={gpu_max_pct:.0f}%"
+
+
+def _limit_memory(torch: Any, budget_mb: float) -> str:
+    if budget_mb <= 0:
+        return "cap=tak-dibatasi"
+    from ..gpu.budget import process_memory_fraction
+
+    free, total = torch.cuda.mem_get_info()
+    fraction = process_memory_fraction(int(total), int(total - free), int(budget_mb * 1024 * 1024))
+    torch.cuda.set_per_process_memory_fraction(fraction)
+    cap_mb = fraction * float(total) / (1024 * 1024)
+    return f"cap={cap_mb:.0f}/{budget_mb:.0f}MB"
 
 
 def _gaussian_kernel(torch: Any, size: int, sigma: float, device: Any) -> Any:
