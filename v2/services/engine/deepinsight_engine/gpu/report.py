@@ -44,7 +44,11 @@ def _depth(raw: object, label: str) -> dict[str, object] | None:
     if any(not 0 <= float(item) <= 1 for item in values):
         return None
     scaled = [float(item) for item in values]
-    return {"width": width, "height": height, "values": scaled, "label": label}
+    row: dict[str, object] = {"width": width, "height": height, "values": scaled, "label": label}
+    jpeg = raw.get("jpeg_b64")
+    if isinstance(jpeg, str) and jpeg:
+        row["jpeg_b64"] = jpeg
+    return row
 
 
 def _classes(hydro: HydrodetectConfig) -> list[dict[str, object]]:

@@ -28,20 +28,47 @@ function paint(node: HTMLCanvasElement | null, depth: Depth | null, opacity: num
   if (!node || !depth || opacity === 0 || import.meta.env.MODE === 'test') return;
   const ctx = node.getContext('2d');
   if (!ctx) return;
+  const jpeg = depth.jpeg_b64;
+  if (jpeg) {
+    const src = `data:image/jpeg;base64,${jpeg}`;
+    node.dataset.src = src;
+    const image = new Image();
+    image.onload = () => {
+      if (node.dataset.src !== src) return;
+      node.width = image.naturalWidth;
+      node.height = image.naturalHeight;
+      ctx.drawImage(image, 0, 0);
+    };
+    image.src = src;
+    return;
+  }
   node.width = depth.width;
   node.height = depth.height;
-  const cellW = 1;
-  const cellH = 1;
   depth.values.forEach((value, index) => {
-    const x = (index % depth.width) * cellW;
-    const y = Math.floor(index / depth.width) * cellH;
-    ctx.fillStyle = shade(value);
-    ctx.fillRect(x, y, cellW + 1, cellH + 1);
+    const x = index % depth.width;
+    const y = Math.floor(index / depth.width);
+    ctx.fillStyle = turbo(value);
+    ctx.fillRect(x, y, 2, 2);
   });
 }
 
-function shade(value: number): string {
-  const near = Math.round(255 * value);
-  const far = Math.round(40 + 80 * (1 - value));
-  return `rgb(${far}, ${near}, ${120})`;
+/** Turbo: 1 dekat merah, 0 jauh biru. Cadangan bila JPEG belum ada. */
+function turbo(value: number): string {
+  const stops: ReadonlyArray<readonly [number, number, number]> = [
+    [48, 18, 59],
+    [70, 107, 227],
+    [53, 183, 121],
+    [175, 220, 46],
+    [249, 251, 21],
+    [122, 4, 3],
+  ];
+  const x = Math.min(1, Math.max(0, value)) * (stops.length - 1);
+  const index = Math.min(stops.length - 2, Math.floor(x));
+  const mix = x - index;
+  const left = stops[index] ?? [48, 18, 59];
+  const right = stops[index + 1] ?? [122, 4, 3];
+  const red = Math.round(left[0] + (right[0] - left[0]) * mix);
+  const green = Math.round(left[1] + (right[1] - left[1]) * mix);
+  const blue = Math.round(left[2] + (right[2] - left[2]) * mix);
+  return `rgb(${red}, ${green}, ${blue})`;
 }

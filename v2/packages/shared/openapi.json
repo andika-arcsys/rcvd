@@ -4676,6 +4676,17 @@
           "label": {
             "type": "string",
             "title": "Label"
+          },
+          "jpeg_b64": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jpeg B64"
           }
         },
         "type": "object",
