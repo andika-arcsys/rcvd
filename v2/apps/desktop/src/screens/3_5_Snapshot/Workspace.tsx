@@ -6,6 +6,7 @@ import { nodesOf, type XY } from '../../measure/draft';
 import { detailChoices } from '../../measure/detail';
 import { strokesOf } from '../../measure/strokes';
 import { useSession } from '../../session/SessionContext';
+import { DepthEstimate } from './DepthEstimate';
 import { Fields } from './Fields';
 import { LaserBar } from './LaserBar';
 import { Readout } from './Readout';
@@ -109,6 +110,7 @@ function Side({
         freezeNo={freezeNo}
         angles={angleList(board.store.draft)}
       />
+      <DepthEstimate draft={board.store.draft} frameId={board.session.frozen?.frameId ?? ''} />
       <SaveRow board={board} actions={actions} saveLabel={saveLabel} />
     </aside>
   );

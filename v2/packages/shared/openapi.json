@@ -3344,6 +3344,65 @@
           }
         }
       }
+    },
+    "/spatial/estimate": {
+      "post": {
+        "tags": [
+          "spatial"
+        ],
+        "summary": "Estimate Depth",
+        "operationId": "estimate_depth_spatial_estimate_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstimateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstimateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3441,6 +3500,29 @@
           "b"
         ],
         "title": "AnnoIn"
+      },
+      "AreaEstimate": {
+        "properties": {
+          "area_cm2": {
+            "type": "number",
+            "title": "Area Cm2"
+          },
+          "uncertainty_cm2": {
+            "type": "number",
+            "title": "Uncertainty Cm2"
+          },
+          "validity": {
+            "type": "string",
+            "title": "Validity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "area_cm2",
+          "uncertainty_cm2",
+          "validity"
+        ],
+        "title": "AreaEstimate"
       },
       "AreaView": {
         "properties": {
@@ -4727,6 +4809,157 @@
         ],
         "title": "EdgeOut"
       },
+      "EstimateIn": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "ref_cm": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Ref Cm"
+          },
+          "calibration": {
+            "$ref": "#/components/schemas/PairIn"
+          },
+          "lengths": {
+            "items": {
+              "$ref": "#/components/schemas/PairIn"
+            },
+            "type": "array",
+            "title": "Lengths",
+            "default": []
+          },
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/PolyIn"
+            },
+            "type": "array",
+            "title": "Areas",
+            "default": []
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/PathIn"
+            },
+            "type": "array",
+            "title": "Paths",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "ref_cm",
+          "calibration"
+        ],
+        "title": "EstimateIn"
+      },
+      "EstimateOut": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "kind": {
+            "type": "string",
+            "const": "spatial-geometry",
+            "title": "Kind"
+          },
+          "validity": {
+            "type": "string",
+            "title": "Validity"
+          },
+          "distance_cm": {
+            "type": "number",
+            "title": "Distance Cm"
+          },
+          "distance_uncertainty_cm": {
+            "type": "number",
+            "title": "Distance Uncertainty Cm"
+          },
+          "scale": {
+            "type": "number",
+            "title": "Scale"
+          },
+          "raw_reference_cm": {
+            "type": "number",
+            "title": "Raw Reference Cm"
+          },
+          "lengths": {
+            "items": {
+              "$ref": "#/components/schemas/LengthEstimate"
+            },
+            "type": "array",
+            "title": "Lengths"
+          },
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/AreaEstimate"
+            },
+            "type": "array",
+            "title": "Areas"
+          },
+          "paths": {
+            "items": {
+              "$ref": "#/components/schemas/PathEstimate"
+            },
+            "type": "array",
+            "title": "Paths"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "units": {
+            "type": "string",
+            "const": "METERS",
+            "title": "Units"
+          },
+          "backend": {
+            "type": "string",
+            "title": "Backend"
+          },
+          "underwater_intrinsics": {
+            "type": "boolean",
+            "title": "Underwater Intrinsics"
+          },
+          "focal_px": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Focal Px"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "kind",
+          "validity",
+          "distance_cm",
+          "distance_uncertainty_cm",
+          "scale",
+          "raw_reference_cm",
+          "lengths",
+          "areas",
+          "paths",
+          "warnings",
+          "units",
+          "backend",
+          "underwater_intrinsics",
+          "focal_px"
+        ],
+        "title": "EstimateOut"
+      },
       "FileRequest": {
         "properties": {
           "path": {
@@ -5287,6 +5520,29 @@
         ],
         "title": "LastError"
       },
+      "LengthEstimate": {
+        "properties": {
+          "distance_cm": {
+            "type": "number",
+            "title": "Distance Cm"
+          },
+          "uncertainty_cm": {
+            "type": "number",
+            "title": "Uncertainty Cm"
+          },
+          "validity": {
+            "type": "string",
+            "title": "Validity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "distance_cm",
+          "uncertainty_cm",
+          "validity"
+        ],
+        "title": "LengthEstimate"
+      },
       "LoginRequest": {
         "properties": {
           "user_id": {
@@ -5832,6 +6088,51 @@
           "value"
         ],
         "title": "PatchIn"
+      },
+      "PathEstimate": {
+        "properties": {
+          "path_cm": {
+            "type": "number",
+            "title": "Path Cm"
+          },
+          "uncertainty_cm": {
+            "type": "number",
+            "title": "Uncertainty Cm"
+          },
+          "validity": {
+            "type": "string",
+            "title": "Validity"
+          },
+          "sample_count": {
+            "type": "integer",
+            "title": "Sample Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path_cm",
+          "uncertainty_cm",
+          "validity",
+          "sample_count"
+        ],
+        "title": "PathEstimate"
+      },
+      "PathIn": {
+        "properties": {
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/Px"
+            },
+            "type": "array",
+            "minItems": 2,
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "points"
+        ],
+        "title": "PathIn"
       },
       "Performance": {
         "properties": {

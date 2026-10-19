@@ -15,6 +15,13 @@ describe('goresan kanvas', () => {
       { a: { x: 10, y: 0 }, b: { x: 10, y: 10 } },
     ]);
     expect(strokesOf(draft).map((stroke) => stroke.kind)).toEqual(['length', 'length']);
+    expect(draft.geometry.paths).toEqual([
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 10, y: 10 },
+      ],
+    ]);
   });
 
   it('sudut siku-siku terbaca 90 derajat dan tidak masuk panjang', () => {

@@ -101,6 +101,14 @@ class ModelManager:
         self._hydro_tune = {"confidence": confidence, "imgsz": imgsz}
         return self.hydro_tune()
 
+    def geometry(
+        self, raw: bytes, width: int, height: int, frame_id: str, spec: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        worker = self._worker
+        if self.state != "ready" or worker is None or self.active != "spatialsight":
+            raise EngineError("MDL-002", "SpatialSight belum dimuat")
+        return worker.geometry(raw, width, height, frame_id, spec)
+
     def infer(self, frame: StoredFrame) -> bytes | None:
         if self.state != "ready" or self._worker is None:
             return None
@@ -176,6 +184,7 @@ class ModelManager:
             "models_dir": str(self._models_dir),
             "onnx": entry.onnx,
             "weights": entry.weights,
+            "checkpoint": entry.checkpoint,
             "classes": entry.classes,
             "preset": chosen.model_dump(),
             "hydro": None if self._hydro is None else self._hydro.model_dump(),

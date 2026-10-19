@@ -1,6 +1,6 @@
 # Kajian SpatialSight: Depth Pro pada konsol lama dan celah terhadap DeepInsight v2
 
-Dokumen ini menjelaskan peringatan `MDL-001` yang muncul saat SpatialSight dibuka di `start.bat`, cara modul kedalaman bekerja pada cabang `cursor/underwater-console-v2-ddf4`, berkas dan lingkungan yang dibutuhkan Apple Depth Pro, serta celah yang masih terbuka di DeepInsight v2. Sumbernya adalah kode yang ada di repositori, berkas konfigurasi v2, dan petunjuk resmi repositori Apple `ml-depth-pro` (berkas `README.md`, `pyproject.toml`, dan `get_pretrained_models.sh`).
+Dokumen ini menjelaskan peringatan `MDL-001` yang muncul saat SpatialSight dibuka di `start.bat`, cara modul kedalaman bekerja pada cabang `cursor/underwater-console-v2-ddf4`, dan bagaimana v2 memakai Depth Pro pada Python 3.12 dengan CUDA Ultralytics. Perintah pasang ada di `docs/KAJIAN_PARITAS_SPATIAL_V2.md`. Sumbernya adalah kode yang ada di repositori, berkas konfigurasi v2, dan petunjuk resmi repositori Apple `ml-depth-pro` (berkas `README.md`, `pyproject.toml`, dan `get_pretrained_models.sh`).
 
 Tanggal kajian: 19 Oktober 2026. Mesin yang memunculkan log memakai sesi `SES-20261019-0701`, environment `deepenv`, dan folder data `C:\Users\larcsys\AppData\Local\DeepInsight`.
 
@@ -108,53 +108,15 @@ Skala referensi tetap dihitung di atas keluaran ini. Bila model sudah dekat deng
 
 ## 5. Apa yang dipasang untuk Depth Pro, dan di lingkungan yang mana
 
-`requirements.txt` konsol lama hanya mewajibkan `opencv-python`, `numpy`, `pytest`, dan secara opsional Flask serta ultralytics. Baris kedalaman di berkas itu adalah komentar: paket dipasang dari repositori resmi, bukan dari PyPI. Memasang Depth Pro ke dalam `deepenv` yang menjalankan v2 berisiko merusak engine yang sudah jalan.
+Depth Pro berjalan di `deepenv`, Python 3.12, dengan `torch 2.13.0+cu132` dan `torchvision 0.28.0+cu132` yang sudah dipakai Ultralytics. Pekerja v2 adalah proses anak interpreter itu. Checkpoint `models/spatialsight/depth_pro.pt` dimuat dengan CUDA yang sama.
 
-Alasannya ada di `pyproject.toml` resmi Apple, keadaan 19 Oktober 2026:
+README Apple menulis contoh conda Python 3.9, dan berkas paketnya membatasi `numpy<2` serta tidak mengunci roda CUDA. Contoh itu tidak diikuti. `pip install -e .` tanpa `--no-deps` dapat mengganti torch. Perintah yang dipakai v2 ada di `docs/KAJIAN_PARITAS_SPATIAL_V2.md`: pasang paket dengan `--no-deps`, tambahkan `timm`, `pillow_heif`, dan `matplotlib`, lalu pastikan `torch.__version__` tetap `2.13.0+cu132` dan `torch.cuda.is_available()` tetap benar.
 
-- Lingkungan yang mereka tulis adalah Python 3.9.
-- Dependensi langsung: `torch`, `torchvision`, `timm`, `numpy<2`, `pillow_heif`, `matplotlib`.
-- Tidak ada pin CUDA. `pip install -e .` dapat menarik roda PyTorch yang tidak sama dengan `torch 2.13.0+cu132` yang sudah terpasang di `deepenv`.
-- Batas `numpy<2` bentrok dengan tumpukan NumPy baru yang dipakai engine dan Ultralytics.
-
-Karena itu Depth Pro dipasang di lingkungan conda terpisah, dan konsol lama dijalankan dari lingkungan itu. `deepenv` tetap untuk `D:\DeepInsight\v2\start.bat`. Dua lingkungan tidak saling mengganti.
-
-Perintah di bawah ini untuk percobaan pada cabang konsol lama. Jalankan di folder yang bukan `deepenv`.
-
-```bat
-conda create -n depth-pro -y python=3.9
-conda activate depth-pro
-
-cd /d D:\src
-git clone https://github.com/apple/ml-depth-pro.git
-cd ml-depth-pro
-python -m pip install -e .
-
-mkdir checkpoints
-curl -L -o checkpoints\depth_pro.pt https://ml-site.cdn-apple.com/models/depth-pro/depth_pro.pt
-```
-
-`curl` menggantikan `source get_pretrained_models.sh`, karena skrip itu memakai `wget` dan shell Unix. Berkas yang diunduh adalah `checkpoints\depth_pro.pt` dari `https://ml-site.cdn-apple.com/models/depth-pro/depth_pro.pt`. Ukur berkasnya setelah unduh selesai. Unduhan yang terputus membuat `create_model_and_transforms` gagal dengan `DepthProUnavailableError`.
-
-Cek singkat sebelum dashboard:
-
-```bat
-python -c "import torch, depth_pro; print(torch.__version__, torch.cuda.is_available())"
-```
-
-CUDA harus `True` pada GPU yang sama dengan inspeksi. Bila `False`, roda PyTorch di lingkungan `depth-pro` adalah CPU. Ganti dengan roda CUDA yang sesuai driver, dari pytorch.org, untuk Python 3.9 lingkungan itu. Jangan mengubah roda di `deepenv` untuk urusan ini.
-
-Konsol lama juga butuh Flask, OpenCV, dan NumPy di lingkungan yang sama, plus bobot HydroDetect bila deteksi ingin dinyalakan:
-
-```bat
-python -m pip install "Flask>=3.1" "opencv-python>=4.8" "numpy<2"
-```
-
-Batasan `numpy<2` mengikuti paket Depth Pro. Jangan menaikkan NumPy di lingkungan ini.
+Konsol Flask lama, bila masih ingin dijalankan, memakai cabang `cursor/underwater-console-v2-ddf4` dan interpreter yang sama. Lingkungan Python 3.9 tidak dibuat.
 
 ### 5.1 Menyalakan Depth Pro di dashboard lama
 
-Checkout cabang konsol lama di salinan kerja yang terpisah dari v2 yang sedang menjalankan `start.bat`, lalu dari lingkungan `depth-pro`:
+Checkout cabang konsol lama di salinan kerja yang terpisah dari v2 yang sedang menjalankan `start.bat`, lalu dari `deepenv`:
 
 ```bat
 cd /d D:\src\rcvd
@@ -243,82 +205,59 @@ Nama-nama ini tidak sama dengan `VALID` pada jalur ukur 2D v2. Menggabungkannya 
 
 ## 7. Apa yang v2 lakukan pada layar yang sama
 
-Layar `3_3_SpatialSight` menampilkan video live di dalam bingkai rasio, plus legenda kedalaman bila payload visi memuat kisi. Teks yang dipasang di antarmuka: pratinjau relatif, dan tidak ada angka panjang. Slider hanya mengubah opasitas gambar. Tombol FREEZE menyimpan bingkai untuk kanvas 2D. Kanvas itu mengukur piksel, skala referensi 2D, panjang tali, dan luas tali sepatu. Ketidakpastian panjang v1 (`Q-KAL-3`) mengabaikan komponen kedalaman dan mencatat itu sebagai keterbatasan.
+Layar `3_3_SpatialSight` menampilkan video live di dalam bingkai rasio, plus legenda kedalaman bila payload visi memuat kisi. Teks yang dipasang di antarmuka: pratinjau relatif, dan tidak ada angka panjang. Slider hanya mengubah opasitas gambar. Tombol FREEZE menyimpan PNG bukti untuk kanvas. Kanvas mengukur piksel, skala referensi 2D, panjang, dan luas tali sepatu. Di sisi kanvas, `Hitung estimasi kedalaman` membaca PNG yang sama dan mengembalikan estimasi 3D. Angka itu tidak masuk tubuh simpan.
 
 Rantai muat model:
 
 1. Operator membuka SpatialSight.
 2. Klien memanggil `POST /models/switch` dengan nama `spatialsight`.
 3. Pekerja sebelumnya (misalnya HydroDetect) dilepas. Satu GPU, satu pekerja.
-4. Berkas `models/spatialsight/model.onnx` diuji. Tidak ada: `MDL-001`, kembali ke Optical.
-5. Bila berkas ada, ONNX Runtime membuka sesi CUDA. Provider CUDA yang tidak terpasang menghasilkan `MDL-003`, bukan peta palsu.
-6. Inferensi mengubah BGR menjadi tensor NCHW ternormalisasi 0–1, menjalankan sesi, lalu `relative_from_output` pada keluaran pertama.
-7. Kisi diubah ke 0–1 dengan minimum dan maksimum isi tensor, diambil sampelnya sampai sisi terpanjang 64, lalu tensor dibuang. Label wajib sama dengan `Preview relatif, bukan ukuran`. Label yang berbeda ditolak sebagai `MDL-002`.
+4. Berkas `models/spatialsight/depth_pro.pt` diuji lebih dulu. Bila ada, pekerja memuat Depth Pro dengan torch CUDA yang sudah terpasang.
+5. Bila checkpoint belum ada dan `model.onnx` ada, ONNX Runtime membuka sesi CUDA untuk pratinjau relatif. Geometri pada jalur ini ditolak `MDL-002`.
+6. Keduanya tidak ada: `MDL-001` menyebut kedua nama berkas, lalu mode kembali ke Optical.
+7. Provider CUDA yang tidak terpasang menghasilkan `MDL-003`.
+8. Pratinjau Depth Pro memakai persentil 2–98 dan kedekatan `1 - nilai`. Label wajib sama dengan `Preview relatif, bukan ukuran`.
 
-Keputusan yang sudah tertulis dan tetap mengikat kajian ini:
+Pengecualian PyTorch yang sudah berlaku untuk `model.pt` HydroDetect dipakai juga untuk `depth_pro.pt`. Keduanya hidup di interpreter engine. Q-AI-3 tetap berlaku untuk cadangan ONNX relatif. `span_m` dan status `VALID` 2D tidak menyerap estimasi monokular. Rincian pemakaian ada di `docs/KAJIAN_PARITAS_SPATIAL_V2.md`.
 
-- ADR-003: inferensi produksi memakai ONNX Runtime CUDA. PyTorch untuk latih dan ekspor. Pengecualian `model.pt` HydroDetect tidak diperluas ke SpatialSight.
-- Q-AI-3 berstatus usulan: versi 1 adalah Depth Anything V2 Small, keluaran relatif, lewat ONNX, dapat diganti lewat config.
-- Arsitektur v2 menulis label “Preview relatif, bukan ukuran” dan melarang angka panjang diambil dari layar ini.
-- D-14 di `docs/DATA_NEEDED.md`: tanpa `model.onnx` tidak ada peta.
+## 8. Celah yang sudah ditutup dan yang masih terbuka
 
-v2 belum memiliki eksportir yang mengubah `depth_pro.pt` atau DA3METRIC-LARGE menjadi `model.onnx`, belum menyimpan tensor setelah FREEZE, dan belum memiliki layanan geometri 3D. Kanvas 2D sudah punya titik, skala, panjang, dan luas tali sepatu dengan otoritas angka di Python. Itu jalur yang harus tetap utuh.
-
-## 8. Celah antara konsol lama dan v2
-
-| Kemampuan | Konsol lama `underwater-console-v2-ddf4` | DeepInsight v2 hari ini |
+| Kemampuan | Konsol lama | v2 setelah paritas |
 | --- | --- | --- |
-| Berkas yang dicari | paket `depth_pro` atau `depth_anything_3`, plus `depth_pro.pt` atau unduhan Hugging Face | `v2/models/spatialsight/model.onnx` saja |
-| Saat berkas tidak ada | toggle mati, log `SpatialSight unavailable` | `MDL-001` pada `/models/switch`, mode kembali ke Optical |
-| Runtime | PyTorch di proses Flask | ONNX Runtime CUDA di pekerja terpisah |
-| Lingkungan | boleh lingkungan khusus Python 3.9 | `deepenv` dengan PyTorch CUDA untuk HydroDetect |
-| Pratinjau | persentil 2–98, Turbo, JPEG, keyframe tiap 15 frame | minimum–maksimum 0–1, kisi sisi 64, digambar di klien |
-| Tensor | Float32 seukuran bingkai, disimpan pada frame beku | dibuang setelah kisi pratinjau dibuat |
-| Satuan DA3 di adapter | `FOCAL_NORMALIZED`, fokus kosong | tidak ada jalur DA3 |
-| Satuan Depth Pro di adapter | `METERS` plus fokus prediksi model | tidak ada jalur Depth Pro |
-| Skala lapangan | dua titik dan panjang cm pada frame yang sama | skala 2D di kanvas, tanpa kedalaman |
-| Intrinsik | fokus model atau sisi terpanjang, pusat di tengah, bendera underwater | tidak dihitung di layar Spatial |
-| Jarak | Euclidean 3D setelah skala | panjang piksel kali skala 2D |
-| Luas | mesh segitiga 3D | tali sepatu 2D |
-| Validitas | empat status di bagian 6 | `VALID` 2D terpisah; kedalaman tidak masuk rumus v1 |
-| Laporan bentang | tidak boleh memakai estimasi monokular sebagai sertifikat | `span_m` tetap dari jalur ukur 2D yang sudah disepakati |
-| Satu model | lepas fitur saat pindah halaman | satu pekerja GPU |
-| VRAM 8 GB | kedalaman dan upscaler berat tidak bersamaan | satu model; peringatan performa sudah ada di layar live |
+| Berkas Depth Pro | `depth_pro.pt` pada proses Flask | `models/spatialsight/depth_pro.pt` pada pekerja engine |
+| Lingkungan | contoh Apple menulis Python 3.9 | Python 3.12 dan CUDA Ultralytics di `deepenv` |
+| Pratinjau | persentil 2–98 | persentil yang sama pada jalur Depth Pro; layar tanpa angka panjang |
+| Tensor frame beku | Float32 pada frame yang dibekukan | inferensi ulang pada PNG bukti |
+| Skala, jarak, jalur, luas mesh | rumus di `measurement.py` | rumus yang sama, status yang sama |
+| ONNX relatif | tidak ada | cadangan pratinjau bila checkpoint belum ada |
+| DA3METRIC-LARGE | backend bawaan, satuan adapter `FOCAL_NORMALIZED` | tidak dimuat sebagai meter |
+| Intrinsik underwater | bendera salah sampai kalibrasi housing | bendera tetap salah, status `ESTIMATE_ONLY_SAME_FRAME` |
+| Laporan bentang | estimasi monokular tidak menjadi sertifikat | `span_m` tetap dari ukur 2D |
 
-Celah yang menjelaskan gejala pengguna ada di baris pertama dan kedua. Konsol v2 tidak mencari `depth_pro.pt`. Memasang paket Apple di `deepenv`, atau menyalin checkpoint ke `models\spatialsight\`, tidak menghilangkan `MDL-001`.
+Gejala `MDL-001` pada `spatialsight/model.onnx` hilang setelah `depth_pro.pt` ada di folder model dan paket `depth_pro` terpasang di `deepenv`. Menyalin checkpoint saja, tanpa paket dan tanpa cabang yang memuat jalur `.pt`, tetap menghasilkan `MDL-001`.
 
-Celah ilmiah yang lebih dalam ada di baris tensor, satuan, dan validitas. v2 sudah melindungi operator dari angka palsu dengan menolak model yang hilang dan dengan label relatif. Konsol lama sudah punya mesin geometri, dengan pagar `ESTIMATE_ONLY_SAME_FRAME`. v2 belum mengangkat mesin itu ke dalam pekerja ONNX dan ke dalam penyimpanan frame beku.
+## 9. Pagar yang tetap
 
-## 9. Urutan yang menjaga kedua pagar itu
+1. Layar live tetap relatif. Angka panjang dibaca di kanvas, setelah FREEZE.
+2. Tensor meter berasal dari PNG bukti, bukan dari kisi 64 piksel.
+3. Status 3D memakai nama konsol lama dan tidak ditulis sebagai `VALID` 2D.
+4. Luas mesh tampil terpisah dari luas tali sepatu.
+5. Estimasi monokular tidak ditulis ke `span_m`.
 
-Urutan ini melanjutkan pemisahan tiga hasil. Langkah di bawah ini kajian, bukan perubahan kode pada commit dokumen ini.
-
-1. Pratinjau live tetap relatif. Berkas yang membuat peringatan hilang adalah ONNX kedalaman relatif, sesuai usulan Q-AI-3 (Depth Anything V2 Small), diletakkan di `models/spatialsight/model.onnx`. Keluaran yang bukan peta 2D ditolak `MDL-002`. Kisi 64 piksel cukup untuk melihat dekat dan jauh. Angka panjang tetap tidak ditampilkan.
-2. Tensor baru disimpan setelah FREEZE, dari bingkai bukti yang sama, di memori sesi yang ikut terhapus saat resume. Pratinjau 64 piksel tidak dipakai sebagai sumber `Z`.
-3. Skala referensi 3D, bila dikerjakan, memakai dua titik dan panjang yang diketahui pada frame itu, dengan status yang namanya tidak bertabrakan dengan `VALID` 2D. `ESTIMATE_ONLY_SAME_FRAME` adalah nama yang sudah dipakai konsol lama untuk kondisi intrinsik underwater yang belum ada.
-4. Luas mesh 3D disimpan terpisah dari luas tali sepatu. Keduanya menjawab pertanyaan yang berbeda: luas permukaan di ruang kamera, dan luas pada bidang gambar.
-5. Estimasi monokular tidak ditulis ke `span_m` atau ke antrian Review sebagai panjang tersertifikasi.
-
-Depth Pro tetap berguna sebagai backend percobaan pada konsol lama dan sebagai pembanding tajamnya tepi, karena makalahnya memang menekankan batas objek. Membawanya ke v2 berarti mengekspor jaringan itu ke ONNX yang pekerja sudah bisa buka, atau menambah pekerja PyTorch kedua. Penambahan pekerja PyTorch menabrak ADR-003. Ekspor ONNX Depth Pro belum ada di repositori dan tidak termasuk berkas `depth_pro.pt` mentah. DA3METRIC-LARGE punya masalah tambahan: adapter lama sendiri menandai keluarannya `FOCAL_NORMALIZED` dan menolak K model. Memasang nama “metric large” di UI v2 akan mengulang kesan metrologi yang metodologi konsol lama sudah hindari.
-
-Untuk RTX 3070 8 GB, satu model pada satu waktu tetap aturan operasi. SpatialSight yang kelak memuat ONNX harus melepas HydroDetect, sama seperti yang sudah dilakukan `ModelManager`.
+Untuk RTX 3070 8 GB, satu model pada satu waktu tetap aturan operasi.
 
 ## 10. Perintah yang relevan dengan mesin yang sedang menyala
-
-v2 yang memunculkan log itu sudah benar menolak SpatialSight. Tidak ada perintah `pip` di `deepenv` yang mengisi `model.onnx`. Yang dapat dicek hanya lokasi berkas:
 
 ```bat
 dir D:\DeepInsight\v2\models\spatialsight
 ```
 
-Folder kosong, atau tidak ada berkas `model.onnx`, sesuai dengan log. HydroDetect tetap memakai `models\hydrodetect\exp5\model.pt` dan tidak terganggu peringatan ini.
+Yang menutup `MDL-001` adalah `depth_pro.pt` di folder itu, plus paket Depth Pro di `deepenv`. Perintah pasang dan cek versi torch ada di `docs/KAJIAN_PARITAS_SPATIAL_V2.md`. HydroDetect tetap memakai `models\hydrodetect\exp5\model.pt`.
 
-Percobaan Depth Pro dilakukan di lingkungan `depth-pro` dan di cabang `cursor/underwater-console-v2-ddf4`, dengan perintah di bagian 5. Setelah percobaan, kembali ke v2 dengan mengaktifkan `deepenv` dan menjalankan `start.bat` di `D:\DeepInsight\v2`. Jangan menjalankan dashboard Flask port 5000 dan engine port 8000 terhadap GPU yang sama bila keduanya memuat model kedalaman atau deteksi bersama-sama.
+Jangan menjalankan dashboard Flask port 5000 dan engine port 8000 terhadap GPU yang sama bila keduanya memuat model kedalaman atau deteksi bersama-sama.
 
 ## 11. Kesimpulan
 
-Peringatan pada sesi `SES-20261019-0701` adalah `MDL-001`: `D:\DeepInsight\v2\models\spatialsight\model.onnx` tidak ada saat `POST /models/switch` meminta SpatialSight. Engine tetap siap. Data sesi di AppData bukan folder bobot.
+Peringatan pada sesi `SES-20261019-0701` adalah `MDL-001` karena pekerja saat itu hanya membuka `spatialsight/model.onnx`. Engine tetap siap. Data sesi di AppData bukan folder bobot.
 
-Konsol lama sudah memisahkan pratinjau Turbo, tensor Float32, dan geometri berskala. Backend bawaannya Depth Anything 3 Metric Large lewat Hugging Face, dengan satuan adapter `FOCAL_NORMALIZED`. Depth Pro adalah alternatif PyTorch: paket dari repositori Apple, Python 3.9, `numpy<2`, checkpoint `depth_pro.pt` dari CDN Apple, dan bendera `--depth-backend depth_pro`. Keluarannya meter plus fokus prediksi, tetap membawa peringatan housing bawah air, dan tetap melewati skala referensi sebelum disebut `REFERENCE_SCALED`.
-
-v2 sudah punya pagar yang sama di lapisan produk: satu pekerja, tanpa peta palsu, label relatif, kanvas 2D yang tidak membaca kedalaman. v2 belum punya berkas ONNX, belum menyimpan tensor pada FREEZE, dan belum menghitung jarak 3D. Memasang Depth Pro di `deepenv` tidak menutup celah itu dan dapat mengganti PyTorch serta NumPy yang dipakai HydroDetect. Lingkungan terpisah dipakai untuk mempelajari Depth Pro pada konsol lama. Masuk ke v2, bila dilanjutkan, lewat ONNX relatif untuk pratinjau, lalu tensor dan geometri hanya pada frame beku, dengan status yang tetap terpisah dari `VALID` dua dimensi.
+v2 sekarang mengikuti fitur Spatial konsol lama pada interpreter yang sama dengan Ultralytics: pratinjau relatif di layar live, tensor Depth Pro pada frame beku, dan geometri berskala dengan status `ESTIMATE_ONLY_SAME_FRAME` selama intrinsik underwater belum ada. Checkpoint diletakkan di `models/spatialsight/depth_pro.pt`. Pemasangan paket menjaga `torch 2.13.0+cu132`.

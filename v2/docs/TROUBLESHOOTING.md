@@ -18,7 +18,7 @@ Unduh diagnostik dari Analisis AI memakai peran Teknisi program. Berkas itu beri
 | Gejala | Sebab yang mungkin | Cek | Solusi |
 | --- | --- | --- | --- |
 | Mode terbatas di Splash | GPU tidak terdeteksi (GPU-001) | `/diagnostics` → `gpu.error_code` | Lanjut mode terbatas, atau pakai PC NVIDIA |
-| HydroDetect / SpatialSight ditolak | Butuh GPU (MDL-003) atau berkas model belum ada (MDL-001) | Folder `models/` dan `config/models.yaml` | HydroDetect: salin `model.pt` lalu pasang `ultralytics`. SpatialSight masih butuh `model.onnx`. Jangan mengarang metrik |
+| HydroDetect / SpatialSight ditolak | Butuh GPU (MDL-003) atau berkas model belum ada (MDL-001) | Folder `models/` dan `config/models.yaml` | HydroDetect: salin `model.pt` lalu pasang `ultralytics`. SpatialSight: salin `depth_pro.pt` dan pasang paket Depth Pro di `deepenv` (`docs/KAJIAN_PARITAS_SPATIAL_V2.md`). `model.onnx` adalah cadangan pratinjau |
 | FREEZE nonaktif, pita merah | Sinyal putus (VID-001) | `lost_signal_s` | Periksa kabel atau sumber berkas |
 | FREEZE menjawab frame hilang | ID lebih tua dari ring (VID-002) | `ring_buffer_s` | Bekukan frame yang masih tampil |
 | Kamera tidak terbuka | Sumber kosong (VID-003) | `config/video.yaml` (D-02, D-03) | Isi jalur yang diberikan tim |

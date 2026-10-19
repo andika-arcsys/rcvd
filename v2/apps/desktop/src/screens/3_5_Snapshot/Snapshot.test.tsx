@@ -72,6 +72,45 @@ describe('Mode Snapshot', () => {
     expect(native).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it('menghitung estimasi kedalaman pada frame beku', async () => {
+    renderApp('/live/snapshot', {
+      role: 'ahli_ukur',
+      frozen: FROZEN,
+      routes: {
+        ...routes([
+          [0, 0],
+          [200, 0],
+        ]),
+        'POST /spatial/estimate': {
+          frame_id: FROZEN.frameId,
+          kind: 'spatial-geometry',
+          validity: 'ESTIMATE_ONLY_SAME_FRAME',
+          distance_cm: 10,
+          distance_uncertainty_cm: 2,
+          scale: 1.25,
+          raw_reference_cm: 8,
+          lengths: [],
+          areas: [],
+          paths: [],
+          warnings: ['Model focal/depth belum divalidasi untuk housing/port underwater.'],
+          units: 'METERS',
+          backend: 'Apple Depth Pro',
+          underwater_intrinsics: false,
+          focal_px: 900,
+        },
+      },
+    });
+    const button = await screen.findByRole('button', { name: 'Hitung estimasi kedalaman' });
+    expect(button).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Terima' }));
+    await userEvent.type(screen.getByLabelText('Referensi laser (cm)'), '10');
+    expect(button).toBeEnabled();
+    await userEvent.click(button);
+    expect(await screen.findByText(/ESTIMATE_ONLY_SAME_FRAME/)).toBeInTheDocument();
+    expect(screen.getByText(/Apple Depth Pro/)).toBeInTheDocument();
+    expect(screen.getByText(/Simpan 2D tetap memakai skala piksel/)).toBeInTheDocument();
+  });
+
   it('satu titik laser meminta klik manual', async () => {
     renderApp('/live/snapshot', {
       role: 'ahli_ukur',

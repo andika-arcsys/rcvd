@@ -21,7 +21,7 @@ Jangan diubah manual.
 | GPU-002 | 500 | VRAM tidak kembali ke garis dasar. | Setelah lepas model, pemakaian VRAM masih di atas toleransi. | Proses pekerja dihentikan paksa. |
 | GPU-003 | 503 | Performa di bawah ambang. | FPS, VRAM, atau utilisasi GPU melewati batas config. | Matikan fitur atau pilih preset AquaClear ringan. |
 | LASER-001 | 422 | Jarak dua titik laser belum diisi. | config laser.ref_cm masih kosong (D-05). | Isi jarak laser yang diukur tim sebelum uji batang. |
-| MDL-001 | 404 | Berkas model tidak ditemukan. | model.pt, model.onnx, atau classes.json belum ada di folder models. | Salin berkas ke jalur di config/models.yaml. Bobot besar tidak disimpan di Git. |
+| MDL-001 | 404 | Berkas model tidak ditemukan. | model.pt, depth_pro.pt, model.onnx, atau classes.json belum ada di folder models. | Salin berkas ke jalur di config/models.yaml. Bobot besar tidak disimpan di Git. |
 | MDL-002 | 500 | Model gagal dimuat. | Runtime atau isi berkas model tidak dapat dipakai. | Periksa log engine dan berkas model. |
 | MDL-003 | 503 | Fitur ini membutuhkan GPU NVIDIA. | Mode terbatas: HydroDetect dan SpatialSight nonaktif tanpa GPU. | Gunakan Optical atau AquaClear, atau jalankan di PC dengan GPU NVIDIA. |
 | MIS-001 | 422 | Misi belum siap dimulai. | Pre-check, tim, atau rencana masih belum lengkap, atau misi sudah berjalan. | Lengkapi rencana dan semua butir pre-check. |

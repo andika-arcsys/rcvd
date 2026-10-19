@@ -977,6 +977,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/spatial/estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Estimate Depth */
+        post: operations["estimate_depth_spatial_estimate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1013,6 +1030,15 @@ export interface components {
             color: "red" | "yellow" | "blue" | "green" | "white";
             a: components["schemas"]["Px"];
             b: components["schemas"]["Px"];
+        };
+        /** AreaEstimate */
+        AreaEstimate: {
+            /** Area Cm2 */
+            area_cm2: number;
+            /** Uncertainty Cm2 */
+            uncertainty_cm2: number;
+            /** Validity */
+            validity: string;
         };
         /** AreaView */
         AreaView: {
@@ -1408,6 +1434,68 @@ export interface components {
             /** Risk */
             risk: boolean;
         };
+        /** EstimateIn */
+        EstimateIn: {
+            /** Frame Id */
+            frame_id: string;
+            /** Ref Cm */
+            ref_cm: number;
+            calibration: components["schemas"]["PairIn"];
+            /**
+             * Lengths
+             * @default []
+             */
+            lengths: components["schemas"]["PairIn"][];
+            /**
+             * Areas
+             * @default []
+             */
+            areas: components["schemas"]["PolyIn"][];
+            /**
+             * Paths
+             * @default []
+             */
+            paths: components["schemas"]["PathIn"][];
+        };
+        /** EstimateOut */
+        EstimateOut: {
+            /** Frame Id */
+            frame_id: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "spatial-geometry";
+            /** Validity */
+            validity: string;
+            /** Distance Cm */
+            distance_cm: number;
+            /** Distance Uncertainty Cm */
+            distance_uncertainty_cm: number;
+            /** Scale */
+            scale: number;
+            /** Raw Reference Cm */
+            raw_reference_cm: number;
+            /** Lengths */
+            lengths: components["schemas"]["LengthEstimate"][];
+            /** Areas */
+            areas: components["schemas"]["AreaEstimate"][];
+            /** Paths */
+            paths: components["schemas"]["PathEstimate"][];
+            /** Warnings */
+            warnings: string[];
+            /**
+             * Units
+             * @constant
+             */
+            units: "METERS";
+            /** Backend */
+            backend: string;
+            /** Underwater Intrinsics */
+            underwater_intrinsics: boolean;
+            /** Focal Px */
+            focal_px: number | null;
+        };
         /** FileRequest */
         FileRequest: {
             /** Path */
@@ -1593,6 +1681,15 @@ export interface components {
             /** Detail */
             detail?: string | null;
         };
+        /** LengthEstimate */
+        LengthEstimate: {
+            /** Distance Cm */
+            distance_cm: number;
+            /** Uncertainty Cm */
+            uncertainty_cm: number;
+            /** Validity */
+            validity: string;
+        };
         /** LoginRequest */
         LoginRequest: {
             /** User Id */
@@ -1775,6 +1872,22 @@ export interface components {
             key: string;
             /** Value */
             value: string;
+        };
+        /** PathEstimate */
+        PathEstimate: {
+            /** Path Cm */
+            path_cm: number;
+            /** Uncertainty Cm */
+            uncertainty_cm: number;
+            /** Validity */
+            validity: string;
+            /** Sample Count */
+            sample_count: number;
+        };
+        /** PathIn */
+        PathIn: {
+            /** Points */
+            points: components["schemas"]["Px"][];
         };
         /** Performance */
         Performance: {
@@ -4381,6 +4494,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SealOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estimate_depth_spatial_estimate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EstimateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstimateOut"];
                 };
             };
             /** @description Validation Error */

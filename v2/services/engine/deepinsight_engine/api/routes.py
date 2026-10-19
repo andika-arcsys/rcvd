@@ -14,6 +14,7 @@ from .routes_measure import measure
 from .routes_office import office
 from .routes_phase8 import phase8
 from .routes_phase9 import phase9
+from .routes_spatial import spatial
 from .routes_stream import stream
 from .routes_vision import vision
 from .schemas import HealthResponse
@@ -72,3 +73,4 @@ router.include_router(measure)
 router.include_router(phase8)
 router.include_router(phase9)
 router.include_router(stream)
+router.include_router(spatial)

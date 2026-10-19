@@ -543,6 +543,7 @@ D:\DeepInsight-models\hydrodetect\exp5\classes.json
 D:\DeepInsight-models\hydrodetect\exp5\metadata.json
 D:\DeepInsight-models\hydrodetect\exp5\model.pt
 D:\DeepInsight-models\hydrodetect\exp5\model.onnx
+D:\DeepInsight-models\spatialsight\depth_pro.pt
 D:\DeepInsight-models\spatialsight\model.onnx
 ```
 
@@ -555,7 +556,7 @@ python -c "import ultralytics, torch; print(ultralytics.__version__, torch.cuda.
 
 Bila `torch.cuda.is_available()` false padahal `nvidia-smi` melihat GPU, roda PyTorch yang terpasang adalah CPU. Ganti dengan roda CUDA yang cocok dengan driver, dari pytorch.org, lalu jalankan perintah cek itu lagi. `model.onnx` tetap cadangan bila `model.pt` tidak ada.
 
-SpatialSight tidak memakai Ultralytics. Konsol lama memakai Depth Anything 3. v2 masih membaca `spatialsight\model.onnx` sebagai pratinjau relatif, bukan meter.
+SpatialSight memakai Apple Depth Pro pada `deepenv` yang sama dengan Ultralytics: Python 3.12 dan `torch 2.13.0+cu132`. Letakkan `depth_pro.pt` di `spatialsight\`. Perintah pasang yang menjaga roda CUDA ada di `docs/KAJIAN_PARITAS_SPATIAL_V2.md`. `model.onnx` tetap cadangan pratinjau relatif bila checkpoint belum ada. Layar live menampilkan kedekatan, dan angka meter dihitung di kanvas frame beku.
 
 Berkas `.onnx` dan `.pt` tidak ada di Git. Laptop GPU dapat membuka berkas HydroDetect:
 
