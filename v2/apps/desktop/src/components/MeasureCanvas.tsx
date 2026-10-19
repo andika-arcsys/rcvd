@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { t } from '../i18n';
 import { imagePoint, VIEW_H, VIEW_W, type NodeRef, type XY } from '../measure/draft';
 import type { Detail } from '../measure/detail';
@@ -26,6 +26,7 @@ interface Props {
   onMove: (id: string, point: XY) => void;
   onZoom: (zoom: number) => void;
   onDetail?: (detail: Detail) => void;
+  overlay?: ReactNode;
 }
 
 /** Titik disimpan dalam piksel frame. Zoom hanya mengubah tampilan. */
@@ -65,7 +66,14 @@ function Stage(props: Props & StageState) {
         onPointerLeave={() => props.setCursor(null)}
       >
         {props.jpeg ? (
-          <img alt="" src={props.jpeg} className="pointer-events-none absolute inset-0 h-full w-full" />
+          <img
+            alt=""
+            src={props.jpeg}
+            className="pointer-events-none absolute inset-0 h-full w-full"
+          />
+        ) : null}
+        {props.overlay ? (
+          <div className="pointer-events-none absolute inset-0">{props.overlay}</div>
         ) : null}
         <Overlay width={props.width} height={props.height} strokes={props.strokes} />
         {props.nodes.map((node) => (
@@ -173,7 +181,11 @@ function dragMove(pointer: PointerEvent, stage: HTMLElement, id: string, props: 
   );
 }
 
-function localPoint(event: { clientX: number; clientY: number; currentTarget: HTMLDivElement }): XY {
+function localPoint(event: {
+  clientX: number;
+  clientY: number;
+  currentTarget: HTMLDivElement;
+}): XY {
   const rect = event.currentTarget.getBoundingClientRect();
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
