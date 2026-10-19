@@ -12,6 +12,7 @@ from typing import Any
 
 from ..core.config import HydrodetectConfig
 from ..core.errors import EngineError
+from .budget import cuda_status_note, limit_process_memory
 from .vision import rle_encode, trim_candidates
 
 IMGSZ = 640
@@ -68,6 +69,38 @@ def torch_device() -> str:
     return "cpu"
 
 
+def cpu_fallback_note() -> str:
+    try:
+        torch = importlib.import_module("torch")
+    except ImportError:
+        return "cpu torch tidak terpasang pada Python start.bat"
+    if not bool(torch.cuda.is_available()):
+        return "cpu torch.cuda.is_available() false"
+    return "cpu ultralytics"
+
+
+def prepare_detector(
+    model: Any,
+    device: str,
+    vram_budget_mb: float,
+    gpu_max_pct: float,
+    imgsz: int,
+) -> str:
+    """Pindahkan bobot ke CUDA, batasi VRAM, lalu panaskan kernel pada imgsz aktif.
+
+    Pemanasan memakai gambar kecil. Ultralytics tetap mengalokasikan workspace
+    sebesar imgsz, jadi frame pertama di ukuran itu tidak membayar kompilasi.
+    """
+    torch = importlib.import_module("torch")
+    if not bool(torch.cuda.is_available()):
+        raise EngineError("MDL-003", "CUDA")
+    cap = limit_process_memory(torch, vram_budget_mb)
+    _ampere_flags(torch)
+    _move_to_cuda(model)
+    _warm(model, device, imgsz)
+    return cuda_status_note(torch, cap, gpu_max_pct, 0, "half")
+
+
 def predict_candidates(
     model: Any,
     image_bgr: Any,
@@ -89,12 +122,54 @@ def predict_candidates(
         conf=gate,
         imgsz=size,
         device=device,
+        half=device != "cpu",
         retina_masks=True,
         verbose=False,
     )[0]
     height, width = int(image_bgr.shape[0]), int(image_bgr.shape[1])
     active = cfg if confidence is None else _uniform(cfg, confidence)
     return trim_candidates(_rows(result, classes, width, height), active)
+
+
+def _ampere_flags(torch: Any) -> None:
+    """RTX 3070 memakai Tensor Core. TF32 menutup sisa operasi fp32 di dalam batas yang sama."""
+    cudnn = getattr(getattr(torch, "backends", None), "cudnn", None)
+    if cudnn is not None:
+        cudnn.benchmark = True
+        if hasattr(cudnn, "allow_tf32"):
+            cudnn.allow_tf32 = True
+    matmul = getattr(getattr(getattr(torch, "backends", None), "cuda", None), "matmul", None)
+    if matmul is not None and hasattr(matmul, "allow_tf32"):
+        matmul.allow_tf32 = True
+
+
+def _move_to_cuda(model: Any) -> None:
+    mover = getattr(model, "to", None)
+    if not callable(mover):
+        mover = getattr(getattr(model, "model", None), "to", None)
+    if not callable(mover):
+        raise EngineError("MDL-002", "model Ultralytics tidak punya .to")
+    try:
+        mover("cuda:0")
+    except Exception as exc:  # noqa: BLE001 - pemindahan perangkat melempar error CUDA yang beragam
+        raise EngineError("MDL-002", f"model tidak pindah ke CUDA: {exc}") from exc
+
+
+def _warm(model: Any, device: str, imgsz: int) -> None:
+    np = importlib.import_module("numpy")
+    blank = np.zeros((32, 32, 3), dtype=np.uint8)
+    size = imgsz if imgsz in QUALITY_SIZES else IMGSZ
+    try:
+        model.predict(
+            blank,
+            imgsz=size,
+            device=device,
+            half=True,
+            retina_masks=True,
+            verbose=False,
+        )
+    except Exception as exc:  # noqa: BLE001 - pemanasan tidak boleh meninggalkan pekerja tanpa pesan
+        raise EngineError("MDL-002", f"pemanasan CUDA gagal: {exc}") from exc
 
 
 def _uniform(cfg: HydrodetectConfig, confidence: float) -> HydrodetectConfig:

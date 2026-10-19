@@ -203,6 +203,7 @@ class ModelManager:
             "display_max_side": self._display_max_side,
             "vram_budget_mb": self._vram_budget_mb,
             "gpu_max_pct": self._gpu_max_pct,
+            "imgsz": int(self._hydro_tune["imgsz"]),
         }
 
     def _preset(self, name: str | None) -> AquaPreset:

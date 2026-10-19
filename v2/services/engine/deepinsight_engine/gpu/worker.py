@@ -1,4 +1,4 @@
-"""Proses pekerja: satu model. AquaClear di CUDA bila ada, OpenCV bila tidak."""
+"""Proses pekerja: satu model. AquaClear dan HydroDetect di CUDA bila ada."""
 
 from __future__ import annotations
 
@@ -21,11 +21,13 @@ from .depth_pro_runtime import infer_meters, load_depth_pro
 from .ultralytics_seg import (
     IMGSZ,
     QUALITY_SIZES,
+    cpu_fallback_note,
     hydro_source,
     load_yolo,
     missing_hydro_detail,
     names_of,
     predict_candidates,
+    prepare_detector,
     torch_device,
 )
 from .vision import RELATIVE_LABEL, depth_event, hydro_event
@@ -125,13 +127,23 @@ def _load_hydro(
         hydro = _hydro_config(message)
     except EngineError as exc:
         return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    device = torch_device()
+    size = _load_imgsz(message)
+    try:
+        note = _place_hydro(model, device, message, size)
+    except EngineError as exc:
+        return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
     state["yolo"] = model
     state["classes"] = classes
     state["hydro"] = hydro
-    state["device"] = torch_device()
+    state["device"] = device
+    state["imgsz"] = size
     state["runtime"] = "ultralytics"
     state["kind"] = "hydrodetect"
-    return {"event": "ready", "fp16": state["device"] != "cpu"}
+    state["device_note"] = note
+    sys.stderr.write(f"HydroDetect: {note} imgsz={size}\n")
+    sys.stderr.flush()
+    return {"event": "ready", "fp16": device != "cpu", "device": note}
 
 
 def _load_spatial(state: dict[str, Any], root: Path, message: dict[str, Any]) -> dict[str, Any]:
@@ -343,6 +355,25 @@ def _keep_tensor(state: dict[str, Any], depth_m: Any, focal: float | None, frame
     state["tensor"] = depth_m
     state["focal"] = focal
     state["tensor_frame"] = frame_id
+
+
+def _place_hydro(model: Any, device: str, message: dict[str, Any], imgsz: int) -> str:
+    if device == "cpu":
+        return cpu_fallback_note()
+    return prepare_detector(
+        model,
+        device,
+        float(message.get("vram_budget_mb") or 0),
+        float(message.get("gpu_max_pct") or 90),
+        imgsz,
+    )
+
+
+def _load_imgsz(message: dict[str, Any]) -> int:
+    value = message.get("imgsz")
+    if isinstance(value, int) and value in QUALITY_SIZES:
+        return value
+    return IMGSZ
 
 
 def _tune_confidence(message: dict[str, Any]) -> float | None:

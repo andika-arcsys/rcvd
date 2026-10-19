@@ -185,23 +185,16 @@ def open_cuda_enhancer(
         )
     except (RuntimeError, AssertionError) as exc:
         return None, f"cpu CUDA gagal: {exc}"
-    free, total = torch.cuda.mem_get_info()
-    used = (total - free) / (1024 * 1024)
-    whole = total / (1024 * 1024)
-    name = str(torch.cuda.get_device_name(enhancer.device))
-    return enhancer, f"cuda {name} vram={used:.0f}/{whole:.0f}MB {cap} gpu<={gpu_max_pct:.0f}%"
+    from ..gpu.budget import cuda_status_note
+
+    note = cuda_status_note(torch, cap, gpu_max_pct, enhancer.device)
+    return enhancer, note
 
 
 def _limit_memory(torch: Any, budget_mb: float) -> str:
-    if budget_mb <= 0:
-        return "cap=tak-dibatasi"
-    from ..gpu.budget import process_memory_fraction
+    from ..gpu.budget import limit_process_memory
 
-    free, total = torch.cuda.mem_get_info()
-    fraction = process_memory_fraction(int(total), int(total - free), int(budget_mb * 1024 * 1024))
-    torch.cuda.set_per_process_memory_fraction(fraction)
-    cap_mb = fraction * float(total) / (1024 * 1024)
-    return f"cap={cap_mb:.0f}/{budget_mb:.0f}MB"
+    return limit_process_memory(torch, budget_mb)
 
 
 def _gaussian_kernel(torch: Any, size: int, sigma: float, device: Any) -> Any:

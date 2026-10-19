@@ -109,7 +109,7 @@ describe('HydroDetect', () => {
     expect(screen.getByText(/Masuk antrian Review, bukan Gallery/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Teliti' }));
     expect(seen.imgsz).toBe(1280);
-    expect(seen.confidence).toBe(0.5);
+    expect(seen.confidence).toBe(0.7);
   });
 
   it('menandai kandidat ke review', async () => {

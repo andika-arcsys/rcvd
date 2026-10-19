@@ -4,6 +4,7 @@ import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
 import { WorkColumns } from '../../components/WorkColumns';
 import { FeatureTabs } from '../3_OpticalNativeView/FeatureTabs';
+import { GpuBudgetLine } from '../3_OpticalNativeView/GpuBudgetLine';
 import { useVideoStatus } from '../3_OpticalNativeView/useLive';
 import { VideoStage } from '../3_OpticalNativeView/VideoStage';
 import { useVision, type Vision } from '../features/poll';
@@ -31,6 +32,7 @@ export default function HydroDetectScreen() {
     <div className="flex h-full min-h-0 flex-col gap-3 p-4">
       <FeatureTabs warning={status?.performance_warning ?? null} active="F3" />
       <PerformanceLink fps={status?.fps ?? null} gpu={status?.gpu_util_pct ?? null} />
+      <GpuBudgetLine status={status} />
       <WorkColumns
         main={
           <Frame
@@ -43,19 +45,19 @@ export default function HydroDetectScreen() {
         }
         side={
           <Aside
-          vision={vision}
-          hidden={hidden.names}
-          onToggle={hidden.toggle}
-          style={draw.style}
-          onStyle={draw.toggle}
-          confidence={tune.confidence}
-          imgsz={tune.imgsz}
-          onTune={tune.send}
-          shown={shown}
-          concealed={concealed}
-          onMark={marked.mark}
-          note={marked.note}
-        />
+            vision={vision}
+            hidden={hidden.names}
+            onToggle={hidden.toggle}
+            style={draw.style}
+            onStyle={draw.toggle}
+            confidence={tune.confidence}
+            imgsz={tune.imgsz}
+            onTune={tune.send}
+            shown={shown}
+            concealed={concealed}
+            onMark={marked.mark}
+            note={marked.note}
+          />
         }
       />
     </div>
@@ -147,7 +149,7 @@ function useDraw() {
 function useTune(vision: Vision | null) {
   const { client } = useEngine();
   const [local, setLocal] = useState<{ confidence: number; imgsz: number } | null>(null);
-  const confidence = local?.confidence ?? vision?.confidence ?? 0.5;
+  const confidence = local?.confidence ?? vision?.confidence ?? 0.7;
   const imgsz = local?.imgsz ?? vision?.imgsz ?? 640;
   const send = (nextConfidence: number, nextSize: number) => {
     setLocal({ confidence: nextConfidence, imgsz: nextSize });
