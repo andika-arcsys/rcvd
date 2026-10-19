@@ -1899,6 +1899,8 @@ export interface components {
             fps_window_s: number;
             /** Vram Max Pct */
             vram_max_pct: number;
+            /** Vram Budget Mb */
+            vram_budget_mb: number;
             /** Gpu Max Pct */
             gpu_max_pct: number;
             /** Gpu Window S */
@@ -2461,6 +2463,16 @@ export interface components {
             turbidity_configured: boolean;
             /** Gpu Util Pct */
             gpu_util_pct: number | null;
+            /** Vram Used Mb */
+            vram_used_mb?: number | null;
+            /** Vram Total Mb */
+            vram_total_mb?: number | null;
+            /** Vram Budget Mb */
+            vram_budget_mb?: number | null;
+            /** Gpu Max Pct */
+            gpu_max_pct?: number | null;
+            /** Gpu Device */
+            gpu_device?: string | null;
             /** Lost */
             lost: boolean;
             /** Snapshot Count */

@@ -13,13 +13,15 @@ def compare_payload(
     view_jpeg: bytes | None,
     max_side: int,
     quality: int,
+    raw_jpeg: bytes | None = None,
 ) -> dict[str, object]:
     if frame is None:
         return {"frame_id": None, "raw_jpeg_b64": None, "view_jpeg_b64": None}
-    raw = encode_jpeg(frame.bgr, frame.width, frame.height, max_side, quality)
-    shown = raw if view_jpeg is None else view_jpeg
+    if raw_jpeg is None:
+        raw_jpeg = encode_jpeg(frame.bgr, frame.width, frame.height, max_side, quality)
+    shown = raw_jpeg if view_jpeg is None else view_jpeg
     return {
         "frame_id": frame.frame_id,
-        "raw_jpeg_b64": base64.b64encode(raw).decode("ascii"),
+        "raw_jpeg_b64": base64.b64encode(raw_jpeg).decode("ascii"),
         "view_jpeg_b64": base64.b64encode(shown).decode("ascii"),
     }

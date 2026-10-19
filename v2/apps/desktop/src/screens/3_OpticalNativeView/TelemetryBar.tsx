@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { t } from '../../i18n';
-import { clockText, dash } from './format';
+import { clockText, dash, memoryText } from './format';
 import type { VideoStatus } from './useLive';
 
 function Item({ label, value }: { label: string; value: string }) {
@@ -26,7 +26,22 @@ export function TelemetryBar({ status }: { status: VideoStatus | null }) {
       <Item label={t('live.depth')} value={t('common.dash')} />
       <Item label={t('live.heading')} value={t('common.dash')} />
       <Item label={t('live.battery')} value={t('common.dash')} />
-      <Item label={t('live.gpu')} value={dash(status?.gpu_util_pct, '%')} />
+      <Item
+        label={t('live.gpu')}
+        value={
+          status?.gpu_max_pct == null
+            ? dash(status?.gpu_util_pct, '%')
+            : `${dash(status?.gpu_util_pct, '%')} / ${dash(status.gpu_max_pct, '%')}`
+        }
+      />
+      <Item
+        label={t('live.memory')}
+        value={
+          status?.vram_budget_mb == null
+            ? memoryText(status?.vram_used_mb, status?.vram_total_mb)
+            : `${memoryText(status?.vram_used_mb, status?.vram_total_mb)} · ${t('live.cap')} ${dash(status.vram_budget_mb)} MB`
+        }
+      />
       <span className="ml-auto font-mono">
         {clock} <span className="text-muted">{t('live.clockNote')}</span>
       </span>

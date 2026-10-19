@@ -53,8 +53,9 @@ performance:
   watchdog_interval_s: 2          # SUMBER
   fps_min: 15                     # USULAN – perlu konfirmasi tim
   fps_window_s: 5                 # USULAN – perlu konfirmasi tim
-  vram_max_pct: 85                # USULAN – perlu konfirmasi tim
-  gpu_max_pct: 95                 # USULAN – perlu konfirmasi tim
+  vram_max_pct: 75                # 6 GB dari kartu 8 GB
+  vram_budget_mb: 6144            # batas keras: 6 GB, sisa 2 GB untuk desktop
+  gpu_max_pct: 90                 # beban GPU tidak dinaikkan di atas 90%
   gpu_window_s: 10                # USULAN – perlu konfirmasi tim
   vram_baseline_tolerance_mb: 150 # USULAN – perlu konfirmasi tim (target rancangan)
   unload_timeout_s: 5            # USULAN – perlu konfirmasi tim (lepas lunak sebelum proses dihentikan)

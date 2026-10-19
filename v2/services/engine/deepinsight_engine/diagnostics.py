@@ -92,8 +92,36 @@ class ErrorLog:
         self.items.append(LastError(ts=time.time(), code=code, detail=detail))
 
 
+_smi_cache: tuple[float, GpuInfo] | None = None
+
+
 def probe_gpu() -> GpuInfo:
-    """Baca GPU lewat NVML bila ada. Tanpa GPU: tersedia=false dengan kode GPU-001."""
+    """Baca GPU lewat NVML, atau nvidia-smi bila paket itu belum ada."""
+    nvml_info = _probe_nvml()
+    if nvml_info.available:
+        return nvml_info
+    smi = _probe_smi_cached()
+    return smi if smi is not None else nvml_info
+
+
+def parse_smi_line(line: str) -> GpuInfo | None:
+    parts = [part.strip() for part in line.split(",")]
+    if len(parts) < 4:
+        return None
+    name, total, used, util = parts[:4]
+    try:
+        return GpuInfo(
+            available=True,
+            name=name,
+            vram_total_mb=float(total),
+            vram_used_mb=float(used),
+            utilization_pct=float(util),
+        )
+    except ValueError:
+        return None
+
+
+def _probe_nvml() -> GpuInfo:
     try:
         nvml: Any = importlib.import_module("pynvml")
         nvml.nvmlInit()
@@ -118,6 +146,40 @@ def probe_gpu() -> GpuInfo:
         )
     except Exception as exc:  # noqa: BLE001 - NVML melempar bermacam error; dicatat, bukan ditelan
         return GpuInfo(available=False, error_code="GPU-001", note=f"NVML gagal: {exc}")
+
+
+def _probe_smi_cached() -> GpuInfo | None:
+    global _smi_cache
+    now = time.monotonic()
+    if _smi_cache is not None and now - _smi_cache[0] < 1.0:
+        return _smi_cache[1]
+    info = _probe_smi()
+    if info is not None:
+        _smi_cache = (now, info)
+    return info
+
+
+def _probe_smi() -> GpuInfo | None:
+    import subprocess
+
+    try:
+        done = subprocess.run(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,memory.total,memory.used,utilization.gpu",
+                "--format=csv,noheader,nounits",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if done.returncode != 0:
+        return None
+    line = done.stdout.strip().splitlines()
+    return None if not line else parse_smi_line(line[0])
 
 
 def _dir_size_mb(path: Path) -> float:

@@ -1,23 +1,18 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { StageFrame } from '../../components/StageFrame';
 import { t } from '../../i18n';
-import type { Compare } from '../features/poll';
+import { useCompareStream } from './stream';
 
 export function ComparePane({
-  pair,
   split,
   onSplit,
 }: {
-  pair: Compare | null;
   split: number;
   onSplit: (value: number) => void;
 }) {
   const raw = useRef<HTMLCanvasElement>(null);
   const view = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    paint(raw.current, pair?.raw_jpeg_b64 ?? null);
-    paint(view.current, pair?.view_jpeg_b64 ?? null);
-  }, [pair]);
+  useCompareStream(raw, view);
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <StageFrame>
@@ -43,17 +38,4 @@ export function ComparePane({
       />
     </div>
   );
-}
-
-function paint(node: HTMLCanvasElement | null, encoded: string | null): void {
-  if (!node || !encoded || import.meta.env.MODE === 'test') return;
-  const image = new Image();
-  image.onload = () => {
-    const ctx = node.getContext('2d');
-    if (!ctx) return;
-    node.width = image.width;
-    node.height = image.height;
-    ctx.drawImage(image, 0, 0);
-  };
-  image.src = `data:image/jpeg;base64,${encoded}`;
 }

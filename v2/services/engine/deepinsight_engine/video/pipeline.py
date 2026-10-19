@@ -16,6 +16,7 @@ class DisplayFrame:
     frame_id: str
     jpeg: bytes
     enhanced: bool
+    raw_jpeg: bytes | None = None
 
 
 class FramePipeline:
@@ -23,7 +24,7 @@ class FramePipeline:
         self,
         ring: RingBuffer,
         video: Video,
-        enhancer: Callable[[StoredFrame], bytes | None],
+        enhancer: Callable[[StoredFrame], bytes | tuple[bytes, int, int] | None],
     ) -> None:
         self.ring = ring
         self._video = video
@@ -39,20 +40,29 @@ class FramePipeline:
         self.last_at = frame.captured_at
         self.ring.push(frame)
         self._remember(self._display_times, frame.captured_at)
-        enhanced = self._enhancer(frame)
-        shown = enhanced if enhanced is not None else frame.bgr
-        if enhanced is not None:
+        shown, width, height, enhanced = _unpack(self._enhancer(frame), frame)
+        if enhanced:
             self._remember(self._infer_times, frame.captured_at)
-        self.last_display = DisplayFrame(
-            frame.frame_id,
-            encode_jpeg(
-                shown,
+        raw_jpeg = None
+        if enhanced:
+            raw_jpeg = encode_jpeg(
+                frame.bgr,
                 frame.width,
                 frame.height,
                 self._video.display_max_side,
                 self._video.display_jpeg_quality,
+            )
+        self.last_display = DisplayFrame(
+            frame.frame_id,
+            encode_jpeg(
+                shown,
+                width,
+                height,
+                self._video.display_max_side,
+                self._video.display_jpeg_quality,
             ),
-            enhanced is not None,
+            enhanced,
+            raw_jpeg,
         )
 
     def observe(self, now: float) -> str | None:
@@ -78,3 +88,14 @@ class FramePipeline:
         window = self._video.fps_sample_s
         while bucket and now - bucket[0] > window:
             bucket.popleft()
+
+
+def _unpack(
+    produced: bytes | tuple[bytes, int, int] | None, frame: StoredFrame
+) -> tuple[bytes, int, int, bool]:
+    if produced is None:
+        return frame.bgr, frame.width, frame.height, False
+    if isinstance(produced, tuple):
+        raw, width, height = produced
+        return raw, width, height, True
+    return produced, frame.width, frame.height, True

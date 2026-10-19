@@ -32,3 +32,13 @@ def test_lost_signal_after_configured_gap() -> None:
     assert pipeline.state == "lost"
     pipeline.push(_frame("b", 20))
     assert pipeline.state == "live"
+
+
+def test_enhanced_frame_keeps_both_jpegs() -> None:
+    video = load_settings(REPO_CONFIG).thresholds.video
+    pipeline = FramePipeline(RingBuffer(video.ring_buffer_s), video, lambda frame: frame.bgr)
+    pipeline.push(_frame("a", 1))
+    shown = pipeline.last_display
+    assert shown is not None and shown.enhanced
+    assert shown.jpeg[:2] == b"\xff\xd8"
+    assert shown.raw_jpeg is not None and shown.raw_jpeg[:2] == b"\xff\xd8"

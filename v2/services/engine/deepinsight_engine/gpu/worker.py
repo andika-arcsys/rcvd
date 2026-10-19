@@ -1,4 +1,4 @@
-"""Proses pekerja: satu model. AquaClear di CPU. ONNX hanya dibuka bila berkasnya ada."""
+"""Proses pekerja: satu model. AquaClear di CUDA bila ada, OpenCV bila tidak."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from ..core.errors import EngineError
 from ..spatial.estimate import scene_from_message
 from ..spatial.preview import relative_preview
 from ..spatial.source import missing_spatial_detail, spatial_source
-from .aquaclear import apply_preset
+from .aquaclear import enhance_live, open_enhancer
 from .depth_map import relative_from_output
 from .depth_pro_runtime import infer_meters, load_depth_pro
 from .ultralytics_seg import (
@@ -57,6 +57,7 @@ def main() -> None:
             state["runtime"] = None
             state["depth_pro"] = None
             state["tensor"] = None
+            state["enhancer"] = None
             _emit({"event": "unloaded"})
 
 
@@ -74,6 +75,20 @@ def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
         return {"event": "error", "code": "MDL-001", "detail": missing}
     if kind == "aquaclear":
         state["preset"] = AquaPreset.model_validate(message["preset"])
+        state["max_side"] = int(message.get("display_max_side") or 0)
+        state["vram_budget_mb"] = float(message.get("vram_budget_mb") or 0)
+        state["gpu_max_pct"] = float(message.get("gpu_max_pct") or 90)
+        state["enhancer"], note = open_enhancer(
+            state["preset"],
+            state["max_side"],
+            state["vram_budget_mb"],
+            state["gpu_max_pct"],
+        )
+        state["meta"] = {"fp16": bool(getattr(state["enhancer"], "uses_cuda", False))}
+        state["device_note"] = note
+        preset_name = state["preset"].pipeline
+        sys.stderr.write(f"AquaClear enhancer: {note} preset={preset_name}\n")
+        sys.stderr.flush()
     else:
         opened = _open_session(root / str(message["onnx"]))
         if isinstance(opened, dict):
@@ -86,7 +101,11 @@ def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
             state["session"] = None
             return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
     state["kind"] = kind
-    return {"event": "ready", "fp16": bool(state.get("meta", {}).get("fp16"))}
+    return {
+        "event": "ready",
+        "fp16": bool(state.get("meta", {}).get("fp16")),
+        "device": state.get("device_note"),
+    }
 
 
 def _load_hydro(
@@ -221,12 +240,14 @@ def _input_meta(session: Any) -> dict[str, Any]:
 
 def _infer(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     if state["kind"] == "aquaclear":
-        _write_aquaclear(message, state["preset"])
+        out_w, out_h = _write_aquaclear(state, message)
         return {
             "event": "result",
             "frame_id": message["frame_id"],
             "enhanced": True,
             "kind": "aquaclear",
+            "out_width": out_w,
+            "out_height": out_h,
         }
     if state.get("runtime") == "ultralytics":
         return _infer_ultra(state, message)
@@ -364,7 +385,7 @@ def _tensor(np: Any, raw: bytes, width: int, height: int, meta: dict[str, Any]) 
     return batch
 
 
-def _write_aquaclear(message: dict[str, Any], preset: AquaPreset) -> None:
+def _write_aquaclear(state: dict[str, Any], message: dict[str, Any]) -> tuple[int, int]:
     from multiprocessing.shared_memory import SharedMemory
 
     shared = SharedMemory(name=str(message["shm"]))
@@ -372,8 +393,20 @@ def _write_aquaclear(message: dict[str, Any], preset: AquaPreset) -> None:
         width, height = int(message["width"]), int(message["height"])
         view: Any = shared.buf
         raw = bytes(view[: width * height * 3])
-        out = apply_preset(raw, width, height, preset)
+        enhancer = state.get("enhancer")
+        if enhancer is None:
+            enhancer, _note = open_enhancer(
+                state["preset"],
+                int(state.get("max_side") or 0),
+                float(state.get("vram_budget_mb") or 0),
+                float(state.get("gpu_max_pct") or 90),
+            )
+            state["enhancer"] = enhancer
+        out, out_w, out_h = enhance_live(
+            enhancer, raw, width, height, int(state.get("max_side") or 0)
+        )
         view[: len(out)] = out
+        return out_w, out_h
     finally:
         shared.close()
 

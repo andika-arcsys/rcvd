@@ -88,6 +88,7 @@ class Performance(_Strict):
     fps_min: float
     fps_window_s: float
     vram_max_pct: float
+    vram_budget_mb: float
     gpu_max_pct: float
     gpu_window_s: float
     vram_baseline_tolerance_mb: float
@@ -212,17 +213,7 @@ class ModelCatalog(_Strict):
 
 
 class AquaPreset(_Strict):
-    clahe_clip: float
-    clahe_tile: int
-    dehaze: float
-
-    @model_validator(mode="after")
-    def _range(self) -> AquaPreset:
-        if not 0 <= self.dehaze <= 1:
-            raise ValueError("dehaze harus di antara 0 dan 1")
-        if self.clahe_tile < 1:
-            raise ValueError("clahe_tile minimal 1")
-        return self
+    pipeline: Literal["realtime", "balanced", "inspection", "quality"]
 
 
 class HydrodetectConfig(_Strict):

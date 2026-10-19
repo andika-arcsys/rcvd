@@ -122,6 +122,17 @@ def test_stream_sends_frame_id_then_jpeg(client: TestClient) -> None:
     assert blob[:2] == b"\xff\xd8"
 
 
+def test_compare_stream_sends_the_display_jpeg(client: TestClient) -> None:
+    frames = client.post("/video/synthetic", json={"count": 1, "width": 32, "height": 24})
+    frame_id = frames.json()["frame_ids"][0]
+    with client.websocket_connect("/video/compare-stream") as socket:
+        meta = socket.receive_json()
+        blob = socket.receive_bytes()
+    assert meta["frame_id"] == frame_id
+    assert meta["parts"] == 1
+    assert blob[:2] == b"\xff\xd8"
+
+
 def test_turbidity_stays_empty_until_thresholds_exist() -> None:
     cfg = TurbidityCfg()
     frame = StoredFrame("a", 0.0, 8, 8, bytes(8 * 8 * 3))

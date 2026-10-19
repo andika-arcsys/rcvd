@@ -52,6 +52,7 @@ def open_live(
 ) -> Any:
     """Buka VideoCapture. Melempar VID-003 bila target kosong atau tidak dapat dibuka."""
     capture = _open(kind, _target(kind, path, device_index, rtsp_url))
+    capture.set(getattr(_cv2(), "CAP_PROP_BUFFERSIZE", 38), 1)
     if not capture.isOpened():
         capture.release()
         raise EngineError("VID-003", kind)

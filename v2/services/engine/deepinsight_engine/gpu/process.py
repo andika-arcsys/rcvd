@@ -23,6 +23,8 @@ class WorkerHandle:
         self._queue: Queue[str] = Queue()
         self._proc: subprocess.Popen[str] | None = None
         self._io = Lock()
+        self._shm: SharedMemory | None = None
+        self._shm_size = 0
         self.last_event: dict[str, Any] | None = None
 
     @property
@@ -73,58 +75,77 @@ class WorkerHandle:
             return self._geometry_locked(raw, width, height, frame_id, spec)
 
     def _infer_locked(self, frame: StoredFrame, extra: Mapping[str, Any] | None) -> bytes | None:
-        shared = SharedMemory(create=True, size=len(frame.bgr))
-        try:
-            view: Any = shared.buf
-            view[: len(frame.bgr)] = frame.bgr
-            payload = _infer_payload(frame, shared.name)
-            if extra:
-                payload.update(extra)
-            self.request(payload)
-            event = self.read_event()
-            self.last_event = event
-            _raise_if_error(event)
-            if not event.get("enhanced"):
-                return None
-            return bytes(view[: len(frame.bgr)])
-        finally:
-            shared.close()
-            shared.unlink()
+        shared = self._buffer(len(frame.bgr))
+        view: Any = shared.buf
+        view[: len(frame.bgr)] = frame.bgr
+        payload = _infer_payload(frame, shared.name)
+        if extra:
+            payload.update(extra)
+        self.request(payload)
+        event = self.read_event()
+        self.last_event = event
+        _raise_if_error(event)
+        if not event.get("enhanced"):
+            return None
+        width = int(event.get("out_width") or frame.width)
+        height = int(event.get("out_height") or frame.height)
+        count = min(width * height * 3, len(view))
+        return bytes(view[:count])
 
     def _geometry_locked(
         self, raw: bytes, width: int, height: int, frame_id: str, spec: Mapping[str, Any]
     ) -> dict[str, Any]:
-        shared = SharedMemory(create=True, size=len(raw))
+        shared = self._buffer(len(raw))
+        view: Any = shared.buf
+        view[: len(raw)] = raw
+        payload: dict[str, Any] = {
+            "cmd": "geometry",
+            "shm": shared.name,
+            "width": width,
+            "height": height,
+            "frame_id": frame_id,
+        }
+        payload.update(spec)
+        self.request(payload)
+        event = self.read_event()
+        _raise_if_error(event)
+        return event
+
+    def _buffer(self, size: int) -> SharedMemory:
+        if self._shm is not None and self._shm_size >= size:
+            return self._shm
+        self._release_memory()
+        self._shm = SharedMemory(create=True, size=size)
+        self._shm_size = size
+        return self._shm
+
+    def _release_memory(self) -> None:
+        shared = self._shm
+        self._shm = None
+        self._shm_size = 0
+        if shared is None:
+            return
+        shared.close()
         try:
-            view: Any = shared.buf
-            view[: len(raw)] = raw
-            payload: dict[str, Any] = {
-                "cmd": "geometry",
-                "shm": shared.name,
-                "width": width,
-                "height": height,
-                "frame_id": frame_id,
-            }
-            payload.update(spec)
-            self.request(payload)
-            event = self.read_event()
-            _raise_if_error(event)
-            return event
-        finally:
-            shared.close()
             shared.unlink()
+        except FileNotFoundError:
+            return
 
     def unload(self, timeout: float) -> bool:
         with self._io:
-            self.request({"cmd": "unload"})
             try:
-                event = self.read_event(timeout)
-            except EngineError:
-                return False
-            return event.get("event") == "unloaded"
+                self.request({"cmd": "unload"})
+                try:
+                    event = self.read_event(timeout)
+                except EngineError:
+                    return False
+                return event.get("event") == "unloaded"
+            finally:
+                self._release_memory()
 
     def kill(self) -> None:
         proc = self._proc
+        self._release_memory()
         if proc is None or proc.poll() is not None:
             return
         proc.kill()
