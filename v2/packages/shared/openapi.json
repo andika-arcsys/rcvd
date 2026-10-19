@@ -1575,6 +1575,65 @@
         }
       }
     },
+    "/spatial/tune": {
+      "post": {
+        "tags": [
+          "vision"
+        ],
+        "summary": "Tune Spatial",
+        "operationId": "tune_spatial_spatial_tune_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpatialTune"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpatialTune"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/video/compare": {
       "get": {
         "tags": [
@@ -7405,6 +7464,24 @@
         ],
         "title": "Span"
       },
+      "SpatialTune": {
+        "properties": {
+          "process_res": {
+            "type": "integer",
+            "enum": [
+              378,
+              504,
+              672
+            ],
+            "title": "Process Res"
+          }
+        },
+        "type": "object",
+        "required": [
+          "process_res"
+        ],
+        "title": "SpatialTune"
+      },
       "StageIn": {
         "properties": {
           "role": {
@@ -8087,6 +8164,10 @@
           "imgsz": {
             "type": "integer",
             "title": "Imgsz"
+          },
+          "process_res": {
+            "type": "integer",
+            "title": "Process Res"
           }
         },
         "type": "object",
@@ -8098,7 +8179,8 @@
           "depth",
           "classes",
           "confidence",
-          "imgsz"
+          "imgsz",
+          "process_res"
         ],
         "title": "VisionView"
       }

@@ -28,6 +28,8 @@ def estimate_scene(
     lengths: Sequence[Pair],
     areas: Sequence[Sequence[Point]],
     paths: Sequence[Sequence[Point]],
+    backend: str = BACKEND,
+    extra_warnings: tuple[str, ...] = (),
 ) -> dict[str, object]:
     height, width = int(depth_m.shape[0]), int(depth_m.shape[1])
     intrinsics = default_intrinsics(width, height, focal_px)
@@ -40,7 +42,7 @@ def estimate_scene(
         intrinsics,
         source="REFERENCE_SCALED",
         frame_id=frame_id,
-        backend_signature=BACKEND,
+        backend_signature=backend,
         intrinsics_source="MODEL_PREDICTED",
     )
     measured = measure_distance(left, right, depth_m, intrinsics, scale, frame_id=frame_id)
@@ -48,7 +50,7 @@ def estimate_scene(
     area_rows = [_area(item, depth_m, intrinsics, scale, frame_id) for item in areas]
     path_rows = [_path(item, depth_m, intrinsics, scale, frame_id) for item in paths]
     raw = scale.raw_reference_distance_m or 0.0
-    warnings = _warnings(measured.warnings, length_rows, area_rows, path_rows)
+    warnings = _warnings(extra_warnings, measured.warnings, length_rows, area_rows, path_rows)
     return {
         "frame_id": frame_id,
         "validity": measured.validity,
@@ -61,14 +63,18 @@ def estimate_scene(
         "paths": path_rows,
         "warnings": warnings,
         "units": "METERS",
-        "backend": BACKEND,
+        "backend": backend,
         "underwater_intrinsics": intrinsics.calibrated_underwater,
         "focal_px": focal_px,
     }
 
 
 def scene_from_message(
-    depth_m: Any, focal_px: float | None, message: Mapping[str, Any]
+    depth_m: Any,
+    focal_px: float | None,
+    message: Mapping[str, Any],
+    backend: str = BACKEND,
+    extra_warnings: tuple[str, ...] = (),
 ) -> dict[str, object]:
     return estimate_scene(
         depth_m,
@@ -79,6 +85,8 @@ def scene_from_message(
         [_pair(item) for item in _rows(message.get("lengths"))],
         [_poly(item) for item in _rows(message.get("areas"))],
         [_poly(item) for item in _rows(message.get("paths"))],
+        backend=backend,
+        extra_warnings=extra_warnings,
     )
 
 

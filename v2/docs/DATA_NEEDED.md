@@ -22,7 +22,7 @@ Angka teknis yang belum diisi tim tidak dikarang. Uji kode memakai fixture di `t
 | D-11 | `classes.json` urutan indeks 8 kelas | `models/hydrodetect/exp5/classes.json` | 6 | Diminta ada di Git, tetapi urutan indeks resmi model belum diterima. Nama filter di `config/hydrodetect.yaml` mengikuti Q-AI-1 dan **bukan** urutan indeks. |
 | D-12 | `metadata.json` (ukuran input, versi, metrik) | `models/hydrodetect/exp5/metadata.json` | 6, 9 | Belum ada. Metrik tidak dikarang. |
 | D-13 | Precision, recall, mAP50 mask per kelas | di dalam D-12 | 9 | Menyusul bersama D-12. |
-| D-14 | Model kedalaman SpatialSight | `models/spatialsight/depth_pro.pt` | 6 | Apple Depth Pro pada Python 3.12 dan CUDA Ultralytics. ONNX relatif di `model.onnx` tetap cadangan pratinjau. Tanpa kedua berkas: MDL-001, tanpa peta tiruan. |
+| D-14 | Paket Depth Anything 3 | tidak ada berkas lokal | 6 | Bawaan live adalah `depth-anything/DA3METRIC-LARGE` dari Hugging Face, `process_res` 504, pada `deepenv` yang sama. Tanpa paket: MDL-002. Tanpa CUDA: MDL-003. `depth_pro.pt` dan `model.onnx` hanya dipakai bila `config/spatialsight.yaml` menulis `backend: depth_pro`. |
 | D-15 | Tiga preset AquaClear | `config/aquaclear_presets.yaml` | 6 | Mengikuti `pipeline.py` konsol RCVD: Ringan=`realtime` (halaman live lama), Balanced=`balanced`, Inspection=`inspection`. Bila CUDA ada, live memakai `scripts/enhance_video_cuda.py` (fp16, tanpa CLAHE). Tanpa CUDA, OpenCV dan NumPy menjalankan pipeline itu. |
 | D-16 | Ambang keyakinan per kelas | `config/hydrodetect.yaml` | 6 | USULAN Q-GPU-4: bawaan 0,50, Leakage 0,35. Boleh menyusul. |
 | D-17 | 20–50 gambar uji berlabel | `samples/labeled/` | 6 | Belum ada. `scripts/eval_hydrodetect.py` berhenti kode 2. |

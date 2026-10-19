@@ -8,12 +8,16 @@ from pathlib import Path
 from typing import Any
 
 from ..core.errors import EngineError
+from .budget import cuda_status_note, try_limit_process_memory
 
 
-def load_depth_pro(checkpoint: Path) -> dict[str, Any]:
+def load_depth_pro(
+    checkpoint: Path, vram_budget_mb: float = 0, gpu_max_pct: float = 90
+) -> dict[str, Any]:
     torch = _torch()
     if not bool(torch.cuda.is_available()):
         raise EngineError("MDL-003", "CUDA Depth Pro")
+    cap = try_limit_process_memory(torch, vram_budget_mb)
     package = _package()
     device = torch.device("cuda")
     config = _checkpoint_config(checkpoint)
@@ -28,7 +32,14 @@ def load_depth_pro(checkpoint: Path) -> dict[str, Any]:
         raise
     except Exception as exc:  # noqa: BLE001 - Depth Pro melempar error muat yang beragam
         raise EngineError("MDL-002", "checkpoint Depth Pro tidak dapat dibuka") from exc
-    return {"model": model, "transform": transform, "device": device, "torch": torch}
+    note = cuda_status_note(torch, cap, gpu_max_pct, device, "half")
+    return {
+        "model": model,
+        "transform": transform,
+        "device": device,
+        "torch": torch,
+        "note": note,
+    }
 
 
 def infer_meters(bundle: dict[str, Any], frame_bgr: Any) -> tuple[Any, float | None]:

@@ -12,8 +12,8 @@ entries:
     classes: hydrodetect/exp5/classes.json
     metadata: hydrodetect/exp5/metadata.json
     requires_gpu: true
-  # Depth Pro memakai Python dan CUDA yang sama dengan Ultralytics.
-  # Checkpoint didahulukan. ONNX tetap pratinjau relatif bila .pt belum ada.
+  # Live memakai Depth Anything 3 (Hugging Face), bukan berkas di folder ini.
+  # depth_pro.pt dan model.onnx hanya untuk backend depth_pro di spatialsight.yaml.
   spatialsight:
     checkpoint: spatialsight/depth_pro.pt
     onnx: spatialsight/model.onnx

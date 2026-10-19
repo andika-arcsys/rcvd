@@ -62,15 +62,17 @@ Bila versi NumPy berubah, pasang kembali angka yang dicatat di awal. Jangan mema
 
 Satu GPU memuat satu model. `ModelManager` melepas pekerja sebelumnya, termasuk HydroDetect, sebelum memuat SpatialSight. Pada RTX 3070 8 GB, kedalaman dan deteksi tidak tinggal bersama di memori.
 
-Pekerja memilih berkas dengan urutan ini:
+`config/spatialsight.yaml` menulis `backend: depth_anything3`. Pekerja memuat `depth-anything/DA3METRIC-LARGE` lewat `DepthAnything3.from_pretrained`, lalu `to(cuda).eval()`. Inferensi memakai `process_res` (bawaan 504) dan `export_format="mini_npz"`. Anggaran proses sama dengan AquaClear dan HydroDetect: 6144 MB dan 90% GPU. Tidak ada berkas lokal. Paket yang belum terpasang menghasilkan `MDL-002`. CUDA yang tidak terlihat oleh torch menghasilkan `MDL-003`. Mode kembali ke Optical. Tidak ada peta warna tiruan.
+
+`backend: depth_pro` memakai urutan berkas berikut:
 
 1. `models/spatialsight/depth_pro.pt` bila berkas itu ada. Runtime `depth_pro`. Muat memakai `create_model_and_transforms` pada CUDA, presisi `float16`, dan `checkpoint_uri` ke berkas itu.
 2. `models/spatialsight/model.onnx` bila checkpoint belum ada dan berkas ONNX ada. Runtime ONNX CUDA. Keluaran dipakai sebagai pratinjau relatif.
-3. Keduanya tidak ada: `MDL-001`. Detail menyebut `spatialsight/depth_pro.pt atau spatialsight/model.onnx`. Mode kembali ke Optical. Tidak ada peta warna tiruan.
+3. Keduanya tidak ada: `MDL-001`. Detail menyebut `spatialsight/depth_pro.pt atau spatialsight/model.onnx`.
 
 `path` pada log `/models/switch` adalah alamat HTTP, bukan folder bobot. Folder bobot mengikuti `models.dir`.
 
-Paket `depth_pro` yang belum terpasang di interpreter ini menghasilkan `MDL-002` dengan detail `paket depth_pro belum terpasang di Python ini`. CUDA yang tidak terlihat oleh torch menghasilkan `MDL-003`.
+Paket `depth_pro` yang belum terpasang di interpreter ini menghasilkan `MDL-002` dengan detail `paket depth_pro belum terpasang di Python ini`.
 
 ## 3. Tiga hasil yang tetap terpisah
 
@@ -80,13 +82,13 @@ Konsol lama memisahkan tiga produk. v2 menjaga pemisahan yang sama.
 
 Layar F4, `3_3_SpatialSight`, menggambar kisi kedalaman di atas video. Label yang dikunci config adalah `Preview relatif, bukan ukuran`. Angka panjang tidak ditampilkan di layar itu.
 
-Untuk Depth Pro, tensor meter diubah menjadi kedekatan: persentil 2 dan 98 pada nilai positif yang hingga, lalu `1 - nilai ternormalisasi`. Nilai 1 berarti dekat, nilai 0 berarti jauh. Kisi diambil sampelnya sampai sisi terpanjang `preview_max_side` (64). Respons `GET /vision` hanya memuat lebar, tinggi, nilai, dan label. Meter tidak ikut.
+Depth Anything 3 dan Depth Pro sama-sama diubah menjadi kedekatan: persentil 2 dan 98 pada nilai positif yang hingga, lalu `1 - nilai ternormalisasi`. Nilai 1 berarti dekat, nilai 0 berarti jauh. Kisi diambil sampelnya sampai sisi terpanjang `preview_max_side` (64). Respons `GET /vision` hanya memuat lebar, tinggi, nilai, dan label. Meter tidak ikut. Tombol Ringan, Konsol, dan Teliti mengirim `process_res` 378, 504, dan 672 lewat `POST /spatial/tune`. Bilah GPU menampilkan pemakaian, batas 90%, dan anggaran 6144 MB.
 
 Untuk ONNX, jalur lama `relative_from_output` tetap dipakai: rentang minimum–maksimum pada keluaran sesi. Tensor meter tidak disimpan, karena berkas ONNX relatif tidak punya satuan meter yang diperiksa.
 
 ### 3.2 Tensor pada frame beku
 
-Tombol FREEZE tetap menyimpan PNG bukti di `evidence/{frame_id}.png`. Tombol `Hitung estimasi kedalaman` di sisi kanvas mengirim `POST /spatial/estimate`. Engine membaca PNG itu, mengirim piksel BGR ke pekerja, dan menjalankan Depth Pro pada bingkai itu. Inferensi live yang terakhir tidak menjadi sumber angka.
+Tombol FREEZE tetap menyimpan PNG bukti di `evidence/{frame_id}.png`. Tombol `Hitung estimasi kedalaman` di sisi kanvas mengirim `POST /spatial/estimate`. Engine membaca PNG itu, mengirim piksel BGR ke pekerja, dan menjalankan backend yang sedang dimuat pada bingkai itu. Depth Anything 3 memakai fokus kosong dan menambahkan peringatan bahwa K belum dikalibrasi serta skala referensi hanya berlaku pada frame beku yang sama. Inferensi live yang terakhir tidak menjadi sumber angka.
 
 Pekerja menyimpan tensor float32, fokus piksel, dan identitas frame di memori proses. Resume dan ganti model melepas pekerja, sehingga tensor ikut hilang. Pratinjau 64 piksel tidak dipakai sebagai `Z`.
 
@@ -131,7 +133,7 @@ Setiap permintaan geometri menambahkan peringatan yang sama dengan adapter lama:
 
 ## 4. Cara memakai di konsol v2
 
-Masuk dengan `uji` / `135790`. Buka SpatialSight. Log `start.bat` menulis `ready` setelah checkpoint terbaca. Layar live menampilkan pratinjau relatif. Slider hanya mengubah opasitas.
+Masuk dengan `uji` / `135790`. Buka SpatialSight. Log `start.bat` menulis `SpatialSight: cuda ... process_res=504`. Layar live menampilkan pratinjau relatif dan bilah GPU. Slider hanya mengubah opasitas. Tombol Konsol adalah 504.
 
 Bekukan frame. Di kanvas:
 
@@ -141,14 +143,15 @@ Bekukan frame. Di kanvas:
 
 Panel menampilkan status 3D, referensi terskala, jarak mentah model, faktor skala, fokus, panjang 3D, luas mesh, jalur 3D, dan peringatan housing. `Simpan` tetap menulis snapshot 2D: skala piksel, panjang piksel, dan luas tali sepatu. Estimasi kedalaman tidak masuk tubuh simpan dan tidak masuk `span_m`.
 
-Ganti ke HydroDetect melepas Depth Pro. Kembali ke SpatialSight memuatnya lagi.
+Ganti ke HydroDetect melepas model kedalaman. Kembali ke SpatialSight memuatnya lagi.
 
 ## 5. Yang disamakan dan yang tetap di tempatnya
 
 | Fitur konsol RCVD | Perilaku v2 |
 | --- | --- |
 | Satu model pada satu waktu | `ModelManager` melepas pekerja lama |
-| Depth Pro, fp16, CUDA, `depth_pro.pt` | Pekerja Python 3.12, torch yang sama dengan Ultralytics |
+| Depth Anything 3, CUDA, `DA3METRIC-LARGE`, `process_res` 504 | Pekerja Python 3.12, anggaran 6144 MB / 90%, pratinjau relatif |
+| Depth Pro, fp16, CUDA, `depth_pro.pt` | Hanya bila `backend: depth_pro` |
 | Pratinjau dekat/jauh | Layar F4, label relatif, tanpa angka panjang |
 | Inferensi ulang pada frame beku | `POST /spatial/estimate` membaca PNG bukti |
 | Skala dari dua titik dan panjang cm | Titik kalibrasi kanvas dan kolom referensi |
@@ -158,7 +161,7 @@ Ganti ke HydroDetect melepas Depth Pro. Kembali ke SpatialSight memuatnya lagi.
 | Empat status geometri | Nama yang sama; underwater tetap salah |
 | Peringatan housing | Selalu ada pada hasil estimasi |
 | ONNX relatif | Cadangan pratinjau bila `depth_pro.pt` belum ada |
-| Depth Anything 3 Metric Large | Tidak dimuat sebagai meter. Adapter lama menandai satuan `FOCAL_NORMALIZED` dan fokus kosong |
+| Depth Anything 3 Metric Large | Dimuat di GPU. Satuan model tetap focal-normalized dan fokus kosong. Angka meter hanya setelah skala referensi pada frame beku |
 | Angka bentang laporan | Tetap dari ukur 2D |
 
 Koordinat tetap piksel bingkai asli. Zum hanya tampilan. Otoritas angka yang disimpan tetap di Python.

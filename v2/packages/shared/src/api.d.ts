@@ -482,6 +482,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/spatial/tune": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tune Spatial */
+        post: operations["tune_spatial_spatial_tune_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/video/compare": {
         parameters: {
             query?: never;
@@ -2304,6 +2321,14 @@ export interface components {
             /** Resurvey Months */
             resurvey_months: number;
         };
+        /** SpatialTune */
+        SpatialTune: {
+            /**
+             * Process Res
+             * @enum {integer}
+             */
+            process_res: 378 | 504 | 672;
+        };
         /** StageIn */
         StageIn: {
             /** Role */
@@ -2503,6 +2528,8 @@ export interface components {
             confidence: number;
             /** Imgsz */
             imgsz: number;
+            /** Process Res */
+            process_res: number;
         };
     };
     responses: never;
@@ -3467,6 +3494,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HydroTune"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tune_spatial_spatial_tune_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpatialTune"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpatialTune"];
                 };
             };
             /** @description Validation Error */

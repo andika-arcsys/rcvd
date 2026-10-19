@@ -46,11 +46,16 @@ class VisionView(BaseModel):
     frame_height: int | None = None
     confidence: float
     imgsz: int
+    process_res: int
 
 
 class HydroTune(BaseModel):
     confidence: float = Field(ge=0.05, le=0.95)
     imgsz: Literal[640, 960, 1280]
+
+
+class SpatialTune(BaseModel):
+    process_res: Literal[378, 504, 672]
 
 
 class CompareView(BaseModel):
@@ -68,6 +73,12 @@ def vision_status(request: Request) -> VisionView:
 def tune_hydro(body: HydroTune, request: Request) -> HydroTune:
     saved = request.app.state.runtime.set_hydro_tune(body.confidence, body.imgsz)
     return HydroTune.model_validate(saved)
+
+
+@vision.post("/spatial/tune", response_model=SpatialTune)
+def tune_spatial(body: SpatialTune, request: Request) -> SpatialTune:
+    saved = request.app.state.runtime.set_spatial_tune(body.process_res)
+    return SpatialTune.model_validate(saved)
 
 
 @vision.get("/video/compare", response_model=CompareView)
