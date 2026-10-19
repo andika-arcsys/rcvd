@@ -27,6 +27,7 @@ class DepthView(BaseModel):
     height: int
     values: list[float]
     label: str
+    jpeg_b64: str | None = None
 
 
 class ClassChip(BaseModel):

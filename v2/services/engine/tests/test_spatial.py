@@ -17,7 +17,7 @@ from deepinsight_engine.spatial.geometry import (
     default_intrinsics,
     measure_distance,
 )
-from deepinsight_engine.spatial.preview import relative_preview
+from deepinsight_engine.spatial.preview import relative_preview, turbo_bgr
 from deepinsight_engine.spatial.source import missing_spatial_detail, spatial_source
 from tests.test_models import _manager
 
@@ -87,6 +87,20 @@ def test_nearer_depth_is_brighter_in_the_relative_preview() -> None:
     values = preview["values"]
     assert isinstance(values, list)
     assert float(values[0]) < float(values[1])
+
+
+def test_turbo_paints_near_warm_and_far_cool() -> None:
+    depth = np.full((40, 40), 5.0, dtype=np.float32)
+    depth[:8, :] = 1.0
+    depth[-8:, :] = 12.0
+    colored = turbo_bgr(depth)
+    near = colored[2, 20]
+    far = colored[-3, 20]
+    assert int(near[2]) > int(far[2])
+    assert int(far[0]) > int(near[0])
+    preview = relative_preview(depth, 64)
+    jpeg = preview.get("jpeg_b64")
+    assert isinstance(jpeg, str) and jpeg.startswith("/9j/")
 
 
 def test_checkpoint_is_preferred_over_onnx(tmp_path: Path) -> None:

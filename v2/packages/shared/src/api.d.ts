@@ -1393,6 +1393,8 @@ export interface components {
             values: number[];
             /** Label */
             label: string;
+            /** Jpeg B64 */
+            jpeg_b64?: string | null;
         };
         /** DetailOut */
         DetailOut: {
