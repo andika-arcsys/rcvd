@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import contextlib
+import sys
+import types
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +12,15 @@ import numpy as np
 import pytest
 
 from deepinsight_engine.core.config import load_settings
-from deepinsight_engine.gpu.depth_anything3_runtime import DA3_WARNINGS, clamp_res, infer_depth
+from deepinsight_engine.core.errors import EngineError
+from deepinsight_engine.gpu.depth_anything3_runtime import (
+    DA3_WARNINGS,
+    _guard_register,
+    _open,
+    _prepare_resolver,
+    clamp_res,
+    infer_depth,
+)
 from deepinsight_engine.gpu.vision import RELATIVE_LABEL
 from deepinsight_engine.gpu.worker import _da3_depth, _geometry, _infer_da3, _load_spatial
 from deepinsight_engine.spatial.estimate import scene_from_message
@@ -260,6 +270,125 @@ class _FakeTorch:
     def autocast(self, **_kwargs: object) -> contextlib.AbstractContextManager[None]:
         self.autocast_used = True
         return contextlib.nullcontext()
+
+
+def test_missing_package_keeps_the_install_sentence(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "deepinsight_engine.gpu.depth_anything3_runtime.importlib.import_module",
+        _reject("depth_anything_3"),
+    )
+    with pytest.raises(EngineError) as info:
+        _open(object(), "depth-anything/DA3METRIC-LARGE")
+    detail = info.value.detail or ""
+    assert info.value.spec.code == "MDL-002"
+    assert "Clone ByteDance-Seed/Depth-Anything-3" in detail
+    assert "pip install -e ." in detail
+
+
+def test_missing_addict_asks_for_that_package(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "deepinsight_engine.gpu.depth_anything3_runtime.importlib.import_module",
+        _reject("addict"),
+    )
+    with pytest.raises(EngineError) as info:
+        _open(object(), "depth-anything/DA3METRIC-LARGE")
+    detail = info.value.detail or ""
+    assert "python -m pip install addict" in detail
+    assert "Clone ByteDance-Seed/Depth-Anything-3 lalu pip install -e ." not in detail
+
+
+def test_missing_dependency_names_the_module(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(sys.modules, "depth_anything_3", types.ModuleType("depth_anything_3"))
+    monkeypatch.setattr(
+        "deepinsight_engine.gpu.depth_anything3_runtime.importlib.import_module",
+        _reject("einops"),
+    )
+    with pytest.raises(EngineError) as info:
+        _open(object(), "depth-anything/DA3METRIC-LARGE")
+    detail = info.value.detail or ""
+    assert "einops" in detail
+    assert "Clone ByteDance-Seed/Depth-Anything-3 lalu pip install -e ." not in detail
+    assert "depth_anything_3" not in sys.modules
+
+
+def test_resolver_error_is_reported(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "deepinsight_engine.gpu.depth_anything3_runtime.importlib.import_module",
+        _raise_value("Resolver 'eval' is already registered"),
+    )
+    with pytest.raises(EngineError) as info:
+        _open(object(), "depth-anything/DA3METRIC-LARGE")
+    detail = info.value.detail or ""
+    assert "gagal dimuat" in detail
+    assert "already registered" in detail
+
+
+def test_eval_resolver_registration_is_idempotent() -> None:
+    class OmegaConf:
+        names: set[str] = set()
+
+        @staticmethod
+        def has_resolver(name: str) -> bool:
+            return name in OmegaConf.names
+
+        @staticmethod
+        def register_new_resolver(name: str, _resolver: object) -> None:
+            if name in OmegaConf.names:
+                raise ValueError("Resolver 'eval' is already registered")
+            OmegaConf.names.add(name)
+
+    guarded = _guard_register(OmegaConf.register_new_resolver, OmegaConf.has_resolver)
+    guarded("eval", eval)
+    guarded("eval", eval)
+    assert OmegaConf.names == {"eval"}
+
+
+def test_prepare_resolver_uses_register_resolver(monkeypatch: pytest.MonkeyPatch) -> None:
+    class OmegaConf:
+        names: set[str] = set()
+        legacy_calls = 0
+
+        @staticmethod
+        def has_resolver(name: str) -> bool:
+            return name in OmegaConf.names
+
+        @staticmethod
+        def register_resolver(name: str, _resolver: object) -> None:
+            if name in OmegaConf.names:
+                raise ValueError("Resolver 'eval' is already registered")
+            OmegaConf.names.add(name)
+
+        @staticmethod
+        def register_new_resolver(name: str, _resolver: object) -> None:
+            OmegaConf.legacy_calls += 1
+            raise AssertionError("register_new_resolver")
+
+    module = types.ModuleType("omegaconf")
+    module.OmegaConf = OmegaConf  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "omegaconf", module)
+    _prepare_resolver()
+    OmegaConf.register_new_resolver("eval", eval)
+    OmegaConf.register_new_resolver("eval", eval)
+    assert OmegaConf.names == {"eval"}
+    assert OmegaConf.legacy_calls == 0
+
+
+def _reject(missing: str) -> Any:
+    def _load(name: str) -> Any:
+        if name == "omegaconf":
+            raise ImportError("omegaconf", name="omegaconf")
+        raise ImportError(f"No module named {missing}", name=missing)
+
+    return _load
+
+
+def _raise_value(text: str) -> Any:
+    def _load(name: str) -> Any:
+        if name == "omegaconf":
+            raise ImportError("omegaconf", name="omegaconf")
+        raise ValueError(text)
+
+    return _load
 
 
 def _modules(name: str) -> Any:

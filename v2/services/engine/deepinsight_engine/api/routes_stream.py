@@ -7,7 +7,10 @@ import secrets
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from ..core.logging import get_logger
+
 stream = APIRouter()
+_log = get_logger("stream")
 
 
 @stream.websocket("/video/stream")
@@ -40,13 +43,16 @@ async def _pump(websocket: WebSocket) -> None:
     last = ""
     try:
         while True:
-            payload, jpeg = websocket.app.state.runtime.display_packet()
+            try:
+                payload, jpeg = websocket.app.state.runtime.display_packet()
+            except Exception as exc:  # noqa: BLE001 - satu frame buruk tidak menutup aliran
+                _skip_frame(exc)
+                await asyncio.sleep(0.03)
+                continue
             key = f"{payload['state']}:{payload['frame_id']}"
-            if key != last:
-                await websocket.send_json(payload)
-                if jpeg:
-                    await websocket.send_bytes(jpeg)
-                last = key
+            if key != last and not await _send_frame(websocket, payload, [jpeg] if jpeg else []):
+                return
+            last = key
             await asyncio.sleep(0.03)
     except WebSocketDisconnect:
         return
@@ -56,13 +62,33 @@ async def _pump_compare(websocket: WebSocket) -> None:
     last = ""
     try:
         while True:
-            payload, parts = websocket.app.state.runtime.compare_packet()
+            try:
+                payload, parts = websocket.app.state.runtime.compare_packet()
+            except Exception as exc:  # noqa: BLE001 - satu frame buruk tidak menutup aliran
+                _skip_frame(exc)
+                await asyncio.sleep(0.03)
+                continue
             key = f"{payload['state']}:{payload['frame_id']}:{len(parts)}"
-            if key != last:
-                await websocket.send_json(payload)
-                for part in parts:
-                    await websocket.send_bytes(part)
-                last = key
+            if key != last and not await _send_frame(websocket, payload, parts):
+                return
+            last = key
             await asyncio.sleep(0.03)
     except WebSocketDisconnect:
         return
+
+
+def _skip_frame(exc: Exception) -> None:
+    _log.warning("frame tampilan dilewati", extra={"code": "SYS-002", "ctx": {"detail": str(exc)}})
+
+
+async def _send_frame(websocket: WebSocket, payload: dict[str, object], parts: list[bytes]) -> bool:
+    try:
+        await websocket.send_json(payload)
+        for part in parts:
+            await websocket.send_bytes(part)
+    except WebSocketDisconnect:
+        return False
+    except Exception as exc:  # noqa: BLE001 - putus aliran tanpa jejak ASGI
+        _skip_frame(exc)
+        return False
+    return True

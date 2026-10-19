@@ -111,6 +111,26 @@ def test_mark_finding_stores_raw_jpeg(client: TestClient) -> None:
     assert row is not None
 
 
+def test_stream_skips_one_bad_frame(client: TestClient) -> None:
+    frames = client.post("/video/synthetic", json={"count": 1, "width": 32, "height": 24})
+    frame_id = frames.json()["frame_ids"][0]
+    runtime = client.app.state.runtime
+    original = runtime.display_packet
+    state = {"failed": False}
+
+    def flaky() -> tuple[dict[str, object], bytes | None]:
+        if not state["failed"]:
+            state["failed"] = True
+            raise RuntimeError("frame tampilan")
+        return original()
+
+    runtime.display_packet = flaky  # type: ignore[method-assign]
+    with client.websocket_connect("/video/stream") as socket:
+        meta = socket.receive_json()
+    assert meta["frame_id"] == frame_id
+    assert meta["state"] == "live"
+
+
 def test_stream_sends_frame_id_then_jpeg(client: TestClient) -> None:
     frames = client.post("/video/synthetic", json={"count": 1, "width": 32, "height": 24})
     frame_id = frames.json()["frame_ids"][0]

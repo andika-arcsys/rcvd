@@ -9,10 +9,24 @@ pada frame beku lewat skala referensi.
 from __future__ import annotations
 
 import importlib
+import sys
 from typing import Any
 
 from ..core.errors import EngineError
 from .budget import cuda_status_note, try_limit_process_memory
+
+_INSTALL = (
+    "paket depth_anything_3 belum terpasang. "
+    "Clone ByteDance-Seed/Depth-Anything-3 lalu pip install -e ."
+)
+# Depth Anything 3 mengimpor addict, tetapi pyproject.toml tidak mencantumkannya.
+_KNOWN_GAPS = {
+    "addict": (
+        "ketergantungan addict belum terpasang. "
+        "Depth Anything 3 mengimpornya, tetapi pip install -e . tidak memasangnya. "
+        "Di deepenv yang sama: python -m pip install addict"
+    ),
+}
 
 PROCESS_SIZES = (378, 504, 672)
 DEFAULT_RES = 504
@@ -71,19 +85,98 @@ def _torch() -> Any:
 
 
 def _open(torch: Any, model_id: str) -> Any:
+    _prepare_resolver()
     try:
         api = importlib.import_module("depth_anything_3.api")
     except ImportError as exc:
-        raise EngineError(
-            "MDL-002",
-            "paket depth_anything_3 belum terpasang. "
-            "Clone ByteDance-Seed/Depth-Anything-3 lalu pip install -e .",
-        ) from exc
+        _drop_partial_da3()
+        raise EngineError("MDL-002", _import_detail(exc)) from exc
+    except Exception as exc:  # noqa: BLE001 - impor DA3 dapat melempar resolver OmegaConf
+        _drop_partial_da3()
+        raise EngineError("MDL-002", f"Depth Anything 3 gagal dimuat: {exc}") from exc
     try:
         model = api.DepthAnything3.from_pretrained(model_id)
         return model.to(torch.device("cuda:0")).eval()
     except Exception as exc:  # noqa: BLE001 - unduh dan muat Hugging Face melempar error beragam
         raise EngineError("MDL-002", f"Depth Anything 3 gagal dimuat: {exc}") from exc
+
+
+def _prepare_resolver() -> None:
+    """cfg.py DA3 mendaftarkan resolver eval saat impor. Pendaftaran kedua menggagalkan muat."""
+    try:
+        module = importlib.import_module("omegaconf")
+    except ImportError:
+        return
+    omega: Any = getattr(module, "OmegaConf", None)
+    if omega is None or getattr(omega, "_deepinsight_eval_guard", False):
+        return
+    modern = getattr(omega, "register_resolver", None)
+    legacy = getattr(omega, "register_new_resolver", None)
+    target = modern if modern is not None else legacy
+    if target is None:
+        return
+    guarded = _guard_register(target, getattr(omega, "has_resolver", None))
+    if modern is not None:
+        omega.register_resolver = guarded
+    if legacy is not None:
+        omega.register_new_resolver = guarded
+    omega._deepinsight_eval_guard = True
+
+
+def _guard_register(original: Any, has_resolver: Any) -> Any:
+    def safe(name: str, resolver: Any, *args: Any, **kwargs: Any) -> None:
+        if has_resolver is not None:
+            try:
+                if bool(has_resolver(name)):
+                    return
+            except Exception:  # noqa: BLE001,S110 - gagal cek resolver tetap boleh mencoba daftar
+                pass
+        try:
+            original(name, resolver, *args, **kwargs)
+        except Exception as exc:  # noqa: BLE001 - pesan resolver sudah terdaftar ditelan, sisanya naik
+            if _already_registered(exc):
+                return
+            raise
+
+    return safe
+
+
+def _already_registered(exc: Exception) -> bool:
+    text = str(exc).lower()
+    return "already registered" in text or "already exists" in text
+
+
+def _import_detail(exc: ImportError) -> str:
+    missing = exc.name or _name_from_message(str(exc))
+    if missing in _KNOWN_GAPS:
+        return _KNOWN_GAPS[missing]
+    if missing in {"", "depth_anything_3"}:
+        return _INSTALL
+    if missing.startswith("depth_anything_3."):
+        return (
+            f"paket depth_anything_3 tidak lengkap ({missing}). "
+            "Clone ByteDance-Seed/Depth-Anything-3 lalu pip install -e ."
+        )
+    return (
+        f"ketergantungan Depth Anything 3 belum terpasang: {missing}. "
+        "Di deepenv yang sama jalankan pip install -e . pada clone "
+        "ByteDance-Seed/Depth-Anything-3."
+    )
+
+
+def _name_from_message(text: str) -> str:
+    marker = "No module named "
+    if marker not in text:
+        return ""
+    raw = text.split(marker, 1)[1].strip().strip(".")
+    return raw.strip("'\"")
+
+
+def _drop_partial_da3() -> None:
+    prefix = "depth_anything_3"
+    for key in list(sys.modules):
+        if key == prefix or key.startswith(f"{prefix}."):
+            del sys.modules[key]
 
 
 def _warm(bundle: dict[str, Any], process_res: int) -> bool:

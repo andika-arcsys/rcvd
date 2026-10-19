@@ -59,13 +59,13 @@ v2 membuka `models/hydrodetect/exp5/model.pt` pada pekerja yang sama, dengan cad
 | Pengaturan | Konsol yang sudah jalan | v2 |
 | --- | --- | --- |
 | Keyakinan | `conf=0.7` tetap | Bawaan 0,70. Slider 5–95% mengganti semua kelas |
-| Perangkat | GPU 0 | GPU 0, `half=True` (fp16) |
+| Perangkat | GPU 0 | GPU 0, `quantize=16` (fp16) |
 | Mask | `retina_masks=True` | sama |
 | Ukuran model | stream sisi 640 | Cepat 640, Seimbang 960, Teliti 1280 |
 | Frame | diperkecil dulu | frame kamera utuh; Ultralytics yang menyesuaikan ke imgsz |
 | VRAM | tidak dibatasi di kode | alokator proses di anggaran 6144 MB, beban 90% |
 
-Saat model dimuat, pekerja memasang `set_per_process_memory_fraction` dari memori yang sudah terpakai, lalu satu `predict` pemanasan pada imgsz aktif dengan `device=0` dan `half=True`. Bobot tidak dipindahkan lewat `model.to` sebelum itu: fuse Ultralytics berjalan pada fp32, dan `model.to` plus `half=True` melempar `expected scalar type Half but found Float`. Galat itu membuat `/models/switch` gagal, lalu dialog mengembalikan operator ke Optical. Bila pemanasan fp16 gagal, model tetap dibuka pada fp32 di GPU yang sama. Jendela `start.bat` menulis `HydroDetect: cuda ... cap=... half` atau `fp32`. Bilah di bawah video menampilkan beban, memori, dan catatan itu. Anggaran tunggu muat model adalah 45 detik, karena fuse CUDA pertama sering melewati 8 detik dan pekerja yang diputus juga mengembalikan dialog ke Optical.
+Saat model dimuat, pekerja memasang `set_per_process_memory_fraction` dari memori yang sudah terpakai, lalu satu `predict` pemanasan pada imgsz aktif dengan `device=0` dan `quantize=16`. Itu sama dengan `underwater_enhance/yolo_integration.py`. Argumen `half` tidak dikirim. Bobot tidak dipindahkan lewat `model.to` sebelum itu: fuse Ultralytics berjalan pada fp32, dan memindahkan bobot ke CUDA sebelum fp16 melempar `expected scalar type Half but found Float`. Galat itu membuat `/models/switch` gagal, lalu dialog mengembalikan operator ke Optical. Bila pemanasan fp16 gagal, model tetap dibuka pada fp32 di GPU yang sama. Jendela `start.bat` menulis `HydroDetect: cuda ... cap=... half` atau `fp32`. Bilah di bawah video menampilkan beban, memori, dan catatan itu. Anggaran tunggu muat model adalah 45 detik, karena fuse CUDA pertama sering melewati 8 detik dan pekerja yang diputus juga mengembalikan dialog ke Optical. Satu frame yang gagal tidak menutup aliran video.
 
 Teliti (1280) adalah cara memakai lebih banyak dari kartu 8 GB. Cepat tetap 640 agar sama dengan stream konsol. Anggaran tetap 6144 MB supaya sekitar 2 GB tinggal untuk desktop. Tidak ada blok VRAM kosong yang dialokasikan hanya agar angka memori terlihat penuh.
 
@@ -96,7 +96,9 @@ python -m pip install -e .
 python -c "import torch, depth_anything_3; print(torch.__version__, torch.cuda.is_available(), depth_anything_3.__file__)"
 ```
 
-Perintah `pip install -e .` mengikuti README konsol lama. Setelahnya `torch.__version__` harus tetap `2.13.0+cu132` dan CUDA tetap `True`. Bila roda torch berubah, pasang kembali `torch==2.13.0+cu132` dan `torchvision==0.28.0+cu132` dari indeks `cu132` sebelum `start.bat`. Bobot diunduh Hugging Face pada pemakaian pertama: `depth-anything/DA3METRIC-LARGE`.
+Perintah `pip install -e .` mengikuti README konsol lama. Jangan memakai ekstra `.[gs]`. Setelahnya `torch.__version__` harus tetap `2.13.0+cu132` dan CUDA tetap `True`. Bila roda torch berubah, pasang kembali `torch==2.13.0+cu132` dan `torchvision==0.28.0+cu132` dari indeks `cu132` sebelum `start.bat`. Bobot diunduh Hugging Face pada pemakaian pertama: `depth-anything/DA3METRIC-LARGE`.
+
+`depth_anything_3/cfg.py` menjalankan `OmegaConf.register_new_resolver("eval", eval)` pada saat impor. OmegaConf baru meminta `register_resolver`. Pekerja v2 mengalihkan pendaftaran lama ke fungsi itu dan mengabaikan pendaftaran kedua, sehingga baris `Use register_resolver() instead` tidak tercetak. Bila modul yang hilang adalah `depth_anything_3`, detail tetap kalimat clone di atas. Bila yang hilang adalah `addict`, detail meminta `python -m pip install addict`: `pip install -e .` tidak memasang paket itu. Modul lain disebut namanya. Peringatan `MDL-002` pada `POST /models/switch` dicatat sebagai JSON dan jendela tetap terbuka.
 
 Pekerja v2 memuat `depth_anything_3` pada CUDA di dalam anggaran 6144 MB dan 90% GPU, sama seperti AquaClear dan HydroDetect. `from_pretrained` lalu `to(cuda).eval()`, inferensi `process_res` dan `export_format="mini_npz"`. Bawaan 504. Tombol layar memakai 378, 504, atau 672 tanpa memuat ulang model. Pratinjau live tetap relatif. Estimasi pada frame beku memakai tensor yang sama, fokus kosong, dan skala referensi. `config/spatialsight.yaml` yang `backend`-nya `depth_pro` tetap memakai `depth_pro.pt`.
 
