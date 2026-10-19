@@ -23,7 +23,7 @@ Angka teknis yang belum diisi tim tidak dikarang. Uji kode memakai fixture di `t
 | D-12 | `metadata.json` (ukuran input, versi, metrik) | `models/hydrodetect/exp5/metadata.json` | 6, 9 | Belum ada. Metrik tidak dikarang. |
 | D-13 | Precision, recall, mAP50 mask per kelas | di dalam D-12 | 9 | Menyusul bersama D-12. |
 | D-14 | Model kedalaman SpatialSight | `models/spatialsight/depth_pro.pt` | 6 | Apple Depth Pro pada Python 3.12 dan CUDA Ultralytics. ONNX relatif di `model.onnx` tetap cadangan pratinjau. Tanpa kedua berkas: MDL-001, tanpa peta tiruan. |
-| D-15 | Tiga preset AquaClear dari `aquaclear_test.py` | `config/aquaclear_presets.yaml` | 6 | Angka yang ada masih USULAN. Kunci preset memakai nama `light` / `medium` / `heavy`. |
+| D-15 | Tiga preset AquaClear | `config/aquaclear_presets.yaml` | 6 | Mengikuti `pipeline.py` konsol RCVD: Ringan=`realtime` (halaman live lama), Balanced=`balanced`, Inspection=`inspection`. OpenCV dan NumPy sudah cukup. |
 | D-16 | Ambang keyakinan per kelas | `config/hydrodetect.yaml` | 6 | USULAN Q-GPU-4: bawaan 0,50, Leakage 0,35. Boleh menyusul. |
 | D-17 | 20–50 gambar uji berlabel | `samples/labeled/` | 6 | Belum ada. `scripts/eval_hydrodetect.py` berhenti kode 2. |
 | D-30 | Tabel warna matriks 5×5 PR-06-019 | `config/risk.yaml` → `matrix` | 9 | Sengaja `null`. Layar menampilkan "Data prosedur belum diisi". |

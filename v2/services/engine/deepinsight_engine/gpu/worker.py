@@ -15,7 +15,7 @@ from ..core.errors import EngineError
 from ..spatial.estimate import scene_from_message
 from ..spatial.preview import relative_preview
 from ..spatial.source import missing_spatial_detail, spatial_source
-from .aquaclear import apply_preset
+from .aquaclear import enhance_frame, open_enhancer
 from .depth_map import relative_from_output
 from .depth_pro_runtime import infer_meters, load_depth_pro
 from .ultralytics_seg import (
@@ -57,6 +57,7 @@ def main() -> None:
             state["runtime"] = None
             state["depth_pro"] = None
             state["tensor"] = None
+            state["enhancer"] = None
             _emit({"event": "unloaded"})
 
 
@@ -74,6 +75,7 @@ def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
         return {"event": "error", "code": "MDL-001", "detail": missing}
     if kind == "aquaclear":
         state["preset"] = AquaPreset.model_validate(message["preset"])
+        state["enhancer"] = open_enhancer(state["preset"])
     else:
         opened = _open_session(root / str(message["onnx"]))
         if isinstance(opened, dict):
@@ -221,7 +223,7 @@ def _input_meta(session: Any) -> dict[str, Any]:
 
 def _infer(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     if state["kind"] == "aquaclear":
-        _write_aquaclear(message, state["preset"])
+        _write_aquaclear(state, message)
         return {
             "event": "result",
             "frame_id": message["frame_id"],
@@ -364,7 +366,7 @@ def _tensor(np: Any, raw: bytes, width: int, height: int, meta: dict[str, Any]) 
     return batch
 
 
-def _write_aquaclear(message: dict[str, Any], preset: AquaPreset) -> None:
+def _write_aquaclear(state: dict[str, Any], message: dict[str, Any]) -> None:
     from multiprocessing.shared_memory import SharedMemory
 
     shared = SharedMemory(name=str(message["shm"]))
@@ -372,7 +374,11 @@ def _write_aquaclear(message: dict[str, Any], preset: AquaPreset) -> None:
         width, height = int(message["width"]), int(message["height"])
         view: Any = shared.buf
         raw = bytes(view[: width * height * 3])
-        out = apply_preset(raw, width, height, preset)
+        enhancer = state.get("enhancer")
+        if enhancer is None:
+            enhancer = open_enhancer(state["preset"])
+            state["enhancer"] = enhancer
+        out = enhance_frame(enhancer, raw, width, height)
         view[: len(out)] = out
     finally:
         shared.close()

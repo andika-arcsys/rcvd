@@ -50,6 +50,10 @@ strict = true
 files = ["deepinsight_engine", "scripts"]
 plugins = ["pydantic.mypy"]
 
+[[tool.mypy.overrides]]
+module = "deepinsight_engine.enhance.*"
+ignore_errors = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

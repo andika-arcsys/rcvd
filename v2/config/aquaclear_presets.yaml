@@ -1,18 +1,12 @@
-# Parameter AquaClear (OpenCV, CPU). Bukan berkas model.
-# USULAN – perlu konfirmasi tim: angka preset belum diukur terhadap skrip lama.
+# Nama pipeline mengikuti underwater_enhance/pipeline.py pada konsol RCVD.
+# Halaman /live/aquaclear di konsol itu memakai preset realtime.
 schema_version: 1
-default: medium
+default: light
 
 presets:
   light:
-    clahe_clip: 1.2
-    clahe_tile: 8
-    dehaze: 0.0
+    pipeline: realtime
   medium:
-    clahe_clip: 2.0
-    clahe_tile: 8
-    dehaze: 0.4
+    pipeline: balanced
   heavy:
-    clahe_clip: 3.5
-    clahe_tile: 8
-    dehaze: 0.7
+    pipeline: inspection
