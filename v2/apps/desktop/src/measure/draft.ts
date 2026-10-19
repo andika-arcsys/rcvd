@@ -44,6 +44,7 @@ export interface Geometry {
   areas: XY[][];
   angles: AngleMark[];
   notes: Anno[];
+  paths: XY[][];
 }
 
 export interface Draft {
@@ -75,7 +76,7 @@ export interface Preview {
 export const VIEW_W = 640;
 export const VIEW_H = 360;
 
-const EMPTY: Geometry = { cal: null, lengths: [], areas: [], angles: [], notes: [] };
+const EMPTY: Geometry = { cal: null, lengths: [], areas: [], angles: [], notes: [], paths: [] };
 
 export function emptyDraft(): Draft {
   return {
@@ -120,7 +121,11 @@ export function place(draft: Draft, point: XY): Draft {
 export function finishPath(draft: Draft): Draft {
   if (draft.tool !== 'path' || draft.pending.length < 2) return draft;
   const added = segments(draft.pending);
-  return commit(draft, { ...draft.geometry, lengths: [...draft.geometry.lengths, ...added] });
+  return commit(draft, {
+    ...draft.geometry,
+    lengths: [...draft.geometry.lengths, ...added],
+    paths: [...draft.geometry.paths, draft.pending],
+  });
 }
 
 export function closeArea(draft: Draft): Draft {

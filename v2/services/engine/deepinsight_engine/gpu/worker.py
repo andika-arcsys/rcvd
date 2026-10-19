@@ -12,8 +12,12 @@ from typing import Any
 
 from ..core.config import AquaPreset
 from ..core.errors import EngineError
+from ..spatial.estimate import scene_from_message
+from ..spatial.preview import relative_preview
+from ..spatial.source import missing_spatial_detail, spatial_source
 from .aquaclear import apply_preset
 from .depth_map import relative_from_output
+from .depth_pro_runtime import infer_meters, load_depth_pro
 from .ultralytics_seg import (
     IMGSZ,
     QUALITY_SIZES,
@@ -42,6 +46,8 @@ def main() -> None:
             _emit(_load(state, message))
         elif command == "infer":
             _emit(_infer(state, message))
+        elif command == "geometry":
+            _emit(_geometry(state, message))
         elif command == "unload":
             _hold_if_requested()
             state["session"] = None
@@ -49,6 +55,8 @@ def main() -> None:
             state["classes"] = None
             state["hydro"] = None
             state["runtime"] = None
+            state["depth_pro"] = None
+            state["tensor"] = None
             _emit({"event": "unloaded"})
 
 
@@ -59,6 +67,8 @@ def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
         loaded = _load_hydro(state, root, message)
         if loaded is not None:
             return loaded
+    if kind == "spatialsight":
+        return _load_spatial(state, root, message)
     missing = _missing_file(kind, root, message)
     if missing:
         return {"event": "error", "code": "MDL-001", "detail": missing}
@@ -103,6 +113,47 @@ def _load_hydro(
     state["runtime"] = "ultralytics"
     state["kind"] = "hydrodetect"
     return {"event": "ready", "fp16": state["device"] != "cpu"}
+
+
+def _load_spatial(state: dict[str, Any], root: Path, message: dict[str, Any]) -> dict[str, Any]:
+    onnx = _opt_str(message.get("onnx"))
+    checkpoint = _opt_str(message.get("checkpoint"))
+    picked = spatial_source(root, onnx, checkpoint)
+    if picked is None:
+        detail = missing_spatial_detail(onnx, checkpoint)
+        return {"event": "error", "code": "MDL-001", "detail": detail}
+    runtime, path = picked
+    try:
+        _remember_side(state, "spatialsight", root, message)
+    except EngineError as exc:
+        return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    if runtime == "depth_pro":
+        return _ready_depth_pro(state, path)
+    opened = _open_session(path)
+    if isinstance(opened, dict):
+        return opened
+    state["session"] = opened
+    state["meta"] = _input_meta(opened)
+    state["runtime"] = "onnx"
+    state["kind"] = "spatialsight"
+    return {"event": "ready", "fp16": bool(state["meta"].get("fp16"))}
+
+
+def _ready_depth_pro(state: dict[str, Any], path: Path) -> dict[str, Any]:
+    try:
+        state["depth_pro"] = load_depth_pro(path)
+    except EngineError as exc:
+        return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    state["runtime"] = "depth_pro"
+    state["kind"] = "spatialsight"
+    return {"event": "ready", "fp16": True}
+
+
+def _opt_str(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def _hydro_config(message: dict[str, Any]) -> Any:
@@ -179,6 +230,8 @@ def _infer(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
         }
     if state.get("runtime") == "ultralytics":
         return _infer_ultra(state, message)
+    if state.get("runtime") == "depth_pro":
+        return _infer_depth(state, message)
     if state["session"] is None:
         return {"event": "error", "code": "MDL-002", "detail": "sesi model kosong"}
     try:
@@ -223,6 +276,52 @@ def _infer_onnx(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any
     depth = relative_from_output(outputs[0], int(state["spatial"]["preview_max_side"]))
     del outputs
     return depth_event(frame_id, depth)
+
+
+def _infer_depth(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
+    frame_id = str(message["frame_id"])
+    try:
+        depth_m, focal = _predict(state, message)
+    except EngineError as exc:
+        return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    except Exception as exc:  # noqa: BLE001 - inferensi tidak boleh mematikan pekerja
+        return {"event": "error", "code": "MDL-002", "detail": str(exc)}
+    _keep_tensor(state, depth_m, focal, frame_id)
+    side = int(state["spatial"]["preview_max_side"])
+    return depth_event(frame_id, relative_preview(depth_m, side))
+
+
+def _geometry(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
+    if state.get("runtime") != "depth_pro":
+        return {
+            "event": "error",
+            "code": "MDL-002",
+            "detail": "pratinjau ONNX relatif tidak punya tensor meter",
+        }
+    try:
+        depth_m, focal = _predict(state, message)
+        result = scene_from_message(depth_m, focal, message)
+    except EngineError as exc:
+        return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    except (ValueError, KeyError, TypeError) as exc:
+        return {"event": "error", "code": "MDL-002", "detail": str(exc)}
+    except Exception as exc:  # noqa: BLE001 - inferensi tidak boleh mematikan pekerja
+        return {"event": "error", "code": "MDL-002", "detail": str(exc)}
+    _keep_tensor(state, depth_m, focal, str(message.get("frame_id")))
+    return {"event": "result", "kind": "spatial-geometry", **result}
+
+
+def _predict(state: dict[str, Any], message: dict[str, Any]) -> tuple[Any, float | None]:
+    np = importlib.import_module("numpy")
+    width, height = int(message["width"]), int(message["height"])
+    image = np.frombuffer(_read_raw(message), dtype=np.uint8).reshape(height, width, 3)
+    return infer_meters(state["depth_pro"], image)
+
+
+def _keep_tensor(state: dict[str, Any], depth_m: Any, focal: float | None, frame_id: str) -> None:
+    state["tensor"] = depth_m
+    state["focal"] = focal
+    state["tensor_frame"] = frame_id
 
 
 def _tune_confidence(message: dict[str, Any]) -> float | None:

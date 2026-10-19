@@ -12,7 +12,9 @@ entries:
     classes: hydrodetect/exp5/classes.json
     metadata: hydrodetect/exp5/metadata.json
     requires_gpu: true
-  # Bukan Ultralytics. Konsol lama memakai Depth Anything 3; v2 menunggu ONNX relatif.
+  # Depth Pro memakai Python dan CUDA yang sama dengan Ultralytics.
+  # Checkpoint didahulukan. ONNX tetap pratinjau relatif bila .pt belum ada.
   spatialsight:
+    checkpoint: spatialsight/depth_pro.pt
     onnx: spatialsight/model.onnx
     requires_gpu: true

@@ -47,6 +47,9 @@ describe('SpatialSight', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/Dekat/)).toBeInTheDocument();
     expect(screen.queryByText('0.1')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Hitung estimasi kedalaman' }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/m²/)).not.toBeInTheDocument();
   });
 });

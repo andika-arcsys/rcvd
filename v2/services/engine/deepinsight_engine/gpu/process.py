@@ -9,7 +9,7 @@ import sys
 from collections.abc import Mapping
 from multiprocessing.shared_memory import SharedMemory
 from queue import Empty, Queue
-from threading import Thread
+from threading import Lock, Thread
 from typing import Any
 
 from ..core.errors import REGISTRY, EngineError
@@ -22,6 +22,7 @@ class WorkerHandle:
         self._env = dict(env or {})
         self._queue: Queue[str] = Queue()
         self._proc: subprocess.Popen[str] | None = None
+        self._io = Lock()
         self.last_event: dict[str, Any] | None = None
 
     @property
@@ -62,6 +63,16 @@ class WorkerHandle:
         return loaded
 
     def infer(self, frame: StoredFrame, extra: Mapping[str, Any] | None = None) -> bytes | None:
+        with self._io:
+            return self._infer_locked(frame, extra)
+
+    def geometry(
+        self, raw: bytes, width: int, height: int, frame_id: str, spec: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        with self._io:
+            return self._geometry_locked(raw, width, height, frame_id, spec)
+
+    def _infer_locked(self, frame: StoredFrame, extra: Mapping[str, Any] | None) -> bytes | None:
         shared = SharedMemory(create=True, size=len(frame.bgr))
         try:
             view: Any = shared.buf
@@ -80,13 +91,37 @@ class WorkerHandle:
             shared.close()
             shared.unlink()
 
-    def unload(self, timeout: float) -> bool:
-        self.request({"cmd": "unload"})
+    def _geometry_locked(
+        self, raw: bytes, width: int, height: int, frame_id: str, spec: Mapping[str, Any]
+    ) -> dict[str, Any]:
+        shared = SharedMemory(create=True, size=len(raw))
         try:
-            event = self.read_event(timeout)
-        except EngineError:
-            return False
-        return event.get("event") == "unloaded"
+            view: Any = shared.buf
+            view[: len(raw)] = raw
+            payload: dict[str, Any] = {
+                "cmd": "geometry",
+                "shm": shared.name,
+                "width": width,
+                "height": height,
+                "frame_id": frame_id,
+            }
+            payload.update(spec)
+            self.request(payload)
+            event = self.read_event()
+            _raise_if_error(event)
+            return event
+        finally:
+            shared.close()
+            shared.unlink()
+
+    def unload(self, timeout: float) -> bool:
+        with self._io:
+            self.request({"cmd": "unload"})
+            try:
+                event = self.read_event(timeout)
+            except EngineError:
+                return False
+            return event.get("event") == "unloaded"
 
     def kill(self) -> None:
         proc = self._proc

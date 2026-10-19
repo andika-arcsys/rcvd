@@ -234,6 +234,17 @@ class Runtime:
     def set_hydro_tune(self, confidence: float, imgsz: int) -> dict[str, float | int]:
         return self.models.set_hydro_tune(confidence, imgsz)
 
+    def estimate_spatial(self, frame_id: str, spec: dict[str, object]) -> dict[str, object]:
+        """Inferensi Depth Pro pada PNG bukti. Hasilnya tidak ditulis ke snapshot."""
+        path = self._evidence / f"{frame_id}.png"
+        if not path.is_file():
+            raise EngineError("VID-002", frame_id)
+        from .video.decode import decode_png
+
+        width, height, raw = decode_png(path.read_bytes())
+        event = self.models.geometry(raw, width, height, frame_id, spec)
+        return {key: value for key, value in event.items() if key != "event"}
+
     def compare_view(self) -> dict[str, object]:
         from .video.compare import compare_payload
 
