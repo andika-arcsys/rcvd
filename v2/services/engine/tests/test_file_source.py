@@ -23,6 +23,9 @@ def test_windows_camera_uses_directshow(monkeypatch) -> None:
         def isOpened(self) -> bool:
             return True
 
+        def set(self, _prop: object, _value: object) -> bool:
+            return True
+
     class FakeCv:
         CAP_DSHOW = 700
 

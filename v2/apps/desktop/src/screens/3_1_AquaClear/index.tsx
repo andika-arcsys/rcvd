@@ -6,7 +6,8 @@ import { useSession } from '../../session/SessionContext';
 import { WorkColumns } from '../../components/WorkColumns';
 import { FeatureTabs } from '../3_OpticalNativeView/FeatureTabs';
 import { useVideoStatus } from '../3_OpticalNativeView/useLive';
-import { useCompare, useVision } from '../features/poll';
+import { dash, memoryText } from '../3_OpticalNativeView/format';
+import { useVision } from '../features/poll';
 import { useReleaseModel } from '../features/release';
 import { ComparePane } from './Compare';
 import { PresetPanel } from './Presets';
@@ -17,7 +18,6 @@ export default function AquaClearScreen() {
   useReleaseModel();
   const status = useVideoStatus();
   const vision = useVision();
-  const pair = useCompare();
   const [split, setSplit] = useState(50);
   const lost = Boolean(status?.lost);
   const frameId = status?.frame_id ?? null;
@@ -25,9 +25,15 @@ export default function AquaClearScreen() {
     <div className="flex h-full min-h-0 flex-col gap-3 p-4">
       <FeatureTabs warning={status?.performance_warning ?? null} active="F2" />
       <WorkColumns
-        main={<ComparePane pair={pair} split={split} onSplit={setSplit} />}
+        main={<ComparePane split={split} onSplit={setSplit} />}
         side={<PresetPanel active={vision?.preset ?? null} />}
       />
+      <p className="font-mono text-xs text-muted">
+        {t('live.gpu')} {dash(status?.gpu_util_pct, '%')}
+        {' · '}
+        {t('live.memory')} {memoryText(status?.vram_used_mb, status?.vram_total_mb)}
+        {status?.gpu_device ? ` · ${status.gpu_device}` : ''}
+      </p>
       <AquaActions lost={lost} frameId={frameId} />
     </div>
   );

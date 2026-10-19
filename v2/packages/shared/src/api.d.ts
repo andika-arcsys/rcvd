@@ -2461,6 +2461,12 @@ export interface components {
             turbidity_configured: boolean;
             /** Gpu Util Pct */
             gpu_util_pct: number | null;
+            /** Vram Used Mb */
+            vram_used_mb?: number | null;
+            /** Vram Total Mb */
+            vram_total_mb?: number | null;
+            /** Gpu Device */
+            gpu_device?: string | null;
             /** Lost */
             lost: boolean;
             /** Snapshot Count */

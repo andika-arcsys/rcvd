@@ -10,7 +10,7 @@ import numpy as np
 from deepinsight_engine.core.config import load_settings
 from deepinsight_engine.enhance.cuda_video import CUDA_PRESETS, open_cuda_enhancer
 from deepinsight_engine.enhance.pipeline import UnderwaterEnhancer
-from deepinsight_engine.gpu.aquaclear import apply_preset, open_enhancer
+from deepinsight_engine.gpu.aquaclear import apply_preset, enhance_live, open_enhancer
 
 REPO = Path(__file__).resolve().parents[4]
 CONFIG = Path(__file__).resolve().parents[3] / "config"
@@ -52,12 +52,27 @@ def test_cuda_realtime_uses_the_script_flags() -> None:
 def test_open_enhancer_uses_cpu_when_cuda_is_absent() -> None:
     settings = load_settings(CONFIG)
     preset = settings.aquaclear.presets["light"]
-    enhancer = open_enhancer(preset)
-    if open_cuda_enhancer("realtime") is None:
+    cuda, note = open_cuda_enhancer("realtime")
+    enhancer, opened = open_enhancer(preset)
+    if cuda is None:
+        assert note.startswith("cpu")
+        assert opened.startswith("cpu")
         assert isinstance(enhancer, UnderwaterEnhancer)
         assert not getattr(enhancer, "uses_cuda", False)
     else:
         assert getattr(enhancer, "uses_cuda", False)
+
+
+def test_cpu_live_path_fits_the_display_side() -> None:
+    settings = load_settings(CONFIG)
+    preset = settings.aquaclear.presets["light"]
+    enhancer, _note = open_enhancer(preset)
+    if getattr(enhancer, "uses_cuda", False):
+        return
+    image = np.zeros((48, 64, 3), dtype=np.uint8)
+    out, width, height = enhance_live(enhancer, image.tobytes(), 64, 48, 32)
+    assert (width, height) == (32, 24)
+    assert len(out) == width * height * 3
 
 
 def test_default_is_the_live_page_preset() -> None:

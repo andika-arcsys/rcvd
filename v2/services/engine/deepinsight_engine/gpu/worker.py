@@ -15,7 +15,7 @@ from ..core.errors import EngineError
 from ..spatial.estimate import scene_from_message
 from ..spatial.preview import relative_preview
 from ..spatial.source import missing_spatial_detail, spatial_source
-from .aquaclear import enhance_frame, open_enhancer
+from .aquaclear import enhance_live, open_enhancer
 from .depth_map import relative_from_output
 from .depth_pro_runtime import infer_meters, load_depth_pro
 from .ultralytics_seg import (
@@ -75,10 +75,12 @@ def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
         return {"event": "error", "code": "MDL-001", "detail": missing}
     if kind == "aquaclear":
         state["preset"] = AquaPreset.model_validate(message["preset"])
-        state["enhancer"] = open_enhancer(state["preset"])
+        state["max_side"] = int(message.get("display_max_side") or 0)
+        state["enhancer"], note = open_enhancer(state["preset"], state["max_side"])
         state["meta"] = {"fp16": bool(getattr(state["enhancer"], "uses_cuda", False))}
-        device = "cuda" if state["meta"]["fp16"] else "cpu"
-        sys.stderr.write(f"AquaClear enhancer: {device} preset={state['preset'].pipeline}\n")
+        state["device_note"] = note
+        preset_name = state["preset"].pipeline
+        sys.stderr.write(f"AquaClear enhancer: {note} preset={preset_name}\n")
         sys.stderr.flush()
     else:
         opened = _open_session(root / str(message["onnx"]))
@@ -92,7 +94,11 @@ def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
             state["session"] = None
             return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
     state["kind"] = kind
-    return {"event": "ready", "fp16": bool(state.get("meta", {}).get("fp16"))}
+    return {
+        "event": "ready",
+        "fp16": bool(state.get("meta", {}).get("fp16")),
+        "device": state.get("device_note"),
+    }
 
 
 def _load_hydro(
@@ -227,12 +233,14 @@ def _input_meta(session: Any) -> dict[str, Any]:
 
 def _infer(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     if state["kind"] == "aquaclear":
-        _write_aquaclear(state, message)
+        out_w, out_h = _write_aquaclear(state, message)
         return {
             "event": "result",
             "frame_id": message["frame_id"],
             "enhanced": True,
             "kind": "aquaclear",
+            "out_width": out_w,
+            "out_height": out_h,
         }
     if state.get("runtime") == "ultralytics":
         return _infer_ultra(state, message)
@@ -370,7 +378,7 @@ def _tensor(np: Any, raw: bytes, width: int, height: int, meta: dict[str, Any]) 
     return batch
 
 
-def _write_aquaclear(state: dict[str, Any], message: dict[str, Any]) -> None:
+def _write_aquaclear(state: dict[str, Any], message: dict[str, Any]) -> tuple[int, int]:
     from multiprocessing.shared_memory import SharedMemory
 
     shared = SharedMemory(name=str(message["shm"]))
@@ -380,10 +388,13 @@ def _write_aquaclear(state: dict[str, Any], message: dict[str, Any]) -> None:
         raw = bytes(view[: width * height * 3])
         enhancer = state.get("enhancer")
         if enhancer is None:
-            enhancer = open_enhancer(state["preset"])
+            enhancer, _note = open_enhancer(state["preset"], int(state.get("max_side") or 0))
             state["enhancer"] = enhancer
-        out = enhance_frame(enhancer, raw, width, height)
+        out, out_w, out_h = enhance_live(
+            enhancer, raw, width, height, int(state.get("max_side") or 0)
+        )
         view[: len(out)] = out
+        return out_w, out_h
     finally:
         shared.close()
 

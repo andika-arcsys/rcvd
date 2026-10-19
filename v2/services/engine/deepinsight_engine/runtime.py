@@ -61,6 +61,7 @@ class Runtime:
             on_error,
             hydro=settings.hydrodetect,
             spatial=settings.spatialsight,
+            display_max_side=settings.thresholds.video.display_max_side,
         )
         self.cache = CacheManager(data_dir / "cache", settings.thresholds.cache.max_mb)
         self.pipeline = FramePipeline(
@@ -195,6 +196,9 @@ class Runtime:
             "turbidity_level": level,
             "turbidity_configured": configured(self._settings.video.turbidity),
             "gpu_util_pct": gpu.utilization_pct,
+            "vram_used_mb": gpu.vram_used_mb,
+            "vram_total_mb": gpu.vram_total_mb,
+            "gpu_device": self.models.device_note,
             "lost": state == "lost",
             "snapshot_count": serial,
             "performance_warning": warning,
@@ -253,7 +257,23 @@ class Runtime:
             frame = self.pipeline.ring.latest()
             shown = self.pipeline.last_display
         jpeg = None if shown is None else shown.jpeg
-        return compare_payload(frame, jpeg, video.display_max_side, video.display_jpeg_quality)
+        raw_jpeg = None if shown is None else shown.raw_jpeg
+        return compare_payload(
+            frame, jpeg, video.display_max_side, video.display_jpeg_quality, raw_jpeg
+        )
+
+    def compare_packet(self) -> tuple[dict[str, object], list[bytes]]:
+        with self._lock:
+            shown = self.pipeline.last_display
+            state = self.pipeline.state
+        frame_id = None if shown is None else shown.frame_id
+        parts: list[bytes] = []
+        if shown is not None and state != "lost":
+            if shown.raw_jpeg is not None:
+                parts.append(shown.raw_jpeg)
+            if shown.jpeg:
+                parts.append(shown.jpeg)
+        return {"state": state, "frame_id": frame_id, "parts": len(parts)}, parts
 
     def display_packet(self) -> tuple[dict[str, object], bytes | None]:
         with self._lock:
@@ -311,7 +331,7 @@ class Runtime:
         if shown is not None and shown.frame_id == frame.frame_id:
             self.cache.put(f"display/{frame.frame_id}", shown.jpeg)
 
-    def _enhance(self, frame: StoredFrame) -> bytes | None:
+    def _enhance(self, frame: StoredFrame) -> tuple[bytes, int, int] | None:
         try:
             raw = self.models.infer(frame)
         except EngineError as exc:
@@ -319,7 +339,13 @@ class Runtime:
             return None
         event = self.models.last_result
         self._vision = {} if event is None else dict(event)
-        return raw
+        if raw is None:
+            return None
+        width = int((event or {}).get("out_width") or frame.width)
+        height = int((event or {}).get("out_height") or frame.height)
+        if width * height * 3 != len(raw):
+            width, height = frame.width, frame.height
+        return raw, width, height
 
     def _display_fps(self) -> float | None:
         with self._lock:

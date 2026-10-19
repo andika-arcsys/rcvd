@@ -34,6 +34,7 @@ class ModelManager:
         worker_env: Mapping[str, str] | None = None,
         hydro: HydrodetectConfig | None = None,
         spatial: SpatialSightConfig | None = None,
+        display_max_side: int = 0,
     ) -> None:
         self._catalog = catalog
         self._models_dir = models_dir
@@ -47,6 +48,7 @@ class ModelManager:
         self._worker_env = dict(worker_env or {})
         self._hydro = hydro
         self._spatial = spatial
+        self._display_max_side = display_max_side
         self._hydro_tune: dict[str, float | int] = {
             "confidence": 0.5 if hydro is None else hydro.default_confidence,
             "imgsz": 640,
@@ -58,6 +60,7 @@ class ModelManager:
         self.last_result: dict[str, Any] | None = None
         self.state = "optical"
         self.killed_for_vram = False
+        self.device_note: str | None = None
 
     def set_models_dir(self, models_dir: Path) -> None:
         self._models_dir = models_dir
@@ -126,6 +129,7 @@ class ModelManager:
         self.active = None
         self.preset_name = None
         self.last_result = None
+        self.device_note = None
         self.state = "optical"
 
     def _open(self, name: str, entry: ModelEntry, preset: str | None) -> WorkerHandle:
@@ -146,6 +150,8 @@ class ModelManager:
             worker.kill()
             self._fail_optical()
             raise EngineError("MDL-002", str(event))
+        note = event.get("device")
+        self.device_note = None if note is None else str(note)
         return worker
 
     def _fail_optical(self) -> None:
@@ -153,6 +159,7 @@ class ModelManager:
         self.active = None
         self.preset_name = None
         self.last_result = None
+        self.device_note = None
         self.state = "optical"
 
     def _release(self) -> None:
@@ -189,6 +196,7 @@ class ModelManager:
             "preset": chosen.model_dump(),
             "hydro": None if self._hydro is None else self._hydro.model_dump(),
             "spatial": None if self._spatial is None else self._spatial.model_dump(),
+            "display_max_side": self._display_max_side,
         }
 
     def _preset(self, name: str | None) -> AquaPreset:

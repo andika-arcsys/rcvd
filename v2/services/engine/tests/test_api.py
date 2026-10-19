@@ -10,6 +10,7 @@ from deepinsight_engine.api.app import create_app
 from deepinsight_engine.core.config import load_settings
 from deepinsight_engine.core.errors import EngineError
 from deepinsight_engine.core.ids import is_session_id
+from deepinsight_engine.diagnostics import parse_smi_line
 
 
 def test_health(client: TestClient) -> None:
@@ -37,6 +38,17 @@ def test_diagnostics_has_required_fields(client: TestClient) -> None:
     assert body["gpu"]["available"] in (True, False)
     if not body["gpu"]["available"]:
         assert body["gpu"]["error_code"] == "GPU-001"
+
+
+def test_nvidia_smi_line_becomes_gpu_reading() -> None:
+    info = parse_smi_line("NVIDIA GeForce RTX 3070, 8192, 640, 18")
+    assert info is not None
+    assert info.available is True
+    assert info.name == "NVIDIA GeForce RTX 3070"
+    assert info.vram_total_mb == 8192
+    assert info.vram_used_mb == 640
+    assert info.utilization_pct == 18
+    assert parse_smi_line("bukan angka") is None
 
 
 def test_config_endpoints(client: TestClient) -> None:

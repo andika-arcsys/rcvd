@@ -43,6 +43,7 @@ def test_synthetic_freeze_is_raw_png_outside_cache(client: TestClient, tmp_path:
     switched = client.post("/models/switch", json={"name": "aquaclear", "preset": "medium"})
     assert switched.status_code == 200
     assert switched.json()["state"] == "ready"
+    assert str(client.get("/video/status").json()["gpu_device"]).startswith(("cpu", "cuda"))
     frames = client.post("/video/synthetic", json={"count": 2, "width": 32, "height": 24})
     assert frames.status_code == 200
     frame_id = frames.json()["frame_ids"][-1]

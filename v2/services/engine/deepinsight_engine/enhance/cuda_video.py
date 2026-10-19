@@ -38,16 +38,17 @@ CUDA_PRESETS: dict[str, CudaPreset] = {
 
 
 class CudaUnderwaterVideoEnhancer:
-    """Enhancer stateful. process() mengembalikan BGR uint8 seukuran masukan."""
+    """Enhancer stateful. process() mengembalikan BGR uint8, diperkecil bila max_side diisi."""
 
     uses_cuda = True
 
-    def __init__(self, pipeline: str, device: str = "cuda:0") -> None:
+    def __init__(self, pipeline: str, device: str = "cuda:0", max_side: int = 0) -> None:
         torch = importlib.import_module("torch")
         chosen = CUDA_PRESETS[pipeline]
         self.torch = torch
         self.nnf = torch.nn.functional
         self.device = torch.device(device)
+        self.max_side = max_side
         self.denoise = chosen.denoise
         self.temporal_alpha = chosen.temporal_alpha
         self.gamma = chosen.gamma
@@ -66,10 +67,24 @@ class CudaUnderwaterVideoEnhancer:
             / 255.0
         )
         with torch.amp.autocast("cuda", dtype=torch.float16):
+            image = self._fit(image)
             image = _color(torch, image, self.gamma, self.saturation)
             image = self._edge_aware_denoise(image)
             image = self._motion_adaptive_temporal(image)
         return (image[0].permute(1, 2, 0).clamp(0, 1) * 255.0).byte().cpu().numpy()
+
+    def _fit(self, image: Any) -> Any:
+        if self.max_side <= 0:
+            return image
+        from ..video.encode import fitted_size
+
+        height, width = int(image.shape[2]), int(image.shape[3])
+        out_w, out_h = fitted_size(width, height, self.max_side)
+        if (out_w, out_h) == (width, height):
+            return image
+        return self.nnf.interpolate(
+            image, size=(out_h, out_w), mode="bilinear", align_corners=False
+        )
 
     def _blur(self, image: Any) -> Any:
         kernel = self.gaussian.repeat(3, 1, 1, 1)
@@ -99,17 +114,24 @@ class CudaUnderwaterVideoEnhancer:
         return output
 
 
-def open_cuda_enhancer(pipeline: str) -> CudaUnderwaterVideoEnhancer | None:
+def open_cuda_enhancer(
+    pipeline: str, max_side: int = 0
+) -> tuple[CudaUnderwaterVideoEnhancer | None, str]:
     try:
         torch = importlib.import_module("torch")
     except ImportError:
-        return None
+        return None, "cpu torch tidak terpasang pada Python start.bat"
     if not bool(torch.cuda.is_available()):
-        return None
+        return None, "cpu torch.cuda.is_available() false"
     try:
-        return CudaUnderwaterVideoEnhancer(pipeline)
-    except (RuntimeError, AssertionError):
-        return None
+        enhancer = CudaUnderwaterVideoEnhancer(pipeline, max_side=max_side)
+    except (RuntimeError, AssertionError) as exc:
+        return None, f"cpu CUDA gagal: {exc}"
+    free, total = torch.cuda.mem_get_info()
+    used = (total - free) / (1024 * 1024)
+    whole = total / (1024 * 1024)
+    name = str(torch.cuda.get_device_name(enhancer.device))
+    return enhancer, f"cuda {name} vram={used:.0f}/{whole:.0f}MB side={max_side}"
 
 
 def _gaussian_kernel(torch: Any, size: int, sigma: float, device: Any) -> Any:

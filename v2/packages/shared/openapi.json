@@ -7890,6 +7890,39 @@
             ],
             "title": "Gpu Util Pct"
           },
+          "vram_used_mb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vram Used Mb"
+          },
+          "vram_total_mb": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vram Total Mb"
+          },
+          "gpu_device": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gpu Device"
+          },
           "lost": {
             "type": "boolean",
             "title": "Lost"
