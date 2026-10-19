@@ -1,4 +1,4 @@
-"""Proses pekerja: satu model. AquaClear di CPU. ONNX hanya dibuka bila berkasnya ada."""
+"""Proses pekerja: satu model. AquaClear di CUDA bila ada, OpenCV bila tidak."""
 
 from __future__ import annotations
 
@@ -76,6 +76,10 @@ def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     if kind == "aquaclear":
         state["preset"] = AquaPreset.model_validate(message["preset"])
         state["enhancer"] = open_enhancer(state["preset"])
+        state["meta"] = {"fp16": bool(getattr(state["enhancer"], "uses_cuda", False))}
+        device = "cuda" if state["meta"]["fp16"] else "cpu"
+        sys.stderr.write(f"AquaClear enhancer: {device} preset={state['preset'].pipeline}\n")
+        sys.stderr.flush()
     else:
         opened = _open_session(root / str(message["onnx"]))
         if isinstance(opened, dict):

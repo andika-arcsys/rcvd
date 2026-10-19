@@ -8,8 +8,9 @@ from pathlib import Path
 import numpy as np
 
 from deepinsight_engine.core.config import load_settings
+from deepinsight_engine.enhance.cuda_video import CUDA_PRESETS, open_cuda_enhancer
 from deepinsight_engine.enhance.pipeline import UnderwaterEnhancer
-from deepinsight_engine.gpu.aquaclear import apply_preset
+from deepinsight_engine.gpu.aquaclear import apply_preset, open_enhancer
 
 REPO = Path(__file__).resolve().parents[4]
 CONFIG = Path(__file__).resolve().parents[3] / "config"
@@ -32,6 +33,31 @@ def test_each_button_matches_the_rcvd_preset() -> None:
         right = UnderwaterEnhancer.from_preset(pipeline).process(image.copy())
         assert left.shape == image.shape
         assert np.array_equal(left, right)
+
+
+def test_cuda_realtime_uses_the_script_flags() -> None:
+    chosen = CUDA_PRESETS["realtime"]
+    assert (chosen.denoise, chosen.temporal_alpha, chosen.gamma, chosen.saturation) == (
+        0.45,
+        0.35,
+        0.96,
+        1.05,
+    )
+    for name in ("balanced", "inspection", "quality"):
+        other = CUDA_PRESETS[name]
+        assert other.gamma == 0.96
+        assert other.saturation == 1.05
+
+
+def test_open_enhancer_uses_cpu_when_cuda_is_absent() -> None:
+    settings = load_settings(CONFIG)
+    preset = settings.aquaclear.presets["light"]
+    enhancer = open_enhancer(preset)
+    if open_cuda_enhancer("realtime") is None:
+        assert isinstance(enhancer, UnderwaterEnhancer)
+        assert not getattr(enhancer, "uses_cuda", False)
+    else:
+        assert getattr(enhancer, "uses_cuda", False)
 
 
 def test_default_is_the_live_page_preset() -> None:

@@ -22,7 +22,18 @@ v2 memakai modul yang sama di `services/engine/deepinsight_engine/enhance/`. Tom
 
 Bawaan saat jendela AquaClear dibuka adalah Ringan. Enhancer disimpan di pekerja supaya campuran temporal antar-frame tetap jalan. Ganti preset melepas pekerja dan memulai enhancer baru. Tidak ada berkas model.
 
-Instalasi AquaClear pada `deepenv` sudah tercakup oleh engine: `opencv-python-headless` dan `numpy`. Tidak ada paket tambahan.
+Video terasa kasar dan berat bila setiap frame penuh melewati pipeline OpenCV di CPU: UDCP, CLAHE pada LAB, dan unsharp. Konsol lama hanya mengolah stream sisi 640. Referensi yang sudah dijalankan untuk video lebih halus ada di `scripts/enhance_video_cuda.py`, kelas `CudaUnderwaterVideoEnhancer`. Komentar di skrip itu menyebut CLAHE sebagai sumber grain, lalu memakai PyTorch CUDA fp16:
+
+1. kompensasi kanal merah dan biru
+2. white balance Shades-of-Gray, gain dijepit 0,85–1,25
+3. stretch persentil 1–99, rentang minimal 0,12
+4. gamma 0,96 dan saturasi 1,05
+5. denoise Gaussian 5×5 yang menjaga tepi (`--denoise 0.45`)
+6. campuran temporal yang hanya menempel di area diam (`--temporal-alpha 0.35`)
+
+v2 memakai langkah itu pada `enhance/cuda_video.py` saat `torch.cuda.is_available()` benar. Ukuran frame live tidak diubah menjadi 1280×720; langkah resize itu hanya untuk berkas keluaran skrip. JPEG tampilan tetap diperkecil oleh `display_max_side`. Tombol Ringan memakai angka skrip. Balanced menaikkan campuran temporal ke 0,45. Inspection ke 0,55. Gamma dan saturasi tetap 0,96 dan 1,05.
+
+Bila CUDA tidak ada, pekerja kembali ke `UnderwaterEnhancer` OpenCV supaya hasil satu frame tetap sama dengan konsol lama. `deepenv` yang sudah memuat `torch==2.13.0+cu132` tidak perlu paket baru. Tutup jendela lalu jalankan `start.bat` lagi agar pekerja memuat jalur CUDA.
 
 ## HydroDetect
 
