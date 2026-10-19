@@ -98,7 +98,7 @@ python -c "import torch, depth_anything_3; print(torch.__version__, torch.cuda.i
 
 Perintah `pip install -e .` mengikuti README konsol lama. Setelahnya `torch.__version__` harus tetap `2.13.0+cu132` dan CUDA tetap `True`. Bila roda torch berubah, pasang kembali `torch==2.13.0+cu132` dan `torchvision==0.28.0+cu132` dari indeks `cu132` sebelum `start.bat`. Bobot diunduh Hugging Face pada pemakaian pertama: `depth-anything/DA3METRIC-LARGE`.
 
-Geometri 3D di v2 sudah memakai rumus `measurement.py`. Backend kedalaman bawaan konsol lama adalah Depth Anything 3. Menyambungkan paket `depth_anything_3` ke pekerja v2 adalah langkah berikut setelah AquaClear.
+Pekerja v2 memuat `depth_anything_3` pada CUDA di dalam anggaran 6144 MB dan 90% GPU, sama seperti AquaClear dan HydroDetect. `from_pretrained` lalu `to(cuda).eval()`, inferensi `process_res` dan `export_format="mini_npz"`. Bawaan 504. Tombol layar memakai 378, 504, atau 672 tanpa memuat ulang model. Pratinjau live tetap relatif. Estimasi pada frame beku memakai tensor yang sama, fokus kosong, dan skala referensi. `config/spatialsight.yaml` yang `backend`-nya `depth_pro` tetap memakai `depth_pro.pt`.
 
 ## Yang tetap dari UI v2
 

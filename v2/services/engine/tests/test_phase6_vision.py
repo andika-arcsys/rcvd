@@ -109,3 +109,12 @@ def test_hydro_tune_changes_the_next_vision_read(client: TestClient) -> None:
     rejected = client.post("/vision/tune", json={"confidence": 0.01, "imgsz": 640})
     assert rejected.status_code == 422
     assert rejected.json()["code"] == "API-002"
+    vision_now = client.get("/vision").json()
+    assert vision_now["process_res"] == 504
+    tuned = client.post("/spatial/tune", json={"process_res": 672})
+    assert tuned.status_code == 200
+    assert tuned.json() == {"process_res": 672}
+    assert client.get("/vision").json()["process_res"] == 672
+    bad = client.post("/spatial/tune", json={"process_res": 1024})
+    assert bad.status_code == 422
+    assert bad.json()["code"] == "API-002"

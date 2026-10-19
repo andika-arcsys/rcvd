@@ -1,4 +1,4 @@
-"""Proses pekerja: satu model. AquaClear dan HydroDetect di CUDA bila ada."""
+"""Proses pekerja: satu model. AquaClear, HydroDetect, dan SpatialSight di CUDA bila ada."""
 
 from __future__ import annotations
 
@@ -14,8 +14,9 @@ from ..core.config import AquaPreset
 from ..core.errors import EngineError
 from ..spatial.estimate import scene_from_message
 from ..spatial.preview import relative_preview
-from ..spatial.source import missing_spatial_detail, spatial_source
+from ..spatial.source import missing_spatial_detail, spatial_choice
 from .aquaclear import enhance_live, open_enhancer
+from .depth_anything3_runtime import DA3_WARNINGS, clamp_res, infer_depth, load_model
 from .depth_map import relative_from_output
 from .depth_pro_runtime import infer_meters, load_depth_pro
 from .ultralytics_seg import (
@@ -67,9 +68,10 @@ def _command(state: dict[str, Any], command: str, message: dict[str, Any]) -> di
 
 
 def _clear(state: dict[str, Any]) -> None:
-    keys = ("session", "yolo", "classes", "hydro", "runtime", "depth_pro", "tensor", "enhancer")
+    keys = ("session", "yolo", "classes", "hydro", "runtime", "depth_pro", "da3", "tensor")
     for key in keys:
         state[key] = None
+    state["enhancer"] = None
     state["half"] = False
 
 
@@ -158,19 +160,26 @@ def _load_hydro(
 
 
 def _load_spatial(state: dict[str, Any], root: Path, message: dict[str, Any]) -> dict[str, Any]:
+    side = message.get("spatial") or {}
+    backend = str(side.get("backend") or "depth_anything3")
     onnx = _opt_str(message.get("onnx"))
     checkpoint = _opt_str(message.get("checkpoint"))
-    picked = spatial_source(root, onnx, checkpoint)
-    if picked is None:
-        detail = missing_spatial_detail(onnx, checkpoint)
-        return {"event": "error", "code": "MDL-001", "detail": detail}
-    runtime, path = picked
     try:
         _remember_side(state, "spatialsight", root, message)
     except EngineError as exc:
         return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    if backend == "depth_anything3":
+        return _ready_da3(state, message)
+    picked = spatial_choice(backend, root, onnx, checkpoint)
+    if picked is None:
+        detail = missing_spatial_detail(onnx, checkpoint)
+        return {"event": "error", "code": "MDL-001", "detail": detail}
+    runtime, path = picked
+    if path is None:
+        detail = missing_spatial_detail(onnx, checkpoint)
+        return {"event": "error", "code": "MDL-001", "detail": detail}
     if runtime == "depth_pro":
-        return _ready_depth_pro(state, path)
+        return _ready_depth_pro(state, path, message)
     opened = _open_session(path)
     if isinstance(opened, dict):
         return opened
@@ -181,14 +190,47 @@ def _load_spatial(state: dict[str, Any], root: Path, message: dict[str, Any]) ->
     return {"event": "ready", "fp16": bool(state["meta"].get("fp16"))}
 
 
-def _ready_depth_pro(state: dict[str, Any], path: Path) -> dict[str, Any]:
+def _ready_da3(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
+    side = message.get("spatial") or {}
+    model_id = str(side.get("model_id") or "depth-anything/DA3METRIC-LARGE")
+    size = clamp_res(message.get("process_res") or side.get("process_res"))
     try:
-        state["depth_pro"] = load_depth_pro(path)
+        bundle, note, half = load_model(
+            model_id,
+            float(message.get("vram_budget_mb") or 0),
+            float(message.get("gpu_max_pct") or 90),
+            size,
+        )
     except EngineError as exc:
         return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    state["da3"] = bundle
+    state["runtime"] = "depth_anything3"
+    state["process_res"] = size
+    state["half"] = half
+    state["kind"] = "spatialsight"
+    state["device_note"] = note
+    sys.stderr.write(f"SpatialSight: {note} process_res={size} model={model_id}\n")
+    sys.stderr.flush()
+    return {"event": "ready", "fp16": half, "device": note}
+
+
+def _ready_depth_pro(state: dict[str, Any], path: Path, message: dict[str, Any]) -> dict[str, Any]:
+    try:
+        bundle = load_depth_pro(
+            path,
+            float(message.get("vram_budget_mb") or 0),
+            float(message.get("gpu_max_pct") or 90),
+        )
+    except EngineError as exc:
+        return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    note = str(bundle.get("note") or "cuda depth pro")
+    state["depth_pro"] = bundle
     state["runtime"] = "depth_pro"
     state["kind"] = "spatialsight"
-    return {"event": "ready", "fp16": True}
+    state["device_note"] = note
+    sys.stderr.write(f"SpatialSight: {note}\n")
+    sys.stderr.flush()
+    return {"event": "ready", "fp16": True, "device": note}
 
 
 def _opt_str(value: object) -> str | None:
@@ -274,6 +316,8 @@ def _infer(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
         }
     if state.get("runtime") == "ultralytics":
         return _infer_ultra(state, message)
+    if state.get("runtime") == "depth_anything3":
+        return _infer_da3(state, message)
     if state.get("runtime") == "depth_pro":
         return _infer_depth(state, message)
     if state["session"] is None:
@@ -338,6 +382,36 @@ def _infer_onnx(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any
     return depth_event(frame_id, depth)
 
 
+def _infer_da3(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
+    np = importlib.import_module("numpy")
+    width, height = int(message["width"]), int(message["height"])
+    image = np.frombuffer(_read_raw(message), dtype=np.uint8).reshape(height, width, 3)
+    size = clamp_res(message.get("process_res") or state.get("process_res"))
+    state["process_res"] = size
+    try:
+        depth = _da3_depth(state, image, size)
+    except EngineError as exc:
+        return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
+    except Exception as exc:  # noqa: BLE001 - inferensi tidak boleh mematikan pekerja
+        return {"event": "error", "code": "MDL-002", "detail": str(exc)}
+    side = int(state["spatial"]["preview_max_side"])
+    return depth_event(str(message["frame_id"]), relative_preview(depth, side))
+
+
+def _da3_depth(state: dict[str, Any], image: Any, size: int) -> Any:
+    bundle = state["da3"]
+    try:
+        return infer_depth(bundle, image, size)
+    except Exception as exc:
+        if not bundle.get("half"):
+            raise exc
+        bundle["half"] = False
+        state["half"] = False
+        sys.stderr.write(f"SpatialSight fp16 ditolak, lanjut fp32: {exc}\n")
+        sys.stderr.flush()
+        return infer_depth(bundle, image, size)
+
+
 def _infer_depth(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     frame_id = str(message["frame_id"])
     try:
@@ -352,15 +426,28 @@ def _infer_depth(state: dict[str, Any], message: dict[str, Any]) -> dict[str, An
 
 
 def _geometry(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
-    if state.get("runtime") != "depth_pro":
+    runtime = state.get("runtime")
+    if runtime == "onnx":
         return {
             "event": "error",
             "code": "MDL-002",
             "detail": "pratinjau ONNX relatif tidak punya tensor meter",
         }
+    if runtime not in {"depth_pro", "depth_anything3"}:
+        return {"event": "error", "code": "MDL-002", "detail": "SpatialSight belum dimuat"}
     try:
-        depth_m, focal = _predict(state, message)
-        result = scene_from_message(depth_m, focal, message)
+        if runtime == "depth_anything3":
+            depth_m, focal = _da3_geometry(state, message)
+            result = scene_from_message(
+                depth_m,
+                focal,
+                message,
+                backend="Depth Anything 3",
+                extra_warnings=DA3_WARNINGS,
+            )
+        else:
+            depth_m, focal = _predict(state, message)
+            result = scene_from_message(depth_m, focal, message)
     except EngineError as exc:
         return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
     except (ValueError, KeyError, TypeError) as exc:
@@ -369,6 +456,15 @@ def _geometry(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
         return {"event": "error", "code": "MDL-002", "detail": str(exc)}
     _keep_tensor(state, depth_m, focal, str(message.get("frame_id")))
     return {"event": "result", "kind": "spatial-geometry", **result}
+
+
+def _da3_geometry(state: dict[str, Any], message: dict[str, Any]) -> tuple[Any, None]:
+    np = importlib.import_module("numpy")
+    width, height = int(message["width"]), int(message["height"])
+    image = np.frombuffer(_read_raw(message), dtype=np.uint8).reshape(height, width, 3)
+    size = clamp_res(message.get("process_res") or state.get("process_res"))
+    state["process_res"] = size
+    return _da3_depth(state, image, size), None
 
 
 def _predict(state: dict[str, Any], message: dict[str, Any]) -> tuple[Any, float | None]:
@@ -384,9 +480,7 @@ def _keep_tensor(state: dict[str, Any], depth_m: Any, focal: float | None, frame
     state["tensor_frame"] = frame_id
 
 
-def _place_hydro(
-    model: Any, device: str, message: dict[str, Any], imgsz: int
-) -> tuple[str, bool]:
+def _place_hydro(model: Any, device: str, message: dict[str, Any], imgsz: int) -> tuple[str, bool]:
     if device == "cpu":
         return cpu_fallback_note(), False
     return prepare_detector(

@@ -247,6 +247,9 @@ class SpatialSightConfig(_Strict):
     schema_version: int
     preview_max_side: int
     relative_label: str
+    backend: Literal["depth_anything3", "depth_pro"] = "depth_anything3"
+    model_id: str = "depth-anything/DA3METRIC-LARGE"
+    process_res: Literal[378, 504, 672] = 504
 
     @model_validator(mode="after")
     def _label(self) -> SpatialSightConfig:
@@ -254,6 +257,8 @@ class SpatialSightConfig(_Strict):
             raise ValueError("preview_max_side minimal 2")
         if self.relative_label != "Preview relatif, bukan ukuran":
             raise ValueError("label SpatialSight harus tetap")
+        if not self.model_id.strip():
+            raise ValueError("model_id SpatialSight kosong")
         return self
 
 

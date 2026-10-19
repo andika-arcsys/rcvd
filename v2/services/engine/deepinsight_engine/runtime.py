@@ -237,13 +237,17 @@ class Runtime:
         tune = self.models.hydro_tune()
         view["confidence"] = tune["confidence"]
         view["imgsz"] = tune["imgsz"]
+        view["process_res"] = self.models.spatial_tune()["process_res"]
         return view
 
     def set_hydro_tune(self, confidence: float, imgsz: int) -> dict[str, float | int]:
         return self.models.set_hydro_tune(confidence, imgsz)
 
+    def set_spatial_tune(self, process_res: int) -> dict[str, int]:
+        return self.models.set_spatial_tune(process_res)
+
     def estimate_spatial(self, frame_id: str, spec: dict[str, object]) -> dict[str, object]:
-        """Inferensi Depth Pro pada PNG bukti. Hasilnya tidak ditulis ke snapshot."""
+        """Inferensi pada PNG bukti. Hasilnya tidak ditulis ke span 2D."""
         path = self._evidence / f"{frame_id}.png"
         if not path.is_file():
             raise EngineError("VID-002", frame_id)

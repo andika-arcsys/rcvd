@@ -57,6 +57,9 @@ class ModelManager:
             "confidence": 0.5 if hydro is None else hydro.default_confidence,
             "imgsz": 640,
         }
+        self._spatial_tune: dict[str, int] = {
+            "process_res": 504 if spatial is None else int(spatial.process_res),
+        }
         self._baseline = probe.snapshot()
         self._worker: WorkerHandle | None = None
         self.active: str | None = None
@@ -108,18 +111,27 @@ class ModelManager:
         self._hydro_tune = {"confidence": confidence, "imgsz": imgsz}
         return self.hydro_tune()
 
+    def spatial_tune(self) -> dict[str, int]:
+        return dict(self._spatial_tune)
+
+    def set_spatial_tune(self, process_res: int) -> dict[str, int]:
+        self._spatial_tune = {"process_res": process_res}
+        return self.spatial_tune()
+
     def geometry(
         self, raw: bytes, width: int, height: int, frame_id: str, spec: Mapping[str, Any]
     ) -> dict[str, Any]:
         worker = self._worker
         if self.state != "ready" or worker is None or self.active != "spatialsight":
             raise EngineError("MDL-002", "SpatialSight belum dimuat")
-        return worker.geometry(raw, width, height, frame_id, spec)
+        tuned = dict(spec)
+        tuned["process_res"] = int(self._spatial_tune["process_res"])
+        return worker.geometry(raw, width, height, frame_id, tuned)
 
     def infer(self, frame: StoredFrame) -> bytes | None:
         if self.state != "ready" or self._worker is None:
             return None
-        extra = self._hydro_tune if self.active == "hydrodetect" else None
+        extra = self._infer_extra()
         raw = self._worker.infer(frame, extra)
         self.last_result = self._worker.last_event
         return raw
@@ -141,7 +153,7 @@ class ModelManager:
         worker.start()
         worker.request(self._load_payload(name, entry, preset))
         try:
-            event = worker.read_event()
+            event = worker.read_event(120.0 if name == "spatialsight" else None)
         except EngineError:
             worker.kill()
             self._fail_optical()
@@ -204,7 +216,15 @@ class ModelManager:
             "vram_budget_mb": self._vram_budget_mb,
             "gpu_max_pct": self._gpu_max_pct,
             "imgsz": int(self._hydro_tune["imgsz"]),
+            "process_res": int(self._spatial_tune["process_res"]),
         }
+
+    def _infer_extra(self) -> Mapping[str, float | int] | None:
+        if self.active == "hydrodetect":
+            return self._hydro_tune
+        if self.active == "spatialsight":
+            return self._spatial_tune
+        return None
 
     def _preset(self, name: str | None) -> AquaPreset:
         chosen = name or self._default_preset

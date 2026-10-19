@@ -558,7 +558,17 @@ Bila `torch.cuda.is_available()` false padahal `nvidia-smi` melihat GPU, roda Py
 
 Pada laptop GPU, HydroDetect memanggil `predict` di GPU 0 dengan `half=True`, `retina_masks=True`, dan keyakinan bawaan 0,70. Tombol Cepat / Seimbang / Teliti mengatur `imgsz` 640, 960, atau 1280. Alokator proses berhenti di 6144 MB. Jendela `start.bat` menulis baris `HydroDetect: cuda ...`.
 
-SpatialSight memakai Apple Depth Pro pada `deepenv` yang sama dengan Ultralytics: Python 3.12 dan `torch 2.13.0+cu132`. Letakkan `depth_pro.pt` di `spatialsight\`. Perintah pasang yang menjaga roda CUDA ada di `docs/KAJIAN_PARITAS_SPATIAL_V2.md`. `model.onnx` tetap cadangan pratinjau relatif bila checkpoint belum ada. Layar live menampilkan kedekatan, dan angka meter dihitung di kanvas frame beku.
+SpatialSight bawaan memakai Depth Anything 3 pada `deepenv` yang sama dengan Ultralytics: Python 3.12 dan `torch 2.13.0+cu132`. Tidak ada berkas model lokal. Pasang paketnya, lalu cek bahwa torch tidak terganti:
+
+```bat
+cd /d D:\src
+git clone https://github.com/ByteDance-Seed/Depth-Anything-3.git
+cd Depth-Anything-3
+python -m pip install -e .
+python -c "import torch, depth_anything_3; print(torch.__version__, torch.cuda.is_available())"
+```
+
+`torch.__version__` harus tetap `2.13.0+cu132`. Bila pip menggantinya, pasang kembali `torch==2.13.0+cu132` dan `torchvision==0.28.0+cu132` dari indeks `cu132`. Bobot `depth-anything/DA3METRIC-LARGE` diunduh pada pemakaian pertama. Jendela `start.bat` menulis `SpatialSight: cuda ... process_res=504`. Tombol Ringan, Konsol, dan Teliti memakai 378, 504, dan 672. Layar live tetap pratinjau relatif. Angka meter dihitung di kanvas frame beku. Backend `depth_pro` di `config/spatialsight.yaml` tetap membutuhkan `depth_pro.pt`; perintahnya ada di `docs/KAJIAN_PARITAS_SPATIAL_V2.md`.
 
 Berkas `.onnx` dan `.pt` tidak ada di Git. Laptop GPU dapat membuka berkas HydroDetect:
 

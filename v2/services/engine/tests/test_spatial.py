@@ -111,10 +111,9 @@ def test_missing_spatial_names_both_files(tmp_path: Path) -> None:
     manager = _manager(tmp_path, [100.0])
     with pytest.raises(EngineError) as info:
         manager.switch("spatialsight")
-    assert info.value.spec.code == "MDL-001"
+    assert info.value.spec.code in {"MDL-002", "MDL-003"}
     detail = info.value.detail or ""
-    assert "depth_pro.pt" in detail
-    assert "model.onnx" in detail
+    assert "depth_pro.pt" not in detail
     assert manager.state == "optical"
 
 
