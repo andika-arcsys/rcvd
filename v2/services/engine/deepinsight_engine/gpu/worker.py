@@ -44,23 +44,33 @@ def main() -> None:
         command = str(message.get("cmd"))
         if command == "quit":
             break
-        if command == "load":
-            _emit(_load(state, message))
-        elif command == "infer":
-            _emit(_infer(state, message))
-        elif command == "geometry":
-            _emit(_geometry(state, message))
-        elif command == "unload":
-            _hold_if_requested()
-            state["session"] = None
-            state["yolo"] = None
-            state["classes"] = None
-            state["hydro"] = None
-            state["runtime"] = None
-            state["depth_pro"] = None
-            state["tensor"] = None
-            state["enhancer"] = None
-            _emit({"event": "unloaded"})
+        try:
+            _emit(_command(state, command, message))
+        except EngineError as exc:
+            _emit({"event": "error", "code": exc.spec.code, "detail": exc.detail or ""})
+        except Exception as exc:  # noqa: BLE001 - pekerja harus menjawab JSON, bukan mati diam
+            _emit({"event": "error", "code": "MDL-002", "detail": str(exc)})
+
+
+def _command(state: dict[str, Any], command: str, message: dict[str, Any]) -> dict[str, Any]:
+    if command == "load":
+        return _load(state, message)
+    if command == "infer":
+        return _infer(state, message)
+    if command == "geometry":
+        return _geometry(state, message)
+    if command == "unload":
+        _hold_if_requested()
+        _clear(state)
+        return {"event": "unloaded"}
+    return {"event": "error", "code": "MDL-002", "detail": command}
+
+
+def _clear(state: dict[str, Any]) -> None:
+    keys = ("session", "yolo", "classes", "hydro", "runtime", "depth_pro", "tensor", "enhancer")
+    for key in keys:
+        state[key] = None
+    state["half"] = False
 
 
 def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
@@ -130,20 +140,21 @@ def _load_hydro(
     device = torch_device()
     size = _load_imgsz(message)
     try:
-        note = _place_hydro(model, device, message, size)
+        note, half = _place_hydro(model, device, message, size)
     except EngineError as exc:
         return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
     state["yolo"] = model
     state["classes"] = classes
     state["hydro"] = hydro
     state["device"] = device
+    state["half"] = half
     state["imgsz"] = size
     state["runtime"] = "ultralytics"
     state["kind"] = "hydrodetect"
     state["device_note"] = note
     sys.stderr.write(f"HydroDetect: {note} imgsz={size}\n")
     sys.stderr.flush()
-    return {"event": "ready", "fp16": device != "cpu", "device": note}
+    return {"event": "ready", "fp16": half, "device": note}
 
 
 def _load_spatial(state: dict[str, Any], root: Path, message: dict[str, Any]) -> dict[str, Any]:
@@ -277,21 +288,37 @@ def _infer_ultra(state: dict[str, Any], message: dict[str, Any]) -> dict[str, An
     np = importlib.import_module("numpy")
     width, height = int(message["width"]), int(message["height"])
     image = np.frombuffer(_read_raw(message), dtype=np.uint8).reshape(height, width, 3)
+    half = bool(state.get("half"))
     try:
-        found = predict_candidates(
-            state["yolo"],
-            image,
-            state["classes"],
-            state["hydro"],
-            str(state["device"]),
-            confidence=_tune_confidence(message),
-            imgsz=_tune_imgsz(message),
-        )
+        found = _predict_live(state, image, message, half)
     except EngineError as exc:
         return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
     except Exception as exc:  # noqa: BLE001 - inferensi model tidak boleh mematikan pekerja
-        return {"event": "error", "code": "MDL-002", "detail": str(exc)}
+        if not half:
+            return {"event": "error", "code": "MDL-002", "detail": str(exc)}
+        state["half"] = False
+        sys.stderr.write(f"HydroDetect fp16 ditolak, lanjut fp32: {exc}\n")
+        sys.stderr.flush()
+        try:
+            found = _predict_live(state, image, message, False)
+        except Exception as second:  # noqa: BLE001 - percobaan fp32 juga harus kembali sebagai pesan
+            return {"event": "error", "code": "MDL-002", "detail": str(second)}
     return hydro_event(str(message["frame_id"]), found)
+
+
+def _predict_live(
+    state: dict[str, Any], image: Any, message: dict[str, Any], half: bool
+) -> list[dict[str, object]]:
+    return predict_candidates(
+        state["yolo"],
+        image,
+        state["classes"],
+        state["hydro"],
+        str(state["device"]),
+        confidence=_tune_confidence(message),
+        imgsz=_tune_imgsz(message),
+        half=half,
+    )
 
 
 def _infer_onnx(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
@@ -357,9 +384,11 @@ def _keep_tensor(state: dict[str, Any], depth_m: Any, focal: float | None, frame
     state["tensor_frame"] = frame_id
 
 
-def _place_hydro(model: Any, device: str, message: dict[str, Any], imgsz: int) -> str:
+def _place_hydro(
+    model: Any, device: str, message: dict[str, Any], imgsz: int
+) -> tuple[str, bool]:
     if device == "cpu":
-        return cpu_fallback_note()
+        return cpu_fallback_note(), False
     return prepare_detector(
         model,
         device,

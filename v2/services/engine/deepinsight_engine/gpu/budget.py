@@ -22,6 +22,14 @@ def process_memory_fraction(total_bytes: int, used_bytes: int, budget_bytes: int
     return min(1.0, room / total_bytes)
 
 
+def try_limit_process_memory(torch: Any, budget_mb: float) -> str:
+    """Pasang batas. Bila alokator CUDA sudah hidup, catat dan lanjutkan."""
+    try:
+        return limit_process_memory(torch, budget_mb)
+    except Exception as exc:  # noqa: BLE001 - pemanggilan kedua tidak boleh menggagalkan model
+        return f"cap=lewati ({exc})"
+
+
 def limit_process_memory(torch: Any, budget_mb: float) -> str:
     """Batasi alokator CUDA proses ini agar pemakaian perangkat tetap di dalam anggaran."""
     if budget_mb <= 0:

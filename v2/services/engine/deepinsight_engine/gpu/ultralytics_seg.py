@@ -12,7 +12,7 @@ from typing import Any
 
 from ..core.config import HydrodetectConfig
 from ..core.errors import EngineError
-from .budget import cuda_status_note, limit_process_memory
+from .budget import cuda_status_note, try_limit_process_memory
 from .vision import rle_encode, trim_candidates
 
 IMGSZ = 640
@@ -85,20 +85,26 @@ def prepare_detector(
     vram_budget_mb: float,
     gpu_max_pct: float,
     imgsz: int,
-) -> str:
-    """Pindahkan bobot ke CUDA, batasi VRAM, lalu panaskan kernel pada imgsz aktif.
+) -> tuple[str, bool]:
+    """Batasi VRAM, lalu panaskan lewat predict. Jangan pindahkan bobot sendiri.
 
-    Pemanasan memakai gambar kecil. Ultralytics tetap mengalokasikan workspace
-    sebesar imgsz, jadi frame pertama di ukuran itu tidak membayar kompilasi.
+    Ultralytics melakukan fuse pada bobot fp32. ``model.to("cuda")`` sebelum
+    ``half=True`` membuat fuse gagal (Half vs Float) dan dialog kembali ke Optical.
+    ``predict(device=..., half=True)`` yang mengatur perangkat dan fp16.
+    Kegagalan pemanasan tetap membuka model; frame berikutnya yang mencoba lagi.
     """
     torch = importlib.import_module("torch")
     if not bool(torch.cuda.is_available()):
         raise EngineError("MDL-003", "CUDA")
-    cap = limit_process_memory(torch, vram_budget_mb)
+    cap = try_limit_process_memory(torch, vram_budget_mb)
     _ampere_flags(torch)
-    _move_to_cuda(model)
-    _warm(model, device, imgsz)
-    return cuda_status_note(torch, cap, gpu_max_pct, 0, "half")
+    half_ok = _warm(model, device, imgsz, half=True)
+    if not half_ok:
+        _reset_predictor(model)
+        if not _warm(model, device, imgsz, half=False):
+            _reset_predictor(model)
+    suffix = "half" if half_ok else "fp32"
+    return cuda_status_note(torch, cap, gpu_max_pct, 0, suffix), half_ok
 
 
 def predict_candidates(
@@ -109,6 +115,7 @@ def predict_candidates(
     device: str,
     confidence: float | None = None,
     imgsz: int = IMGSZ,
+    half: bool | None = None,
 ) -> list[dict[str, object]]:
     """Deteksi pada array BGR uint8.
 
@@ -117,59 +124,56 @@ def predict_candidates(
     """
     gate = _floor(cfg) if confidence is None else confidence
     size = imgsz if imgsz in QUALITY_SIZES else IMGSZ
-    result = model.predict(
-        image_bgr,
-        conf=gate,
-        imgsz=size,
-        device=device,
-        half=device != "cpu",
-        retina_masks=True,
-        verbose=False,
-    )[0]
+    use_half = device != "cpu" if half is None else half
+    result = _predict(model, image_bgr, gate, size, device, use_half)
     height, width = int(image_bgr.shape[0]), int(image_bgr.shape[1])
     active = cfg if confidence is None else _uniform(cfg, confidence)
     return trim_candidates(_rows(result, classes, width, height), active)
 
 
+def _predict(
+    model: Any,
+    image_bgr: Any,
+    gate: float,
+    size: int,
+    device: str,
+    half: bool,
+) -> Any:
+    return model.predict(
+        image_bgr,
+        conf=gate,
+        imgsz=size,
+        device=device,
+        half=half,
+        retina_masks=True,
+        verbose=False,
+    )[0]
+
+
 def _ampere_flags(torch: Any) -> None:
-    """RTX 3070 memakai Tensor Core. TF32 menutup sisa operasi fp32 di dalam batas yang sama."""
+    """TF32 untuk sisa operasi fp32. Pencarian algoritma cuDNN dimatikan."""
     cudnn = getattr(getattr(torch, "backends", None), "cudnn", None)
-    if cudnn is not None:
-        cudnn.benchmark = True
-        if hasattr(cudnn, "allow_tf32"):
-            cudnn.allow_tf32 = True
+    if cudnn is not None and hasattr(cudnn, "allow_tf32"):
+        cudnn.allow_tf32 = True
     matmul = getattr(getattr(getattr(torch, "backends", None), "cuda", None), "matmul", None)
     if matmul is not None and hasattr(matmul, "allow_tf32"):
         matmul.allow_tf32 = True
 
 
-def _move_to_cuda(model: Any) -> None:
-    mover = getattr(model, "to", None)
-    if not callable(mover):
-        mover = getattr(getattr(model, "model", None), "to", None)
-    if not callable(mover):
-        raise EngineError("MDL-002", "model Ultralytics tidak punya .to")
-    try:
-        mover("cuda:0")
-    except Exception as exc:  # noqa: BLE001 - pemindahan perangkat melempar error CUDA yang beragam
-        raise EngineError("MDL-002", f"model tidak pindah ke CUDA: {exc}") from exc
+def _reset_predictor(model: Any) -> None:
+    if hasattr(model, "predictor"):
+        model.predictor = None
 
 
-def _warm(model: Any, device: str, imgsz: int) -> None:
+def _warm(model: Any, device: str, imgsz: int, half: bool) -> bool:
     np = importlib.import_module("numpy")
     blank = np.zeros((32, 32, 3), dtype=np.uint8)
     size = imgsz if imgsz in QUALITY_SIZES else IMGSZ
     try:
-        model.predict(
-            blank,
-            imgsz=size,
-            device=device,
-            half=True,
-            retina_masks=True,
-            verbose=False,
-        )
-    except Exception as exc:  # noqa: BLE001 - pemanasan tidak boleh meninggalkan pekerja tanpa pesan
-        raise EngineError("MDL-002", f"pemanasan CUDA gagal: {exc}") from exc
+        _predict(model, blank, 0.7, size, device, half)
+    except Exception:  # noqa: BLE001 - pemanasan gagal tetap membuka layar HydroDetect
+        return False
+    return True
 
 
 def _uniform(cfg: HydrodetectConfig, confidence: float) -> HydrodetectConfig:

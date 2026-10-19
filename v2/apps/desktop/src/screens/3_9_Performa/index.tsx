@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEngine } from '../../engine/EngineProvider';
 import { screenTitle, t } from '../../i18n';
+import { engineFailure } from '../../lib/engineError';
 import { dash, memoryText } from '../3_OpticalNativeView/format';
 
 type Performance = components['schemas']['PerformanceView'];
@@ -38,18 +39,23 @@ export default function PerformaScreen() {
           <button
             type="button"
             className="rounded border border-line px-3 py-3"
-            onClick={() => void recover('optical', null, '/live')}
+            onClick={() => void recover.run('optical', null, '/live')}
           >
             {t('live.turnOff')}
           </button>
           <button
             type="button"
             className="rounded border border-line px-3 py-3"
-            onClick={() => void recover('aquaclear', 'light', '/live/aquaclear')}
+            onClick={() => void recover.run('aquaclear', 'light', '/live/aquaclear')}
           >
             {t('live.lightPreset')}
           </button>
         </div>
+        {recover.failure ? (
+          <p role="alert" className="mt-3 text-sm text-warn">
+            {recover.failure}
+          </p>
+        ) : null}
       </section>
     </main>
   );
@@ -82,12 +88,15 @@ function usePerformance(): Performance | null {
 function useRecover() {
   const { client } = useEngine();
   const navigate = useNavigate();
-  return async (name: string, preset: string | null, to: string) => {
+  const [failure, setFailure] = useState<string | null>(null);
+  const run = async (name: string, preset: string | null, to: string) => {
+    setFailure(null);
     const result = await client.POST('/models/switch', { body: { name, preset } });
     if (result.error || !result.data) {
-      navigate('/live');
+      setFailure(engineFailure(result.error, t('live.switchFailed')));
       return;
     }
     navigate(to);
   };
+  return { run, failure };
 }

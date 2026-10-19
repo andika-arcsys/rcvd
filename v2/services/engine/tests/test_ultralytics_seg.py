@@ -9,9 +9,10 @@ import pytest
 
 from deepinsight_engine.core.config import load_settings
 from deepinsight_engine.core.errors import EngineError
-from deepinsight_engine.gpu.budget import limit_process_memory
+from deepinsight_engine.gpu.budget import limit_process_memory, try_limit_process_memory
 from deepinsight_engine.gpu.manager import ModelManager
 from deepinsight_engine.gpu.probe import SequenceProbe
+from deepinsight_engine.gpu.process import WorkerHandle
 from deepinsight_engine.gpu.ultralytics_seg import (
     cpu_fallback_note,
     hydro_source,
@@ -170,6 +171,31 @@ def test_six_gigabyte_cap_on_an_eight_gigabyte_card() -> None:
 
 def test_cpu_note_stays_a_cpu_sentence() -> None:
     assert cpu_fallback_note().startswith("cpu")
+
+
+class _RejectingCuda(_Cuda):
+    def set_per_process_memory_fraction(self, fraction: float) -> None:
+        raise RuntimeError("allocator sudah hidup")
+
+
+def test_allocator_refusal_does_not_block_the_model() -> None:
+    note = try_limit_process_memory(_TorchReplace(), 6144)
+    assert note.startswith("cap=lewati")
+    assert "allocator sudah hidup" in note
+
+
+class _TorchReplace(_Torch):
+    def __init__(self) -> None:
+        self.cuda = _RejectingCuda()
+
+
+def test_library_banner_on_stdout_does_not_drop_the_ready_event() -> None:
+    handle = WorkerHandle(1)
+    handle._queue.put("Ultralytics 8.4.105  Python-3.12 torch-2.13.0+cu132\n")
+    handle._queue.put('{"event": "ready", "fp16": true, "device": "cuda half"}\n')
+    event = handle.read_event()
+    assert event["event"] == "ready"
+    assert event["fp16"] is True
 
 
 def test_present_pt_asks_for_ultralytics(tmp_path: Path) -> None:

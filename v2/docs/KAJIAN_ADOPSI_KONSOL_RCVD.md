@@ -65,7 +65,7 @@ v2 membuka `models/hydrodetect/exp5/model.pt` pada pekerja yang sama, dengan cad
 | Frame | diperkecil dulu | frame kamera utuh; Ultralytics yang menyesuaikan ke imgsz |
 | VRAM | tidak dibatasi di kode | alokator proses di anggaran 6144 MB, beban 90% |
 
-Saat model dimuat, pekerja memasang `set_per_process_memory_fraction` dari memori yang sudah terpakai, memindahkan bobot ke `cuda:0`, lalu satu `predict` pemanasan pada imgsz aktif. Jendela `start.bat` menulis `HydroDetect: cuda ... cap=... half`. Bilah di bawah video menampilkan beban, memori, dan catatan itu.
+Saat model dimuat, pekerja memasang `set_per_process_memory_fraction` dari memori yang sudah terpakai, lalu satu `predict` pemanasan pada imgsz aktif dengan `device=0` dan `half=True`. Bobot tidak dipindahkan lewat `model.to` sebelum itu: fuse Ultralytics berjalan pada fp32, dan `model.to` plus `half=True` melempar `expected scalar type Half but found Float`. Galat itu membuat `/models/switch` gagal, lalu dialog mengembalikan operator ke Optical. Bila pemanasan fp16 gagal, model tetap dibuka pada fp32 di GPU yang sama. Jendela `start.bat` menulis `HydroDetect: cuda ... cap=... half` atau `fp32`. Bilah di bawah video menampilkan beban, memori, dan catatan itu. Anggaran tunggu muat model adalah 45 detik, karena fuse CUDA pertama sering melewati 8 detik dan pekerja yang diputus juga mengembalikan dialog ke Optical.
 
 Teliti (1280) adalah cara memakai lebih banyak dari kartu 8 GB. Cepat tetap 640 agar sama dengan stream konsol. Anggaran tetap 6144 MB supaya sekitar 2 GB tinggal untuk desktop. Tidak ada blok VRAM kosong yang dialokasikan hanya agar angka memori terlihat penuh.
 

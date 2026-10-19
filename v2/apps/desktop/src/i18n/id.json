@@ -258,6 +258,7 @@
     "loadAqua": "Beban rendah–sedang",
     "loadHigh": "Beban tinggi",
     "cancelStay": "Batal · tetap di Optical",
+    "switchFailed": "Model tidak terbuka. Layar ini tetap di sini supaya pesan engine bisa dibaca.",
     "openPerformance": "Peringatan performa",
     "performanceIdle": "Angka performa saat ini",
     "reasonFps": "FPS di bawah ambang",

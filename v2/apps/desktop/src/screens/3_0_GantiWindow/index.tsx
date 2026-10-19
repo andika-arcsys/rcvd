@@ -1,8 +1,9 @@
-import type { components } from '@deepinsight/shared';
+import type { EngineClient, components } from '@deepinsight/shared';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEngine } from '../../engine/EngineProvider';
 import { screenTitle, t } from '../../i18n';
+import { engineFailure } from '../../lib/engineError';
 import { dash } from '../3_OpticalNativeView/format';
 
 type ModelStatus = components['schemas']['ModelStatus'];
@@ -23,6 +24,7 @@ export default function GantiWindowScreen() {
   const models = useModels();
   const gpu = useGpu();
   const [step, setStep] = useState<0 | 1 | 2>(0);
+  const choose = useChoose(setStep);
   const limited = Boolean(models?.limited_mode || (models && !models.gpu_available));
   return (
     <main className="flex h-full items-center justify-center p-6">
@@ -36,8 +38,9 @@ export default function GantiWindowScreen() {
           {t('live.gpuLoad')}: {dash(gpu, '%')}
         </p>
         {limited && <p className="mt-2 text-sm text-warn">{t('live.limitedReason')}</p>}
-        <ChoiceList limited={limited} step={step} setStep={setStep} />
+        <ChoiceList limited={limited} step={step} onChoose={choose.run} />
         <Steps step={step} />
+        <SwitchAlert message={choose.failure} />
         <Link to="/live" className="mt-4 inline-block text-sm text-muted">
           {t('live.cancelStay')}
         </Link>
@@ -49,11 +52,11 @@ export default function GantiWindowScreen() {
 function ChoiceList({
   limited,
   step,
-  setStep,
+  onChoose,
 }: {
   limited: boolean;
   step: 0 | 1 | 2;
-  setStep: (step: 0 | 1 | 2) => void;
+  onChoose: (name: string, to: string) => void;
 }) {
   const [params] = useSearchParams();
   const selected = params.get('fitur');
@@ -66,7 +69,7 @@ function ChoiceList({
           choice={choice}
           selected={selected === choice.id}
           disabled={busy || (limited && choice.gpu)}
-          setStep={setStep}
+          onChoose={onChoose}
         />
       ))}
     </div>
@@ -77,19 +80,18 @@ function ChoiceButton({
   choice,
   selected,
   disabled,
-  setStep,
+  onChoose,
 }: {
   choice: (typeof CHOICES)[number];
   selected: boolean;
   disabled: boolean;
-  setStep: (step: 0 | 1 | 2) => void;
+  onChoose: (name: string, to: string) => void;
 }) {
-  const choose = useChoose(setStep);
   return (
     <button
       type="button"
       disabled={disabled}
-      onClick={() => void choose(choice.id, choice.to)}
+      onClick={() => void onChoose(choice.id, choice.to)}
       className={`rounded border px-3 py-3 text-left disabled:bg-line disabled:text-muted ${
         selected ? 'border-action' : 'border-line'
       }`}
@@ -109,19 +111,39 @@ function Steps({ step }: { step: 0 | 1 | 2 }) {
   );
 }
 
+function SwitchAlert({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="mt-3 text-sm text-warn">
+      {message}
+    </p>
+  );
+}
+
 function useChoose(setStep: (step: 0 | 1 | 2) => void) {
   const { client } = useEngine();
   const navigate = useNavigate();
-  return async (name: string, to: string) => {
+  const [failure, setFailure] = useState<string | null>(null);
+  const run = (name: string, to: string) => {
+    setFailure(null);
     setStep(1);
-    const result = await client.POST('/models/switch', { body: { name, preset: null } });
-    if (result.error || !result.data) {
-      navigate('/live');
-      return;
-    }
-    setStep(2);
-    navigate(to);
+    void openModel(client, name).then((failureText) => {
+      if (failureText) {
+        setStep(0);
+        setFailure(failureText);
+        return;
+      }
+      setStep(2);
+      navigate(to);
+    });
   };
+  return { run, failure };
+}
+
+async function openModel(client: EngineClient, name: string): Promise<string | null> {
+  const result = await client.POST('/models/switch', { body: { name, preset: null } });
+  if (result.data) return null;
+  return engineFailure(result.error, t('live.switchFailed'));
 }
 
 function useModels(): ModelStatus | null {
