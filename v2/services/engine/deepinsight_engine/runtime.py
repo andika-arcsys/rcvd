@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import threading
 import time
 from collections.abc import Callable
@@ -48,6 +49,11 @@ class Runtime:
         self._capture = CaptureLoop(self._ingest, settings.thresholds.video.fps)
         self._marks = data_dir / "marks"
         self._uploads = data_dir / "uploads"
+        self._assist = data_dir / "assist"
+        self._assist_lock = threading.Lock()
+        self._bake_lock = threading.Lock()
+        self._bake_token = 0
+        self._bake: dict[str, object] = {}
         self._vision: dict[str, object] = {}
         self.models = ModelManager(
             settings.models,
@@ -247,15 +253,123 @@ class Runtime:
         return self.models.set_spatial_tune(process_res)
 
     def canvas_assist(self, frame_id: str, view: str) -> dict[str, object]:
-        """Gambar bantuan dari model GPU yang sedang dimuat. Bukan sumber angka."""
-        from .measure.canvas_assist import assist_frame
+        """Berkas bantuan bila ada. Jika belum, model yang sedang dimuat."""
+        from .measure.canvas_assist import assist_frame, read_assist
         from .video.decode import decode_png
 
+        if view != "optical":
+            cached = read_assist(self._assist, frame_id, view)
+            if cached is not None:
+                return cached
         path = self._evidence / f"{frame_id}.png"
         if not path.is_file():
             raise EngineError("VID-002", frame_id)
         width, height, raw = decode_png(path.read_bytes())
-        return assist_frame(self.models, self._settings, frame_id, raw, width, height, view)
+        if view == "optical":
+            return assist_frame(self.models, self._settings, frame_id, raw, width, height, view)
+        with self._assist_lock:
+            return assist_frame(self.models, self._settings, frame_id, raw, width, height, view)
+
+    def begin_prepare(self, frame_id: str, preset: str | None) -> dict[str, object]:
+        """Mulai hitung tiga tampilan bergantian. Panggilan ulang menunggu yang jalan."""
+        from .measure.canvas_assist import assist_job
+
+        if not (self._evidence / f"{frame_id}.png").is_file():
+            raise EngineError("VID-002", frame_id)
+        with self._bake_lock:
+            current = self._bake
+            if current.get("frame_id") == frame_id and current.get("running"):
+                return dict(current)
+            self._bake_token += 1
+            token = self._bake_token
+            self._bake = assist_job(frame_id, True, "aquaclear", "", [])
+            started = dict(self._bake)
+        worker = threading.Thread(
+            target=self._prepare_worker,
+            args=(frame_id, preset, token),
+            name="di-assist",
+            daemon=True,
+        )
+        worker.start()
+        return started
+
+    def prepare_status(self, frame_id: str) -> dict[str, object]:
+        from .measure.canvas_assist import assist_job
+
+        with self._bake_lock:
+            current = dict(self._bake)
+        if current.get("frame_id") != frame_id:
+            return assist_job(frame_id, False, None, "", [])
+        return current
+
+    def _prepare_worker(self, frame_id: str, preset: str | None, token: int) -> None:
+        from .measure.canvas_assist import bake_views
+        from .video.decode import decode_png
+
+        rows: list[dict[str, object]] = []
+        note = ""
+        try:
+            with self._assist_lock:
+                if not self._token_is(token):
+                    return
+                path = self._evidence / f"{frame_id}.png"
+                width, height, raw = decode_png(path.read_bytes())
+                chosen = self._aqua_preset(frame_id, preset)
+                rows = bake_views(
+                    self.models,
+                    self._settings,
+                    frame_id,
+                    raw,
+                    width,
+                    height,
+                    self._assist,
+                    chosen,
+                    lambda view, done: self._publish(token, frame_id, True, view, "", done),
+                    lambda: self._token_is(token),
+                )
+        except EngineError as exc:
+            note = f"{exc.spec.code}: {exc.detail or exc.spec.message_id}"
+        except Exception as exc:  # noqa: BLE001 - utas bantuan harus selesai meski model gagal
+            note = str(exc)
+        if self._token_is(token):
+            self._publish(token, frame_id, False, None, note, rows)
+
+    def _publish(
+        self,
+        token: int,
+        frame_id: str,
+        running: bool,
+        current: str | None,
+        note: str,
+        views: list[dict[str, object]],
+    ) -> None:
+        from .measure.canvas_assist import assist_job
+
+        with self._bake_lock:
+            if token != self._bake_token:
+                return
+            self._bake = assist_job(frame_id, running, current, note, list(views))
+
+    def _token_is(self, token: int) -> bool:
+        with self._bake_lock:
+            return token == self._bake_token
+
+    def _aqua_preset(self, frame_id: str, requested: str | None) -> str | None:
+        chosen = requested or self._recorded_preset(frame_id)
+        if isinstance(chosen, str) and chosen in self._settings.aquaclear.presets:
+            return chosen
+        return None
+
+    def _recorded_preset(self, frame_id: str) -> str | None:
+        path = self._evidence / f"{frame_id}.json"
+        if not path.is_file():
+            return None
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        preset = loaded.get("aquaclear_preset") if isinstance(loaded, dict) else None
+        return preset if isinstance(preset, str) else None
 
     def estimate_spatial(self, frame_id: str, spec: dict[str, object]) -> dict[str, object]:
         """Inferensi pada PNG bukti. Hasilnya tidak ditulis ke span 2D."""
@@ -351,6 +465,14 @@ class Runtime:
             self.cache.put(f"display/{frame.frame_id}", shown.jpeg)
 
     def _enhance(self, frame: StoredFrame) -> tuple[bytes, int, int] | None:
+        if not self._assist_lock.acquire(blocking=False):
+            return None
+        try:
+            return self._enhance_locked(frame)
+        finally:
+            self._assist_lock.release()
+
+    def _enhance_locked(self, frame: StoredFrame) -> tuple[bytes, int, int] | None:
         try:
             raw = self.models.infer(frame)
         except EngineError as exc:

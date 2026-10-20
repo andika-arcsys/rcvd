@@ -31,6 +31,23 @@ describe('Tampilan bantuan kanvas', () => {
     expect(await screen.findByText(/belum dimuat/)).toBeInTheDocument();
     expect(screen.getByText('Titik disimpan dalam piksel frame asli.')).toBeInTheDocument();
   });
+
+  it('membaca berkas sementara yang disiapkan saat snapshot dibuka', async () => {
+    renderApp('/live/snapshot', {
+      role: 'ahli_ukur',
+      frozen: FROZEN,
+      routes: {
+        'POST /measure/assist/frm-1/prepare': doneBake(),
+        'GET /measure/assist/frm-1': async (request: Request) => {
+          const view = new URL(request.url).searchParams.get('view');
+          return json(view === 'hydrodetect' ? hydro() : idle());
+        },
+      },
+    });
+    expect(await screen.findByText(/hydrodetect.json/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'HydroDetect' }));
+    expect(await screen.findByText(/HydroDetect pada PNG beku/)).toBeInTheDocument();
+  });
 });
 
 function aqua() {
@@ -40,6 +57,40 @@ function aqua() {
     ready: true,
     jpeg_b64: 'abc',
     note: 'AquaClear pada PNG beku.',
+  };
+}
+
+function doneBake() {
+  return {
+    frame_id: 'frm-1',
+    running: false,
+    current: null,
+    note: '',
+    views: [
+      { view: 'aquaclear', ready: true, note: 'AquaClear pada PNG beku.', file: 'aquaclear.jpg' },
+      {
+        view: 'hydrodetect',
+        ready: true,
+        note: 'HydroDetect pada PNG beku.',
+        file: 'hydrodetect.json',
+      },
+      {
+        view: 'spatialsight',
+        ready: false,
+        note: 'MDL-001: berkas model belum ada.',
+        file: null,
+      },
+    ],
+  };
+}
+
+function hydro() {
+  return {
+    ...idle(),
+    kind: 'hydrodetect',
+    ready: true,
+    candidates: [],
+    note: 'HydroDetect pada PNG beku.',
   };
 }
 

@@ -8,7 +8,14 @@ import { strokesOf } from '../../measure/strokes';
 import { useSession } from '../../session/SessionContext';
 import { GpuBudgetLine } from '../3_OpticalNativeView/GpuBudgetLine';
 import { useVideoStatus } from '../3_OpticalNativeView/useLive';
-import { AssistBar, AssistOverlay, assistNote, shownJpeg, useAssist } from './CanvasAssist';
+import {
+  AssistBar,
+  AssistOverlay,
+  assistNote,
+  bakeNote,
+  shownJpeg,
+  useAssist,
+} from './CanvasAssist';
 import { DepthEstimate } from './DepthEstimate';
 import { Fields } from './Fields';
 import { LaserBar } from './LaserBar';
@@ -47,7 +54,7 @@ function Board({ saveLabel }: { saveLabel: 'measure.save' | 'measure.saveAs' }) 
   const board = useBoard();
   const actions = boardActions(board);
   const frame = board.loaded.frame;
-  const assist = useAssist(board.session.frozen?.frameId);
+  const assist = useAssist(board.session.frozen?.frameId, board.session.frozen?.preset);
   const laser = board.laserMode === 'ask' ? asPoints(frame?.laser) : [];
   return (
     <WorkColumns
@@ -86,7 +93,9 @@ function CanvasColumn({
     <div className="flex flex-col gap-2">
       <AssistBar
         picked={assist.picked}
-        note={assistNote(assist.picked, assist.row)}
+        note={assistNote(assist.picked, assist.row, assist.bake)}
+        bake={bakeNote(assist.bake)}
+        busy={assist.bake?.running ?? false}
         onPick={assist.choose}
       />
       <MeasureCanvas
