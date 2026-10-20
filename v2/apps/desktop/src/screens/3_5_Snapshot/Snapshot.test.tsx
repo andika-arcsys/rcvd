@@ -170,7 +170,7 @@ describe('Mode Snapshot', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Accept' }));
     await userEvent.click(screen.getByRole('button', { name: 'RESUME' }));
     await userEvent.click(screen.getByRole('button', { name: 'Clear and return' }));
-    expect(await screen.findByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: /Canvas/ }));
     expect(await screen.findByRole('button', { name: 'Save as snapshot' })).toBeDisabled();
   });

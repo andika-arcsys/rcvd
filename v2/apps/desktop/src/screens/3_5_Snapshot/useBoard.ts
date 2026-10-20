@@ -7,7 +7,6 @@ import {
   beginMove,
   canSave,
   emptyDraft,
-  fitZoom,
   isDirty,
   moveNode,
   place,
@@ -41,14 +40,7 @@ export function useBoard() {
   const [zoom, setZoom] = useState(1);
   const [error, setError] = useState('');
   const [askResume, setAskResume] = useState(false);
-  useBoardEffects(
-    store.draft,
-    store.setDraft,
-    edge,
-    loaded.frame,
-    session.setUnsavedMeasure,
-    setZoom,
-  );
+  useBoardEffects(store.draft, store.setDraft, edge, session.setUnsavedMeasure);
   const view = buildView(store.draft, loaded.thresholds, edge);
   return {
     session,
@@ -76,9 +68,7 @@ function useBoardEffects(
   draft: Draft,
   setDraft: (value: Draft | ((prev: Draft) => Draft)) => void,
   edge: boolean,
-  frame: { width: number; height: number } | null,
   setUnsaved: (value: boolean) => void,
-  setZoom: (zoom: number) => void,
 ) {
   useEffect(() => {
     setDraft((prev) => (prev.edgeRisk === edge ? prev : { ...prev, edgeRisk: edge }));
@@ -86,9 +76,6 @@ function useBoardEffects(
   useEffect(() => {
     setUnsaved(isDirty(draft));
   }, [draft, setUnsaved]);
-  useEffect(() => {
-    if (frame) setZoom(fitZoom(frame.width, frame.height));
-  }, [frame, setZoom]);
 }
 
 function buildView(

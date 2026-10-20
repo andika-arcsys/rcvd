@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { WorkColumns } from '../../components/WorkColumns';
 import { t } from '../../i18n';
@@ -9,9 +9,11 @@ import { FeatureStatus } from './FeatureStatus';
 import { FeatureTabs } from './FeatureTabs';
 import { useAskedFeature, useFeatureSwitch } from './featureSwitch';
 import { useLiveInput } from './input';
+import { LiveFeaturePanel, useLiveFeature } from './LiveFeaturePanel';
 import { LiveOverlay } from './LiveOverlay';
 import { SideColumn } from './SideColumn';
 import { SourcePicker } from './SourcePicker';
+import { holdLiveStream } from './stream';
 import { TelemetryBar } from './TelemetryBar';
 import { useCurrentMission, useFindings, useLiveActions, useVideoStatus } from './useLive';
 import { VideoStage } from './VideoStage';
@@ -25,8 +27,18 @@ export default function OpticalNativeViewScreen() {
   const actions = useLiveActions(status?.frame_id ?? null, Boolean(status?.lost));
   const features = useFeatureSwitch();
   const [dual, setDual] = useState(false);
+  const [held, setHeld] = useState(false);
   useAskedFeature(features.pick);
-  useLiveInput(actions.freeze, actions.mark, features.pick);
+  useLiveInput(
+    () => latch(dual, held, setHeld),
+    () => undefined,
+    features.pick,
+  );
+  useEffect(() => {
+    if (!dual && held) setHeld(false);
+    holdLiveStream(dual && held);
+    return () => holdLiveStream(false);
+  }, [dual, held]);
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-4">
       {segment ? (
@@ -41,17 +53,22 @@ export default function OpticalNativeViewScreen() {
         dual={dual}
         onDual={() => setDual((value) => !value)}
       />
-      <WorkColumns
-        main={<LivePicture dual={dual} active={features.active} lost={Boolean(status?.lost)} />}
-        side={<SideColumn status={status} mission={mission} findings={findings} />}
+      <LiveBody
+        dual={dual}
+        active={features.active}
+        lost={Boolean(status?.lost)}
+        status={status}
+        mission={mission}
+        findings={findings}
       />
       <ActionBar
         lost={Boolean(status?.lost)}
+        dual={dual}
+        held={held}
         note={actions.note}
         confirmEnd={actions.confirmEnd}
-        onFreeze={actions.freeze}
+        onFreeze={() => latch(dual, held, setHeld)}
         onSnapshot={actions.freeze}
-        onMark={actions.mark}
         setConfirmEnd={actions.setConfirmEnd}
       />
     </div>
@@ -89,18 +106,61 @@ function FeatureBar({
   );
 }
 
-function LivePicture({ dual, active, lost }: { dual: boolean; active: string; lost: boolean }) {
+function latch(dual: boolean, held: boolean, setHeld: (value: boolean) => void): void {
+  if (!dual) return;
+  setHeld(!held);
+}
+
+function LiveBody({
+  dual,
+  active,
+  lost,
+  status,
+  mission,
+  findings,
+}: {
+  dual: boolean;
+  active: string;
+  lost: boolean;
+  status: ReturnType<typeof useVideoStatus>;
+  mission: ReturnType<typeof useCurrentMission>;
+  findings: ReturnType<typeof useFindings>;
+}) {
   const vision = useVision();
-  const overlay = <LiveOverlay vision={vision} opacity={dual ? 85 : 70} />;
+  const controls = useLiveFeature(vision);
+  const opacity = active === 'F4' ? controls.spatial.opacity : dual ? 85 : 70;
+  const overlay = (
+    <LiveOverlay
+      vision={vision}
+      opacity={opacity}
+      hidden={controls.hydro.hidden}
+      style={controls.hydro.style}
+    />
+  );
   return (
-    <div className="flex min-w-0 flex-col gap-3">
-      <SourcePicker />
-      {dual ? (
-        <DualStage featureLabel={t(featureLabel(active))} overlay={overlay} />
-      ) : (
-        <VideoStage lost={lost}>{overlay}</VideoStage>
-      )}
-    </div>
+    <WorkColumns
+      main={
+        <div className="flex min-w-0 flex-col gap-3">
+          <SourcePicker />
+          {dual ? (
+            <DualStage featureLabel={t(featureLabel(active))} overlay={overlay} />
+          ) : (
+            <VideoStage lost={lost}>{overlay}</VideoStage>
+          )}
+        </div>
+      }
+      side={
+        <div className="flex flex-col gap-3">
+          <LiveFeaturePanel
+            active={active}
+            vision={vision}
+            hydro={controls.hydro}
+            spatial={controls.spatial}
+          />
+          <SideColumn status={status} mission={mission} findings={findings} />
+        </div>
+      }
+    />
   );
 }
 

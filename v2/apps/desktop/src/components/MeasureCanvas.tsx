@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { t } from '../i18n';
-import { imagePoint, VIEW_H, VIEW_W, type NodeRef, type XY } from '../measure/draft';
+import { fitZoom, imagePoint, type NodeRef, type XY } from '../measure/draft';
 import type { Detail } from '../measure/detail';
 import type { Stroke } from '../measure/strokes';
 import { Overlay } from './measure/Overlay';
@@ -33,6 +33,11 @@ interface Props {
 export function MeasureCanvas(props: Props) {
   const [drag, setDrag] = useState<string | null>(null);
   const [cursor, setCursor] = useState<XY | null>(null);
+  const frame = useRef<HTMLDivElement>(null);
+  const fitNow = () => {
+    const node = frame.current;
+    if (node) fitBox(node, props.width, props.height, props.onZoom);
+  };
   return (
     <div className="flex flex-col gap-2">
       <ViewBar
@@ -45,17 +50,60 @@ export function MeasureCanvas(props: Props) {
         choices={props.choices ?? []}
         cursor={cursor ? imagePoint(cursor.x, cursor.y, props.zoom, 0, 0) : null}
         onZoom={props.onZoom}
+        onFit={fitNow}
         onDetail={props.onDetail}
       />
-      <Stage {...props} drag={drag} cursor={cursor} setDrag={setDrag} setCursor={setCursor} />
+      <Stage
+        {...props}
+        frame={frame}
+        drag={drag}
+        cursor={cursor}
+        setDrag={setDrag}
+        setCursor={setCursor}
+      />
     </div>
   );
 }
 
+function useFitFrame(
+  frame: RefObject<HTMLDivElement | null>,
+  width: number,
+  height: number,
+  onZoom: (zoom: number) => void,
+) {
+  useEffect(() => {
+    const node = frame.current;
+    if (!node || typeof ResizeObserver === 'undefined') return;
+    const fit = () => fitBox(node, width, height, onZoom);
+    const observer = new ResizeObserver(fit);
+    observer.observe(node);
+    fit();
+    return () => observer.disconnect();
+  }, [frame, width, height, onZoom]);
+}
+
+function fitBox(
+  node: HTMLDivElement,
+  width: number,
+  height: number,
+  onZoom: (zoom: number) => void,
+): void {
+  const boxW = node.clientWidth;
+  const boxH = node.clientHeight;
+  if (boxW < 2 || boxH < 2) return;
+  onZoom(fitZoom(width, height, boxW, boxH));
+}
+
 function Stage(props: Props & StageState) {
   const dragNode = props.nodes.find((node) => node.id === props.drag) ?? null;
+  useFitFrame(props.frame, props.width, props.height, props.onZoom);
   return (
-    <div className="overflow-auto bg-bg" style={{ width: VIEW_W, height: VIEW_H }}>
+    <div
+      ref={props.frame as RefObject<HTMLDivElement>}
+      data-canvas-stage="measure"
+      className="w-full overflow-auto bg-bg"
+      style={{ height: 'calc(100vh - 18rem)', minHeight: '16rem' }}
+    >
       <div
         role="application"
         aria-label={t('measure.canvas')}
@@ -87,6 +135,7 @@ function Stage(props: Props & StageState) {
 }
 
 interface StageState {
+  frame: RefObject<HTMLDivElement | null>;
   drag: string | null;
   cursor: XY | null;
   setDrag: (id: string | null) => void;

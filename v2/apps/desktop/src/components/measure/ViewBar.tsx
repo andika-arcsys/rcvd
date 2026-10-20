@@ -14,6 +14,7 @@ export function ViewBar({
   choices,
   cursor,
   onZoom,
+  onFit,
   onDetail,
 }: {
   zoom: number;
@@ -25,12 +26,13 @@ export function ViewBar({
   choices: Detail[];
   cursor: XY | null;
   onZoom: (zoom: number) => void;
+  onFit?: () => void;
   onDetail?: (detail: Detail) => void;
 }) {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex flex-wrap items-center gap-2">
-        <Zoom zoom={zoom} width={width} height={height} onZoom={onZoom} />
+        <Zoom zoom={zoom} width={width} height={height} onZoom={onZoom} onFit={onFit} />
         <Resolution detail={detail} choices={choices} onDetail={onDetail} />
         <Size shownWidth={shownWidth} shownHeight={shownHeight} width={width} height={height} />
         <Cursor cursor={cursor} />
@@ -47,11 +49,13 @@ function Zoom({
   width,
   height,
   onZoom,
+  onFit,
 }: {
   zoom: number;
   width: number;
   height: number;
   onZoom: (zoom: number) => void;
+  onFit?: () => void;
 }) {
   return (
     <div className="flex gap-1">
@@ -61,10 +65,19 @@ function Zoom({
       <button type="button" className={BUTTON} onClick={() => onZoom(clamp(zoom * 1.25))}>
         {t('measure.zoomIn')}
       </button>
-      <button type="button" className={BUTTON} onClick={() => onZoom(fitZoom(width, height))}>
+      <button
+        type="button"
+        className={BUTTON}
+        onClick={() => (onFit ? onFit() : onZoom(fitZoom(width, height)))}
+      >
         {t('measure.fit')}
       </button>
-      <button type="button" className={BUTTON} aria-label={t('measure.actual')} onClick={() => onZoom(1)}>
+      <button
+        type="button"
+        className={BUTTON}
+        aria-label={t('measure.actual')}
+        onClick={() => onZoom(1)}
+      >
         1:1
       </button>
     </div>
@@ -88,7 +101,9 @@ function Resolution({
           key={item}
           type="button"
           aria-pressed={detail === item}
-          className={detail === item ? 'rounded border border-action bg-active px-2 py-1 text-sm' : BUTTON}
+          className={
+            detail === item ? 'rounded border border-action bg-active px-2 py-1 text-sm' : BUTTON
+          }
           onClick={() => onDetail(item)}
         >
           {t(labelKey(item))}

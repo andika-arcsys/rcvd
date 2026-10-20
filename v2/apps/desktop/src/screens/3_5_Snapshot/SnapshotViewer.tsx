@@ -1,4 +1,5 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
+import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
 import { useVideoStream } from '../3_OpticalNativeView/stream';
 import {
@@ -21,7 +22,15 @@ const MODES: { id: AssistView; label: string }[] = [
 const BUTTON = 'rounded border border-line px-2 py-1 text-sm';
 const PRESSED = 'rounded border border-action bg-active px-2 py-1 text-sm';
 
-export function SnapshotViewer({ frameId, preset }: { frameId: string; preset?: string | null }) {
+export function SnapshotViewer({
+  frameId,
+  preset,
+  fileId,
+}: {
+  frameId: string;
+  preset?: string | null;
+  fileId?: string;
+}) {
   const loaded = useFrameContext(frameId, 'display');
   const assist = useAssist(frameId, preset, false);
   const frame = loaded.frame;
@@ -30,6 +39,7 @@ export function SnapshotViewer({ frameId, preset }: { frameId: string; preset?: 
   return (
     <div className="flex flex-col gap-2">
       <ModeBar picked={assist.picked} onPick={assist.choose} />
+      <SaveTransform fileId={fileId} />
       {bakeNote(assist.bake) ? (
         <p className="text-xs text-info" role="status">
           {bakeNote(assist.bake)}
@@ -40,7 +50,7 @@ export function SnapshotViewer({ frameId, preset }: { frameId: string; preset?: 
         <ComparePane title={t('measure.viewerLive')}>
           <LiveCamera />
         </ComparePane>
-        <ComparePane title={t('measure.viewerFreeze')}>
+        <ComparePane title={t('measure.viewerCanvas')}>
           <FreezeStill
             jpeg={shownJpeg(optical, assist.picked, assist.row)}
             width={frame?.width ?? 1}
@@ -68,6 +78,35 @@ function ModeBar({ picked, onPick }: { picked: AssistView; onPick: (view: Assist
           {t(item.label)}
         </button>
       ))}
+    </div>
+  );
+}
+
+function SaveTransform({ fileId }: { fileId: string | undefined }) {
+  const { client } = useEngine();
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const save = () => {
+    if (!fileId) return;
+    setBusy(true);
+    void client
+      .POST('/gallery/{snapshot_id}/transform', { params: { path: { snapshot_id: fileId } } })
+      .then((result) => {
+        setBusy(false);
+        setNote(result.data ? t('measure.saveModes') : t('spatial.failed'));
+      });
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        className="rounded bg-action px-3 py-1.5 text-sm text-bg disabled:bg-line disabled:text-muted"
+        disabled={!fileId || busy}
+        onClick={save}
+      >
+        {t('measure.saveModes')}
+      </button>
+      {note ? <p className="text-xs text-ok">{note}</p> : null}
     </div>
   );
 }

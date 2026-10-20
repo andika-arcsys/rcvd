@@ -23,7 +23,11 @@ export function TransformGate({ fileId }: { fileId: string }) {
     <div className="flex flex-col gap-3">
       <figure className="flex flex-col gap-1">
         <figcaption className="text-sm">{fileId}</figcaption>
-        <div className="relative h-72 w-full overflow-hidden rounded border border-line bg-bg">
+        <div
+          className="relative w-full overflow-hidden rounded border border-line bg-bg"
+          data-canvas-stage="gate"
+          style={{ height: 'calc(100vh - 16rem)', minHeight: '16rem' }}
+        >
           {src ? (
             <img src={src} alt={fileId} className="absolute inset-0 h-full w-full object-contain" />
           ) : null}

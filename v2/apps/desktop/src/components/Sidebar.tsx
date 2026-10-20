@@ -1,6 +1,6 @@
 import type { Access } from '@deepinsight/shared';
-import { useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Fragment, useState, type ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { t } from '../i18n';
 import { MENU_ITEMS, type MenuId } from '../navigation/registry';
 import { MenuIcon, PanelIcon } from './menuIcons';
@@ -27,6 +27,8 @@ function isDisabled(id: MenuId, access: AccessMap | null): boolean {
 export function Sidebar({ active, access, roleLabel, missionName, onExit }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const toggle = () => storeCollapsed(!collapsed, setCollapsed);
+  const here = useLocation().pathname;
+  const canvasHere = here.startsWith('/live/canvas') || here.startsWith('/live/snapshot');
   return (
     <nav
       aria-label="Menu utama"
@@ -37,14 +39,19 @@ export function Sidebar({ active, access, roleLabel, missionName, onExit }: Side
       <CollapseButton collapsed={collapsed} onToggle={toggle} />
       <Brand collapsed={collapsed} missionName={missionName} roleLabel={roleLabel} />
       {MENU_ITEMS.map((item) => (
-        <MenuEntry
-          key={item.id}
-          id={item.id}
-          active={active}
-          access={access}
-          collapsed={collapsed}
-          onExit={onExit}
-        />
+        <Fragment key={item.id}>
+          <MenuEntry
+            id={item.id}
+            active={active}
+            access={access}
+            collapsed={collapsed}
+            onExit={onExit}
+            canvasHere={canvasHere}
+          />
+          {item.id === 'live_operation' ? (
+            <CanvasEntry access={access} collapsed={collapsed} here={canvasHere} />
+          ) : null}
+        </Fragment>
       ))}
     </nav>
   );
@@ -94,22 +101,86 @@ function MenuEntry({
   access,
   collapsed,
   onExit,
+  canvasHere,
 }: {
   id: MenuId;
   active: MenuId | null;
   access: AccessMap | null;
   collapsed: boolean;
   onExit: () => void;
+  canvasHere: boolean;
 }) {
   const label = t(`menu.${id}`);
   const path = MENU_ITEMS.find((item) => item.id === id)?.path ?? '/';
   const disabled = isDisabled(id, access);
   const reason = access === null ? t('common.waitingEngine') : t('common.noAccess');
-  const body = <EntryBody id={id} label={label} collapsed={collapsed} reason={disabled ? reason : undefined} />;
+  const body = (
+    <EntryBody id={id} label={label} collapsed={collapsed} reason={disabled ? reason : undefined} />
+  );
   const row = rowClass(collapsed);
+  const current = active === id && !(id === 'live_operation' && canvasHere);
   if (disabled) return <DisabledEntry row={row} reason={reason} body={body} />;
-  if (id === 'keluar') return <ExitEntry row={row} label={label} collapsed={collapsed} onExit={onExit} body={body} />;
-  return <NavEntry row={row} path={path} label={label} collapsed={collapsed} active={active === id} body={body} />;
+  if (id === 'keluar')
+    return <ExitEntry row={row} label={label} collapsed={collapsed} onExit={onExit} body={body} />;
+  return (
+    <NavEntry
+      row={row}
+      path={path}
+      label={label}
+      collapsed={collapsed}
+      active={current}
+      body={body}
+    />
+  );
+}
+
+function CanvasEntry({
+  access,
+  collapsed,
+  here,
+}: {
+  access: AccessMap | null;
+  collapsed: boolean;
+  here: boolean;
+}) {
+  const label = t('menu.canvas');
+  const row = rowClass(collapsed);
+  const disabled = isDisabled('live_operation', access);
+  const reason = access === null ? t('common.waitingEngine') : t('common.noAccess');
+  const body = (
+    <>
+      <CanvasIcon />
+      <span className={collapsed ? 'sr-only' : ''} title={disabled ? reason : undefined}>
+        {label}
+      </span>
+    </>
+  );
+  if (disabled) return <DisabledEntry row={row} reason={reason} body={body} />;
+  return (
+    <NavEntry
+      row={row}
+      path="/live/canvas"
+      label={label}
+      collapsed={collapsed}
+      active={here}
+      body={body}
+    />
+  );
+}
+
+function CanvasIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 shrink-0"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M4 5h16v14H4zM8 9h8M8 13h5" />
+    </svg>
+  );
 }
 
 function EntryBody({
@@ -126,7 +197,11 @@ function EntryBody({
   return (
     <>
       <MenuIcon id={id} />
-      <span className={collapsed ? 'sr-only' : ''} title={reason} aria-disabled={reason ? true : undefined}>
+      <span
+        className={collapsed ? 'sr-only' : ''}
+        title={reason}
+        aria-disabled={reason ? true : undefined}
+      >
         {label}
       </span>
     </>
@@ -139,7 +214,12 @@ function rowClass(collapsed: boolean): string {
 
 function DisabledEntry({ row, reason, body }: { row: string; reason: string; body: ReactNode }) {
   return (
-    <span role="link" aria-disabled="true" title={reason} className={`${row} cursor-not-allowed text-muted/50`}>
+    <span
+      role="link"
+      aria-disabled="true"
+      title={reason}
+      className={`${row} cursor-not-allowed text-muted/50`}
+    >
       {body}
     </span>
   );

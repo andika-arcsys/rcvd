@@ -40,7 +40,7 @@ describe('Peringatan performa', () => {
     expect(screen.getAllByText('–').length).toBeGreaterThanOrEqual(3);
     await userEvent.click(screen.getByRole('button', { name: 'Matikan fitur' }));
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Optical Native View' }),
+      await screen.findByRole('heading', { level: 1, name: 'Live Operation' }),
     ).toBeInTheDocument();
     expect(seen.name).toBe('optical');
   });

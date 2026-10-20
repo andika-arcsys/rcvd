@@ -51,7 +51,11 @@ export function MeasureWorkspace({ saveLabel }: { saveLabel: 'measure.save' | 'm
         <>
           <PaneTabs pane={pane} onPane={setPane} />
           {pane === 'viewer' ? (
-            <SnapshotViewer frameId={frozen.frameId} preset={frozen.preset} />
+            <SnapshotViewer
+              frameId={frozen.frameId}
+              preset={frozen.preset}
+              fileId={frozen.fileId}
+            />
           ) : gate.blocked ? (
             <TransformGate fileId={gate.fileId} />
           ) : (
@@ -104,7 +108,7 @@ function Board({ saveLabel }: { saveLabel: 'measure.save' | 'measure.saveAs' }) 
   const laser = board.laserMode === 'ask' ? asPoints(frame?.laser) : [];
   return (
     <WorkColumns
-      mainMin="40rem"
+      mainMin="12rem"
       className="gap-4"
       main={<CanvasColumn board={board} actions={actions} assist={assist} />}
       side={

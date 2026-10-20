@@ -104,9 +104,14 @@ export function imagePoint(
   return { x: (viewX - panX) / zoom, y: (viewY - panY) / zoom };
 }
 
-export function fitZoom(width: number, height: number): number {
-  if (width <= 0 || height <= 0) return 1;
-  return Math.min(VIEW_W / width, VIEW_H / height);
+export function fitZoom(
+  width: number,
+  height: number,
+  viewW = VIEW_W,
+  viewH = VIEW_H,
+): number {
+  if (width <= 0 || height <= 0 || viewW <= 0 || viewH <= 0) return 1;
+  return Math.min(viewW / width, viewH / height);
 }
 
 export function place(draft: Draft, point: XY): Draft {
