@@ -1,58 +1,72 @@
 import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { jsonResponse, renderApp } from '../../test/renderApp';
 
-const PERF = {
-  warning: null,
-  detail: null,
+const LIVE = {
+  state: 'live',
+  frame_id: 'frm-1',
+  frame_count: 1,
+  enhanced: false,
   fps: null,
+  recording: false,
+  turbidity_level: null,
+  turbidity_configured: false,
   gpu_util_pct: null,
-  vram_used_mb: null,
-  vram_total_mb: null,
+  lost: false,
+  snapshot_count: 0,
+  performance_warning: null,
+  performance_detail: null,
 };
 
-const READY = { active: 'aquaclear', state: 'ready', gpu_available: true, limited_mode: false };
-
 describe('Ganti window', () => {
-  it('menonaktifkan HydroDetect dan SpatialSight pada mode terbatas', async () => {
+  it('kembali ke live view tanpa dialog feature', async () => {
     renderApp('/live/ganti-window', {
+      role: 'ketua_tim',
       routes: {
-        'GET /models': { active: null, state: 'optical', gpu_available: false, limited_mode: true },
-        'GET /video/performance': PERF,
+        'GET /video/status': LIVE,
+        'GET /findings': [],
+        'GET /missions/current': { mission: null },
       },
     });
-    expect(await screen.findByText(/Mode terbatas/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /HydroDetect/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /SpatialSight/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /AquaClear/ })).toBeEnabled();
+    expect(await screen.findByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Menu utama' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
+    expect(screen.queryByText('Melepas model lama')).toBeNull();
   });
 
-  it('menandai langkah melepas model lalu membuka AquaClear', async () => {
+  it('fitur yang diminta dimuat di live view', async () => {
     let release: (value: Response) => void = () => undefined;
-    renderApp('/live/ganti-window', {
+    let switched = '';
+    renderApp('/live/ganti-window?fitur=aquaclear', {
       role: 'ketua_tim',
       routes: {
-        'GET /models': READY,
-        'GET /video/performance': PERF,
-        'POST /models/switch': () =>
-          new Promise<Response>((resolve) => {
+        'GET /video/status': LIVE,
+        'GET /findings': [],
+        'GET /missions/current': { mission: null },
+        'POST /models/switch': async (request: Request) => {
+          const body = (await request.json()) as { name?: string };
+          switched = body.name ?? '';
+          return new Promise<Response>((resolve) => {
             release = resolve;
-          }),
+          });
+        },
       },
     });
-    await userEvent.click(await screen.findByRole('button', { name: /AquaClear/ }));
-    expect(screen.getByText('Melepas model lama')).toHaveAttribute('aria-current', 'step');
-    release(jsonResponse(200, READY));
-    expect(await screen.findByRole('heading', { level: 1, name: 'AquaClear' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(await screen.findByText('Loading')).toBeInTheDocument();
+    expect(switched).toBe('aquaclear');
+    release(jsonResponse(200, { active: 'aquaclear', state: 'ready' }));
+    expect(await screen.findByText('Ready')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
   });
 
-  it('tetap di dialog dan menampilkan pesan bila pemuatan gagal', async () => {
-    renderApp('/live/ganti-window', {
+  it('kegagalan mode tampil sebagai status di live view', async () => {
+    renderApp('/live/ganti-window?fitur=hydrodetect', {
       role: 'ketua_tim',
       routes: {
-        'GET /models': READY,
-        'GET /video/performance': PERF,
+        'GET /video/status': LIVE,
+        'GET /findings': [],
+        'GET /missions/current': { mission: null },
         'POST /models/switch': () =>
           jsonResponse(503, {
             code: 'MDL-003',
@@ -61,9 +75,8 @@ describe('Ganti window', () => {
           }),
       },
     });
-    await userEvent.click(await screen.findByRole('button', { name: /HydroDetect/ }));
     expect(await screen.findByRole('alert')).toHaveTextContent('MDL-003: CUDA');
-    expect(screen.getByRole('heading', { level: 2, name: /Feature window/ })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 1, name: 'Optical Native View' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
   });
 });

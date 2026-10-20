@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useEngine } from '../../engine/EngineProvider';
+import { featureTransition } from '../3_OpticalNativeView/featureSwitch';
 
 let lease = 0;
 
@@ -9,8 +10,9 @@ export function useReleaseModel(): void {
   useEffect(() => {
     const mine = ++lease;
     return () => {
+      const seen = featureTransition();
       window.setTimeout(() => {
-        if (lease !== mine) return;
+        if (lease !== mine || featureTransition() !== seen) return;
         void client.POST('/models/switch', { body: { name: 'optical', preset: null } });
       }, 0);
     };

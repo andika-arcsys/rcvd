@@ -1,6 +1,6 @@
 import type { components } from '@deepinsight/shared';
 import type { Draft } from '../../measure/draft';
-import { savedWithinLog } from '../../measure/log';
+import { CAL_TAG, savedWithinLog } from '../../measure/log';
 
 export function saveBody(draft: Draft, frameId: string): components['schemas']['SaveIn'] | null {
   const cal = draft.geometry.cal;
@@ -10,7 +10,7 @@ export function saveBody(draft: Draft, frameId: string): components['schemas']['
   return {
     frame_id: frameId,
     ref_cm: ref,
-    calibration: { a: cal.a, b: cal.b, tag: '' },
+    calibration: { a: cal.a, b: cal.b, tag: CAL_TAG },
     lengths: kept.lengths,
     areas: kept.areas,
     annotations: draft.geometry.notes,

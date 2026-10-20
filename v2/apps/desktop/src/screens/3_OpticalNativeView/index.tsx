@@ -6,7 +6,7 @@ import { ActionBar } from './ActionBar';
 import { DualStage } from './DualStage';
 import { FeatureStatus } from './FeatureStatus';
 import { FeatureTabs } from './FeatureTabs';
-import { useFeatureSwitch } from './featureSwitch';
+import { useAskedFeature, useFeatureSwitch } from './featureSwitch';
 import { useLiveInput } from './input';
 import { SideColumn } from './SideColumn';
 import { TelemetryBar } from './TelemetryBar';
@@ -23,6 +23,7 @@ export default function OpticalNativeViewScreen() {
   const actions = useLiveActions(status?.frame_id ?? null, Boolean(status?.lost));
   const features = useFeatureSwitch();
   const [dual, setDual] = useState(false);
+  useAskedFeature(features.pick);
   useLiveInput(actions.freeze, actions.mark, features.pick);
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-4">
@@ -39,15 +40,7 @@ export default function OpticalNativeViewScreen() {
         onDual={() => setDual((value) => !value)}
       />
       <WorkColumns
-        main={
-          <LivePicture
-            dual={dual}
-            active={features.active}
-            frameId={status?.frame_id ?? null}
-            lost={Boolean(status?.lost)}
-            enhanced={Boolean(status?.enhanced)}
-          />
-        }
+        main={<LivePicture dual={dual} active={features.active} lost={Boolean(status?.lost)} />}
         side={<SideColumn status={status} mission={mission} findings={findings} />}
       />
       <ActionBar
@@ -94,28 +87,11 @@ function FeatureBar({
   );
 }
 
-function LivePicture({
-  dual,
-  active,
-  frameId,
-  lost,
-  enhanced,
-}: {
-  dual: boolean;
-  active: string;
-  frameId: string | null;
-  lost: boolean;
-  enhanced: boolean;
-}) {
-  const label = t(featureLabel(active));
+function LivePicture({ dual, active, lost }: { dual: boolean; active: string; lost: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <SourcePicker />
-      {dual ? (
-        <DualStage featureLabel={label} />
-      ) : (
-        <VideoStage frameId={frameId} lost={lost} label={enhanced ? label : undefined} />
-      )}
+      {dual ? <DualStage featureLabel={t(featureLabel(active))} /> : <VideoStage lost={lost} />}
     </div>
   );
 }

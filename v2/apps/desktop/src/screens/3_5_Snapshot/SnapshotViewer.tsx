@@ -85,17 +85,13 @@ function ComparePane({ title, children }: { title: string; children: ReactNode }
 
 function LiveCamera() {
   const video = useRef<HTMLCanvasElement>(null);
-  const overlay = useRef<HTMLCanvasElement>(null);
-  useVideoStream(video, overlay);
+  useVideoStream(video);
   return (
-    <>
-      <canvas
-        ref={video}
-        className="absolute inset-0 h-full w-full object-contain"
-        aria-label={t('measure.viewerLive')}
-      />
-      <canvas ref={overlay} className="pointer-events-none absolute inset-0 h-full w-full" />
-    </>
+    <canvas
+      ref={video}
+      className="absolute inset-0 h-full w-full object-contain"
+      aria-label={t('measure.viewerLive')}
+    />
   );
 }
 

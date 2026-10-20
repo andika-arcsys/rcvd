@@ -9,11 +9,12 @@ describe('log snapshot', () => {
     const log = logLines(draft, meters, [], []);
     expect(log.capped).toBe(true);
     expect(log.lines).toHaveLength(20);
-    expect(log.lines[0]?.text).toBe('L-1  1.000 m');
-    expect(log.lines[19]?.tag).toBe('L-20');
+    expect(log.lines[0]?.text).toBe('L1# 1.000 m');
+    expect(log.lines[2]?.text).toBe('L3# 1.000 m');
+    expect(log.lines[19]?.tag).toBe('L20#');
     const kept = savedWithinLog(draft);
     expect(kept.lengths).toHaveLength(20);
-    expect(kept.lengths[19]?.tag).toBe('L-20');
+    expect(kept.lengths[19]?.tag).toBe('L20#');
   });
 
   it('jalur tersimpan sebagai PATH, bukan baris L tambahan', () => {
@@ -23,8 +24,8 @@ describe('log snapshot', () => {
     draft = place(draft, { x: 10, y: 10 });
     draft = finishPath(draft);
     const log = logLines(draft, [1, 2], [], []);
-    expect(log.lines.map((line) => line.text)).toEqual(['PATH-1  3.000 m']);
-    expect(savedWithinLog(draft).lengths.map((item) => item.tag)).toEqual(['PATH-1', 'PATH-1']);
+    expect(log.lines.map((line) => line.text)).toEqual(['PATH1# 3.000 m']);
+    expect(savedWithinLog(draft).lengths.map((item) => item.tag)).toEqual(['PATH1#', 'PATH1#']);
   });
 
   it('menyimpan tag area di dalam batas log', () => {
@@ -46,8 +47,8 @@ describe('log snapshot', () => {
       [],
     );
     expect(log.capped).toBe(false);
-    expect(log.lines.at(-1)?.text).toBe('AREA-1  0.1011 m²');
-    expect(savedWithinLog(draft).areas[0]?.tag).toBe('AREA-1');
+    expect(log.lines.at(-1)?.text).toBe('AREA1# 0.1011 m²');
+    expect(savedWithinLog(draft).areas[0]?.tag).toBe('AREA1#');
   });
 });
 

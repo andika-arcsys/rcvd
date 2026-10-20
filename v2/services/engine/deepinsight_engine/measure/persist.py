@@ -91,7 +91,7 @@ def build_record(
             {
                 "meters": item.meters,
                 "uncertainty_2sigma_m": item.uncertainty_2sigma_m,
-                "tag": _tag(length_tags, index, f"L-{index + 1}"),
+                "tag": _tag(length_tags, index, f"L{index + 1}#"),
             }
             for index, item in enumerate(measured)
         ],
@@ -99,7 +99,7 @@ def build_record(
             {
                 "area_m2": item.area_m2,
                 "uncertainty_2sigma_m2": item.uncertainty_2sigma_m2,
-                "tag": _tag(area_tags, index, f"AREA-{index + 1}"),
+                "tag": _tag(area_tags, index, f"AREA{index + 1}#"),
             }
             for index, item in enumerate(fields)
         ],

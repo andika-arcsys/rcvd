@@ -3,6 +3,8 @@ import type { Draft, Pair, XY } from './draft';
 /** Satu snapshot menyimpan paling banyak 20 baris log. */
 export const LOG_LIMIT = 20;
 
+export const CAL_TAG = 'CAL#';
+
 export interface LogLine {
   tag: string;
   text: string;
@@ -19,6 +21,37 @@ export interface SavedArea {
   tag: string;
 }
 
+export function lengthTag(number: number): string {
+  return `L${number}#`;
+}
+
+export function pathTag(number: number): string {
+  return `PATH${number}#`;
+}
+
+export function areaTag(number: number): string {
+  return `AREA${number}#`;
+}
+
+export function angleTag(number: number): string {
+  return `ANG${number}#`;
+}
+
+/** `L3# 2.035 m` — satu spasi sesudah tanda pagar. */
+export function tagged(tag: string, value: string): string {
+  return `${tag} ${value}`;
+}
+
+export function taggedMeasure(
+  tag: string,
+  value: number | undefined,
+  unit: string,
+  digits: number,
+): string {
+  if (value === undefined || !Number.isFinite(value)) return tag;
+  return tagged(tag, `${value.toFixed(digits)} ${unit}`);
+}
+
 export function lengthNames(lengths: Pair[], paths: XY[][]): string[] {
   const pathOf = pathBySegment(paths);
   let shown = 0;
@@ -26,7 +59,7 @@ export function lengthNames(lengths: Pair[], paths: XY[][]): string[] {
     const path = pathOf.get(pairKey(item.a, item.b));
     if (path) return path;
     shown += 1;
-    return `L-${shown}`;
+    return lengthTag(shown);
   });
 }
 
@@ -63,7 +96,7 @@ export function savedWithinLog(draft: Draft): { lengths: SavedLength[]; areas: S
       return [{ a: item.a, b: item.b, tag }];
     }),
     areas: draft.geometry.areas.flatMap((points, index) => {
-      const tag = `AREA-${index + 1}`;
+      const tag = areaTag(index + 1);
       if (!kept.has(tag)) return [];
       return [{ points, tag }];
     }),
@@ -73,40 +106,40 @@ export function savedWithinLog(draft: Draft): { lengths: SavedLength[]; areas: S
 function rowTags(draft: Draft): string[] {
   const names = lengthNames(draft.geometry.lengths, draft.geometry.paths);
   return [
-    ...names.filter((tag) => tag.startsWith('L-')),
-    ...draft.geometry.paths.map((_, index) => `PATH-${index + 1}`),
-    ...draft.geometry.areas.map((_, index) => `AREA-${index + 1}`),
-    ...draft.geometry.angles.map((_, index) => `ANG-${index + 1}`),
+    ...names.filter(isLengthTag),
+    ...draft.geometry.paths.map((_, index) => pathTag(index + 1)),
+    ...draft.geometry.areas.map((_, index) => areaTag(index + 1)),
+    ...draft.geometry.angles.map((_, index) => angleTag(index + 1)),
   ];
 }
 
 function lengthLines(names: string[], meters: number[]): LogLine[] {
   const rows: LogLine[] = [];
   names.forEach((tag, index) => {
-    if (!tag.startsWith('L-')) return;
-    rows.push({ tag, text: withUnit(tag, meters[index], 'm', 3) });
+    if (!isLengthTag(tag)) return;
+    rows.push({ tag, text: taggedMeasure(tag, meters[index], 'm', 3) });
   });
   return rows;
 }
 
 function pathLines(paths: XY[][], lengths: Pair[], names: string[], meters: number[]): LogLine[] {
   return paths.map((poly, index) => {
-    const tag = `PATH-${index + 1}`;
-    return { tag, text: withUnit(tag, pathSum(poly, lengths, names, meters, tag), 'm', 3) };
+    const tag = pathTag(index + 1);
+    return { tag, text: taggedMeasure(tag, pathSum(poly, lengths, names, meters, tag), 'm', 3) };
   });
 }
 
 function areaLines(areas: number[]): LogLine[] {
   return areas.map((value, index) => {
-    const tag = `AREA-${index + 1}`;
-    return { tag, text: withUnit(tag, value, 'm²', 4) };
+    const tag = areaTag(index + 1);
+    return { tag, text: taggedMeasure(tag, value, 'm²', 4) };
   });
 }
 
 function angleLines(angles: number[]): LogLine[] {
   return angles.map((value, index) => {
-    const tag = `ANG-${index + 1}`;
-    const text = Number.isFinite(value) ? `${tag}  ${value.toFixed(1)}°` : tag;
+    const tag = angleTag(index + 1);
+    const text = Number.isFinite(value) ? tagged(tag, `${value.toFixed(1)}°`) : tag;
     return { tag, text };
   });
 }
@@ -138,7 +171,7 @@ function pathSum(
 function pathBySegment(paths: XY[][]): Map<string, string> {
   const tags = new Map<string, string>();
   paths.forEach((poly, number) => {
-    const tag = `PATH-${number + 1}`;
+    const tag = pathTag(number + 1);
     for (let index = 1; index < poly.length; index += 1) {
       const left = poly[index - 1];
       const right = poly[index];
@@ -148,11 +181,10 @@ function pathBySegment(paths: XY[][]): Map<string, string> {
   return tags;
 }
 
-function pairKey(a: XY, b: XY): string {
-  return `${a.x},${a.y}|${b.x},${b.y}`;
+function isLengthTag(tag: string): boolean {
+  return /^L\d+#$/.test(tag);
 }
 
-function withUnit(tag: string, value: number | undefined, unit: string, digits: number): string {
-  if (value === undefined || !Number.isFinite(value)) return tag;
-  return `${tag}  ${value.toFixed(digits)} ${unit}`;
+function pairKey(a: XY, b: XY): string {
+  return `${a.x},${a.y}|${b.x},${b.y}`;
 }
