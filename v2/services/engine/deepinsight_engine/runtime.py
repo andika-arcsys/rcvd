@@ -21,6 +21,7 @@ from .video.capture import CaptureLoop
 from .video.evidence import store_png
 from .video.file_source import open_live, read_file
 from .video.frames import RingBuffer, StoredFrame
+from .video.live_infer import LiveInfer, publish_allowed
 from .video.marks import store_jpeg
 from .video.pipeline import FramePipeline
 from .video.quality import configured, turbidity_level
@@ -59,6 +60,7 @@ class Runtime:
         self._bake_token = 0
         self._bake: dict[str, object] = {}
         self._vision: dict[str, object] = {}
+        self._live_infer = LiveInfer(self._infer_later)
         self.models = ModelManager(
             settings.models,
             models_dir,
@@ -131,6 +133,9 @@ class Runtime:
             )
 
     def switch(self, name: str, preset: str | None) -> None:
+        self._live_infer.cancel()
+        with self._lock:
+            self._vision = {}
         self.models.switch(name, preset)
 
     def push_synthetic(self, count: int, width: int, height: int) -> list[str]:
@@ -405,6 +410,10 @@ class Runtime:
 
         with self._lock:
             event = dict(self._vision)
+            raw_kind = event.get("kind")
+            kind = raw_kind if isinstance(raw_kind, str) else None
+            if not publish_allowed(self.models.active, kind, self.models.state):
+                event = {}
             preset = self.models.preset_name
             frame = self.pipeline.ring.latest()
         hydro = self._settings.hydrodetect
@@ -644,21 +653,47 @@ class Runtime:
             self.cache.put(f"display/{frame.frame_id}", shown.jpeg)
 
     def _enhance(self, frame: StoredFrame) -> tuple[bytes, int, int] | None:
+        if self._defer_gpu():
+            self._live_infer.submit(frame)
+            return None
         if not self._assist_lock.acquire(blocking=False):
             return None
         try:
-            return self._enhance_locked(frame)
+            return self._enhance_locked(frame, None)
         finally:
             self._assist_lock.release()
 
-    def _enhance_locked(self, frame: StoredFrame) -> tuple[bytes, int, int] | None:
+    def _defer_gpu(self) -> bool:
+        """HydroDetect dan SpatialSight tidak menahan gambar kamera."""
+        return self.models.state == "ready" and self.models.active in {
+            "hydrodetect",
+            "spatialsight",
+        }
+
+    def _infer_later(self, frame: StoredFrame, generation: int) -> None:
+        if not self._assist_lock.acquire(blocking=False):
+            return
+        try:
+            self._enhance_locked(frame, generation)
+        finally:
+            self._assist_lock.release()
+
+    def _enhance_locked(
+        self, frame: StoredFrame, generation: int | None
+    ) -> tuple[bytes, int, int] | None:
+        kind = self.models.active
         try:
             raw = self.models.infer(frame)
         except EngineError as exc:
             self._on_error(exc.spec.code, exc.detail)
             return None
         event = self.models.last_result
-        self._vision = {} if event is None else dict(event)
+        with self._lock:
+            if generation is not None and not self._live_infer.accepts(generation):
+                return None
+            if not publish_allowed(self.models.active, kind, self.models.state):
+                return None
+            self._vision = {} if event is None else dict(event)
         if raw is None:
             return None
         width = int((event or {}).get("out_width") or frame.width)

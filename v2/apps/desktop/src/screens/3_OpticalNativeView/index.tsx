@@ -2,16 +2,18 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { WorkColumns } from '../../components/WorkColumns';
 import { t } from '../../i18n';
+import { useVision } from '../features/poll';
 import { ActionBar } from './ActionBar';
 import { DualStage } from './DualStage';
 import { FeatureStatus } from './FeatureStatus';
 import { FeatureTabs } from './FeatureTabs';
 import { useAskedFeature, useFeatureSwitch } from './featureSwitch';
 import { useLiveInput } from './input';
+import { LiveOverlay } from './LiveOverlay';
 import { SideColumn } from './SideColumn';
+import { SourcePicker } from './SourcePicker';
 import { TelemetryBar } from './TelemetryBar';
 import { useCurrentMission, useFindings, useLiveActions, useVideoStatus } from './useLive';
-import { SourcePicker } from './SourcePicker';
 import { VideoStage } from './VideoStage';
 
 export default function OpticalNativeViewScreen() {
@@ -88,10 +90,16 @@ function FeatureBar({
 }
 
 function LivePicture({ dual, active, lost }: { dual: boolean; active: string; lost: boolean }) {
+  const vision = useVision();
+  const overlay = <LiveOverlay vision={vision} opacity={dual ? 85 : 70} />;
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <SourcePicker />
-      {dual ? <DualStage featureLabel={t(featureLabel(active))} /> : <VideoStage lost={lost} />}
+      {dual ? (
+        <DualStage featureLabel={t(featureLabel(active))} overlay={overlay} />
+      ) : (
+        <VideoStage lost={lost}>{overlay}</VideoStage>
+      )}
     </div>
   );
 }

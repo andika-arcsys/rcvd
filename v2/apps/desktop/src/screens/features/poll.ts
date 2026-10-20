@@ -4,7 +4,7 @@ import { useEngine } from '../../engine/EngineProvider';
 
 export type Vision = components['schemas']['VisionView'];
 
-const POLL_MS = 1000;
+const POLL_MS = 300;
 
 export function useVision(): Vision | null {
   const { client } = useEngine();
