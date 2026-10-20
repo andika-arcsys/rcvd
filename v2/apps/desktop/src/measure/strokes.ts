@@ -1,5 +1,5 @@
 import type { Anno, Draft, Pair, XY } from './draft';
-import { lengthNames } from './log';
+import { CAL_TAG, angleTag, areaTag, lengthNames, pathTag, tagged, taggedMeasure } from './log';
 
 export type StrokeKind = 'cal' | 'length' | 'path' | 'area' | 'note' | 'angle' | 'pending';
 
@@ -38,7 +38,7 @@ export function strokesOf(draft: Draft, tags: LineTags = NO_TAGS): Stroke[] {
 function calStroke(pair: Pair | null, refCm: string): Stroke[] {
   if (!pair) return [];
   const ref = refCm.trim();
-  return [{ ...pairStroke('cal', 'cal', pair), tag: ref ? `CAL  ${ref} cm` : 'CAL' }];
+  return [{ ...pairStroke('cal', 'cal', pair), tag: ref ? tagged(CAL_TAG, `${ref} cm`) : CAL_TAG }];
 }
 
 function lengthStrokes(
@@ -53,7 +53,7 @@ function lengthStrokes(
     if (onPath.has(pairKey(item.a, item.b))) return;
     rows.push({
       ...pairStroke(`len.${index}`, 'length', item),
-      tag: withValue(names[index] ?? 'L', meters[index], 'm'),
+      tag: taggedMeasure(names[index] ?? 'L', meters[index], 'm', 3),
     });
   });
   return rows;
@@ -65,7 +65,7 @@ function pathStrokes(paths: XY[][], lengths: Pair[], meters: number[]): Stroke[]
     id: `path.${number}`,
     kind: 'path',
     points: poly,
-    tag: withValue(`PATH-${number + 1}`, pathMeters(poly, index, meters), 'm'),
+    tag: taggedMeasure(pathTag(number + 1), pathMeters(poly, index, meters), 'm', 3),
   }));
 }
 
@@ -79,7 +79,7 @@ function areaStroke(poly: XY[], index: number, value: number | undefined): Strok
     kind: 'area',
     points: poly,
     closed: true,
-    tag: withValue(`AREA-${index + 1}`, value, 'm²', 4),
+    tag: taggedMeasure(areaTag(index + 1), value, 'm²', 4),
   };
 }
 
@@ -98,9 +98,9 @@ function angleStroke(
   index: number,
   value: number | undefined,
 ): Stroke {
-  const name = `ANG-${index + 1}`;
+  const name = angleTag(index + 1);
   const tag =
-    value === undefined || !Number.isFinite(value) ? name : `${name}  ${value.toFixed(1)}°`;
+    value === undefined || !Number.isFinite(value) ? name : tagged(name, `${value.toFixed(1)}°`);
   return { id: `ang.${index}`, kind: 'angle', points: [item.a, item.v, item.c], tag };
 }
 
@@ -139,11 +139,6 @@ function pathMeters(poly: XY[], index: Map<string, number>, meters: number[]): n
 
 function pairKey(a: XY, b: XY): string {
   return `${a.x},${a.y}|${b.x},${b.y}`;
-}
-
-function withValue(name: string, value: number | undefined, unit: string, digits = 3): string {
-  if (value === undefined || !Number.isFinite(value)) return name;
-  return `${name}  ${value.toFixed(digits)} ${unit}`;
 }
 
 function pendingStroke(draft: Draft): Stroke[] {

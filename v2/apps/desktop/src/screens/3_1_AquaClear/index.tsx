@@ -69,7 +69,7 @@ function AquaActions({ lost, frameId }: { lost: boolean; frameId: string | null 
       </button>
       <button
         type="button"
-        onClick={() => navigate('/live/ganti-window')}
+        onClick={() => navigate('/live')}
         className={`${ACTION} border border-line`}
       >
         {t('feature.switchWindow')}

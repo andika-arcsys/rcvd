@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 import time
 from collections.abc import Callable, Mapping
 from pathlib import Path
@@ -69,6 +70,7 @@ class ModelManager:
         self.state = "optical"
         self.killed_for_vram = False
         self.device_note: str | None = None
+        self._switch_guard = threading.Lock()
 
     def set_models_dir(self, models_dir: Path) -> None:
         self._models_dir = models_dir
@@ -86,6 +88,10 @@ class ModelManager:
         return None if self._worker is None else self._worker.pid
 
     def switch(self, name: str, preset: str | None = None) -> None:
+        with self._switch_guard:
+            self._switch_locked(name, preset)
+
+    def _switch_locked(self, name: str, preset: str | None) -> None:
         if name == "optical":
             self._to_optical()
             return

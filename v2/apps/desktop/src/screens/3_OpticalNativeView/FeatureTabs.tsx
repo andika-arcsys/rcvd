@@ -7,19 +7,19 @@ const TABS: { label: string; hint: string; to: string; feature: LiveFeature | nu
   {
     label: 'live.tabAquaclear',
     hint: 'F2',
-    to: '/live/ganti-window?fitur=aquaclear',
+    to: '/live?fitur=aquaclear',
     feature: 'aquaclear',
   },
   {
     label: 'live.tabHydro',
     hint: 'F3',
-    to: '/live/ganti-window?fitur=hydrodetect',
+    to: '/live?fitur=hydrodetect',
     feature: 'hydrodetect',
   },
   {
     label: 'live.tabSpatial',
     hint: 'F4',
-    to: '/live/ganti-window?fitur=spatialsight',
+    to: '/live?fitur=spatialsight',
     feature: 'spatialsight',
   },
   { label: 'live.tabCanvas', hint: 'F5', to: '/live/canvas', feature: null },

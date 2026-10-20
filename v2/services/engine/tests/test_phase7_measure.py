@@ -86,7 +86,7 @@ def test_save_recomputes_and_versions(client: TestClient, tmp_path: Path) -> Non
     assert body["calibration"]["status"] == "ESTIMATE_ONLY"
     assert body["calibration"]["camera_present"] is False
     assert body["measurements"][0]["meters"] == 0.5
-    assert body["measurements"][0]["tag"] == "L-1"
+    assert body["measurements"][0]["tag"] == "L1#"
     assert body["version"] == 1
     assert body["supersedes"] is None
     assert body["freeze_no"] == 1

@@ -29,7 +29,7 @@ export default function SpatialSightScreen() {
       <GpuBudgetLine status={status} />
       <WorkColumns
         main={
-          <VideoStage frameId={frameId} lost={lost}>
+          <VideoStage lost={lost}>
             <DepthLegend depth={vision?.depth ?? null} opacity={opacity} />
           </VideoStage>
         }

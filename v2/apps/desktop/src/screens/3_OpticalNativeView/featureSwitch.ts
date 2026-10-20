@@ -1,8 +1,20 @@
 import type { EngineClient } from '@deepinsight/shared';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
 import { engineFailure } from '../../lib/engineError';
+
+let transition = 0;
+
+/** Tandai bahwa live view sudah mengambil alih ganti model, supaya lepas optical tidak menyusul. */
+export function markFeatureTransition(): void {
+  transition += 1;
+}
+
+export function featureTransition(): number {
+  return transition;
+}
 
 export type LiveFeature = 'optical' | 'aquaclear' | 'hydrodetect' | 'spatialsight';
 export type GpuFeature = Exclude<LiveFeature, 'optical'>;
@@ -37,6 +49,7 @@ export function useFeatureSwitch(): {
   const held = useRef(false);
   const pick = useCallback(
     (name: LiveFeature) => {
+      markFeatureTransition();
       if (held.current) return;
       held.current = true;
       const id = token.current + 1;
@@ -55,6 +68,23 @@ export function useFeatureSwitch(): {
   return { chips, busy, fault, active: featureHint(chips), pick };
 }
 
+export function useAskedFeature(pick: (name: LiveFeature) => void): void {
+  const [params, setParams] = useSearchParams();
+  const asked = params.get('fitur');
+  useEffect(() => {
+    if (!isLiveFeature(asked)) return;
+    if (claimAsked(asked)) pick(asked);
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete('fitur');
+        return next;
+      },
+      { replace: true },
+    );
+  }, [asked, pick, setParams]);
+}
+
 export function featureHint(chips: FeatureChips): string {
   const active = GPU.find((name) => chips[name].state !== 'idle');
   return active ? HINT[active] : 'F1';
@@ -68,6 +98,26 @@ async function switchModel(client: EngineClient, name: LiveFeature): Promise<str
   } catch {
     return t('live.switchFailed');
   }
+}
+
+let recentAsked = '';
+let recentAskedAt = 0;
+
+function claimAsked(name: LiveFeature): boolean {
+  const now = Date.now();
+  if (recentAsked === name && now - recentAskedAt < 400) return false;
+  recentAsked = name;
+  recentAskedAt = now;
+  return true;
+}
+
+function isLiveFeature(value: string | null): value is LiveFeature {
+  return (
+    value === 'optical' ||
+    value === 'aquaclear' ||
+    value === 'hydrodetect' ||
+    value === 'spatialsight'
+  );
 }
 
 function idleChips(): FeatureChips {

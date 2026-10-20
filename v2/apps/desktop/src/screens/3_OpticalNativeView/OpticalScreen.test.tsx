@@ -83,14 +83,15 @@ describe('Optical Native View', () => {
     expect(screen.getByLabelText('Alamat RTSP')).toBeInTheDocument();
   });
 
-  it('menampilkan telemetri kosong, kualitas belum diisi, dan video asli', async () => {
+  it('menampilkan telemetri kosong dan video tanpa teks tambahan', async () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
     expect(await screen.findByText('Belum diisi')).toBeInTheDocument();
     expect(screen.getByText('Tidak merekam')).toBeInTheDocument();
-    expect(screen.getByText('Laser point not detected')).toBeInTheDocument();
     expect(screen.getByText('Segmen aktif belum diisi')).toBeInTheDocument();
-    expect(screen.getByText('Video asli · tanpa pengolahan')).toBeInTheDocument();
-    expect(screen.getByText('frm-1')).toBeInTheDocument();
+    expect(screen.queryByText('Laser point not detected')).toBeNull();
+    expect(screen.queryByText('Video asli · tanpa pengolahan')).toBeNull();
+    expect(screen.queryByText('frm-1')).toBeNull();
+    expect(screen.getByLabelText('Video asli · tanpa pengolahan')).toBeInTheDocument();
   });
 
   it('FREEZE menyimpan berkas dan membuka Gallery', async () => {
@@ -148,6 +149,25 @@ describe('Optical Native View', () => {
     release(jsonResponse(200, { active: 'aquaclear', state: 'ready' }));
     expect(await screen.findByText('Ready')).toBeInTheDocument();
     expect(switched).toBe('aquaclear');
+  });
+
+  it('query fitur memuat SpatialSight di live view', async () => {
+    let switched = '';
+    renderApp('/live?fitur=spatialsight', {
+      role: 'pilot_drone',
+      routes: {
+        ...routes(),
+        'POST /models/switch': async (request: Request) => {
+          const body = (await request.json()) as { name?: string };
+          switched = body.name ?? '';
+          return jsonResponse(200, { active: 'spatialsight', state: 'ready' });
+        },
+      },
+    });
+    expect(await screen.findByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(await screen.findByText('Ready')).toBeInTheDocument();
+    expect(switched).toBe('spatialsight');
+    expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
   });
 
   it('gagal memuat HydroDetect tetap di live view dengan status mode itu', async () => {

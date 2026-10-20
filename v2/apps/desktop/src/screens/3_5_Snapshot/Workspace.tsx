@@ -47,17 +47,16 @@ export function MeasureWorkspace({ saveLabel }: { saveLabel: 'measure.save' | 'm
           {t('feature.presetRecorded')}: {frozen.preset}
         </p>
       ) : null}
-      {frozen && gate.blocked ? (
-        <TransformGate fileId={gate.fileId} />
-      ) : frozen ? (
+      {frozen ? (
         <>
           <PaneTabs pane={pane} onPane={setPane} />
-          <div hidden={pane !== 'measure'}>
-            <Board saveLabel={saveLabel} />
-          </div>
           {pane === 'viewer' ? (
             <SnapshotViewer frameId={frozen.frameId} preset={frozen.preset} />
-          ) : null}
+          ) : gate.blocked ? (
+            <TransformGate fileId={gate.fileId} />
+          ) : (
+            <Board saveLabel={saveLabel} />
+          )}
         </>
       ) : (
         <p className="text-sm text-muted">{t('live.noFreeze')}</p>

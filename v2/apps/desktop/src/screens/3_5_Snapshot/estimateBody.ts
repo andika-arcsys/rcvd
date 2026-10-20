@@ -1,6 +1,6 @@
 import type { components } from '@deepinsight/shared';
 import type { Draft } from '../../measure/draft';
-import { lengthNames } from '../../measure/log';
+import { CAL_TAG, areaTag, lengthNames } from '../../measure/log';
 
 export function estimateBody(
   draft: Draft,
@@ -13,13 +13,13 @@ export function estimateBody(
   return {
     frame_id: frameId,
     ref_cm: ref,
-    calibration: { a: cal.a, b: cal.b, tag: '' },
+    calibration: { a: cal.a, b: cal.b, tag: CAL_TAG },
     lengths: draft.geometry.lengths.map((item, index) => ({
       a: item.a,
       b: item.b,
       tag: names[index] ?? '',
     })),
-    areas: draft.geometry.areas.map((points, index) => ({ points, tag: `AREA-${index + 1}` })),
+    areas: draft.geometry.areas.map((points, index) => ({ points, tag: areaTag(index + 1) })),
     paths: draft.geometry.paths.map((points) => ({ points })),
   };
 }

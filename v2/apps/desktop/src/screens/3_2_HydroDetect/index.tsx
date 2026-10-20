@@ -35,13 +35,7 @@ export default function HydroDetectScreen() {
       <GpuBudgetLine status={status} />
       <WorkColumns
         main={
-          <Frame
-            frameId={status?.frame_id ?? null}
-            lost={Boolean(status?.lost)}
-            vision={vision}
-            shown={shown}
-            style={draw.style}
-          />
+          <Frame lost={Boolean(status?.lost)} vision={vision} shown={shown} style={draw.style} />
         }
         side={
           <Aside
@@ -65,20 +59,18 @@ export default function HydroDetectScreen() {
 }
 
 function Frame({
-  frameId,
   lost,
   vision,
   shown,
   style,
 }: {
-  frameId: string | null;
   lost: boolean;
   vision: Vision | null;
   shown: Vision['candidates'];
   style: MaskStyle;
 }) {
   return (
-    <VideoStage frameId={frameId} lost={lost}>
+    <VideoStage lost={lost}>
       <MaskOverlay
         items={shown}
         colors={vision?.classes ?? []}
