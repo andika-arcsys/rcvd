@@ -1,11 +1,17 @@
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { t } from '../../i18n';
 import { useCompareStream } from '../3_1_AquaClear/stream';
 
 const FRAME = 'absolute inset-0 h-full w-full object-contain';
 const BOX = 'relative aspect-video w-full overflow-hidden rounded border border-line bg-bg';
 
-export function DualStage({ featureLabel }: { featureLabel: string }) {
+export function DualStage({
+  featureLabel,
+  overlay,
+}: {
+  featureLabel: string;
+  overlay?: ReactNode;
+}) {
   const raw = useRef<HTMLCanvasElement>(null);
   const view = useRef<HTMLCanvasElement>(null);
   useCompareStream(raw, view);
@@ -21,6 +27,7 @@ export function DualStage({ featureLabel }: { featureLabel: string }) {
         <figcaption className="text-sm">{featureLabel}</figcaption>
         <div className={BOX}>
           <canvas ref={view} className={FRAME} aria-label={featureLabel} />
+          {overlay}
         </div>
       </figure>
     </div>

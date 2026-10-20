@@ -44,6 +44,54 @@ const FROZEN = {
   path: '/tmp/a.png',
 };
 
+const HYDRO = {
+  frame_id: 'frm-1',
+  kind: 'hydrodetect',
+  preset: null,
+  candidates: [
+    {
+      class_name: 'Pipe',
+      score: 0.9,
+      bbox: [1, 2, 3, 4],
+      polygon: [
+        [0, 0],
+        [10, 0],
+        [10, 10],
+      ],
+      rle: [],
+      rle_size: [1, 1],
+      hidden_by_filter: false,
+    },
+  ],
+  depth: null,
+  classes: [{ name: 'Pipe', hidden_by_default: false, color: '#fff' }],
+  frame_width: 32,
+  frame_height: 24,
+  confidence: 0.5,
+  imgsz: 640,
+  process_res: 504,
+};
+
+const SPATIAL = {
+  frame_id: 'frm-1',
+  kind: 'spatialsight',
+  preset: null,
+  candidates: [],
+  depth: {
+    width: 2,
+    height: 2,
+    values: [1, 0.5, 0.2, 0],
+    label: 'Preview relatif, bukan ukuran',
+    jpeg_b64: null,
+  },
+  classes: [],
+  frame_width: 32,
+  frame_height: 24,
+  confidence: 0.5,
+  imgsz: 640,
+  process_res: 504,
+};
+
 function routes(status = LIVE) {
   return {
     'GET /video/status': status,
@@ -105,6 +153,26 @@ describe('Optical Native View', () => {
     await screen.findByRole('button', { name: 'FREEZE' });
     await userEvent.keyboard('[Space]');
     expect(await screen.findByRole('heading', { name: 'Gallery' })).toBeInTheDocument();
+  });
+
+  it('HydroDetect menggambar deteksi di atas video live', async () => {
+    renderApp('/live', {
+      role: 'pilot_drone',
+      routes: { ...routes(), 'GET /vision': HYDRO },
+    });
+    expect(await screen.findByLabelText('HydroDetect')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+  });
+
+  it('SpatialSight menampilkan peta relatif di jendela fitur', async () => {
+    renderApp('/live', {
+      role: 'pilot_drone',
+      routes: { ...routes(), 'GET /vision': SPATIAL },
+    });
+    expect(await screen.findByText('Preview relatif, bukan ukuran')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('tab', { name: 'Dual' }));
+    expect(screen.getByLabelText('Live camera')).toBeInTheDocument();
+    expect(screen.getByText('Preview relatif, bukan ukuran')).toBeInTheDocument();
   });
 
   it('tab Dual menampilkan dua jendela dan tombol SNAPSHOT', async () => {
