@@ -1,4 +1,5 @@
 import type { Anno, Draft, Pair, XY } from './draft';
+import { lengthNames } from './log';
 
 export type StrokeKind = 'cal' | 'length' | 'path' | 'area' | 'note' | 'angle' | 'pending';
 
@@ -25,7 +26,7 @@ export function strokesOf(draft: Draft, tags: LineTags = NO_TAGS): Stroke[] {
   const onPath = pathSegmentKeys(draft.geometry.paths);
   return [
     ...calStroke(draft.geometry.cal, tags.refCm),
-    ...lengthStrokes(draft.geometry.lengths, onPath, tags.meters),
+    ...lengthStrokes(draft.geometry.lengths, onPath, tags.meters, draft.geometry.paths),
     ...pathStrokes(draft.geometry.paths, draft.geometry.lengths, tags.meters),
     ...draft.geometry.areas.map((poly, index) => areaStroke(poly, index, tags.areas[index])),
     ...draft.geometry.notes.map((item, index) => noteStroke(item, index)),
@@ -40,15 +41,19 @@ function calStroke(pair: Pair | null, refCm: string): Stroke[] {
   return [{ ...pairStroke('cal', 'cal', pair), tag: ref ? `CAL  ${ref} cm` : 'CAL' }];
 }
 
-function lengthStrokes(lengths: Pair[], onPath: Set<string>, meters: number[]): Stroke[] {
+function lengthStrokes(
+  lengths: Pair[],
+  onPath: Set<string>,
+  meters: number[],
+  paths: XY[][],
+): Stroke[] {
+  const names = lengthNames(lengths, paths);
   const rows: Stroke[] = [];
-  let shown = 0;
   lengths.forEach((item, index) => {
     if (onPath.has(pairKey(item.a, item.b))) return;
-    shown += 1;
     rows.push({
       ...pairStroke(`len.${index}`, 'length', item),
-      tag: withValue(`L-${shown}`, meters[index], 'm'),
+      tag: withValue(names[index] ?? 'L', meters[index], 'm'),
     });
   });
   return rows;

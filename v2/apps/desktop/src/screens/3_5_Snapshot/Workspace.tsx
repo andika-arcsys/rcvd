@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { MeasureCanvas } from '../../components/MeasureCanvas';
 import { MeasureLegend } from '../../components/measure/MeasureLegend';
 import { WorkColumns } from '../../components/WorkColumns';
@@ -21,6 +22,7 @@ import { DepthEstimate } from './DepthEstimate';
 import { Fields } from './Fields';
 import { LaserBar } from './LaserBar';
 import { Readout } from './Readout';
+import { SnapshotViewer } from './SnapshotViewer';
 import { Tools } from './Tools';
 import { boardActions, useBoard } from './useBoard';
 
@@ -30,6 +32,7 @@ const ACTION =
 export function MeasureWorkspace({ saveLabel }: { saveLabel: 'measure.save' | 'measure.saveAs' }) {
   const { frozen } = useSession();
   const status = useVideoStatus();
+  const [pane, setPane] = useState<'measure' | 'viewer'>('measure');
   return (
     <section className="flex flex-col gap-3 p-4">
       <p className="font-mono">
@@ -42,12 +45,51 @@ export function MeasureWorkspace({ saveLabel }: { saveLabel: 'measure.save' | 'm
           {t('feature.presetRecorded')}: {frozen.preset}
         </p>
       ) : null}
+      <PaneTabs pane={pane} onPane={setPane} />
       {frozen ? (
-        <Board saveLabel={saveLabel} />
+        <>
+          <div hidden={pane !== 'measure'}>
+            <Board saveLabel={saveLabel} />
+          </div>
+          {pane === 'viewer' ? (
+            <SnapshotViewer frameId={frozen.frameId} preset={frozen.preset} />
+          ) : null}
+        </>
       ) : (
         <p className="text-sm text-muted">{t('live.noFreeze')}</p>
       )}
     </section>
+  );
+}
+
+function PaneTabs({
+  pane,
+  onPane,
+}: {
+  pane: 'measure' | 'viewer';
+  onPane: (pane: 'measure' | 'viewer') => void;
+}) {
+  const items = [
+    { id: 'measure' as const, label: 'measure.measureTab' },
+    { id: 'viewer' as const, label: 'measure.viewer' },
+  ];
+  return (
+    <div role="tablist" aria-label={t('measure.viewer')} className="flex gap-1">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={pane === item.id}
+          className={`rounded border px-3 py-1 text-sm ${
+            pane === item.id ? 'border-action text-action' : 'border-line text-muted'
+          }`}
+          onClick={() => onPane(item.id)}
+        >
+          {t(item.label)}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -149,10 +191,10 @@ function Side({
       <Tools draft={board.store.draft} setDraft={board.store.setDraft} />
       <Fields draft={board.store.draft} setDraft={board.store.setDraft} />
       <Readout
+        draft={board.store.draft}
         view={board.view?.preview ?? null}
         edge={board.edge}
         freezeNo={freezeNo}
-        angles={angleList(board.store.draft)}
       />
       <DepthEstimate draft={board.store.draft} frameId={board.session.frozen?.frameId ?? ''} />
       <SaveRow board={board} actions={actions} saveLabel={saveLabel} />

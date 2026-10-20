@@ -18,11 +18,11 @@ const VIEWS: { id: AssistView; label: string }[] = [
 const BUTTON = 'rounded border border-line px-2 py-1 text-sm';
 const PRESSED = 'rounded border border-action bg-active px-2 py-1 text-sm';
 
-export function useAssist(frameId: string | undefined, preset?: string | null) {
+export function useAssist(frameId: string | undefined, preset?: string | null, startBake = true) {
   const { client } = useEngine();
   const [picked, setPicked] = useState<AssistView>('optical');
   const [row, setRow] = useState<AssistOut | null>(null);
-  const bake = useBake(frameId, preset);
+  const bake = useBake(frameId, preset, startBake);
   useEffect(() => {
     setPicked('optical');
     setRow(null);
@@ -139,13 +139,18 @@ export function AssistOverlay({
 
 type PrepareOut = components['schemas']['PrepareOut'];
 
-function useBake(frameId: string | undefined, preset?: string | null): PrepareOut | null {
+function useBake(
+  frameId: string | undefined,
+  preset: string | null | undefined,
+  startBake: boolean,
+): PrepareOut | null {
   const { client } = useEngine();
   const [job, setJob] = useState<PrepareOut | null>(null);
   useEffect(() => {
     if (!frameId) return undefined;
+    if (!startBake) return watchStatus(client, frameId, setJob);
     return watchBake(client, frameId, preset ?? null, setJob);
-  }, [client, frameId, preset]);
+  }, [client, frameId, preset, startBake]);
   return job;
 }
 
@@ -176,6 +181,30 @@ function watchBake(
         );
       }, 700);
     });
+  return () => {
+    stop = true;
+    window.clearInterval(timer);
+  };
+}
+
+function watchStatus(
+  client: ReturnType<typeof useEngine>['client'],
+  frameId: string,
+  setJob: (job: PrepareOut | null) => void,
+): () => void {
+  let stop = false;
+  let timer = 0;
+  const pull = () => {
+    void pollBake(
+      client,
+      frameId,
+      () => stop,
+      setJob,
+      () => window.clearInterval(timer),
+    );
+  };
+  pull();
+  timer = window.setInterval(pull, 700);
   return () => {
     stop = true;
     window.clearInterval(timer);

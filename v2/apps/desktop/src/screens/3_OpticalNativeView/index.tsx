@@ -2,7 +2,9 @@ import { useSearchParams } from 'react-router-dom';
 import { WorkColumns } from '../../components/WorkColumns';
 import { t } from '../../i18n';
 import { ActionBar } from './ActionBar';
+import { FeatureStatus } from './FeatureStatus';
 import { FeatureTabs } from './FeatureTabs';
+import { useFeatureSwitch } from './featureSwitch';
 import { useLiveInput } from './input';
 import { SideColumn } from './SideColumn';
 import { TelemetryBar } from './TelemetryBar';
@@ -17,7 +19,8 @@ export default function OpticalNativeViewScreen() {
   const mission = useCurrentMission();
   const findings = useFindings();
   const actions = useLiveActions(status?.frame_id ?? null, Boolean(status?.lost));
-  useLiveInput(actions.freeze, actions.mark);
+  const features = useFeatureSwitch();
+  useLiveInput(actions.freeze, actions.mark, features.pick);
   return (
     <div className="flex h-full min-h-0 flex-col gap-3 p-4">
       {segment ? (
@@ -26,7 +29,18 @@ export default function OpticalNativeViewScreen() {
         </p>
       ) : null}
       <TelemetryBar status={status} />
-      <FeatureTabs warning={status?.performance_warning ?? null} />
+      <FeatureTabs
+        warning={status?.performance_warning ?? null}
+        active={features.active}
+        busy={features.busy}
+        onFeature={features.pick}
+      />
+      <FeatureStatus chips={features.chips} />
+      {features.fault ? (
+        <p role="alert" className="text-sm text-warn">
+          {features.fault}
+        </p>
+      ) : null}
       <WorkColumns
         main={
           <div className="flex min-w-0 flex-col gap-3">

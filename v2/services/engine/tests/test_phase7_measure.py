@@ -86,6 +86,7 @@ def test_save_recomputes_and_versions(client: TestClient, tmp_path: Path) -> Non
     assert body["calibration"]["status"] == "ESTIMATE_ONLY"
     assert body["calibration"]["camera_present"] is False
     assert body["measurements"][0]["meters"] == 0.5
+    assert body["measurements"][0]["tag"] == "L-1"
     assert body["version"] == 1
     assert body["supersedes"] is None
     assert body["freeze_no"] == 1
@@ -165,6 +166,36 @@ def _jpeg_size(payload: str) -> tuple[int, int]:
     assert image is not None
     height, width = image.shape[:2]
     return width, height
+
+
+def test_save_stores_length_and_area_tags(client: TestClient, tmp_path: Path) -> None:
+    _paint(tmp_path / "evidence" / "frm-tag.png", _gray(420, 420))
+    response = client.post(
+        "/snapshots",
+        json={
+            "frame_id": "frm-tag",
+            "ref_cm": 10,
+            "calibration": {"a": {"x": 0, "y": 0}, "b": {"x": 100, "y": 0}},
+            "lengths": [{"a": {"x": 0, "y": 0}, "b": {"x": 300, "y": 400}, "tag": "  L-3  "}],
+            "areas": [
+                {
+                    "points": [
+                        {"x": 10, "y": 10},
+                        {"x": 110, "y": 10},
+                        {"x": 110, "y": 110},
+                        {"x": 10, "y": 110},
+                    ],
+                    "tag": "AREA-9",
+                }
+            ],
+            "annotations": [],
+            "note": "",
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["measurements"][0]["tag"] == "L-3"
+    assert body["areas"][0]["tag"] == "AREA-9"
 
 
 def test_write_new_refuses_existing_name(tmp_path: Path) -> None:

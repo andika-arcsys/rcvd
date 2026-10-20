@@ -38,10 +38,12 @@ class Px(BaseModel):
 class PairIn(BaseModel):
     a: Px
     b: Px
+    tag: str = Field(default="", max_length=24)
 
 
 class PolyIn(BaseModel):
     points: list[Px] = Field(min_length=3)
+    tag: str = Field(default="", max_length=24)
 
 
 class AnnoIn(BaseModel):
@@ -141,11 +143,13 @@ class CalView(BaseModel):
 class MeasView(BaseModel):
     meters: float
     uncertainty_2sigma_m: float
+    tag: str = ""
 
 
 class AreaView(BaseModel):
     area_m2: float
     uncertainty_2sigma_m2: float
+    tag: str = ""
 
 
 class FrameView(BaseModel):
@@ -309,7 +313,9 @@ def _record(
         edge_limit=settings.thresholds.calibration.edge_risk_px,
         cal_points=(_pt(body.calibration.a), _pt(body.calibration.b)),
         lengths=[(_pt(item.a), _pt(item.b)) for item in body.lengths],
+        length_tags=[item.tag for item in body.lengths],
         areas=[[_pt(point) for point in item.points] for item in body.areas],
+        area_tags=[item.tag for item in body.areas],
         annotations=[item.model_dump() for item in body.annotations],
         segment=body.segment,
         marker=body.marker,
