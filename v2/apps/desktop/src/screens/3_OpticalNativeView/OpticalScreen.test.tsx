@@ -114,11 +114,50 @@ describe('Optical Native View', () => {
     expect(await screen.findByText('Kandidat masuk antrian Review.')).toBeInTheDocument();
   });
 
-  it('F2 membuka dialog ganti window', async () => {
-    renderApp('/live', { role: 'pilot_drone', routes: routes() });
+  it('F2 tetap di live view dan menampilkan status muat', async () => {
+    let release: (value: Response) => void = () => undefined;
+    let switched = '';
+    renderApp('/live', {
+      role: 'pilot_drone',
+      routes: {
+        ...routes(),
+        'POST /models/switch': async (request: Request) => {
+          const body = (await request.json()) as { name?: string };
+          switched = body.name ?? '';
+          return new Promise<Response>((resolve) => {
+            release = resolve;
+          });
+        },
+      },
+    });
     await screen.findByRole('tab', { name: /AquaClear/ });
+    expect(screen.queryByRole('button', { name: 'Change feature' })).toBeNull();
     await userEvent.keyboard('[F2]');
-    expect(await screen.findByRole('heading', { name: 'Feature window' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
+    expect(await screen.findByText('Loading')).toBeInTheDocument();
+    release(jsonResponse(200, { active: 'aquaclear', state: 'ready' }));
+    expect(await screen.findByText('Ready')).toBeInTheDocument();
+    expect(switched).toBe('aquaclear');
+  });
+
+  it('gagal memuat HydroDetect tetap di live view dengan status mode itu', async () => {
+    renderApp('/live', {
+      role: 'pilot_drone',
+      routes: {
+        ...routes(),
+        'POST /models/switch': () =>
+          jsonResponse(503, {
+            code: 'MDL-003',
+            message: 'Fitur ini membutuhkan GPU NVIDIA.',
+            detail: 'hydrodetect',
+          }),
+      },
+    });
+    await userEvent.click(await screen.findByRole('tab', { name: /HydroDetect/ }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('MDL-003: hydrodetect');
+    expect(screen.getByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
   });
 
   it('LOST SIGNAL menonaktifkan FREEZE', async () => {

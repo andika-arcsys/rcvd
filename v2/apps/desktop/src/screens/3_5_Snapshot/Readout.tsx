@@ -1,19 +1,22 @@
 import { t } from '../../i18n';
-import type { Preview } from '../../measure/draft';
+import { angleList } from '../../measure/angle';
+import type { Draft, Preview } from '../../measure/draft';
+import { logLines } from '../../measure/log';
 
 export function Readout({
+  draft,
   view,
   edge,
   freezeNo,
-  angles,
 }: {
+  draft: Draft;
   view: Preview | null;
   edge: boolean;
   freezeNo: number | null;
-  angles: number[];
 }) {
+  const log = logLines(draft, view?.meters ?? [], view?.areas ?? [], angleList(draft));
   return (
-    <div className="flex flex-col gap-1 text-sm">
+    <div className="flex flex-col gap-1 text-sm" aria-label={t('measure.log')}>
       <p>
         {t('measure.freezeNo')} {freezeNo ?? t('common.dash')}
       </p>
@@ -24,32 +27,12 @@ export function Readout({
           {t('measure.edge')}
         </p>
       ) : null}
-      {view?.meters.map((meters, index) => (
-        <p key={`m${index}`}>
-          {t('measure.meters')} {meters.toFixed(3)} {t('common.meter')}
-        </p>
+      {log.lines.map((line) => (
+        <p key={line.tag}>{line.text}</p>
       ))}
-      {view && view.meters.length > 1 ? (
-        <p>
-          {t('measure.total')} {total(view.meters).toFixed(3)} {t('common.meter')}
-        </p>
-      ) : null}
-      {angles.map((value, index) => (
-        <p key={`s${index}`}>
-          {t('measure.angleValue')} {value.toFixed(1)}°
-        </p>
-      ))}
-      {view?.areas.map((value, index) => (
-        <p key={`a${index}`}>
-          {t('measure.areaValue')} {value.toFixed(4)} {t('measure.square')}
-        </p>
-      ))}
+      {log.capped ? <p className="text-xs text-muted">{t('measure.logLimit')}</p> : null}
     </div>
   );
-}
-
-function total(values: number[]): number {
-  return values.reduce((sum, value) => sum + value, 0);
 }
 
 function Status({ view }: { view: Preview | null }) {

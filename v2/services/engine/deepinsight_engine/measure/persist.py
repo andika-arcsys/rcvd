@@ -15,6 +15,12 @@ from .length import length
 from .types import Camera, MeasureLimits, Point
 
 
+def _tag(tags: list[str] | None, index: int, fallback: str) -> str:
+    if tags is not None and index < len(tags) and tags[index].strip():
+        return tags[index].strip()[:24]
+    return fallback
+
+
 def build_record(
     frame_id: str,
     width: int,
@@ -43,6 +49,8 @@ def build_record(
     operator: str,
     note: str,
     freeze_no: int,
+    length_tags: list[str] | None = None,
+    area_tags: list[str] | None = None,
 ) -> dict[str, object]:
     cal = calibrate(cal_points[0], cal_points[1], ref_m, click_sigma, limits, camera)
     if cal.status == "UNCALIBRATED":
@@ -80,12 +88,20 @@ def build_record(
             "camera_present": camera is not None,
         },
         "measurements": [
-            {"meters": item.meters, "uncertainty_2sigma_m": item.uncertainty_2sigma_m}
-            for item in measured
+            {
+                "meters": item.meters,
+                "uncertainty_2sigma_m": item.uncertainty_2sigma_m,
+                "tag": _tag(length_tags, index, f"L-{index + 1}"),
+            }
+            for index, item in enumerate(measured)
         ],
         "areas": [
-            {"area_m2": item.area_m2, "uncertainty_2sigma_m2": item.uncertainty_2sigma_m2}
-            for item in fields
+            {
+                "area_m2": item.area_m2,
+                "uncertainty_2sigma_m2": item.uncertainty_2sigma_m2,
+                "tag": _tag(area_tags, index, f"AREA-{index + 1}"),
+            }
+            for index, item in enumerate(fields)
         ],
         "annotations": annotations,
         "warnings": [cal.baseline_hint] if cal.baseline_hint else [],

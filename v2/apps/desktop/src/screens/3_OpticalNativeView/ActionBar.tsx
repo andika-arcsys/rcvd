@@ -36,7 +36,6 @@ export function ActionBar({
       >
         {t('live.mark')}
       </button>
-      <SwitchButton />
       <button
         type="button"
         onClick={() => setConfirmEnd(true)}
@@ -47,19 +46,6 @@ export function ActionBar({
       {note && <p className="text-sm text-ok">{note}</p>}
       {confirmEnd && <EndDialog onClose={() => setConfirmEnd(false)} />}
     </div>
-  );
-}
-
-function SwitchButton() {
-  const navigate = useNavigate();
-  return (
-    <button
-      type="button"
-      onClick={() => navigate('/live/ganti-window')}
-      className={`${ACTION} border border-line`}
-    >
-      {t('live.switch')}
-    </button>
   );
 }
 

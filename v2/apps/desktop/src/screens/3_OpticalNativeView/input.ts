@@ -1,16 +1,16 @@
 import type { components } from '@deepinsight/shared';
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { LiveFeature } from './featureSwitch';
 import { useControls } from './useLive';
 
 type Controls = components['schemas']['ControlsConfig'];
 
-const TABS: Record<string, string> = {
-  tab_optical: '/live',
-  tab_aquaclear: '/live/ganti-window?fitur=aquaclear',
-  tab_hydrodetect: '/live/ganti-window?fitur=hydrodetect',
-  tab_spatialsight: '/live/ganti-window?fitur=spatialsight',
-  tab_canvas: '/live/canvas',
+const KEY_FEATURE: Record<string, LiveFeature> = {
+  tab_optical: 'optical',
+  tab_aquaclear: 'aquaclear',
+  tab_hydrodetect: 'hydrodetect',
+  tab_spatialsight: 'spatialsight',
 };
 
 const FEATURES = ['optical', 'aquaclear', 'hydrodetect', 'spatialsight', 'canvas'] as const;
@@ -18,11 +18,15 @@ const FEATURES = ['optical', 'aquaclear', 'hydrodetect', 'spatialsight', 'canvas
 /** Indeks tombol Gamepad API (pemetaan standar), bukan ambang ukur. */
 const GAMEPAD_INDEX: Record<string, number> = { A: 0, LB: 4, RB: 5 };
 
-export function useLiveInput(freeze: () => void, mark: () => void): void {
+export function useLiveInput(
+  freeze: () => void,
+  mark: () => void,
+  onFeature: (name: LiveFeature) => void,
+): void {
   const controls = useControls();
   const navigate = useNavigate();
-  useKeyboard(controls, freeze, mark, navigate);
-  useGamepad(controls, freeze, navigate);
+  useKeyboard(controls, freeze, mark, navigate, onFeature);
+  useGamepad(controls, freeze, navigate, onFeature);
 }
 
 function useKeyboard(
@@ -30,13 +34,15 @@ function useKeyboard(
   freeze: () => void,
   mark: () => void,
   navigate: (path: string) => void,
+  onFeature: (name: LiveFeature) => void,
 ): void {
   useEffect(() => {
     if (!controls) return;
-    const onKey = (event: KeyboardEvent) => handleKey(event, controls, freeze, mark, navigate);
+    const onKey = (event: KeyboardEvent) =>
+      handleKey(event, controls, freeze, mark, navigate, onFeature);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [controls, freeze, mark, navigate]);
+  }, [controls, freeze, mark, navigate, onFeature]);
 }
 
 function handleKey(
@@ -45,6 +51,7 @@ function handleKey(
   freeze: () => void,
   mark: () => void,
   navigate: (path: string) => void,
+  onFeature: (name: LiveFeature) => void,
 ): void {
   if (isTyping(event)) return;
   const board = controls.keyboard;
@@ -58,14 +65,16 @@ function handleKey(
     mark();
     return;
   }
-  const tab = tabPath(board, event.code);
-  if (tab) navigate(tab);
+  const tab = tabName(board, event.code);
+  if (tab === 'tab_canvas') navigate('/live/canvas');
+  else if (tab && KEY_FEATURE[tab]) onFeature(KEY_FEATURE[tab]);
 }
 
 function useGamepad(
   controls: Controls | null,
   freeze: () => void,
   navigate: (path: string) => void,
+  onFeature: (name: LiveFeature) => void,
 ): void {
   const index = useRef(0);
   useEffect(() => {
@@ -75,25 +84,30 @@ function useGamepad(
     const tick = () => {
       const pad = navigator.getGamepads()[0];
       if (pad)
-        applyPad(pad, controls.gamepad, held, freeze, (delta) => step(index, delta, navigate));
+        applyPad(pad, controls.gamepad, held, freeze, (delta) =>
+          step(index, delta, navigate, onFeature),
+        );
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [controls, freeze, navigate]);
+  }, [controls, freeze, navigate, onFeature]);
 }
 
-function step(index: { current: number }, delta: number, navigate: (path: string) => void): void {
+function step(
+  index: { current: number },
+  delta: number,
+  navigate: (path: string) => void,
+  onFeature: (name: LiveFeature) => void,
+): void {
   index.current = (index.current + delta + FEATURES.length) % FEATURES.length;
   const name = FEATURES[index.current] ?? 'optical';
-  if (name === 'optical') navigate('/live');
-  else if (name === 'canvas') navigate('/live/canvas');
-  else navigate(`/live/ganti-window?fitur=${name}`);
+  if (name === 'canvas') navigate('/live/canvas');
+  else onFeature(name);
 }
 
-function tabPath(board: Record<string, string>, code: string): string | null {
-  const name = Object.entries(board).find(([, value]) => value === code)?.[0];
-  return name ? (TABS[name] ?? null) : null;
+function tabName(board: Record<string, string>, code: string): string | null {
+  return Object.entries(board).find(([, value]) => value === code)?.[0] ?? null;
 }
 
 function isTyping(event: KeyboardEvent): boolean {

@@ -1098,6 +1098,11 @@ export interface components {
             area_m2: number;
             /** Uncertainty 2Sigma M2 */
             uncertainty_2sigma_m2: number;
+            /**
+             * Tag
+             * @default
+             */
+            tag: string;
         };
         /** AssessIn */
         AssessIn: {
@@ -1813,6 +1818,11 @@ export interface components {
             meters: number;
             /** Uncertainty 2Sigma M */
             uncertainty_2sigma_m: number;
+            /**
+             * Tag
+             * @default
+             */
+            tag: string;
         };
         /** Measure */
         Measure: {
@@ -1939,6 +1949,11 @@ export interface components {
         PairIn: {
             a: components["schemas"]["Px"];
             b: components["schemas"]["Px"];
+            /**
+             * Tag
+             * @default
+             */
+            tag: string;
         };
         /** PairM */
         PairM: {
@@ -2053,6 +2068,11 @@ export interface components {
         PolyIn: {
             /** Points */
             points: components["schemas"]["Px"][];
+            /**
+             * Tag
+             * @default
+             */
+            tag: string;
         };
         /** PrepareIn */
         PrepareIn: {

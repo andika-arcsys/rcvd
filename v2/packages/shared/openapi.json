@@ -3790,6 +3790,11 @@
           "uncertainty_2sigma_m2": {
             "type": "number",
             "title": "Uncertainty 2Sigma M2"
+          },
+          "tag": {
+            "type": "string",
+            "title": "Tag",
+            "default": ""
           }
         },
         "type": "object",
@@ -6010,6 +6015,11 @@
           "uncertainty_2sigma_m": {
             "type": "number",
             "title": "Uncertainty 2Sigma M"
+          },
+          "tag": {
+            "type": "string",
+            "title": "Tag",
+            "default": ""
           }
         },
         "type": "object",
@@ -6400,6 +6410,12 @@
           },
           "b": {
             "$ref": "#/components/schemas/Px"
+          },
+          "tag": {
+            "type": "string",
+            "maxLength": 24,
+            "title": "Tag",
+            "default": ""
           }
         },
         "type": "object",
@@ -6767,6 +6783,12 @@
             "type": "array",
             "minItems": 3,
             "title": "Points"
+          },
+          "tag": {
+            "type": "string",
+            "maxLength": 24,
+            "title": "Tag",
+            "default": ""
           }
         },
         "type": "object",
