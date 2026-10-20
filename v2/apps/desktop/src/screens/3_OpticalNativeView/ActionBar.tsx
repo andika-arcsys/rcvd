@@ -8,6 +8,7 @@ export function ActionBar({
   note,
   confirmEnd,
   onFreeze,
+  onSnapshot,
   onMark,
   setConfirmEnd,
 }: {
@@ -15,27 +16,13 @@ export function ActionBar({
   note: string | null;
   confirmEnd: boolean;
   onFreeze: () => void;
+  onSnapshot?: () => void;
   onMark: () => void;
   setConfirmEnd: (open: boolean) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button
-        type="button"
-        disabled={lost}
-        onClick={onFreeze}
-        className={`${ACTION} bg-action text-bg`}
-      >
-        {t('live.freeze')}
-      </button>
-      <button
-        type="button"
-        disabled={lost}
-        onClick={onMark}
-        className={`${ACTION} border border-line`}
-      >
-        {t('live.mark')}
-      </button>
+      <ShotButtons lost={lost} onFreeze={onFreeze} onSnapshot={onSnapshot} onMark={onMark} />
       <button
         type="button"
         onClick={() => setConfirmEnd(true)}
@@ -46,6 +33,49 @@ export function ActionBar({
       {note && <p className="text-sm text-ok">{note}</p>}
       {confirmEnd && <EndDialog onClose={() => setConfirmEnd(false)} />}
     </div>
+  );
+}
+
+function ShotButtons({
+  lost,
+  onFreeze,
+  onSnapshot,
+  onMark,
+}: {
+  lost: boolean;
+  onFreeze: () => void;
+  onSnapshot?: () => void;
+  onMark: () => void;
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        disabled={lost}
+        onClick={onFreeze}
+        className={`${ACTION} bg-action text-bg`}
+      >
+        {t('live.freeze')}
+      </button>
+      {onSnapshot ? (
+        <button
+          type="button"
+          disabled={lost}
+          onClick={onSnapshot}
+          className={`${ACTION} bg-action text-bg`}
+        >
+          {t('live.snapshot')}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        disabled={lost}
+        onClick={onMark}
+        className={`${ACTION} border border-line`}
+      >
+        {t('live.mark')}
+      </button>
+    </>
   );
 }
 

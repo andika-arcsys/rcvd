@@ -23,6 +23,7 @@ import { Fields } from './Fields';
 import { LaserBar } from './LaserBar';
 import { Readout } from './Readout';
 import { SnapshotViewer } from './SnapshotViewer';
+import { TransformGate, useSnapGate } from './TransformGate';
 import { Tools } from './Tools';
 import { boardActions, useBoard } from './useBoard';
 
@@ -32,6 +33,7 @@ const ACTION =
 export function MeasureWorkspace({ saveLabel }: { saveLabel: 'measure.save' | 'measure.saveAs' }) {
   const { frozen } = useSession();
   const status = useVideoStatus();
+  const gate = useSnapGate(frozen?.fileId);
   const [pane, setPane] = useState<'measure' | 'viewer'>('measure');
   return (
     <section className="flex flex-col gap-3 p-4">
@@ -45,9 +47,11 @@ export function MeasureWorkspace({ saveLabel }: { saveLabel: 'measure.save' | 'm
           {t('feature.presetRecorded')}: {frozen.preset}
         </p>
       ) : null}
-      <PaneTabs pane={pane} onPane={setPane} />
-      {frozen ? (
+      {frozen && gate.blocked ? (
+        <TransformGate fileId={gate.fileId} />
+      ) : frozen ? (
         <>
+          <PaneTabs pane={pane} onPane={setPane} />
           <div hidden={pane !== 'measure'}>
             <Board saveLabel={saveLabel} />
           </div>

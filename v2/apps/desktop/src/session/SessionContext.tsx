@@ -10,6 +10,7 @@ export interface FrozenFrame {
   frameId: string;
   snapshotId: string;
   preset?: string | null;
+  fileId?: string;
 }
 
 interface SessionState {

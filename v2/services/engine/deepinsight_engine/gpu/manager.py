@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
@@ -179,18 +180,28 @@ class ModelManager:
         self.state = "optical"
 
     def _release(self) -> None:
+        """Kosongkan VRAM sebelum model lain dimuat.
+
+        Pekerja dimatikan sesudah unload supaya konteks CUDA hilang, bukan hanya
+        referensi Python. Proses berikutnya baru dimulai setelah pemakaian turun.
+        """
         worker = self._worker
         self._worker = None
         if worker is None:
             return
-        exited = worker.unload(self._unload_timeout)
-        if self._over_baseline() and not exited:
-            worker.kill()
+        worker.unload(self._unload_timeout)
+        worker.kill()
+        self._wait_vram()
+        if self._over_baseline():
             self.killed_for_vram = True
             self._on_error("GPU-002", self.active)
-            return
-        if not exited:
-            worker.kill()
+
+    def _wait_vram(self) -> None:
+        deadline = time.monotonic() + min(2.0, self._unload_timeout)
+        while time.monotonic() < deadline:
+            if not self._over_baseline():
+                return
+            time.sleep(0.05)
 
     def _over_baseline(self) -> bool:
         reading = self._probe.snapshot()

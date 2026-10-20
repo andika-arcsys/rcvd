@@ -43,11 +43,16 @@ export function Detail({ card }: { card: Card | null }) {
         type="button"
         className={ACTION}
         onClick={() => {
-          setFrozen({ frameId: card.frame_id, snapshotId: card.id, preset: card.preset });
-          navigate('/live/canvas');
+          setFrozen({
+            frameId: card.frame_id,
+            snapshotId: card.id,
+            preset: card.preset,
+            fileId: snapFile(card.id),
+          });
+          navigate('/live/snapshot');
         }}
       >
-        {t('gallery.openCanvas')}
+        {t('gallery.confirm')}
       </button>
       <Link to="/archive" className={ACTION}>
         {t('gallery.exportPack')}
@@ -57,4 +62,9 @@ export function Detail({ card }: { card: Card | null }) {
       </Link>
     </aside>
   );
+}
+
+function snapFile(id: string): string {
+  const match = /^(\d{14})_(SNAP|AQUA|HYDRO|SPATIAL)$/.exec(id);
+  return match ? `${match[1]}_SNAP` : id;
 }

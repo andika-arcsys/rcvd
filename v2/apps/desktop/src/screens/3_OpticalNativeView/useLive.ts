@@ -92,8 +92,12 @@ export function useLiveActions(frameId: string | null, lost: boolean) {
     if (!frameId || lost) return;
     void client.POST('/freeze', { body: { frame_id: frameId } }).then((result) => {
       if (!result.data) return;
-      setFrozen({ frameId: result.data.frame_id, snapshotId: result.data.snapshot_id });
-      navigate('/live/snapshot');
+      setFrozen({
+        frameId: result.data.frame_id,
+        snapshotId: result.data.snapshot_id,
+        fileId: result.data.file_id || result.data.snapshot_id,
+      });
+      navigate('/gallery');
     });
   }, [client, frameId, lost, navigate, setFrozen]);
   const mark = useCallback(() => {

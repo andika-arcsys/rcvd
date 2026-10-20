@@ -49,6 +49,18 @@ def test_missing_weight_returns_to_optical(tmp_path: Path) -> None:
     assert manager.workers == 0
 
 
+def test_switch_kills_worker_when_vram_returns(tmp_path: Path) -> None:
+    manager = _manager(tmp_path, [100.0, 100.0])
+    manager.switch("aquaclear")
+    pid = manager.worker_pid
+    assert pid is not None
+    manager.switch("optical")
+    assert manager.state == "optical"
+    assert manager.killed_for_vram is False
+    with pytest.raises(ProcessLookupError):
+        os.kill(pid, 0)
+
+
 def test_worker_is_killed_when_vram_does_not_return(tmp_path: Path) -> None:
     seen: list[str] = []
     manager = _manager(

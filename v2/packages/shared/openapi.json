@@ -2242,6 +2242,178 @@
         }
       }
     },
+    "/gallery/{snapshot_id}/bundle": {
+      "get": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Gallery Bundle",
+        "operationId": "gallery_bundle_gallery__snapshot_id__bundle_get",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gallery/{snapshot_id}/transform": {
+      "post": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Start Transform",
+        "operationId": "start_transform_gallery__snapshot_id__transform_post",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "gallery"
+        ],
+        "summary": "Transform Status",
+        "operationId": "transform_status_gallery__snapshot_id__transform_get",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/gallery/{snapshot_id}/jpeg": {
       "get": {
         "tags": [
@@ -4134,6 +4306,75 @@
         ],
         "title": "Body_upload_video_video_upload_post"
       },
+      "BundleOut": {
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "title": "File Id"
+          },
+          "stamp": {
+            "type": "string",
+            "title": "Stamp"
+          },
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "snap": {
+            "type": "boolean",
+            "title": "Snap"
+          },
+          "aqua": {
+            "type": "boolean",
+            "title": "Aqua"
+          },
+          "hydro": {
+            "type": "boolean",
+            "title": "Hydro"
+          },
+          "spatial": {
+            "type": "boolean",
+            "title": "Spatial"
+          },
+          "ready": {
+            "type": "boolean",
+            "title": "Ready"
+          },
+          "running": {
+            "type": "boolean",
+            "title": "Running",
+            "default": false
+          },
+          "current": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "file_id",
+          "stamp",
+          "frame_id",
+          "snap",
+          "aqua",
+          "hydro",
+          "spatial",
+          "ready"
+        ],
+        "title": "BundleOut"
+      },
       "Cache": {
         "properties": {
           "max_mb": {
@@ -5556,6 +5797,16 @@
               }
             ],
             "title": "Aquaclear Preset"
+          },
+          "file_id": {
+            "type": "string",
+            "title": "File Id",
+            "default": ""
+          },
+          "stamp": {
+            "type": "string",
+            "title": "Stamp",
+            "default": ""
           }
         },
         "type": "object",

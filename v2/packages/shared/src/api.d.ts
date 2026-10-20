@@ -653,6 +653,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/gallery/{snapshot_id}/bundle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gallery Bundle */
+        get: operations["gallery_bundle_gallery__snapshot_id__bundle_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gallery/{snapshot_id}/transform": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Transform Status */
+        get: operations["transform_status_gallery__snapshot_id__transform_get"];
+        put?: never;
+        /** Start Transform */
+        post: operations["start_transform_gallery__snapshot_id__transform_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/gallery/{snapshot_id}/jpeg": {
         parameters: {
             query?: never;
@@ -1194,6 +1229,37 @@ export interface components {
             /** File */
             file: string;
         };
+        /** BundleOut */
+        BundleOut: {
+            /** File Id */
+            file_id: string;
+            /** Stamp */
+            stamp: string;
+            /** Frame Id */
+            frame_id: string;
+            /** Snap */
+            snap: boolean;
+            /** Aqua */
+            aqua: boolean;
+            /** Hydro */
+            hydro: boolean;
+            /** Spatial */
+            spatial: boolean;
+            /** Ready */
+            ready: boolean;
+            /**
+             * Running
+             * @default false
+             */
+            running: boolean;
+            /** Current */
+            current?: string | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
         /** Cache */
         Cache: {
             /** Max Mb */
@@ -1664,6 +1730,16 @@ export interface components {
             path: string;
             /** Aquaclear Preset */
             aquaclear_preset?: string | null;
+            /**
+             * File Id
+             * @default
+             */
+            file_id: string;
+            /**
+             * Stamp
+             * @default
+             */
+            stamp: string;
         };
         /** FreezeView */
         FreezeView: {
@@ -3987,6 +4063,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    gallery_bundle_gallery__snapshot_id__bundle_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transform_status_gallery__snapshot_id__transform_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_transform_gallery__snapshot_id__transform_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                snapshot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleOut"];
                 };
             };
             /** @description Validation Error */

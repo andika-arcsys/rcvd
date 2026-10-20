@@ -6,10 +6,12 @@ import { useVideoStream } from './stream';
 export function VideoStage({
   frameId,
   lost,
+  label,
   children,
 }: {
   frameId: string | null;
   lost: boolean;
+  label?: string;
   children?: ReactNode;
 }) {
   const video = useRef<HTMLCanvasElement>(null);
@@ -31,7 +33,7 @@ export function VideoStage({
         {frameId ?? t('common.dash')}
       </p>
       <p className="absolute right-3 top-3 max-w-[45%] truncate text-right text-xs text-ink">
-        {t('live.rawLabel')}
+        {label ?? t('live.rawLabel')}
       </p>
       <p className="absolute bottom-3 left-3 text-xs text-muted">{t('live.laserUnknown')}</p>
       {lost && (
