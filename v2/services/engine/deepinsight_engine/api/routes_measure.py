@@ -95,6 +95,25 @@ class AssistOut(BaseModel):
     note: str
 
 
+class PrepareIn(BaseModel):
+    preset: str | None = None
+
+
+class PrepareItem(BaseModel):
+    view: AssistView
+    ready: bool
+    note: str
+    file: str | None = None
+
+
+class PrepareOut(BaseModel):
+    frame_id: str
+    running: bool
+    current: AssistView | None = None
+    note: str
+    views: list[PrepareItem]
+
+
 class ContextOut(BaseModel):
     frame_id: str
     width: int
@@ -191,6 +210,18 @@ def measure_context(
 def measure_assist(frame_id: str, request: Request, view: AssistView = "optical") -> AssistOut:
     payload = request.app.state.runtime.canvas_assist(frame_id, view)
     return AssistOut.model_validate(payload)
+
+
+@measure.post("/measure/assist/{frame_id}/prepare", response_model=PrepareOut)
+def start_assist_prepare(frame_id: str, body: PrepareIn, request: Request) -> PrepareOut:
+    payload = request.app.state.runtime.begin_prepare(frame_id, body.preset)
+    return PrepareOut.model_validate(payload)
+
+
+@measure.get("/measure/assist/{frame_id}/prepare", response_model=PrepareOut)
+def assist_prepare_status(frame_id: str, request: Request) -> PrepareOut:
+    payload = request.app.state.runtime.prepare_status(frame_id)
+    return PrepareOut.model_validate(payload)
 
 
 @measure.post("/measure/edge", response_model=EdgeOut)

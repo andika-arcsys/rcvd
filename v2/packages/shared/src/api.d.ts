@@ -550,6 +550,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/measure/assist/{frame_id}/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Assist Prepare Status */
+        get: operations["assist_prepare_status_measure_assist__frame_id__prepare_get"];
+        put?: never;
+        /** Start Assist Prepare */
+        post: operations["start_assist_prepare_measure_assist__frame_id__prepare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/measure/edge": {
         parameters: {
             query?: never;
@@ -2035,6 +2053,38 @@ export interface components {
         PolyIn: {
             /** Points */
             points: components["schemas"]["Px"][];
+        };
+        /** PrepareIn */
+        PrepareIn: {
+            /** Preset */
+            preset?: string | null;
+        };
+        /** PrepareItem */
+        PrepareItem: {
+            /**
+             * View
+             * @enum {string}
+             */
+            view: "optical" | "aquaclear" | "hydrodetect" | "spatialsight";
+            /** Ready */
+            ready: boolean;
+            /** Note */
+            note: string;
+            /** File */
+            file?: string | null;
+        };
+        /** PrepareOut */
+        PrepareOut: {
+            /** Frame Id */
+            frame_id: string;
+            /** Running */
+            running: boolean;
+            /** Current */
+            current?: ("optical" | "aquaclear" | "hydrodetect" | "spatialsight") | null;
+            /** Note */
+            note: string;
+            /** Views */
+            views: components["schemas"]["PrepareItem"][];
         };
         /** Px */
         Px: {
@@ -3678,6 +3728,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AssistOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assist_prepare_status_measure_assist__frame_id__prepare_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                frame_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrepareOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_assist_prepare_measure_assist__frame_id__prepare_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path: {
+                frame_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrepareIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrepareOut"];
                 };
             };
             /** @description Validation Error */

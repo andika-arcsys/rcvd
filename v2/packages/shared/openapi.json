@@ -1830,6 +1830,130 @@
         }
       }
     },
+    "/measure/assist/{frame_id}/prepare": {
+      "post": {
+        "tags": [
+          "measure"
+        ],
+        "summary": "Start Assist Prepare",
+        "operationId": "start_assist_prepare_measure_assist__frame_id__prepare_post",
+        "parameters": [
+          {
+            "name": "frame_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Frame Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrepareOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "measure"
+        ],
+        "summary": "Assist Prepare Status",
+        "operationId": "assist_prepare_status_measure_assist__frame_id__prepare_get",
+        "parameters": [
+          {
+            "name": "frame_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Frame Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrepareOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/measure/edge": {
       "post": {
         "tags": [
@@ -6650,6 +6774,111 @@
           "points"
         ],
         "title": "PolyIn"
+      },
+      "PrepareIn": {
+        "properties": {
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset"
+          }
+        },
+        "type": "object",
+        "title": "PrepareIn"
+      },
+      "PrepareItem": {
+        "properties": {
+          "view": {
+            "type": "string",
+            "enum": [
+              "optical",
+              "aquaclear",
+              "hydrodetect",
+              "spatialsight"
+            ],
+            "title": "View"
+          },
+          "ready": {
+            "type": "boolean",
+            "title": "Ready"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "view",
+          "ready",
+          "note"
+        ],
+        "title": "PrepareItem"
+      },
+      "PrepareOut": {
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "title": "Frame Id"
+          },
+          "running": {
+            "type": "boolean",
+            "title": "Running"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "optical",
+                  "aquaclear",
+                  "hydrodetect",
+                  "spatialsight"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "views": {
+            "items": {
+              "$ref": "#/components/schemas/PrepareItem"
+            },
+            "type": "array",
+            "title": "Views"
+          }
+        },
+        "type": "object",
+        "required": [
+          "frame_id",
+          "running",
+          "note",
+          "views"
+        ],
+        "title": "PrepareOut"
       },
       "Px": {
         "properties": {
