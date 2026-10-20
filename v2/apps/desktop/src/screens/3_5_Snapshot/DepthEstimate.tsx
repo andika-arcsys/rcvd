@@ -2,7 +2,7 @@ import type { components } from '@deepinsight/shared';
 import { useState } from 'react';
 import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
-import { engineError } from '../../lib/engineError';
+import { engineFailure } from '../../lib/engineError';
 import type { Draft } from '../../measure/draft';
 import { EstimateFigures } from './EstimateFigures';
 import { estimateBody } from './estimateBody';
@@ -56,7 +56,7 @@ async function runEstimate(
   setBusy(false);
   if (result.error || !result.data) {
     setRow(null);
-    setError(engineError(result.error)?.code ?? t('spatial.failed'));
+    setError(engineFailure(result.error, t('spatial.failed')));
     return;
   }
   setRow(result.data);

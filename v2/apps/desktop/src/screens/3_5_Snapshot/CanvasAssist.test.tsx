@@ -19,8 +19,8 @@ describe('Tampilan bantuan kanvas', () => {
         },
       },
     });
-    expect(await screen.findByText('FRAME BEKU')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Frame asli' })).toHaveAttribute(
+    expect(await screen.findByText('FREEZE')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Original frame' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -29,7 +29,7 @@ describe('Tampilan bantuan kanvas', () => {
     expect(await screen.findByText(/AquaClear pada PNG beku/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'HydroDetect' }));
     expect(await screen.findByText(/belum dimuat/)).toBeInTheDocument();
-    expect(screen.getByText('Titik disimpan dalam piksel frame asli.')).toBeInTheDocument();
+    expect(screen.getByText('Points stay on the original-frame pixels.')).toBeInTheDocument();
   });
 
   it('membaca berkas sementara yang disiapkan saat snapshot dibuka', async () => {

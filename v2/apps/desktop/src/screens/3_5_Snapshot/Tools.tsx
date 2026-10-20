@@ -39,10 +39,10 @@ export function Tools({ draft, setDraft }: { draft: Draft; setDraft: (next: Draf
             key={tool}
             type="button"
             aria-pressed={draft.tool === tool}
-            className={pressed(draft.tool === tool)}
+            className={toolClass(tool, draft)}
             onClick={() => setDraft(setTool(draft, tool))}
           >
-            {t(`measure.${tool}`)}
+            {toolLabel(tool, draft)}
           </button>
         ))}
       </div>
@@ -135,8 +135,23 @@ function Hint({ tool }: { tool: Tool }) {
   return <p className="text-xs text-muted">{t('measure.pixelNote')}</p>;
 }
 
+function toolLabel(tool: Tool, draft: Draft): string {
+  const name = t(`measure.${tool}`);
+  if (tool === 'calibrate' && draft.geometry.cal) return `${name} OK`;
+  return name;
+}
+
+function toolClass(tool: Tool, draft: Draft): string {
+  const on = draft.tool === tool;
+  if (tool === 'calibrate' && draft.geometry.cal) return on ? CAL_ON : CAL_IDLE;
+  return on ? ON : OFF;
+}
+
+const ON = 'rounded border border-action bg-active px-2 py-1 text-sm';
+const OFF = 'rounded border border-line px-2 py-1 text-sm';
+const CAL_ON = 'rounded border border-ok bg-ok px-2 py-1 text-sm font-semibold text-bg';
+const CAL_IDLE = 'rounded border border-ok px-2 py-1 text-sm text-ok';
+
 function pressed(on: boolean): string {
-  return on
-    ? 'rounded border border-action bg-active px-2 py-1 text-sm'
-    : 'rounded border border-line px-2 py-1 text-sm';
+  return on ? ON : OFF;
 }

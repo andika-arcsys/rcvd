@@ -1,10 +1,11 @@
 import { MeasureCanvas } from '../../components/MeasureCanvas';
+import { MeasureLegend } from '../../components/measure/MeasureLegend';
 import { WorkColumns } from '../../components/WorkColumns';
 import { t } from '../../i18n';
 import { angleList } from '../../measure/angle';
 import { nodesOf, type XY } from '../../measure/draft';
 import { detailChoices } from '../../measure/detail';
-import { strokesOf } from '../../measure/strokes';
+import { strokesOf, type LineTags } from '../../measure/strokes';
 import { useSession } from '../../session/SessionContext';
 import { GpuBudgetLine } from '../3_OpticalNativeView/GpuBudgetLine';
 import { useVideoStatus } from '../3_OpticalNativeView/useLive';
@@ -98,6 +99,7 @@ function CanvasColumn({
         busy={assist.bake?.running ?? false}
         onPick={assist.choose}
       />
+      <MeasureLegend />
       <MeasureCanvas
         width={width}
         height={height}
@@ -105,7 +107,7 @@ function CanvasColumn({
         shownHeight={frame?.shown_height ?? height}
         jpeg={shownJpeg(optical, assist.picked, assist.row)}
         nodes={nodesOf(board.store.draft)}
-        strokes={strokesOf(board.store.draft)}
+        strokes={strokesOf(board.store.draft, lineTags(board))}
         zoom={board.zoom}
         hitPx={board.view?.hit ?? 0}
         magnifier={board.view?.magnifier ?? 0}
@@ -222,6 +224,15 @@ function Resume({ onStay, onGo }: { onStay: () => void; onGo: () => void }) {
       </div>
     </div>
   );
+}
+
+function lineTags(board: ReturnType<typeof useBoard>): LineTags {
+  return {
+    meters: board.view?.preview?.meters ?? [],
+    areas: board.view?.preview?.areas ?? [],
+    angles: angleList(board.store.draft),
+    refCm: board.store.draft.refCm,
+  };
 }
 
 function asPoints(rows: number[][] | undefined): XY[] {

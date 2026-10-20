@@ -52,7 +52,7 @@ describe('SpatialSight', () => {
     expect(screen.getByText(/Dekat/)).toBeInTheDocument();
     expect(screen.queryByText('0.1')).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Hitung estimasi kedalaman' }),
+      screen.queryByRole('button', { name: 'Compute depth estimate' }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/m²/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Konsol' })).toHaveAttribute('aria-pressed', 'true');
@@ -105,12 +105,12 @@ describe('SpatialSight', () => {
         },
       },
     });
-    expect(await screen.findByText(/maks/i)).toBeInTheDocument();
+    expect(await screen.findByText(/\bmax\b/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Teliti' }));
     expect(seen.process_res).toBe(672);
     expect(screen.queryByText('0.1')).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Hitung estimasi kedalaman' }),
+      screen.queryByRole('button', { name: 'Compute depth estimate' }),
     ).not.toBeInTheDocument();
   });
 });

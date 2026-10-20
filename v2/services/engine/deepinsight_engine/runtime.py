@@ -372,15 +372,22 @@ class Runtime:
         return preset if isinstance(preset, str) else None
 
     def estimate_spatial(self, frame_id: str, spec: dict[str, object]) -> dict[str, object]:
-        """Inferensi pada PNG bukti. Hasilnya tidak ditulis ke span 2D."""
+        """Muat SpatialSight bila perlu, lalu inferensi pada PNG bukti. Span 2D tidak ditulis."""
         path = self._evidence / f"{frame_id}.png"
         if not path.is_file():
             raise EngineError("VID-002", frame_id)
         from .video.decode import decode_png
 
         width, height, raw = decode_png(path.read_bytes())
-        event = self.models.geometry(raw, width, height, frame_id, spec)
+        with self._assist_lock:
+            self._ensure_spatial()
+            event = self.models.geometry(raw, width, height, frame_id, spec)
         return {key: value for key, value in event.items() if key != "event"}
+
+    def _ensure_spatial(self) -> None:
+        if self.models.state == "ready" and self.models.active == "spatialsight":
+            return
+        self.models.switch("spatialsight")
 
     def compare_view(self) -> dict[str, object]:
         from .video.compare import compare_payload

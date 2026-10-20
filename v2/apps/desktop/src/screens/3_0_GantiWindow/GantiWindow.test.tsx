@@ -63,7 +63,7 @@ describe('Ganti window', () => {
     });
     await userEvent.click(await screen.findByRole('button', { name: /HydroDetect/ }));
     expect(await screen.findByRole('alert')).toHaveTextContent('MDL-003: CUDA');
-    expect(screen.getByRole('heading', { level: 2, name: /Ganti/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: /Feature window/ })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 1, name: 'Optical Native View' })).toBeNull();
   });
 });

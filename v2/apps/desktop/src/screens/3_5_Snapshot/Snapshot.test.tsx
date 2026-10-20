@@ -8,9 +8,9 @@ const FROZEN = { frameId: 'frm-1', snapshotId: 'snp-1', preset: 'light' as const
 describe('Mode Snapshot', () => {
   it('tetap menampilkan frame dan preset bila konteks belum ada', async () => {
     renderApp('/live/snapshot', { role: 'pilot_drone', frozen: FROZEN, routes: {} });
-    expect(await screen.findByRole('heading', { name: 'Mode Snapshot' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Snapshot' })).toBeInTheDocument();
     expect(screen.getByText(/frm-1/)).toBeInTheDocument();
-    expect(screen.getByText(/Preset tercatat: light/)).toBeInTheDocument();
+    expect(screen.getByText(/Recorded preset: light/)).toBeInTheDocument();
   });
 
   it('Simpan nonaktif sampai dua titik dan referensi ada', async () => {
@@ -22,11 +22,13 @@ describe('Mode Snapshot', () => {
         [200, 0],
       ]),
     });
-    const save = await screen.findByRole('button', { name: 'Simpan' });
+    const save = await screen.findByRole('button', { name: 'Save' });
     expect(save).toBeDisabled();
-    await userEvent.click(screen.getByRole('button', { name: 'Terima' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Accept' }));
+    expect(screen.getByRole('button', { name: 'Calibration OK' })).toHaveClass('bg-ok');
+    expect(screen.getByLabelText('Line legend')).toBeInTheDocument();
     expect(save).toBeDisabled();
-    await userEvent.type(screen.getByLabelText('Referensi laser (cm)'), '10');
+    await userEvent.type(screen.getByLabelText('Calibration reference (cm)'), '10');
     expect(save).toBeEnabled();
   });
 
@@ -39,14 +41,14 @@ describe('Mode Snapshot', () => {
         [200, 0],
       ]),
     });
-    await userEvent.click(await screen.findByRole('button', { name: 'Terima' }));
-    const node = screen.getAllByRole('button', { name: /Titik/ })[0];
+    await userEvent.click(await screen.findByRole('button', { name: 'Accept' }));
+    const node = screen.getAllByRole('button', { name: /Point/ })[0];
     if (!node) throw new Error('titik hilang');
     expect(node).toHaveStyle({ width: '24px', height: '24px' });
     expect(node.querySelector('[data-dot]')).toHaveStyle({ width: '4px', height: '4px' });
     expect(screen.queryByRole('button', { name: 'Geser tampilan' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Jalur' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sudut' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Path' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Angle' })).toBeInTheDocument();
   });
 
   it('frame beku yang lebih besar menawarkan piksel asli', async () => {
@@ -65,7 +67,7 @@ describe('Mode Snapshot', () => {
         'POST /measure/edge': { risk: false },
       },
     });
-    const native = await screen.findByRole('button', { name: 'Asli' });
+    const native = await screen.findByRole('button', { name: 'Native' });
     expect(native).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByText('1280×720 / 1920×1080')).toBeInTheDocument();
     await userEvent.click(native);
@@ -100,15 +102,15 @@ describe('Mode Snapshot', () => {
         },
       },
     });
-    const button = await screen.findByRole('button', { name: 'Hitung estimasi kedalaman' });
+    const button = await screen.findByRole('button', { name: 'Compute depth estimate' });
     expect(button).toBeDisabled();
-    await userEvent.click(screen.getByRole('button', { name: 'Terima' }));
-    await userEvent.type(screen.getByLabelText('Referensi laser (cm)'), '10');
+    await userEvent.click(screen.getByRole('button', { name: 'Accept' }));
+    await userEvent.type(screen.getByLabelText('Calibration reference (cm)'), '10');
     expect(button).toBeEnabled();
     await userEvent.click(button);
     expect(await screen.findByText(/ESTIMATE_ONLY_SAME_FRAME/)).toBeInTheDocument();
     expect(screen.getByText(/Apple Depth Pro/)).toBeInTheDocument();
-    expect(screen.getByText(/Simpan 2D tetap memakai skala piksel/)).toBeInTheDocument();
+    expect(screen.getByText(/pixel scale/)).toBeInTheDocument();
   });
 
   it('satu titik laser meminta klik manual', async () => {
@@ -117,8 +119,8 @@ describe('Mode Snapshot', () => {
       frozen: FROZEN,
       routes: routes([[4, 4]]),
     });
-    expect(await screen.findByText(/Hanya satu titik laser/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Simpan' })).toBeDisabled();
+    expect(await screen.findByText(/Only one laser point/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 
   it('menyimpan lalu koreksi mengirim versi baru', async () => {
@@ -137,17 +139,17 @@ describe('Mode Snapshot', () => {
         },
       },
     });
-    await userEvent.click(await screen.findByRole('button', { name: 'Terima' }));
-    await userEvent.type(screen.getByLabelText('Referensi laser (cm)'), '10');
-    await userEvent.click(screen.getByRole('button', { name: 'Simpan' }));
-    expect(await screen.findByRole('heading', { name: 'Simpan snapshot' })).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'Accept' }));
+    await userEvent.type(screen.getByLabelText('Calibration reference (cm)'), '10');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByRole('heading', { name: 'Save snapshot' })).toBeInTheDocument();
     expect(screen.getByText(/SNP-1.json/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('link', { name: 'Ukur titik lain' }));
-    const again = await screen.findByRole('button', { name: 'Simpan' });
+    await userEvent.click(screen.getByRole('link', { name: 'Measure another point' }));
+    const again = await screen.findByRole('button', { name: 'Save' });
     await waitFor(() => expect(again).toBeEnabled());
     await userEvent.click(again);
     expect(calls).toBe(2);
-    expect(await screen.findByText(/Versi 2/)).toBeInTheDocument();
+    expect(await screen.findByText(/Version 2/)).toBeInTheDocument();
   });
 
   it('RESUME menghapus titik yang belum disimpan', async () => {
@@ -165,12 +167,12 @@ describe('Mode Snapshot', () => {
         'GET /config/controls': { schema_version: 1, keyboard: {}, gamepad: {} },
       },
     });
-    await userEvent.click(await screen.findByRole('button', { name: 'Terima' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Accept' }));
     await userEvent.click(screen.getByRole('button', { name: 'RESUME' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Hapus dan kembali' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear and return' }));
     expect(await screen.findByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: /Canvas/ }));
-    expect(await screen.findByRole('button', { name: 'Simpan sebagai snapshot' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Save as snapshot' })).toBeDisabled();
   });
 });
 

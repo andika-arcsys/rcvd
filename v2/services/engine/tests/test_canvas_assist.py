@@ -83,6 +83,22 @@ def test_prepare_writes_temp_files_and_tabs_read_them(client: TestClient, tmp_pa
     assert aqua["ready"] is True
 
 
+def test_estimate_loads_spatialsight_before_refusing(client: TestClient) -> None:
+    frame_id = _freeze(client)
+    response = client.post(
+        "/spatial/estimate",
+        json={
+            "frame_id": frame_id,
+            "ref_cm": 10,
+            "calibration": {"a": {"x": 1, "y": 1}, "b": {"x": 20, "y": 1}},
+        },
+    )
+    assert response.status_code in {500, 503}
+    body = response.json()
+    assert body["code"] in {"MDL-002", "MDL-003"}
+    assert body["detail"] != "SpatialSight belum dimuat"
+
+
 def test_missing_evidence_is_rejected(client: TestClient) -> None:
     missing = client.get("/measure/assist/frm-hilang", params={"view": "optical"})
     assert missing.status_code == 410

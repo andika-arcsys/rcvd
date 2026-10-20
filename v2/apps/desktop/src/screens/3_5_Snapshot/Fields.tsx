@@ -19,6 +19,7 @@ export function Fields({ draft, setDraft }: { draft: Draft; setDraft: (next: Dra
           onChange={(event) => setDraft({ ...draft, refCm: event.target.value })}
           className="mt-1 w-full rounded border border-line bg-panel px-2 py-1"
         />
+        <span className="mt-1 block text-xs text-muted">{t('measure.refHint')}</span>
       </label>
       <label className="text-sm">
         {t('measure.segment')}
@@ -27,8 +28,9 @@ export function Fields({ draft, setDraft }: { draft: Draft; setDraft: (next: Dra
           disabled
           className="mt-1 w-full rounded border border-line bg-panel px-2 py-1"
         >
-          <option value="">{t('live.segmentMissing')}</option>
+          <option value="">{t('measure.segmentEmpty')}</option>
         </select>
+        <span className="mt-1 block text-xs text-muted">{t('measure.segmentHint')}</span>
       </label>
       <MarkerField draft={draft} setDraft={setDraft} />
       <label className="text-sm">
@@ -61,6 +63,7 @@ function MarkerField({ draft, setDraft }: { draft: Draft; setDraft: (next: Draft
           </option>
         ))}
       </select>
+      <span className="mt-1 block text-xs text-muted">{t('measure.markerHint')}</span>
     </label>
   );
 }
