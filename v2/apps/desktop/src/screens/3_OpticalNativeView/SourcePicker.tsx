@@ -32,8 +32,8 @@ export function SourcePicker({ onOpened, title }: { onOpened?: () => void; title
   };
 
   return (
-    <section className="rounded-xl border border-line p-3">
-      <p className="mb-2 text-sm font-semibold">{title ?? t('live.sourceTitle')}</p>
+    <section className="flex flex-wrap items-center gap-2 rounded-xl border border-line px-3 py-2">
+      <p className="text-sm font-semibold">{title ?? t('live.sourceTitle')}</p>
       <ModeButtons mode={mode} onPick={setMode} />
       <SourceFields
         mode={mode}
@@ -47,9 +47,9 @@ export function SourcePicker({ onOpened, title }: { onOpened?: () => void; title
         onOpen={open}
       />
       {mode === 'camera' ? (
-        <p className="mt-2 text-xs text-muted">{t('live.sourceIndexHint')}</p>
+        <p className="w-full text-xs text-muted">{t('live.sourceIndexHint')}</p>
       ) : null}
-      {note ? <p className="mt-2 text-sm">{note}</p> : null}
+      {note ? <p className="w-full text-sm">{note}</p> : null}
     </section>
   );
 }
@@ -84,7 +84,7 @@ function SourceFields(props: {
   onOpen: () => void;
 }) {
   return (
-    <div className="mt-3 flex flex-wrap items-end gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {props.mode === 'camera' ? <CameraIndex index={props.index} onIndex={props.onIndex} /> : null}
       {props.mode === 'rtsp' ? <RtspUrl url={props.url} onUrl={props.onUrl} /> : null}
       {props.mode === 'file' ? <FileBrowse onFile={props.onFile} /> : null}
@@ -130,13 +130,13 @@ function RtspUrl({ url, onUrl }: { url: string; onUrl: (value: string) => void }
 
 function FileBrowse({ onFile }: { onFile: (file: File | null) => void }) {
   return (
-    <label className="text-sm">
+    <label className="flex items-center gap-2 text-sm">
       {t('live.sourceBrowse')}
       <input
         type="file"
         accept="video/*,.mp4,.mov,.avi,.mkv,.webm,.m4v"
         onChange={(event) => onFile(event.target.files?.[0] ?? null)}
-        className="mt-1 block text-sm"
+        className="max-w-56 text-sm"
       />
     </label>
   );

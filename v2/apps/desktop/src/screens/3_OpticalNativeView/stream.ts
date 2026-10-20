@@ -8,15 +8,27 @@ export function streamUrl(baseUrl: string, token?: string): string {
   return url.toString();
 }
 
+let streamHeld = false;
+let lastBlob: Blob | null = null;
+
+/** Menahan gambar live. Frame terakhir tetap di kanvas. */
+export function holdLiveStream(next: boolean): void {
+  streamHeld = next;
+}
+
 export function useVideoStream(canvas: RefObject<HTMLCanvasElement | null>): void {
   useEffect(() => {
     if (import.meta.env.MODE === 'test') return;
+    if (lastBlob) void paintFrame(canvas.current, lastBlob);
     const conn = resolveEngineConnection();
     const socket = new WebSocket(streamUrl(conn.baseUrl, conn.token));
     socket.binaryType = 'blob';
     socket.onmessage = (event: MessageEvent) => {
       const data: unknown = event.data;
-      if (data instanceof Blob) void paintFrame(canvas.current, data);
+      if (!(data instanceof Blob)) return;
+      if (!streamHeld) lastBlob = data;
+      const shown = streamHeld ? lastBlob : data;
+      if (shown) void paintFrame(canvas.current, shown);
     };
     return () => socket.close();
   }, [canvas]);

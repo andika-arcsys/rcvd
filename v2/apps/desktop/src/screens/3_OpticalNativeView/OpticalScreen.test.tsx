@@ -103,7 +103,7 @@ function routes(status = LIVE) {
   };
 }
 
-describe('Optical Native View', () => {
+describe('Live Operation', () => {
   it('membuka kamera laptop lewat nomor perangkat', async () => {
     let body: { kind?: string; device_index?: number } = {};
     renderApp('/live', {
@@ -142,17 +142,24 @@ describe('Optical Native View', () => {
     expect(screen.getByLabelText('Video asli · tanpa pengolahan')).toBeInTheDocument();
   });
 
-  it('FREEZE menyimpan berkas dan membuka Gallery', async () => {
+  it('SNAPSHOT menyimpan berkas dan tetap di Live Operation', async () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
-    await userEvent.click(await screen.findByRole('button', { name: 'FREEZE' }));
-    expect(await screen.findByRole('heading', { name: 'Gallery' })).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'SNAPSHOT' }));
+    expect(await screen.findByText('Berkas snapshot tersimpan.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
   });
 
-  it('spasi membekukan frame yang tampil', async () => {
+  it('FREEZE menahan video hanya pada Dual', async () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
-    await screen.findByRole('button', { name: 'FREEZE' });
+    const freeze = await screen.findByRole('button', { name: 'FREEZE' });
+    expect(freeze).toBeDisabled();
+    await userEvent.click(screen.getByRole('tab', { name: 'Dual' }));
+    expect(freeze).toBeEnabled();
+    await userEvent.click(freeze);
+    expect(freeze).toHaveAttribute('aria-pressed', 'true');
     await userEvent.keyboard('[Space]');
-    expect(await screen.findByRole('heading', { name: 'Gallery' })).toBeInTheDocument();
+    expect(freeze).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
   });
 
   it('HydroDetect menggambar deteksi di atas video live', async () => {
@@ -161,7 +168,7 @@ describe('Optical Native View', () => {
       routes: { ...routes(), 'GET /vision': HYDRO },
     });
     expect(await screen.findByLabelText('HydroDetect')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
   });
 
   it('SpatialSight menampilkan peta relatif di jendela fitur', async () => {
@@ -181,15 +188,9 @@ describe('Optical Native View', () => {
     expect(screen.getByLabelText('Live camera')).toBeInTheDocument();
     expect(screen.getByLabelText('Feature')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'SNAPSHOT' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Tandai temuan' })).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'SNAPSHOT' }));
-    expect(await screen.findByRole('heading', { name: 'Gallery' })).toBeInTheDocument();
-  });
-
-  it('tombol T menandai temuan', async () => {
-    renderApp('/live', { role: 'pilot_drone', routes: routes() });
-    await screen.findByRole('button', { name: 'FREEZE' });
-    await userEvent.keyboard('t');
-    expect(await screen.findByText('Kandidat masuk antrian Review.')).toBeInTheDocument();
+    expect(await screen.findByText('Berkas snapshot tersimpan.')).toBeInTheDocument();
   });
 
   it('F2 tetap di live view dan menampilkan status muat', async () => {
@@ -211,11 +212,14 @@ describe('Optical Native View', () => {
     await screen.findByRole('tab', { name: /AquaClear/ });
     expect(screen.queryByRole('button', { name: 'Change feature' })).toBeNull();
     await userEvent.keyboard('[F2]');
-    expect(screen.getByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
     expect(await screen.findByText('Loading')).toBeInTheDocument();
     release(jsonResponse(200, { active: 'aquaclear', state: 'ready' }));
     expect(await screen.findByText('Ready')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ringan' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Balanced' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Inspection' })).toBeInTheDocument();
     expect(switched).toBe('aquaclear');
   });
 
@@ -232,8 +236,10 @@ describe('Optical Native View', () => {
         },
       },
     });
-    expect(await screen.findByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
     expect(await screen.findByText('Ready')).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: 'Transparansi overlay' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Konsol' })).toBeInTheDocument();
     expect(switched).toBe('spatialsight');
     expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
   });
@@ -253,7 +259,9 @@ describe('Optical Native View', () => {
     });
     await userEvent.click(await screen.findByRole('tab', { name: /HydroDetect/ }));
     expect(await screen.findByRole('alert')).toHaveTextContent('MDL-003: hydrodetect');
-    expect(screen.getByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: 'Keyakinan' })).toBeInTheDocument();
+    expect(screen.getByText('Filter kelas')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
   });
 

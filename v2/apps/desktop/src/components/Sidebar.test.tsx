@@ -41,7 +41,8 @@ function renderSidebar(
 describe('Sidebar', () => {
   it('menampilkan 12 menu dan menyorot menu aktif', () => {
     renderSidebar(FULL, 'gallery');
-    expect(screen.getAllByRole('link')).toHaveLength(11);
+    expect(screen.getAllByRole('link')).toHaveLength(12);
+    expect(screen.getByRole('link', { name: 'Canvas' })).toHaveAttribute('href', '/live/canvas');
     expect(screen.getByRole('button', { name: 'Keluar' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Gallery' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Review' })).not.toHaveAttribute('aria-current');

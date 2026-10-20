@@ -28,7 +28,7 @@ describe('Ganti window', () => {
         'GET /missions/current': { mission: null },
       },
     });
-    expect(await screen.findByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Menu utama' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
     expect(screen.queryByText('Melepas model lama')).toBeNull();
@@ -52,7 +52,7 @@ describe('Ganti window', () => {
         },
       },
     });
-    expect(await screen.findByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
     expect(await screen.findByText('Loading')).toBeInTheDocument();
     expect(switched).toBe('aquaclear');
     release(jsonResponse(200, { active: 'aquaclear', state: 'ready' }));
@@ -76,7 +76,7 @@ describe('Ganti window', () => {
       },
     });
     expect(await screen.findByRole('alert')).toHaveTextContent('MDL-003: CUDA');
-    expect(screen.getByRole('heading', { name: 'Optical Native View' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
   });
 });

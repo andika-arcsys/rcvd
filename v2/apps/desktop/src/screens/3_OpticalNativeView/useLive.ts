@@ -1,6 +1,5 @@
 import type { components } from '@deepinsight/shared';
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
 import { useSession } from '../../session/SessionContext';
@@ -85,7 +84,6 @@ export function useControls(): Controls | null {
 export function useLiveActions(frameId: string | null, lost: boolean) {
   const { client } = useEngine();
   const { setFrozen } = useSession();
-  const navigate = useNavigate();
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const freeze = useCallback(() => {
@@ -97,9 +95,9 @@ export function useLiveActions(frameId: string | null, lost: boolean) {
         snapshotId: result.data.snapshot_id,
         fileId: result.data.file_id || result.data.snapshot_id,
       });
-      navigate('/gallery');
+      setNote(t('live.snapshotSaved'));
     });
-  }, [client, frameId, lost, navigate, setFrozen]);
+  }, [client, frameId, lost, setFrozen]);
   const mark = useCallback(() => {
     if (!frameId || lost) return;
     void client.POST('/findings', { body: { frame_id: frameId } }).then((result) => {

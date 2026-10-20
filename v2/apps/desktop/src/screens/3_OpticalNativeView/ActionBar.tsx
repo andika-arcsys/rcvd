@@ -1,28 +1,39 @@
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { t } from '../../i18n';
+
 const ACTION = 'rounded px-4 py-2 text-sm disabled:bg-line disabled:text-muted';
 
 export function ActionBar({
   lost,
+  dual,
+  held,
   note,
   confirmEnd,
   onFreeze,
   onSnapshot,
-  onMark,
   setConfirmEnd,
 }: {
   lost: boolean;
+  dual: boolean;
+  held: boolean;
   note: string | null;
   confirmEnd: boolean;
   onFreeze: () => void;
-  onSnapshot?: () => void;
-  onMark: () => void;
+  onSnapshot: () => void;
   setConfirmEnd: (open: boolean) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <ShotButtons lost={lost} onFreeze={onFreeze} onSnapshot={onSnapshot} onMark={onMark} />
+      <FreezeButton lost={lost} dual={dual} held={held} onFreeze={onFreeze} />
+      <button
+        type="button"
+        disabled={lost}
+        onClick={onSnapshot}
+        className={`${ACTION} bg-action text-bg`}
+      >
+        {t('live.snapshot')}
+      </button>
       <button
         type="button"
         onClick={() => setConfirmEnd(true)}
@@ -36,46 +47,28 @@ export function ActionBar({
   );
 }
 
-function ShotButtons({
+function FreezeButton({
   lost,
+  dual,
+  held,
   onFreeze,
-  onSnapshot,
-  onMark,
 }: {
   lost: boolean;
+  dual: boolean;
+  held: boolean;
   onFreeze: () => void;
-  onSnapshot?: () => void;
-  onMark: () => void;
 }) {
+  const latched = dual && held;
   return (
-    <>
-      <button
-        type="button"
-        disabled={lost}
-        onClick={onFreeze}
-        className={`${ACTION} bg-action text-bg`}
-      >
-        {t('live.freeze')}
-      </button>
-      {onSnapshot ? (
-        <button
-          type="button"
-          disabled={lost}
-          onClick={onSnapshot}
-          className={`${ACTION} bg-action text-bg`}
-        >
-          {t('live.snapshot')}
-        </button>
-      ) : null}
-      <button
-        type="button"
-        disabled={lost}
-        onClick={onMark}
-        className={`${ACTION} border border-line`}
-      >
-        {t('live.mark')}
-      </button>
-    </>
+    <button
+      type="button"
+      disabled={lost || !dual}
+      aria-pressed={latched}
+      onClick={onFreeze}
+      className={`${ACTION} ${latched ? 'bg-danger text-bg' : 'border border-line text-ink'}`}
+    >
+      {t('live.freeze')}
+    </button>
   );
 }
 

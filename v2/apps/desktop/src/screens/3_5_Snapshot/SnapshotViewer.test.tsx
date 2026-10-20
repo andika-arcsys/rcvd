@@ -11,7 +11,11 @@ describe('Snapshot viewer', () => {
     await userEvent.click(await screen.findByRole('tab', { name: 'Snapshot viewer' }));
     expect(screen.getByRole('heading', { name: 'Snapshot' })).toBeInTheDocument();
     expect(screen.getByText('Live camera')).toBeInTheDocument();
-    expect(screen.getByText('Freeze frame')).toBeInTheDocument();
+    const captions = screen.getAllByText('Canvas').map((node) => node.tagName);
+    expect(captions).toContain('FIGCAPTION');
+    expect(
+      screen.getByRole('button', { name: 'Simpan AquaClear, HydroDetect, dan SpatialSight' }),
+    ).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Raw' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: 'AquaClear' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'HydroDetect' })).toBeInTheDocument();
