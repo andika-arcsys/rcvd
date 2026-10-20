@@ -49,7 +49,7 @@ describe('aplikasi', () => {
 
   it('layar kerja punya sidebar; dialog dan pra-login tidak', async () => {
     renderApp('/live/ganti-window', { role: 'ketua_tim' });
-    expect(await screen.findByRole('heading', { name: 'Ganti window fitur' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Feature window' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: 'Menu utama' })).toBeNull();
   });
 

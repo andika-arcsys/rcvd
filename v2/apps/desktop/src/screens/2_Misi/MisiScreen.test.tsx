@@ -56,15 +56,15 @@ describe('Misi', () => {
     });
     await userEvent.selectOptions(await screen.findByLabelText('Pipa'), 'contoh');
     expect(screen.getByText(/9,65 m/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mulai misi' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Start survey' })).toBeDisabled();
   });
 
   it('Mulai misi nonaktif sampai semua pre-check lolos, lalu aktif', async () => {
     const { unmount } = renderWith(false);
-    expect(await screen.findByRole('button', { name: 'Mulai misi' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: 'Start survey' })).toBeDisabled();
     unmount();
     renderWith(true);
-    expect(await screen.findByRole('button', { name: 'Mulai misi' })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: 'Start survey' })).toBeEnabled();
   });
 });
 

@@ -87,7 +87,7 @@ describe('Optical Native View', () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
     expect(await screen.findByText('Belum diisi')).toBeInTheDocument();
     expect(screen.getByText('Tidak merekam')).toBeInTheDocument();
-    expect(screen.getByText('Titik laser belum dideteksi')).toBeInTheDocument();
+    expect(screen.getByText('Laser point not detected')).toBeInTheDocument();
     expect(screen.getByText('Segmen aktif belum diisi')).toBeInTheDocument();
     expect(screen.getByText('Video asli · tanpa pengolahan')).toBeInTheDocument();
     expect(screen.getByText('frm-1')).toBeInTheDocument();
@@ -96,7 +96,7 @@ describe('Optical Native View', () => {
   it('FREEZE mengirim frame dan membuka Mode Snapshot', async () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
     await userEvent.click(await screen.findByRole('button', { name: 'FREEZE' }));
-    expect(await screen.findByRole('heading', { name: 'Mode Snapshot' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Snapshot' })).toBeInTheDocument();
     expect(screen.getByText(/frm-1/)).toBeInTheDocument();
   });
 
@@ -104,7 +104,7 @@ describe('Optical Native View', () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
     await screen.findByRole('button', { name: 'FREEZE' });
     await userEvent.keyboard('[Space]');
-    expect(await screen.findByRole('heading', { name: 'Mode Snapshot' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Snapshot' })).toBeInTheDocument();
   });
 
   it('tombol T menandai temuan', async () => {
@@ -118,7 +118,7 @@ describe('Optical Native View', () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
     await screen.findByRole('tab', { name: /AquaClear/ });
     await userEvent.keyboard('[F2]');
-    expect(await screen.findByRole('heading', { name: 'Ganti window fitur' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Feature window' })).toBeInTheDocument();
   });
 
   it('LOST SIGNAL menonaktifkan FREEZE', async () => {

@@ -26,12 +26,12 @@ export function Readout({
       ) : null}
       {view?.meters.map((meters, index) => (
         <p key={`m${index}`}>
-          {t('measure.meters')} {meters} {t('common.meter')}
+          {t('measure.meters')} {meters.toFixed(3)} {t('common.meter')}
         </p>
       ))}
       {view && view.meters.length > 1 ? (
         <p>
-          {t('measure.total')} {total(view.meters)} {t('common.meter')}
+          {t('measure.total')} {total(view.meters).toFixed(3)} {t('common.meter')}
         </p>
       ) : null}
       {angles.map((value, index) => (
@@ -41,7 +41,7 @@ export function Readout({
       ))}
       {view?.areas.map((value, index) => (
         <p key={`a${index}`}>
-          {t('measure.areaValue')} {value} {t('measure.square')}
+          {t('measure.areaValue')} {value.toFixed(4)} {t('measure.square')}
         </p>
       ))}
     </div>

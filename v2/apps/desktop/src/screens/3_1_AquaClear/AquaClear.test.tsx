@@ -50,7 +50,7 @@ describe('AquaClear', () => {
     );
     expect(screen.getByRole('button', { name: 'Ringan' })).toBeInTheDocument();
     expect(screen.getByLabelText('Penggeser perbandingan')).toBeInTheDocument();
-    expect(screen.getByText('Tepi pipa dan titik laser jelas?')).toBeInTheDocument();
+    expect(screen.getByText('Pipe edge and calibration line clear?')).toBeInTheDocument();
   });
 
   it('kunci preset mencatat nama dan membuka snapshot', async () => {
@@ -75,8 +75,8 @@ describe('AquaClear', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Ringan' }));
     expect(seen.preset).toBe('light');
     await userEvent.click(screen.getByRole('button', { name: 'Kunci preset & FREEZE' }));
-    expect(await screen.findByRole('heading', { name: 'Mode Snapshot' })).toBeInTheDocument();
-    expect(screen.getByText(/Preset tercatat: light/)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Snapshot' })).toBeInTheDocument();
+    expect(screen.getByText(/Recorded preset: light/)).toBeInTheDocument();
   });
 });
 

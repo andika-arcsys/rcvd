@@ -57,7 +57,7 @@ describe('Sidebar', () => {
 
   it('akses "view" tetap dapat dibuka', () => {
     renderSidebar({ ...FULL, misi: 'view' });
-    expect(screen.getByRole('link', { name: 'Misi' })).toHaveAttribute('href', '/misi');
+    expect(screen.getByRole('link', { name: 'Survey' })).toHaveAttribute('href', '/misi');
   });
 
   it('tanpa data akses, semua menu dikunci kecuali Keluar', () => {
@@ -71,12 +71,12 @@ describe('Sidebar', () => {
 
   it('ciutkan menu menyisakan ikon dan bisa dibuka lagi', async () => {
     renderSidebar(FULL, 'gallery');
-    await userEvent.click(screen.getByRole('button', { name: 'Ciutkan menu' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Collapse' }));
     const gallery = screen.getByRole('link', { name: 'Gallery' });
     expect(gallery.querySelector('.sr-only')).toHaveTextContent('Gallery');
     expect(gallery).toHaveAttribute('aria-current', 'page');
-    await userEvent.click(screen.getByRole('button', { name: 'Tampilkan keterangan' }));
-    expect(screen.getByRole('button', { name: 'Ciutkan menu' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Show labels' }));
+    expect(screen.getByRole('button', { name: 'Collapse' })).toBeInTheDocument();
   });
 
   it('Keluar memanggil handler konfirmasi', async () => {

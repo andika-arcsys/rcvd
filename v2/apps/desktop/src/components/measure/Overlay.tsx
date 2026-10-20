@@ -1,18 +1,6 @@
-import type { Stroke } from '../../measure/strokes';
 import type { XY } from '../../measure/draft';
-
-const INK: Record<string, string> = {
-  red: '#E5534B',
-  yellow: '#E5B33A',
-  blue: '#4EA8DE',
-  green: '#3FB97C',
-  white: '#E6EDF3',
-  cal: '#E5B33A',
-  length: '#E6EDF3',
-  area: '#3FB97C',
-  angle: '#4EA8DE',
-  pending: '#F28C28',
-};
+import { LINE_INK, lineDash } from '../../measure/ink';
+import type { Stroke } from '../../measure/strokes';
 
 export function Overlay({
   width,
@@ -30,6 +18,9 @@ export function Overlay({
     >
       {strokes.map((stroke) => (
         <Shape key={stroke.id} stroke={stroke} />
+      ))}
+      {strokes.map((stroke) => (
+        <Tag key={`${stroke.id}.tag`} stroke={stroke} />
       ))}
     </svg>
   );
@@ -49,8 +40,8 @@ function Trace({ stroke, ink }: { stroke: Stroke; ink: string }) {
       points={asPoints(stroke.points)}
       fill="none"
       stroke={ink}
-      strokeWidth={1.5}
-      strokeDasharray={dashed(stroke) ? '4 3' : undefined}
+      strokeWidth={widthOf(stroke.kind)}
+      strokeDasharray={lineDash(stroke.kind)}
       vectorEffect="non-scaling-stroke"
     />
   );
@@ -63,7 +54,7 @@ function Region({ stroke, ink }: { stroke: Stroke; ink: string }) {
       fill={ink}
       fillOpacity={0.12}
       stroke={ink}
-      strokeWidth={1.5}
+      strokeWidth={widthOf(stroke.kind)}
       vectorEffect="non-scaling-stroke"
     />
   );
@@ -92,19 +83,57 @@ function Ring({ stroke, ink }: { stroke: Stroke; ink: string }) {
       r={Math.hypot(end.x - start.x, end.y - start.y) / 2}
       fill="none"
       stroke={ink}
-      strokeWidth={1.5}
+      strokeWidth={widthOf(stroke.kind)}
       vectorEffect="non-scaling-stroke"
     />
   );
 }
 
-function colorOf(stroke: Stroke): string {
-  if (stroke.color) return INK[stroke.color] ?? INK.white ?? '#E6EDF3';
-  return INK[stroke.kind] ?? INK.white ?? '#E6EDF3';
+function Tag({ stroke }: { stroke: Stroke }) {
+  if (!stroke.tag) return null;
+  const point = labelPoint(stroke);
+  return (
+    <text
+      x={point.x}
+      y={point.y}
+      fill="#F8FBFF"
+      stroke="#0B131B"
+      strokeWidth={3}
+      paintOrder="stroke fill"
+      fontSize={16}
+      fontFamily="IBM Plex Sans, sans-serif"
+      textAnchor="middle"
+    >
+      {stroke.tag}
+    </text>
+  );
 }
 
-function dashed(stroke: Stroke): boolean {
-  return stroke.kind === 'cal' || stroke.kind === 'pending';
+function colorOf(stroke: Stroke): string {
+  if (stroke.color) return LINE_INK[stroke.color] ?? LINE_INK.white;
+  return LINE_INK[stroke.kind as keyof typeof LINE_INK] ?? LINE_INK.white;
+}
+
+function widthOf(kind: string): number {
+  return kind === 'note' ? 1.5 : 2.5;
+}
+
+function labelPoint(stroke: Stroke): XY {
+  if (stroke.kind === 'area') return centroid(stroke.points);
+  if (stroke.kind === 'angle') return stroke.points[1] ?? centroid(stroke.points);
+  const mid = Math.max(0, Math.floor((stroke.points.length - 1) / 2));
+  const left = stroke.points[mid];
+  const right = stroke.points[mid + 1] ?? left;
+  if (!left) return { x: 0, y: 0 };
+  if (!right) return left;
+  return { x: (left.x + right.x) / 2, y: (left.y + right.y) / 2 - 14 };
+}
+
+function centroid(points: XY[]): XY {
+  if (points.length === 0) return { x: 0, y: 0 };
+  const x = points.reduce((sum, point) => sum + point.x, 0) / points.length;
+  const y = points.reduce((sum, point) => sum + point.y, 0) / points.length;
+  return { x, y };
 }
 
 function asPoints(points: XY[]): string {
