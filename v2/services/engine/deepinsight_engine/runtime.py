@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import threading
 import time
@@ -49,7 +50,10 @@ class Runtime:
         self._capture = CaptureLoop(self._ingest, settings.thresholds.video.fps)
         self._marks = data_dir / "marks"
         self._uploads = data_dir / "uploads"
+        self._snaps = data_dir / "snapshots"
         self._assist = data_dir / "assist"
+        self._transform_lock = threading.Lock()
+        self._transform: dict[str, object] = {}
         self._assist_lock = threading.Lock()
         self._bake_lock = threading.Lock()
         self._bake_token = 0
@@ -168,7 +172,175 @@ class Runtime:
             if not (self._evidence / f"{frame.frame_id}.png").is_file():
                 self._serial += 1
             preset = self.models.preset_name if self.models.active == "aquaclear" else None
-            return store_png(self._evidence, frame, session, max(self._serial, 1), preset)
+            body = store_png(self._evidence, frame, session, max(self._serial, 1), preset)
+            return self._named_snap(frame, body)
+
+    def snap_bundle(self, file_id: str) -> dict[str, object] | None:
+        from .measure.snapfile import bundle
+
+        found = bundle(self._snaps, file_id)
+        if found is None:
+            return None
+        with self._transform_lock:
+            current = dict(self._transform)
+        if current.get("file_id") == found["file_id"]:
+            found["running"] = bool(current.get("running"))
+            found["current"] = current.get("current")
+            found["note"] = str(current.get("note") or "")
+        return found
+
+    def begin_transform(self, file_id: str) -> dict[str, object]:
+        """Hitung AquaClear, HydroDetect, lalu SpatialSight. VRAM dikosongkan tiap model."""
+        found = self.snap_bundle(file_id)
+        if found is None:
+            raise EngineError("API-003", file_id)
+        with self._transform_lock:
+            current = dict(self._transform)
+            if current.get("file_id") == found["file_id"] and current.get("running"):
+                return current
+            self._transform = {
+                "file_id": found["file_id"],
+                "stamp": found["stamp"],
+                "frame_id": found["frame_id"],
+                "running": True,
+                "current": "aquaclear",
+                "note": "",
+                "snap": found["snap"],
+                "aqua": found["aqua"],
+                "hydro": found["hydro"],
+                "spatial": found["spatial"],
+                "ready": found["ready"],
+            }
+            started = dict(self._transform)
+        threading.Thread(
+            target=self._transform_worker,
+            args=(str(found["file_id"]), str(found["stamp"]), str(found["frame_id"])),
+            name="di-transform",
+            daemon=True,
+        ).start()
+        return started
+
+    def transform_status(self, file_id: str) -> dict[str, object]:
+        found = self.snap_bundle(file_id)
+        if found is None:
+            raise EngineError("API-003", file_id)
+        with self._transform_lock:
+            current = dict(self._transform)
+        if current.get("file_id") != found["file_id"]:
+            found["running"] = False
+            found["current"] = None
+            found["note"] = ""
+            return found
+        current["aqua"] = found["aqua"]
+        current["hydro"] = found["hydro"]
+        current["spatial"] = found["spatial"]
+        current["ready"] = found["ready"]
+        return current
+
+    def _named_snap(self, frame: StoredFrame, body: dict[str, object]) -> dict[str, object]:
+        from .measure.snapfile import write_snap
+
+        video = self._settings.thresholds.video
+        file_id, stamp = write_snap(
+            self._snaps,
+            frame,
+            body,
+            video.display_max_side,
+            video.display_jpeg_quality,
+        )
+        body["file_id"] = file_id
+        body["stamp"] = stamp
+        path = body.get("path")
+        if isinstance(path, str) and path:
+            Path(path).with_suffix(".json").write_text(json.dumps(body), encoding="utf-8")
+        return body
+
+    def _transform_worker(self, file_id: str, stamp: str, frame_id: str) -> None:
+        from .measure.canvas_assist import assist_frame
+        from .measure.snapfile import product_jpeg, write_product
+        from .video.decode import decode_png
+
+        steps = (
+            ("aquaclear", "AquaClear"),
+            ("hydrodetect", "HydroDetect"),
+            ("spatialsight", "SpatialSight"),
+        )
+        notes: list[str] = []
+        path = self._evidence / f"{frame_id}.png"
+        try:
+            width, height, raw = decode_png(path.read_bytes())
+        except (OSError, EngineError) as exc:
+            self._finish_transform(file_id, str(exc))
+            return
+        preset = self._settings.aquaclear.default
+        for view, label in steps:
+            self._publish_transform(file_id, True, view, " ".join(notes))
+            step = self._transform_one(
+                view,
+                label,
+                stamp,
+                frame_id,
+                raw,
+                width,
+                height,
+                preset,
+                assist_frame,
+                product_jpeg,
+                write_product,
+            )
+            if step:
+                notes.append(step)
+        with self._assist_lock, contextlib.suppress(EngineError):
+            self.models.switch("optical")
+        self._finish_transform(file_id, " ".join(notes))
+
+    def _transform_one(
+        self,
+        view: str,
+        label: str,
+        stamp: str,
+        frame_id: str,
+        raw: bytes,
+        width: int,
+        height: int,
+        preset: str,
+        assist_frame: Callable[..., dict[str, object]],
+        product_jpeg: Callable[..., bytes | None],
+        write_product: Callable[..., str],
+    ) -> str:
+        try:
+            with self._assist_lock:
+                self.models.switch(view, preset if view == "aquaclear" else None)
+                row = assist_frame(self.models, self._settings, frame_id, raw, width, height, view)
+                jpeg = product_jpeg(row, raw, width, height)
+            if row.get("ready") and jpeg is not None:
+                write_product(
+                    self._snaps,
+                    stamp,
+                    view,
+                    frame_id,
+                    jpeg,
+                    str(row.get("note") or label),
+                )
+                return ""
+            return str(row.get("note") or f"{label} belum tersimpan")
+        except EngineError as exc:
+            return f"{label} {exc.spec.code}: {exc.detail or exc.spec.message_id}"
+        except Exception as exc:  # noqa: BLE001 - satu model gagal, model berikut tetap dicoba
+            return f"{label} {exc}"
+
+    def _publish_transform(
+        self, file_id: str, running: bool, current: str | None, note: str
+    ) -> None:
+        with self._transform_lock:
+            if self._transform.get("file_id") != file_id:
+                return
+            self._transform["running"] = running
+            self._transform["current"] = current
+            self._transform["note"] = note
+
+    def _finish_transform(self, file_id: str, note: str) -> None:
+        self._publish_transform(file_id, False, None, note)
 
     def mark(self, frame_id: str) -> tuple[str, str]:
         with self._lock:

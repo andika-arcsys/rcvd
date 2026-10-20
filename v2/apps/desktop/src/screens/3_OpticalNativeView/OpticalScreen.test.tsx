@@ -93,18 +93,27 @@ describe('Optical Native View', () => {
     expect(screen.getByText('frm-1')).toBeInTheDocument();
   });
 
-  it('FREEZE mengirim frame dan membuka Mode Snapshot', async () => {
+  it('FREEZE menyimpan berkas dan membuka Gallery', async () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
     await userEvent.click(await screen.findByRole('button', { name: 'FREEZE' }));
-    expect(await screen.findByRole('heading', { name: 'Snapshot' })).toBeInTheDocument();
-    expect(screen.getByText(/frm-1/)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Gallery' })).toBeInTheDocument();
   });
 
   it('spasi membekukan frame yang tampil', async () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
     await screen.findByRole('button', { name: 'FREEZE' });
     await userEvent.keyboard('[Space]');
-    expect(await screen.findByRole('heading', { name: 'Snapshot' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Gallery' })).toBeInTheDocument();
+  });
+
+  it('tab Dual menampilkan dua jendela dan tombol SNAPSHOT', async () => {
+    renderApp('/live', { role: 'pilot_drone', routes: routes() });
+    await userEvent.click(await screen.findByRole('tab', { name: 'Dual' }));
+    expect(screen.getByLabelText('Live camera')).toBeInTheDocument();
+    expect(screen.getByLabelText('Feature')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'SNAPSHOT' })).toBeEnabled();
+    await userEvent.click(screen.getByRole('button', { name: 'SNAPSHOT' }));
+    expect(await screen.findByRole('heading', { name: 'Gallery' })).toBeInTheDocument();
   });
 
   it('tombol T menandai temuan', async () => {

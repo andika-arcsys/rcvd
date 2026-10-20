@@ -130,6 +130,20 @@ class DecisionOut(BaseModel):
     version: int
 
 
+class BundleOut(BaseModel):
+    file_id: str
+    stamp: str
+    frame_id: str
+    snap: bool
+    aqua: bool
+    hydro: bool
+    spatial: bool
+    ready: bool
+    running: bool = False
+    current: str | None = None
+    note: str = ""
+
+
 @phase8.get("/gallery", response_model=list[CardOut])
 def gallery(request: Request) -> list[CardOut]:
     return [_card(path) for path in sorted(_snap_dir(request).glob("*.json"))]
@@ -141,6 +155,24 @@ def gallery_detail(snapshot_id: str, request: Request) -> DetailOut:
     if not path.is_file():
         raise EngineError("API-003", snapshot_id)
     return _detail(path)
+
+
+@phase8.get("/gallery/{snapshot_id}/bundle", response_model=BundleOut)
+def gallery_bundle(snapshot_id: str, request: Request) -> BundleOut:
+    found = request.app.state.runtime.snap_bundle(snapshot_id)
+    if found is None:
+        raise EngineError("API-003", snapshot_id)
+    return BundleOut.model_validate(found)
+
+
+@phase8.post("/gallery/{snapshot_id}/transform", response_model=BundleOut)
+def start_transform(snapshot_id: str, request: Request) -> BundleOut:
+    return BundleOut.model_validate(request.app.state.runtime.begin_transform(snapshot_id))
+
+
+@phase8.get("/gallery/{snapshot_id}/transform", response_model=BundleOut)
+def transform_status(snapshot_id: str, request: Request) -> BundleOut:
+    return BundleOut.model_validate(request.app.state.runtime.transform_status(snapshot_id))
 
 
 @phase8.get("/gallery/{snapshot_id}/jpeg")

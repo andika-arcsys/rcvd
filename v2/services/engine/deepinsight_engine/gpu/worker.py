@@ -68,11 +68,32 @@ def _command(state: dict[str, Any], command: str, message: dict[str, Any]) -> di
 
 
 def _clear(state: dict[str, Any]) -> None:
+    """Lepas referensi model, lalu kembalikan cache CUDA ke driver."""
     keys = ("session", "yolo", "classes", "hydro", "runtime", "depth_pro", "da3", "tensor")
     for key in keys:
         state[key] = None
     state["enhancer"] = None
     state["half"] = False
+    _release_cuda()
+
+
+def _release_cuda() -> None:
+    import gc
+    import importlib
+
+    gc.collect()
+    try:
+        torch = importlib.import_module("torch")
+    except ImportError:
+        return
+    cuda = getattr(torch, "cuda", None)
+    if cuda is None or not bool(cuda.is_available()):
+        return
+    cuda.synchronize()
+    cuda.empty_cache()
+    collect = getattr(cuda, "ipc_collect", None)
+    if collect is not None:
+        collect()
 
 
 def _load(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:

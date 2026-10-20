@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import threading
+import time
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -63,6 +65,17 @@ def test_synthetic_freeze_is_raw_png_outside_cache(client: TestClient, tmp_path:
     again = client.post("/freeze", json={"frame_id": frame_id})
     assert again.json()["sha256"] == body["sha256"]
     assert again.json()["snapshot_id"] == body["snapshot_id"]
+    assert re.fullmatch(r"\d{14}_SNAP", body["file_id"])
+    assert again.json()["file_id"] == body["file_id"]
+    assert body["stamp"] == body["file_id"].split("_", 1)[0]
+    snap_jpg = png.parents[1] / "snapshots" / f"{body['file_id']}.jpg"
+    assert snap_jpg.is_file()
+    assert snap_jpg.with_suffix(".json").is_file()
+    listed = client.get("/gallery").json()
+    assert any(item["id"] == body["file_id"] for item in listed)
+    packed = client.get(f"/gallery/{body['file_id']}/bundle").json()
+    assert packed["snap"] is True
+    assert packed["ready"] is False
 
     missing = client.post("/freeze", json={"frame_id": "tidak-ada"})
     assert missing.status_code == 410
@@ -75,3 +88,38 @@ def test_synthetic_freeze_is_raw_png_outside_cache(client: TestClient, tmp_path:
     assert png.is_file()
     names = [item.name for item in threading.enumerate()]
     assert "di-watchdog" not in names
+
+
+def test_transform_saves_features_in_order(client: TestClient) -> None:
+    frames = client.post("/video/synthetic", json={"count": 1, "width": 32, "height": 24})
+    frame_id = frames.json()["frame_ids"][-1]
+    frozen = client.post("/freeze", json={"frame_id": frame_id})
+    body = frozen.json()
+    file_id = body["file_id"]
+    started = client.post(f"/gallery/{file_id}/transform")
+    assert started.status_code == 200
+    assert started.json()["running"] is True
+    status = started.json()
+    deadline = time.monotonic() + 90
+    while status["running"] and time.monotonic() < deadline:
+        time.sleep(0.2)
+        status = client.get(f"/gallery/{file_id}/transform").json()
+    assert status["running"] is False
+    assert status["file_id"] == file_id
+    snap_dir = Path(body["path"]).parents[1] / "snapshots"
+    stamp = body["stamp"]
+    assert (snap_dir / f"{stamp}_AQUA.jpg").is_file()
+    gpu = client.get("/models").json()
+    assert gpu["state"] == "optical"
+    if not gpu["gpu_available"]:
+        assert status["aqua"] is True
+        assert status["hydro"] is False
+        assert status["spatial"] is False
+        assert status["ready"] is False
+        assert "HydroDetect MDL-003" in status["note"]
+        assert "SpatialSight MDL-003" in status["note"]
+        shown = client.get(f"/gallery/{file_id}/bundle").json()
+        assert "HydroDetect MDL-003" in shown["note"]
+        assert shown["running"] is False
+        assert not (snap_dir / f"{stamp}_HYDRO.jpg").is_file()
+        assert not (snap_dir / f"{stamp}_SPATIAL.jpg").is_file()

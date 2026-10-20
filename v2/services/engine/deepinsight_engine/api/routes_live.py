@@ -104,6 +104,8 @@ class FreezeResult(BaseModel):
     png_bytes: int
     path: str
     aquaclear_preset: str | None = None
+    file_id: str = ""
+    stamp: str = ""
 
 
 class SessionClose(BaseModel):

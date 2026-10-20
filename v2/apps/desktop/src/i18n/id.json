@@ -242,6 +242,10 @@
     "noFindings": "Belum ada temuan.",
     "candidate": "Kandidat",
     "freeze": "FREEZE",
+    "snapshot": "SNAPSHOT",
+    "tabDual": "Dual",
+    "dualLive": "Live camera",
+    "dualFeature": "Feature",
     "mark": "Tandai temuan",
     "marked": "Kandidat masuk antrian Review.",
     "switch": "Change feature",
@@ -443,7 +447,9 @@
     "files": "Files",
     "saveFailed": "Save failed.",
     "missingSave": "No snapshot has been saved in this session.",
-    "node": "Point"
+    "node": "Point",
+    "transform": "Transform",
+    "transformHint": "AquaClear, HydroDetect, dan SpatialSight disimpan dulu. Pengukuran terbuka setelah berkas AQUA, HYDRO, dan SPATIAL ada."
   },
   "gallery": {
     "empty": "Belum ada snapshot.",
@@ -456,6 +462,7 @@
     "json": "JSON",
     "toReview": "Kirim ke Review",
     "openCanvas": "Buka di Canvas",
+    "confirm": "Konfirmasi dan buka canvas",
     "exportPack": "Ekspor paket",
     "span": "Hitung span",
     "window": "Jendela",

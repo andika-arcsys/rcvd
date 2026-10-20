@@ -20,7 +20,7 @@ export function CardGrid({
 }) {
   return (
     <div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-3 gap-3 xl:grid-cols-4">
         {cards.map((card) => (
           <CardButton
             key={card.id}
@@ -55,7 +55,7 @@ function CardButton({
       onClick={() => onSelect(card.id)}
     >
       {thumb ? (
-        <img alt="" src={thumb} className="mb-2 h-20 w-full object-cover" />
+        <img alt="" src={thumb} className="mb-2 aspect-video w-full object-cover" />
       ) : (
         <span className="mb-2 block h-20 bg-bg" />
       )}

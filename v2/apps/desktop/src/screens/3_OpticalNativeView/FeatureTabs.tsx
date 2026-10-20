@@ -29,19 +29,28 @@ export function FeatureTabs({
   warning,
   active = 'F1',
   busy = false,
+  dual = false,
   onFeature,
+  onDual,
 }: {
   warning: string | null;
   active?: string;
   busy?: boolean;
+  dual?: boolean;
   onFeature?: (name: LiveFeature) => void;
+  onDual?: () => void;
 }) {
+  const canvas = TABS[TABS.length - 1];
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div role="tablist" aria-label={t('live.features')} className="flex flex-wrap gap-1">
-        {TABS.map((tab) => (
+        {TABS.slice(0, -1).map((tab) => (
           <TabControl key={tab.hint} tab={tab} active={active} busy={busy} onFeature={onFeature} />
         ))}
+        {onDual ? <DualTab pressed={dual} onDual={onDual} /> : null}
+        {canvas ? (
+          <TabControl tab={canvas} active={active} busy={busy} onFeature={onFeature} />
+        ) : null}
       </div>
       <p className="text-xs text-muted">{t('live.oneModel')}</p>
       {warning && (
@@ -50,6 +59,22 @@ export function FeatureTabs({
         </Link>
       )}
     </div>
+  );
+}
+
+function DualTab({ pressed, onDual }: { pressed: boolean; onDual: () => void }) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={pressed}
+      className={`rounded border px-3 py-1 text-sm ${
+        pressed ? 'border-action text-action' : 'border-line text-muted'
+      }`}
+      onClick={onDual}
+    >
+      {t('live.tabDual')}
+    </button>
   );
 }
 
