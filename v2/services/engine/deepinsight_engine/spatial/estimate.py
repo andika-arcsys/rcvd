@@ -10,11 +10,15 @@ from .geometry import (
     calculate_surface_area,
     calibration_from_reference,
     default_intrinsics,
-    measure_distance,
+    measure_span,
 )
 
 BACKEND = "Apple Depth Pro"
 HOUSING_WARNING = "Model focal/depth belum divalidasi untuk housing/port underwater."
+SPAN_WARNING = (
+    "Lebar garis memakai kedalaman di tengah garis. Angka 2D pada kanvas tetap "
+    "satu skala piksel dan hanya sah pada jarak garis kalibrasi."
+)
 Point = tuple[float, float]
 Pair = tuple[Point, Point]
 
@@ -45,7 +49,7 @@ def estimate_scene(
         backend_signature=backend,
         intrinsics_source="MODEL_PREDICTED",
     )
-    measured = measure_distance(left, right, depth_m, intrinsics, scale, frame_id=frame_id)
+    measured = measure_span(left, right, depth_m, intrinsics, scale, frame_id=frame_id)
     length_rows = [_length(item, depth_m, intrinsics, scale, frame_id) for item in lengths]
     area_rows = [_area(item, depth_m, intrinsics, scale, frame_id) for item in areas]
     path_rows = [_path(item, depth_m, intrinsics, scale, frame_id) for item in paths]
@@ -93,7 +97,7 @@ def scene_from_message(
 def _length(
     pair: Pair, depth_m: Any, intrinsics: Any, scale: Any, frame_id: str
 ) -> dict[str, object]:
-    measured = measure_distance(
+    measured = measure_span(
         _pixel(pair[0]), _pixel(pair[1]), depth_m, intrinsics, scale, frame_id=frame_id
     )
     return {
@@ -134,7 +138,7 @@ def _path(
 
 
 def _warnings(*groups: object) -> list[str]:
-    found = [HOUSING_WARNING]
+    found = [HOUSING_WARNING, SPAN_WARNING]
     for group in groups:
         if isinstance(group, tuple):
             found.extend(str(item) for item in group)

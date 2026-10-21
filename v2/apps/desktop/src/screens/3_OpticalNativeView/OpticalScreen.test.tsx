@@ -261,6 +261,8 @@ describe('Live Operation', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('MDL-003: hydrodetect');
     expect(screen.getByRole('slider', { name: 'Keyakinan' })).toBeInTheDocument();
     expect(screen.getByText('Filter kelas')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Kandidat frame ini' })).toBeInTheDocument();
+    expect(screen.getByText('Belum ada kandidat.')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
   });

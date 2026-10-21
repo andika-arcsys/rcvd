@@ -8,6 +8,7 @@ export function CardGrid({
   onSelect,
   start,
   total,
+  pageSize,
   onStart,
 }: {
   cards: Card[];
@@ -16,6 +17,7 @@ export function CardGrid({
   onSelect: (id: string) => void;
   start: number;
   total: number;
+  pageSize: number;
   onStart: (start: number) => void;
 }) {
   return (
@@ -31,7 +33,13 @@ export function CardGrid({
           />
         ))}
       </div>
-      <WindowLine start={start} count={cards.length} total={total} onStart={onStart} />
+      <WindowLine
+        start={start}
+        count={cards.length}
+        total={total}
+        pageSize={pageSize}
+        onStart={onStart}
+      />
     </div>
   );
 }
@@ -69,25 +77,37 @@ function WindowLine({
   start,
   count,
   total,
+  pageSize,
   onStart,
 }: {
   start: number;
   count: number;
   total: number;
+  pageSize: number;
   onStart: (start: number) => void;
 }) {
+  const size = Math.max(1, pageSize);
   return (
     <div className="mt-2 flex gap-2 text-sm">
       <button
         type="button"
-        className="rounded border border-line px-2 py-1"
-        onClick={() => onStart(0)}
+        className="rounded border border-line px-2 py-1 disabled:text-muted"
+        disabled={start <= 0}
+        onClick={() => onStart(Math.max(0, start - size))}
       >
-        {t('gallery.window')}
+        {t('gallery.prev')}
       </button>
       <span className="text-muted">
         {start + 1}–{start + count} / {total}
       </span>
+      <button
+        type="button"
+        className="rounded border border-line px-2 py-1 disabled:text-muted"
+        disabled={start + count >= total}
+        onClick={() => onStart(start + size)}
+      >
+        {t('gallery.next')}
+      </button>
     </div>
   );
 }

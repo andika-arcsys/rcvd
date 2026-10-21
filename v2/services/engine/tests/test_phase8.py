@@ -158,6 +158,47 @@ def test_confirm_rules(tmp_path: Path) -> None:
         assert empty.value.spec.code == "REV-004"
 
 
+def test_gallery_lists_newest_snapshot_first(tmp_path: Path) -> None:
+    folder = tmp_path / "snapshots"
+    folder.mkdir()
+    _snap(folder, "20200101000000_SNAP", 0.1)
+    _snap(folder, "20261020120000_SNAP", 0.4)
+    _snap(folder, "SNP-SES-20261020-1100-0001", 0.2)
+    with _client(tmp_path) as client:
+        listed = client.get("/gallery")
+        assert listed.status_code == 200
+        assert [item["id"] for item in listed.json()] == [
+            "20261020120000_SNAP",
+            "SNP-SES-20261020-1100-0001",
+            "20200101000000_SNAP",
+        ]
+        detail = client.get("/gallery/20261020120000_SNAP")
+        assert detail.status_code == 200
+        assert detail.json()["log"][0]["text"] == "CAL# 40.90 cm"
+        assert detail.json()["log"][1]["text"].startswith("L1# 0.400 m")
+
+
+def _snap(folder: Path, name: str, meters: float) -> None:
+    (folder / f"{name}.json").write_text(
+        json.dumps(
+            {
+                "id": name,
+                "version": 1,
+                "freeze_no": 1,
+                "operator": "uji",
+                "frame": {"id": "frm"},
+                "calibration": {"status": "ESTIMATE_ONLY", "ref_m": 0.409},
+                "measurements": [
+                    {"meters": meters, "uncertainty_2sigma_m": 0.01, "tag": "L1#"}
+                ],
+                "annotations": [{"shape": "arrow", "color": "red"}],
+                "note": "las",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
 def test_gallery_lists_snapshot_and_missing_jpeg(tmp_path: Path) -> None:
     folder = tmp_path / "snapshots"
     folder.mkdir()

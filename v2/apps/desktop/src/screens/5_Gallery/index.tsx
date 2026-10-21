@@ -3,7 +3,7 @@ import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
 import { WorkColumns } from '../../components/WorkColumns';
 import { Detail, ReviewLink } from './Detail';
-import { filterCards, segmentsOf, type Card, type GalleryQuery } from './filter';
+import { filterCards, newestFirst, segmentsOf, type Card, type GalleryQuery } from './filter';
 import { Filters } from './Filters';
 import { CardGrid } from './Grid';
 import { useGalleryData } from './load';
@@ -25,7 +25,7 @@ export default function GalleryScreen() {
       </div>
     );
   }
-  const matched = filterCards(data.cards, query);
+  const matched = filterCards(newestFirst(data.cards), query);
   const windowSize = data.risk.gallery_window;
   const visible = visibleSlice(matched, start, windowSize);
   const card = matched.find((item) => item.id === selected) ?? visible[0] ?? null;
@@ -111,6 +111,7 @@ function GalleryMain(props: {
           onSelect={props.onSelect}
           start={props.start}
           total={props.matched}
+          pageSize={props.risk.gallery_window}
           onStart={props.setStart}
         />
       )}

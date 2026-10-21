@@ -1517,6 +1517,11 @@ export interface components {
             frame_id: string;
             /** Note */
             note: string;
+            /**
+             * Log
+             * @default []
+             */
+            log: components["schemas"]["LogLine"][];
         };
         /** DeviceRequest */
         DeviceRequest: {
@@ -1853,6 +1858,13 @@ export interface components {
             uncertainty_cm: number;
             /** Validity */
             validity: string;
+        };
+        /** LogLine */
+        LogLine: {
+            /** Tag */
+            tag: string;
+            /** Text */
+            text: string;
         };
         /** LoginRequest */
         LoginRequest: {
