@@ -4,6 +4,7 @@ import LoginScreen from './0_1_Login';
 import PeranScreen from './0_2_Peran';
 import DashboardScreen from './1_Dashboard';
 import MisiScreen from './2_Misi';
+import KalibrasiKameraScreen from './2_5_KalibrasiKamera';
 import OpticalNativeViewScreen from './3_OpticalNativeView';
 import GantiWindowScreen from './3_0_GantiWindow';
 import AquaClearScreen from './3_1_AquaClear';
@@ -31,6 +32,7 @@ export const SCREEN_COMPONENTS: Record<string, ComponentType> = {
   '0.2': PeranScreen,
   '1': DashboardScreen,
   '2': MisiScreen,
+  '2.5': KalibrasiKameraScreen,
   '3': OpticalNativeViewScreen,
   '3.0': GantiWindowScreen,
   '3.1': AquaClearScreen,

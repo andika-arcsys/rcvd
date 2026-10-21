@@ -35,7 +35,10 @@ def test_repo_config_loads(config_dir: Path) -> None:
 def test_roles_matrix_is_complete(config_dir: Path) -> None:
     roles = load_settings(config_dir).roles
     assert len(roles.roles) == 7
-    assert len(roles.menus) == 12
+    assert len(roles.menus) == 13
+    assert roles.menus["kalibrasi_kamera"]["ahli_ukur"] == "full"
+    assert roles.menus["kalibrasi_kamera"]["pengelola_data"] == "view"
+    assert roles.menus["kalibrasi_kamera"]["manajemen"] == "none"
     assert roles.menus["pims_rbi"]["pilot_drone"] == "none"
     assert roles.menus["analisis_ai"]["teknisi_program"] == "full"
     assert all(row["ketua_tim"] != "none" for row in roles.menus.values())

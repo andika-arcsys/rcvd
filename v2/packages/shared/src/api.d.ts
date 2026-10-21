@@ -106,6 +106,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cameras/pattern/chessboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chessboard Pattern */
+        get: operations["chessboard_pattern_cameras_pattern_chessboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras/pattern/aruco": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Aruco Pattern */
+        get: operations["aruco_pattern_cameras_pattern_aruco_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras/calibrate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Calibrate */
+        post: operations["calibrate_cameras_calibrate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras/aruco": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Aruco Depth */
+        post: operations["aruco_depth_cameras_aruco_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/models": {
         parameters: {
             query?: never;
@@ -1139,6 +1207,21 @@ export interface components {
              */
             tag: string;
         };
+        /** ArucoOut */
+        ArucoOut: {
+            /** Camera Id */
+            camera_id: string;
+            /** Marker Mm */
+            marker_mm: number;
+            /** Dictionary */
+            dictionary: string;
+            /** Markers */
+            markers: components["schemas"]["MarkerOut"][];
+            /** Message */
+            message: string;
+            /** Preview Jpeg */
+            preview_jpeg?: string | null;
+        };
         /** AssessIn */
         AssessIn: {
             /** Segments */
@@ -1223,6 +1306,32 @@ export interface components {
             max_attempts: number;
             /** Lock Minutes */
             lock_minutes: number;
+        };
+        /** Body_aruco_depth_cameras_aruco_post */
+        Body_aruco_depth_cameras_aruco_post: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Marker Mm */
+            marker_mm: number;
+            /** File */
+            file: string;
+        };
+        /** Body_calibrate_cameras_calibrate_post */
+        Body_calibrate_cameras_calibrate_post: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Square Mm */
+            square_mm: number;
+            /** Corners Cols */
+            corners_cols: number;
+            /** Corners Rows */
+            corners_rows: number;
+            /** Files */
+            files: string[];
         };
         /** Body_upload_video_video_upload_post */
         Body_upload_video_video_upload_post: {
@@ -1316,6 +1425,31 @@ export interface components {
             camera_file_required_for_valid: boolean;
             /** Min Baseline Px */
             min_baseline_px: number;
+        };
+        /** CalibrationOut */
+        CalibrationOut: {
+            /** Code */
+            code: number;
+            /** Message */
+            message: string;
+            /** Photos */
+            photos: number;
+            /** Readable */
+            readable: number;
+            /** Rms */
+            rms?: number | null;
+            /** Band */
+            band?: string | null;
+            /** Camera Matrix */
+            camera_matrix?: number[] | null;
+            /** Dist Coeffs */
+            dist_coeffs?: number[] | null;
+            /** Image Width */
+            image_width?: number | null;
+            /** Image Height */
+            image_height?: number | null;
+            /** Written */
+            written: boolean;
         };
         /**
          * CameraThresholds
@@ -1998,6 +2132,19 @@ export interface components {
             path: string;
             /** Sha256 */
             sha256: string;
+        };
+        /** MarkerOut */
+        MarkerOut: {
+            /** Marker Id */
+            marker_id: number;
+            /** X Mm */
+            x_mm: number;
+            /** Y Mm */
+            y_mm: number;
+            /** Z Mm */
+            z_mm: number;
+            /** Distance Mm */
+            distance_mm: number;
         };
         /** MeasView */
         MeasView: {
@@ -3035,6 +3182,143 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RiskClasses"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    chessboard_pattern_cameras_pattern_chessboard_get: {
+        parameters: {
+            query?: {
+                cols?: number;
+                rows?: number;
+            };
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aruco_pattern_cameras_pattern_aruco_get: {
+        parameters: {
+            query?: {
+                marker_id?: number;
+            };
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calibrate_cameras_calibrate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_calibrate_cameras_calibrate_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalibrationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aruco_depth_cameras_aruco_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_aruco_depth_cameras_aruco_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArucoOut"];
                 };
             };
             /** @description Validation Error */

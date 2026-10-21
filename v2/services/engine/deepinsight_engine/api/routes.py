@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Request
 from .. import __version__
 from ..core.config import ControlsConfig, RiskClasses, RolesConfig, Settings, Thresholds
 from ..diagnostics import DiagnosticsReport, ErrorLog, build_report
+from .routes_camera import camera
 from .routes_live import live
 from .routes_measure import measure
 from .routes_office import office
@@ -66,6 +67,7 @@ def config_risk(request: Request) -> RiskClasses:
 
 
 router.include_router(protected)
+router.include_router(camera)
 router.include_router(live)
 router.include_router(office)
 router.include_router(vision)

@@ -14,7 +14,7 @@
 <nav aria-label="Menu utama" style="width: 220px; min-height: 900px; height: 100%; background: #101B25; border-right: 1px solid #22313F; padding: 20px 12px; display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; font-family: 'IBM Plex Sans', sans-serif; color: #E6EDF3">
   <div style="font-weight: 600; font-size: 18px; padding: 0 10px 4px">DeepInsight</div>
   <div style="font-size: 12px; color: #93A4B5; padding: 0 10px 16px">Misi: Sinorang River Crossing<br>Peran: Ketua tim</div>
-  <sc-for list="{{items}}" as="item" hint-placeholder-count="12">
+  <sc-for list="{{items}}" as="item" hint-placeholder-count="13">
     <sc-if value="{{item.on}}" hint-placeholder-val="{{false}}">
       <a href="{{item.href}}" aria-current="page" style="display: block; text-decoration: none; color: #E6EDF3; background: #1C2C3B; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600">{{item.label}}</a>
     </sc-if>
@@ -28,7 +28,7 @@
 class Component extends DCLogic {
 renderVals() {
   const a = this.props.active ?? 'Dashboard';
-  const list = [['Dashboard','Dashboard.dc.html'],['Misi','Misi.dc.html'],['Live Operation','Main.dc.html'],['Review','Review.dc.html'],['Gallery','Gallery.dc.html'],['Laporan','Laporan.dc.html'],['PIMS / RBI','Pims.dc.html'],['Analisis AI','AnalisisAI.dc.html'],['Sustainability','Sustainability.dc.html'],['Arsip','Arsip.dc.html'],['Pengaturan','Pengaturan.dc.html'],['Keluar','Penutupan.dc.html']];
+  const list = [['Dashboard','Dashboard.dc.html'],['Misi','Misi.dc.html'],['Kalibrasi kamera','KalibrasiKamera.dc.html'],['Live Operation','Main.dc.html'],['Review','Review.dc.html'],['Gallery','Gallery.dc.html'],['Laporan','Laporan.dc.html'],['PIMS / RBI','Pims.dc.html'],['Analisis AI','AnalisisAI.dc.html'],['Sustainability','Sustainability.dc.html'],['Arsip','Arsip.dc.html'],['Pengaturan','Pengaturan.dc.html'],['Keluar','Penutupan.dc.html']];
   return { items: list.map(([label, href]) => ({ label, href, on: label === a, off: label !== a })) };
 }
 }
