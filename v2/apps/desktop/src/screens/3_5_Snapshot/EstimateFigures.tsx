@@ -2,6 +2,19 @@ import type { components } from '@deepinsight/shared';
 import { t } from '../../i18n';
 
 type Row = components['schemas']['EstimateOut'];
+type LengthRow = components['schemas']['LengthEstimate'];
+
+const SOURCE: Record<string, string> = {
+  camera_file: 'spatial.sourceCamera',
+  'prediction.intrinsics': 'spatial.sourceModel',
+  longest_side: 'spatial.sourceGuess',
+};
+
+const KIND: Record<string, string> = {
+  span: 'spatial.kindSpan',
+  facing: 'spatial.kindFacing',
+  length3d: 'spatial.kindLength',
+};
 
 export function EstimateFigures({ row }: { row: Row }) {
   return (
@@ -21,7 +34,9 @@ export function EstimateFigures({ row }: { row: Row }) {
       <p>
         {t('spatial.backend')} {row.backend}
       </p>
+      <Provenance row={row} />
       <Focal value={row.focal_px} />
+      <Calibration row={row} />
       <Lengths row={row} />
       <Areas row={row} />
       <Paths row={row} />
@@ -29,6 +44,26 @@ export function EstimateFigures({ row }: { row: Row }) {
         <p key={item}>{item}</p>
       ))}
     </div>
+  );
+}
+
+function Provenance({ row }: { row: Row }) {
+  const source = SOURCE[row.intrinsics_source] ?? 'spatial.sourceGuess';
+  return (
+    <>
+      <p>
+        {t('spatial.source')} {t(source)}
+      </p>
+      <p>
+        {t('spatial.model')} {row.model_id || '—'} {row.checkpoint}
+      </p>
+      <p>
+        {t('spatial.processSize')} {row.process_res || '—'} {row.resize_method}
+      </p>
+      <p>
+        {t('spatial.confMin')} {row.conf_min}
+      </p>
+    </>
   );
 }
 
@@ -41,13 +76,39 @@ function Focal({ value }: { value: number | null }) {
   );
 }
 
+function Calibration({ row }: { row: Row }) {
+  if (row.cal_depth == null || row.cal_u == null || row.cal_v == null) return null;
+  return (
+    <p>
+      CAL {t('spatial.sample')} {row.cal_u.toFixed(0)},{row.cal_v.toFixed(0)} depth{' '}
+      {row.cal_depth.toFixed(3)} map {fmt(row.cal_map_u)},{fmt(row.cal_map_v)}
+    </p>
+  );
+}
+
 function Lengths({ row }: { row: Row }) {
   return row.lengths.map((item, index) => (
-    <p key={`len-${index}`}>
-      {t('spatial.length')} {index + 1}: {cm(item.distance_cm)} ± {cm(item.uncertainty_cm)} (
-      {item.validity})
-    </p>
+    <LengthLine key={`len-${index}`} item={item} index={index} />
   ));
+}
+
+function LengthLine({ item, index }: { item: LengthRow; index: number }) {
+  const name = t(KIND[item.kind] ?? 'spatial.kindSpan');
+  return (
+    <div>
+      <p>
+        {name} {index + 1}: {cm(item.distance_cm)} ± {cm(item.uncertainty_cm)} ({item.validity})
+        {item.uncertain_depth ? ` ${t('spatial.uncertain')}` : ''}
+      </p>
+      <p className="text-xs text-muted">
+        {t('spatial.sample')} {fmt(item.sample_u)},{fmt(item.sample_v)} depth {fmt(item.depth)} map{' '}
+        {fmt(item.map_u)},{fmt(item.map_v)}
+        {item.depth_b == null
+          ? ''
+          : ` | ${fmt(item.sample_u_b)},${fmt(item.sample_v_b)} depth ${fmt(item.depth_b)}`}
+      </p>
+    </div>
+  );
 }
 
 function Areas({ row }: { row: Row }) {
@@ -70,4 +131,9 @@ function Paths({ row }: { row: Row }) {
 
 function cm(value: number): string {
   return `${value.toFixed(2)} cm`;
+}
+
+function fmt(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  return value.toFixed(1);
 }

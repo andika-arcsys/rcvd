@@ -8,7 +8,9 @@ import {
 } from '@deepinsight/shared';
 export { beginMove, moveNode } from './move';
 
-export type Tool = 'calibrate' | 'length' | 'path' | 'area' | 'angle' | 'annotate';
+export type Tool =
+  'calibrate' | 'length' | 'facing' | 'length3d' | 'path' | 'area' | 'angle' | 'annotate';
+export type DepthKind = 'span' | 'facing' | 'length3d';
 export const COLORS = ['red', 'yellow', 'blue', 'green', 'white'] as const;
 export type AnnoColor = (typeof COLORS)[number];
 export type AnnoShape = 'arrow' | 'line' | 'circle';
@@ -23,6 +25,7 @@ export interface XY {
 export interface Pair {
   a: XY;
   b: XY;
+  kind?: DepthKind;
 }
 
 export interface AngleMark {
@@ -225,8 +228,10 @@ function commitPair(draft: Draft, pending: XY[]): Draft {
   const built = pairOf(pending);
   if (!built) return draft;
   if (draft.tool === 'calibrate') return commit(draft, { ...draft.geometry, cal: built });
-  if (draft.tool === 'length') {
-    return commit(draft, { ...draft.geometry, lengths: [...draft.geometry.lengths, built] });
+  const kind = lengthKind(draft.tool);
+  if (kind) {
+    const line = kind === 'span' ? built : { ...built, kind };
+    return commit(draft, { ...draft.geometry, lengths: [...draft.geometry.lengths, line] });
   }
   const note: Anno = { shape: draft.shape, color: draft.color, a: built.a, b: built.b };
   return commit(draft, { ...draft.geometry, notes: [...draft.geometry.notes, note] });
@@ -234,6 +239,12 @@ function commitPair(draft: Draft, pending: XY[]): Draft {
 
 function commit(draft: Draft, geometry: Geometry): Draft {
   return { ...draft, pending: [], geometry, past: [...draft.past, draft.geometry], future: [] };
+}
+
+function lengthKind(tool: Tool): DepthKind | null {
+  if (tool === 'length') return 'span';
+  if (tool === 'facing' || tool === 'length3d') return tool;
+  return null;
 }
 
 function pairOf(points: readonly XY[]): Pair | null {

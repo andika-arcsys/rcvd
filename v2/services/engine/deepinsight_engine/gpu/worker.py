@@ -12,11 +12,20 @@ from typing import Any
 
 from ..core.config import AquaPreset
 from ..core.errors import EngineError
+from ..spatial.da3_frame import camera_k, scale_prediction_k
 from ..spatial.estimate import scene_from_message
+from ..spatial.geometry import CameraIntrinsics
 from ..spatial.preview import relative_preview
 from ..spatial.source import missing_spatial_detail, spatial_choice
 from .aquaclear import enhance_live, open_enhancer
-from .depth_anything3_runtime import DA3_WARNINGS, clamp_res, infer_depth, load_model
+from .depth_anything3_runtime import (
+    DA3_WARNINGS,
+    Da3Observation,
+    clamp_res,
+    infer_depth,
+    infer_observation,
+    load_model,
+)
 from .depth_map import relative_from_output
 from .depth_pro_runtime import infer_meters, load_depth_pro
 from .ultralytics_seg import (
@@ -456,9 +465,14 @@ def _geometry(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
         }
     if runtime not in {"depth_pro", "depth_anything3"}:
         return {"event": "error", "code": "MDL-002", "detail": "SpatialSight belum dimuat"}
+    depth_m: Any = None
+    focal: float | None = None
     try:
         if runtime == "depth_anything3":
-            depth_m, focal = _da3_geometry(state, message)
+            observed = _da3_geometry(state, message)
+            _attach_observation(message, observed)
+            focal = _focal_of(message)
+            depth_m = observed.depth
             result = scene_from_message(
                 depth_m,
                 focal,
@@ -466,6 +480,7 @@ def _geometry(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
                 backend="Depth Anything 3",
                 extra_warnings=DA3_WARNINGS,
             )
+            _log_samples(result)
         else:
             depth_m, focal = _predict(state, message)
             result = scene_from_message(depth_m, focal, message)
@@ -479,13 +494,84 @@ def _geometry(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     return {"event": "result", "kind": "spatial-geometry", **result}
 
 
-def _da3_geometry(state: dict[str, Any], message: dict[str, Any]) -> tuple[Any, None]:
+def _da3_geometry(state: dict[str, Any], message: dict[str, Any]) -> Da3Observation:
     np = importlib.import_module("numpy")
     width, height = int(message["width"]), int(message["height"])
     image = np.frombuffer(_read_raw(message), dtype=np.uint8).reshape(height, width, 3)
     size = clamp_res(message.get("process_res") or state.get("process_res"))
     state["process_res"] = size
-    return _da3_depth(state, image, size), None
+    return infer_observation(state["da3"], image, size)
+
+
+def _attach_observation(message: dict[str, Any], observed: Da3Observation) -> None:
+    message["conf"] = observed.conf
+    message["geom"] = observed.geometry
+    message["model_id"] = observed.model_id
+    message["checkpoint"] = observed.checkpoint
+    message["process_res"] = observed.process_res
+    message["resize_method"] = observed.resize_method
+    camera = _camera_intrinsics(message)
+    if camera is not None:
+        message["intrinsics"] = camera
+        message["intrinsics_source"] = "camera_file"
+        return
+    if observed.raw_intrinsics is not None:
+        fx, fy, cx, cy = scale_prediction_k(observed.raw_intrinsics, observed.geometry)
+        message["intrinsics"] = CameraIntrinsics(fx, fy, cx, cy, calibrated_underwater=False)
+        message["intrinsics_source"] = "prediction.intrinsics"
+        return
+    message["intrinsics_source"] = "longest_side"
+
+
+def _camera_intrinsics(message: dict[str, Any]) -> CameraIntrinsics | None:
+    matrix = message.get("camera_matrix")
+    if not isinstance(matrix, list) or len(matrix) != 9:
+        return None
+    if not all(isinstance(item, int | float) and not isinstance(item, bool) for item in matrix):
+        return None
+    width, height = int(message["width"]), int(message["height"])
+    calib_w = message.get("camera_width")
+    calib_h = message.get("camera_height")
+    fx, fy, cx, cy = camera_k(
+        [float(item) for item in matrix],
+        width,
+        height,
+        int(calib_w) if isinstance(calib_w, int) else None,
+        int(calib_h) if isinstance(calib_h, int) else None,
+    )
+    return CameraIntrinsics(fx, fy, cx, cy, calibrated_underwater=True)
+
+
+def _focal_of(message: dict[str, Any]) -> float | None:
+    camera = message.get("intrinsics")
+    if isinstance(camera, CameraIntrinsics) and message.get("intrinsics_source") != "longest_side":
+        return (camera.fx + camera.fy) / 2.0
+    return None
+
+
+def _log_samples(result: dict[str, object]) -> None:
+    cal = (
+        f"CAL depth={result.get('cal_depth')} "
+        f"u={result.get('cal_u')} v={result.get('cal_v')} "
+        f"map=({result.get('cal_map_u')},{result.get('cal_map_v')}) "
+        f"source={result.get('intrinsics_source')} model={result.get('model_id')} "
+        f"process={result.get('process_res')} conf_min={result.get('conf_min')}"
+    )
+    sys.stderr.write(f"SpatialSight sampel {cal}\n")
+    lengths = result.get("lengths")
+    if isinstance(lengths, list):
+        for index, row in enumerate(lengths, start=1):
+            if not isinstance(row, dict):
+                continue
+            sys.stderr.write(
+                "SpatialSight sampel "
+                f"L{index} tag={row.get('tag')} kind={row.get('kind')} "
+                f"depth={row.get('depth')} u={row.get('sample_u')} v={row.get('sample_v')} "
+                f"map=({row.get('map_u')},{row.get('map_v')}) "
+                f"depth_b={row.get('depth_b')} u_b={row.get('sample_u_b')} "
+                f"v_b={row.get('sample_v_b')}\n"
+            )
+    sys.stderr.flush()
 
 
 def _predict(state: dict[str, Any], message: dict[str, Any]) -> tuple[Any, float | None]:

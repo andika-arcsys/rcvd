@@ -250,6 +250,7 @@ class SpatialSightConfig(_Strict):
     backend: Literal["depth_anything3", "depth_pro"] = "depth_anything3"
     model_id: str = "depth-anything/DA3METRIC-LARGE"
     process_res: Literal[378, 504, 672] = 504
+    conf_min: float = 0.0
 
     @model_validator(mode="after")
     def _label(self) -> SpatialSightConfig:
@@ -259,6 +260,8 @@ class SpatialSightConfig(_Strict):
             raise ValueError("label SpatialSight harus tetap")
         if not self.model_id.strip():
             raise ValueError("model_id SpatialSight kosong")
+        if self.conf_min < 0:
+            raise ValueError("conf_min tidak boleh negatif")
         return self
 
 

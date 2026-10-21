@@ -12,7 +12,16 @@ import {
   type Tool,
 } from '../../measure/draft';
 
-const TOOLS: Tool[] = ['calibrate', 'length', 'path', 'area', 'angle', 'annotate'];
+const TOOLS: Tool[] = [
+  'calibrate',
+  'length',
+  'facing',
+  'length3d',
+  'path',
+  'area',
+  'angle',
+  'annotate',
+];
 const SHAPES: AnnoShape[] = ['arrow', 'line', 'circle'];
 const COLORS: AnnoColor[] = ['red', 'yellow', 'blue', 'green', 'white'];
 
@@ -132,6 +141,8 @@ function History({ draft, setDraft }: { draft: Draft; setDraft: (next: Draft) =>
 function Hint({ tool }: { tool: Tool }) {
   if (tool === 'angle') return <p className="text-xs text-muted">{t('measure.angleHint')}</p>;
   if (tool === 'path') return <p className="text-xs text-muted">{t('measure.pathHint')}</p>;
+  if (tool === 'facing') return <p className="text-xs text-muted">{t('measure.facingHint')}</p>;
+  if (tool === 'length3d') return <p className="text-xs text-muted">{t('measure.length3dHint')}</p>;
   return <p className="text-xs text-muted">{t('measure.pixelNote')}</p>;
 }
 

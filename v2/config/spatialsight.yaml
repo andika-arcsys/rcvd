@@ -6,3 +6,5 @@ relative_label: "Preview relatif, bukan ukuran"
 backend: depth_anything3
 model_id: depth-anything/DA3METRIC-LARGE
 process_res: 504
+# 0 menyimpan setiap piksel hingga. Naikkan setelah frame uji menunjukkan batas conf.
+conf_min: 0.0

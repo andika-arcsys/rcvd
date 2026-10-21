@@ -17,7 +17,7 @@ export function saveBody(
   return {
     frame_id: frameId,
     ref_cm: ref,
-    calibration: { a: cal.a, b: cal.b, tag: CAL_TAG },
+    calibration: { a: cal.a, b: cal.b, tag: CAL_TAG, kind: 'span' },
     lengths: kept.lengths,
     areas: kept.areas,
     annotations: draft.geometry.notes,

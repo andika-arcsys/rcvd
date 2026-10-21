@@ -1615,6 +1615,8 @@ export interface components {
              * @default []
              */
             paths: components["schemas"]["PathIn"][];
+            /** Camera Id */
+            camera_id?: string | null;
         };
         /** EstimateOut */
         EstimateOut: {
@@ -1654,6 +1656,46 @@ export interface components {
             underwater_intrinsics: boolean;
             /** Focal Px */
             focal_px: number | null;
+            /**
+             * Intrinsics Source
+             * @default longest_side
+             */
+            intrinsics_source: string;
+            /**
+             * Model Id
+             * @default
+             */
+            model_id: string;
+            /**
+             * Process Res
+             * @default 0
+             */
+            process_res: number;
+            /**
+             * Resize Method
+             * @default
+             */
+            resize_method: string;
+            /**
+             * Checkpoint
+             * @default
+             */
+            checkpoint: string;
+            /**
+             * Conf Min
+             * @default 0
+             */
+            conf_min: number;
+            /** Cal Depth */
+            cal_depth?: number | null;
+            /** Cal U */
+            cal_u?: number | null;
+            /** Cal V */
+            cal_v?: number | null;
+            /** Cal Map U */
+            cal_map_u?: number | null;
+            /** Cal Map V */
+            cal_map_v?: number | null;
         };
         /** FileRequest */
         FileRequest: {
@@ -1858,6 +1900,46 @@ export interface components {
             uncertainty_cm: number;
             /** Validity */
             validity: string;
+            /**
+             * Kind
+             * @default span
+             */
+            kind: string;
+            /**
+             * Tag
+             * @default
+             */
+            tag: string;
+            /** Depth */
+            depth?: number | null;
+            /** Sample U */
+            sample_u?: number | null;
+            /** Sample V */
+            sample_v?: number | null;
+            /** Map U */
+            map_u?: number | null;
+            /** Map V */
+            map_v?: number | null;
+            /** Depth B */
+            depth_b?: number | null;
+            /** Sample U B */
+            sample_u_b?: number | null;
+            /** Sample V B */
+            sample_v_b?: number | null;
+            /** Map U B */
+            map_u_b?: number | null;
+            /** Map V B */
+            map_v_b?: number | null;
+            /**
+             * Uncertain Depth
+             * @default false
+             */
+            uncertain_depth: boolean;
+            /**
+             * Warnings
+             * @default []
+             */
+            warnings: string[];
         };
         /** LogLine */
         LogLine: {
@@ -2044,6 +2126,12 @@ export interface components {
              * @default
              */
             tag: string;
+            /**
+             * Kind
+             * @default span
+             * @enum {string}
+             */
+            kind: "span" | "facing" | "length3d";
         };
         /** PairM */
         PairM: {
