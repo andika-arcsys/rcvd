@@ -81,7 +81,7 @@ function Calibration({ row }: { row: Row }) {
   return (
     <p>
       CAL {t('spatial.sample')} {row.cal_u.toFixed(0)},{row.cal_v.toFixed(0)} depth{' '}
-      {row.cal_depth.toFixed(3)} map {fmt(row.cal_map_u)},{fmt(row.cal_map_v)}
+      {row.cal_depth.toFixed(3)} map {fmt(row.cal_map_u)},{fmt(row.cal_map_v)} {angle(row.cal_angle_deg)}
     </p>
   );
 }
@@ -97,7 +97,8 @@ function LengthLine({ item, index }: { item: LengthRow; index: number }) {
   return (
     <div>
       <p>
-        {name} {index + 1}: {cm(item.distance_cm)} ± {cm(item.uncertainty_cm)} ({item.validity})
+        {name} {index + 1}: {cm(item.distance_cm)} ± {cm(item.uncertainty_cm)} ({item.validity}){' '}
+        {angle(item.angle_deg)}
         {item.uncertain_depth ? ` ${t('spatial.uncertain')}` : ''}
       </p>
       <p className="text-xs text-muted">
@@ -131,6 +132,11 @@ function Paths({ row }: { row: Row }) {
 
 function cm(value: number): string {
   return `${value.toFixed(2)} cm`;
+}
+
+function angle(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return '';
+  return `${t('spatial.angle')} ${value.toFixed(1)}°`;
 }
 
 function fmt(value: number | null | undefined): string {

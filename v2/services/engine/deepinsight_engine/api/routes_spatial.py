@@ -50,6 +50,7 @@ class LengthEstimate(BaseModel):
     map_u_b: float | None = None
     map_v_b: float | None = None
     uncertain_depth: bool = False
+    angle_deg: float = 0.0
     warnings: list[str] = []
 
 
@@ -93,6 +94,7 @@ class EstimateOut(BaseModel):
     cal_v: float | None = None
     cal_map_u: float | None = None
     cal_map_v: float | None = None
+    cal_angle_deg: float = 0.0
 
 
 @spatial.post("/spatial/estimate", response_model=EstimateOut)

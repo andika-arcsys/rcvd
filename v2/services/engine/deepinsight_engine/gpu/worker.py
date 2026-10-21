@@ -554,6 +554,7 @@ def _log_samples(result: dict[str, object]) -> None:
         f"CAL depth={result.get('cal_depth')} "
         f"u={result.get('cal_u')} v={result.get('cal_v')} "
         f"map=({result.get('cal_map_u')},{result.get('cal_map_v')}) "
+        f"sudut={result.get('cal_angle_deg')} "
         f"source={result.get('intrinsics_source')} model={result.get('model_id')} "
         f"process={result.get('process_res')} conf_min={result.get('conf_min')}"
     )
@@ -569,7 +570,7 @@ def _log_samples(result: dict[str, object]) -> None:
                 f"depth={row.get('depth')} u={row.get('sample_u')} v={row.get('sample_v')} "
                 f"map=({row.get('map_u')},{row.get('map_v')}) "
                 f"depth_b={row.get('depth_b')} u_b={row.get('sample_u_b')} "
-                f"v_b={row.get('sample_v_b')}\n"
+                f"v_b={row.get('sample_v_b')} sudut={row.get('angle_deg')}\n"
             )
     sys.stderr.flush()
 

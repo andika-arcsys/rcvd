@@ -332,7 +332,8 @@
   },
   "spatial": {
     "title": "Depth estimate",
-    "hint": "Satu tekan menjalankan Depth Anything 3 sekali pada PNG beku untuk seluruh garis, lalu model dilepas. Tekan lagi untuk siklus baru. Angka simpan 2D tetap pada skala piksel.",
+    "hint": "Satu tekan menjalankan Depth Anything 3 sekali pada PNG beku untuk seluruh garis, lalu model dilepas. Tekan lagi untuk siklus baru. Angka simpan 2D tetap pada skala piksel. Sudut diukur dari titik awal ke titik akhir, searah jarum jam dari horizontal layar. 0° mendatar ke kanan.",
+    "angle": "Sudut",
     "run": "Compute depth estimate",
     "busy": "Loading SpatialSight…",
     "failed": "Estimate failed",

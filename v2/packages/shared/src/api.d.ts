@@ -1696,6 +1696,11 @@ export interface components {
             cal_map_u?: number | null;
             /** Cal Map V */
             cal_map_v?: number | null;
+            /**
+             * Cal Angle Deg
+             * @default 0
+             */
+            cal_angle_deg: number;
         };
         /** FileRequest */
         FileRequest: {
@@ -1935,6 +1940,11 @@ export interface components {
              * @default false
              */
             uncertain_depth: boolean;
+            /**
+             * Angle Deg
+             * @default 0
+             */
+            angle_deg: number;
             /**
              * Warnings
              * @default []

@@ -11,6 +11,7 @@ from .geometry import (
     calculate_accumulated_path_distance,
     calculate_surface_area,
     calibration_from_reference,
+    clockwise_screen_deg,
     default_intrinsics,
     measure_span,
 )
@@ -129,6 +130,7 @@ def estimate_scene(
         "cal_v": scale.sample_v,
         "cal_map_u": map_u,
         "cal_map_v": map_v,
+        "cal_angle_deg": clockwise_screen_deg(calibration[0], calibration[1]),
     }
 
 
@@ -198,7 +200,9 @@ def _length(
         conf_min=conf_min,
         geom=geom,
     )
-    return _figure(figure, tag)
+    row = _figure(figure, tag)
+    row["angle_deg"] = clockwise_screen_deg(pair[0], pair[1])
+    return row
 
 
 def _area(
