@@ -30,6 +30,26 @@ const DASH = {
     },
   ],
   remeasure: [{ segment: 'S1', note: 'Ukur ulang' }],
+  study: [
+    {
+      code: 'D-05',
+      group: 'bukti',
+      group_label: 'Bukti',
+      title: 'Jarak dua titik laser',
+      state: 'siap',
+      detail: '10 cm',
+      path: '/pengaturan',
+    },
+    {
+      code: 'D-30',
+      group: 'pims',
+      group_label: 'PIMS / RBI',
+      title: 'Matriks PR-06-019',
+      state: 'kosong',
+      detail: 'Tabel matriks kosong',
+      path: '/pims',
+    },
+  ],
 };
 
 describe('Dashboard', () => {
@@ -42,6 +62,11 @@ describe('Dashboard', () => {
     expect(screen.getByText(/9,65 m/)).toBeInTheDocument();
     expect(screen.getByText('Contoh')).toBeInTheDocument();
     expect(screen.queryByText('Tugas ukur ulang')).toBeNull();
+    expect(screen.getByText('Kelengkapan kajian')).toBeInTheDocument();
+    expect(screen.getByText('Siap')).toBeInTheDocument();
+    expect(screen.getByText('Belum diisi')).toBeInTheDocument();
+    const opens = screen.getAllByRole('link', { name: 'Buka' });
+    expect(opens.map((link) => link.getAttribute('href'))).toEqual(['/pengaturan', '/pims']);
   });
 
   it('Ahli pengukuran melihat tugas ukur ulang', async () => {

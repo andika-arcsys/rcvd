@@ -108,6 +108,18 @@ class FindingView(BaseModel):
     jpeg_path: str | None
 
 
+class StudyItem(BaseModel):
+    """Satu baris kelengkapan kajian. state siap atau kosong, tanpa angka tebakan."""
+
+    code: str
+    group: str
+    group_label: str
+    title: str
+    state: str
+    detail: str
+    path: str
+
+
 class DashboardView(BaseModel):
     active_missions: int
     pending_review: int
@@ -117,3 +129,4 @@ class DashboardView(BaseModel):
     banner: ReviewBanner | None
     missions: list[MissionView]
     remeasure: list[RemeasureTask]
+    study: list[StudyItem] = []

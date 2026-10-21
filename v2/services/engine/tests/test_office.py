@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -185,6 +186,32 @@ def test_dashboard_banner_for_leakage_and_span(tmp_path: Path) -> None:
         assert body["banner"]["kind"] == "leakage"
         assert body["snapshots_today"] == 0
         assert body["longest_span_m"] is None
+        study = {item["code"]: item for item in body["study"]}
+        assert study["D-05"]["state"] == "siap"
+        assert study["D-05"]["detail"] == "10 cm"
+        assert study["D-21"]["state"] == "siap"
+        assert study["D-30"]["state"] == "kosong"
+        assert study["D-31"]["state"] == "kosong"
+        assert study["D-32"]["state"] == "kosong"
+        assert study["D-35"]["state"] == "kosong"
+        assert study["D-41"]["state"] == "kosong"
+        assert study["D-40"]["state"] == "kosong"
+        assert study["D-43"]["state"] == "kosong"
+        assert study["PKG"]["detail"] == "Belum ada paket"
+        assert study["RPT"]["detail"] == "0 disetujui, 0 belum disetujui"
+
+
+def test_dashboard_counts_only_today_snap_files(tmp_path: Path) -> None:
+    folder = tmp_path / "snapshots"
+    folder.mkdir()
+    today = datetime.now().strftime("%Y%m%d")
+    (folder / f"{today}120000_SNAP.json").write_text("{}", encoding="utf-8")
+    (folder / f"{today}120000_AQUA.json").write_text("{}", encoding="utf-8")
+    (folder / "20200101120000_SNAP.json").write_text("{}", encoding="utf-8")
+    app = create_app(config_dir=REPO_CONFIG, data_dir=tmp_path)
+    with TestClient(app) as client:
+        body = client.get("/dashboard").json()
+        assert body["snapshots_today"] == 1
 
 
 def test_short_baseline_hint_on_rod(tmp_path: Path) -> None:

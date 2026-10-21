@@ -39,6 +39,7 @@ from .models import (
     RodInput,
     RodView,
 )
+from .study import snapshots_today, study_items
 
 TEAM_ROLES = (
     "ketua_tim",
@@ -326,16 +327,18 @@ class Office:
                 RemeasureTask(segment=str(item["segment"]), note=str(item["note"]))
                 for item in conn.execute("SELECT segment, note FROM remeasure WHERE open=1")
             ]
+            study = study_items(self.settings, self.config_dir, conn)
         assert active is not None and pending is not None and spans is not None
         return DashboardView(
             active_missions=int(active["n"]),
             pending_review=int(pending["n"]),
-            snapshots_today=0,
+            snapshots_today=snapshots_today(self.data_dir / "snapshots"),
             longest_span_m=None if spans["m"] is None else float(spans["m"]),
             critical_limit_m=None if running is None else float(running["critical_limit_m"]),
             banner=banner,
             missions=missions,
             remeasure=tasks,
+            study=study,
         )
 
     def add_finding(

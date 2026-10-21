@@ -4941,6 +4941,14 @@
             },
             "type": "array",
             "title": "Remeasure"
+          },
+          "study": {
+            "items": {
+              "$ref": "#/components/schemas/StudyItem"
+            },
+            "type": "array",
+            "title": "Study",
+            "default": []
           }
         },
         "type": "object",
@@ -8473,6 +8481,50 @@
           "role"
         ],
         "title": "StageIn"
+      },
+      "StudyItem": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "group": {
+            "type": "string",
+            "title": "Group"
+          },
+          "group_label": {
+            "type": "string",
+            "title": "Group Label"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "group",
+          "group_label",
+          "title",
+          "state",
+          "detail",
+          "path"
+        ],
+        "title": "StudyItem",
+        "description": "Satu baris kelengkapan kajian. state siap atau kosong, tanpa angka tebakan."
       },
       "SummaryOut": {
         "properties": {

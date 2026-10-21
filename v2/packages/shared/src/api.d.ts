@@ -1448,6 +1448,11 @@ export interface components {
             missions: components["schemas"]["MissionView"][];
             /** Remeasure */
             remeasure: components["schemas"]["RemeasureTask"][];
+            /**
+             * Study
+             * @default []
+             */
+            study: components["schemas"]["StudyItem"][];
         };
         /** DecisionIn */
         DecisionIn: {
@@ -2641,6 +2646,26 @@ export interface components {
         StageIn: {
             /** Role */
             role: string;
+        };
+        /**
+         * StudyItem
+         * @description Satu baris kelengkapan kajian. state siap atau kosong, tanpa angka tebakan.
+         */
+        StudyItem: {
+            /** Code */
+            code: string;
+            /** Group */
+            group: string;
+            /** Group Label */
+            group_label: string;
+            /** Title */
+            title: string;
+            /** State */
+            state: string;
+            /** Detail */
+            detail: string;
+            /** Path */
+            path: string;
         };
         /** SummaryOut */
         SummaryOut: {

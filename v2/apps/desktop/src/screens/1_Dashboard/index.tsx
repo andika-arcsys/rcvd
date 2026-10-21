@@ -6,6 +6,7 @@ import { t } from '../../i18n';
 import { useSession } from '../../session/SessionContext';
 import { KpiRow } from './Kpis';
 import { MissionTable } from './MissionTable';
+import { StudyBoard } from './StudyBoard';
 
 type DashboardView = components['schemas']['DashboardView'];
 
@@ -86,6 +87,7 @@ function DashboardBody({
         <b>{t('dashboard.missions')}</b>
         <MissionTable missions={data.missions} />
       </section>
+      <StudyBoard items={data.study ?? []} />
       {role === 'ahli_ukur' && <Remeasure tasks={data.remeasure} />}
     </div>
   );
