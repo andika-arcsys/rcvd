@@ -113,19 +113,22 @@ describe('HydroDetect', () => {
   });
 
   it('menandai kandidat ke review', async () => {
-    const seen: { class_name?: string } = {};
+    const seen: { class_name?: string; score?: number } = {};
     renderApp('/live/hydrodetect', {
       role: 'pilot_drone',
       routes: {
         ...routes(),
         'POST /findings': async (request: Request) => {
-          seen.class_name = ((await request.json()) as { class_name?: string }).class_name;
+          const body = (await request.json()) as { class_name?: string; score?: number };
+          seen.class_name = body.class_name;
+          seen.score = body.score;
           return jsonResponse(200, { id: 1, frame_id: 'frm-1', path: '/tmp/a.jpg', sha256: 'b' });
         },
       },
     });
     await userEvent.click(await screen.findByRole('button', { name: 'Tandai ke Review' }));
     expect(seen.class_name).toBe('Leakage');
+    expect(seen.score).toBe(0.8);
   });
 });
 

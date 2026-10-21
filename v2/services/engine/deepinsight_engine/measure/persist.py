@@ -1,8 +1,9 @@
-"""Nilai yang disimpan dihitung ulang di sini. Berkas lama tidak ditimpa."""
+"""Nilai yang disimpan dihitung ulang di sini. Berkas yang sama ditimpa."""
 
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from deepinsight_engine.core.errors import EngineError
@@ -13,6 +14,10 @@ from .calibrate import calibrate
 from .edge import edge_risk
 from .length import length
 from .types import Camera, MeasureLimits, Point
+
+_SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,80}$")
+_EDGE_WARNING = "Titik berada dekat tepi objek. Angka tetap disimpan."
+_UNCAL_WARNING = "Kalibrasi belum memenuhi ambang. Angka tetap disimpan."
 
 
 def _tag(tags: list[str] | None, index: int, fallback: str) -> str:
@@ -53,15 +58,16 @@ def build_record(
     area_tags: list[str] | None = None,
 ) -> dict[str, object]:
     cal = calibrate(cal_points[0], cal_points[1], ref_m, click_sigma, limits, camera)
-    if cal.status == "UNCALIBRATED":
-        raise EngineError("SNAP-001", frame_id)
     measured = [length(a, b, cal, limits) for a, b in lengths]
     fields = [area(points, cal, limits) for points in areas]
     watched = [point for pair in lengths for point in pair]
     watched.extend(point for poly in areas for point in poly)
     flags = edge_risk(bgr, width, height, watched, canny_low, canny_high, edge_limit)
+    warnings = [cal.baseline_hint] if cal.baseline_hint else []
+    if cal.status == "UNCALIBRATED":
+        warnings.append(_UNCAL_WARNING)
     if any(flags):
-        raise EngineError("EDGE-001", frame_id)
+        warnings.append(_EDGE_WARNING)
     return {
         "id": snapshot_id(session, serial),
         "version": version,
@@ -104,10 +110,48 @@ def build_record(
             for index, item in enumerate(fields)
         ],
         "annotations": annotations,
-        "warnings": [cal.baseline_hint] if cal.baseline_hint else [],
+        "warnings": warnings,
         "operator": operator,
         "note": note,
     }
+
+
+def safe_snapshot_id(name: str | None) -> str | None:
+    if name and _SAFE_ID.fullmatch(name):
+        return name
+    return None
+
+
+def next_version(existing: dict[str, object] | None) -> int:
+    """Berkas kosong tetap versi 1. Koreksi berikutnya naik satu di berkas yang sama."""
+    if existing is None:
+        return 1
+    current = existing.get("version")
+    version = current if isinstance(current, int) and current > 0 else 1
+    measured = existing.get("measurements")
+    if isinstance(measured, list) and measured:
+        return version + 1
+    return version
+
+
+def kept_freeze(existing: dict[str, object] | None, fallback: int) -> int:
+    if existing is None:
+        return fallback
+    raw = existing.get("freeze_no")
+    return raw if isinstance(raw, int) and raw > 0 else fallback
+
+
+def write_over(directory: Path, body: dict[str, object], jpeg: bytes) -> tuple[Path, Path]:
+    """Tulis ulang json dan jpeg dengan nama yang sama."""
+    directory.mkdir(parents=True, exist_ok=True)
+    name = safe_snapshot_id(str(body.get("id") or ""))
+    if name is None:
+        raise EngineError("SYS-002", "nama snapshot")
+    json_path = directory / f"{name}.json"
+    jpeg_path = directory / f"{name}.jpg"
+    json_path.write_text(json.dumps(body), encoding="utf-8")
+    jpeg_path.write_bytes(jpeg)
+    return json_path, jpeg_path
 
 
 def write_new(directory: Path, body: dict[str, object], jpeg: bytes) -> tuple[Path, Path]:

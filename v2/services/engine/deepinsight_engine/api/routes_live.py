@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Request, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..core.errors import EngineError
 from ..office.models import FindingView
@@ -81,6 +81,7 @@ class PerformanceView(BaseModel):
 class MarkRequest(BaseModel):
     frame_id: str
     class_name: str | None = None
+    score: float | None = Field(default=None, ge=0, le=1)
 
 
 class MarkResult(BaseModel):
@@ -188,7 +189,7 @@ def freeze(body: FreezeRequest, request: Request) -> FreezeResult:
 @live.post("/findings", response_model=MarkResult)
 def mark_finding(body: MarkRequest, request: Request) -> MarkResult:
     path, digest = request.app.state.runtime.mark(body.frame_id)
-    row_id = request.app.state.office.add_finding(body.frame_id, path, body.class_name)
+    row_id = request.app.state.office.add_finding(body.frame_id, path, body.class_name, body.score)
     return MarkResult(id=row_id, frame_id=body.frame_id, path=path, sha256=digest)
 
 

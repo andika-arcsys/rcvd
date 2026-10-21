@@ -104,12 +104,7 @@ export function imagePoint(
   return { x: (viewX - panX) / zoom, y: (viewY - panY) / zoom };
 }
 
-export function fitZoom(
-  width: number,
-  height: number,
-  viewW = VIEW_W,
-  viewH = VIEW_H,
-): number {
+export function fitZoom(width: number, height: number, viewW = VIEW_W, viewH = VIEW_H): number {
   if (width <= 0 || height <= 0 || viewW <= 0 || viewH <= 0) return 1;
   return Math.min(viewW / width, viewH / height);
 }
@@ -207,9 +202,8 @@ export function previewOf(draft: Draft, limits: MeasureLimits, clickSigma: numbe
   }
 }
 
-export function canSave(draft: Draft, view: Preview | null): boolean {
-  if (!view || view.error || draft.edgeRisk) return false;
-  return view.status === 'VALID' || view.status === 'ESTIMATE_ONLY';
+export function canSave(_draft: Draft, view: Preview | null): boolean {
+  return Boolean(view && !view.error);
 }
 
 export function isDirty(draft: Draft): boolean {

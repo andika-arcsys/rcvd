@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { formatCount, formatMeters } from '../../lib/format';
 import { t } from '../../i18n';
+import { findingLabel } from './findingLabel';
 import type { Finding, Mission, VideoStatus } from './useLive';
 
 const LEVEL: Record<string, string> = {
@@ -56,9 +57,7 @@ function Findings({ items }: { items: Finding[] }) {
       ) : (
         <ul>
           {items.map((item) => (
-            <li key={item.id}>
-              {item.title} · {t('live.candidate')}
-            </li>
+            <li key={item.id}>{findingLabel(item.title) || t('common.dash')}</li>
           ))}
         </ul>
       )}

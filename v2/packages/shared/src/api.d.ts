@@ -1888,6 +1888,8 @@ export interface components {
             frame_id: string;
             /** Class Name */
             class_name?: string | null;
+            /** Score */
+            score?: number | null;
         };
         /** MarkResult */
         MarkResult: {
@@ -2398,6 +2400,8 @@ export interface components {
              * @default
              */
             note: string;
+            /** File Id */
+            file_id?: string | null;
         };
         /** SealOut */
         SealOut: {

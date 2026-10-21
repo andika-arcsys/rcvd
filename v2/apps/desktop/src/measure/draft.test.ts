@@ -51,7 +51,7 @@ describe('draf ukur', () => {
     expect(imagePoint(210, 10, 2, 10, 10)).toEqual({ x: 100, y: 0 });
   });
 
-  it('Simpan nonaktif saat belum terkalibrasi atau terlalu dekat tepi', () => {
+  it('Simpan tetap aktif saat baseline pendek atau titik dekat tepi', () => {
     const wide = previewOf(lengthDraft(), limits, 1.5);
     expect(canSave(lengthDraft(), wide)).toBe(true);
     let short = acceptLaser(emptyDraft(), [
@@ -59,8 +59,9 @@ describe('draf ukur', () => {
       { x: 10, y: 0 },
     ]);
     short = { ...short, refCm: '10' };
-    expect(canSave(short, previewOf(short, limits, 1.5))).toBe(false);
-    expect(canSave({ ...lengthDraft(), edgeRisk: true }, wide)).toBe(false);
+    expect(canSave(short, previewOf(short, limits, 1.5))).toBe(true);
+    expect(canSave({ ...lengthDraft(), edgeRisk: true }, wide)).toBe(true);
+    expect(canSave(emptyDraft(), null)).toBe(false);
   });
 
   it('undo mengembalikan titik', () => {
