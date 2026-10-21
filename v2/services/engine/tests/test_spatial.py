@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -166,3 +167,103 @@ def test_estimate_without_evidence_is_rejected(secured_client: object) -> None:
     )
     assert response.status_code == 410
     assert response.json()["code"] == "VID-002"
+
+
+class _CycleModels:
+    def __init__(self) -> None:
+        self.active: str | None = None
+        self.state = "optical"
+        self.switches: list[str] = []
+        self.geometry_calls = 0
+        self.fail = False
+
+    def switch(self, name: str, preset: str | None = None) -> None:
+        del preset
+        self.switches.append(name)
+        if name == "optical":
+            self.active = None
+            self.state = "optical"
+            return
+        self.active = name
+        self.state = "ready"
+
+    def geometry(
+        self, raw: bytes, width: int, height: int, frame_id: str, spec: dict[str, object]
+    ) -> dict[str, object]:
+        del raw, width, height, frame_id
+        self.geometry_calls += 1
+        if self.fail:
+            raise EngineError("MDL-002", "gagal")
+        lengths = spec.get("lengths")
+        return {"event": "result", "kind": "spatial-geometry", "lengths": lengths}
+
+
+class _CycleInfer:
+    def __init__(self) -> None:
+        self.cancels = 0
+
+    def cancel(self) -> None:
+        self.cancels += 1
+
+
+def _runtime_for_cycle(tmp_path: Path, models: _CycleModels) -> object:
+    from deepinsight_engine.runtime import Runtime
+
+    runtime = Runtime.__new__(Runtime)
+    runtime._evidence = tmp_path
+    runtime._assist_lock = threading.Lock()
+    runtime._live_infer = _CycleInfer()
+    runtime.models = models
+    (tmp_path / "frm-uji.png").write_bytes(b"png")
+    return runtime
+
+
+def test_estimate_spatial_runs_once_then_unloads(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "deepinsight_engine.video.decode.decode_png",
+        lambda _data: (8, 8, b"\x00" * (8 * 8 * 3)),
+    )
+    models = _CycleModels()
+    runtime = _runtime_for_cycle(tmp_path, models)
+    spec = {"lengths": [{}, {}, {}], "known_m": 0.4}
+    result = runtime.estimate_spatial("frm-uji", spec)  # type: ignore[attr-defined]
+    assert result["kind"] == "spatial-geometry"
+    assert models.geometry_calls == 1
+    assert models.switches == ["spatialsight", "optical"]
+    assert models.active is None
+    assert models.state == "optical"
+    assert runtime._live_infer.cancels >= 2  # type: ignore[attr-defined]
+
+
+def test_estimate_spatial_unloads_when_geometry_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "deepinsight_engine.video.decode.decode_png",
+        lambda _data: (8, 8, b"\x00" * (8 * 8 * 3)),
+    )
+    models = _CycleModels()
+    models.fail = True
+    runtime = _runtime_for_cycle(tmp_path, models)
+    with pytest.raises(EngineError) as info:
+        runtime.estimate_spatial("frm-uji", {"lengths": [{}]})  # type: ignore[attr-defined]
+    assert info.value.spec.code == "MDL-002"
+    assert models.geometry_calls == 1
+    assert models.switches == ["spatialsight", "optical"]
+    assert models.active is None
+
+
+def test_turbo_jpeg_failure_keeps_the_numeric_preview(monkeypatch: pytest.MonkeyPatch) -> None:
+    import cv2
+
+    def boom(_image: object, _colormap: int) -> None:
+        raise cv2.error("colormap gagal")
+
+    monkeypatch.setattr(cv2, "applyColorMap", boom)
+    preview = relative_preview(np.full((32, 32), 2.0, dtype=np.float32), 64)
+    values = preview["values"]
+    assert isinstance(values, list)
+    assert values
+    assert "jpeg_b64" not in preview
