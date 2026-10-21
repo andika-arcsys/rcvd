@@ -1,5 +1,14 @@
 import type { Anno, Draft, Pair, XY } from './draft';
-import { CAL_TAG, angleTag, areaTag, lengthNames, pathTag, tagged, taggedMeasure } from './log';
+import {
+  CAL_TAG,
+  angleTag,
+  areaTag,
+  lengthNames,
+  pathTag,
+  tagged,
+  taggedMeasure,
+  withScreenAngle,
+} from './log';
 
 export type StrokeKind = 'cal' | 'length' | 'path' | 'area' | 'note' | 'angle' | 'pending';
 
@@ -38,7 +47,8 @@ export function strokesOf(draft: Draft, tags: LineTags = NO_TAGS): Stroke[] {
 function calStroke(pair: Pair | null, refCm: string): Stroke[] {
   if (!pair) return [];
   const ref = refCm.trim();
-  return [{ ...pairStroke('cal', 'cal', pair), tag: ref ? tagged(CAL_TAG, `${ref} cm`) : CAL_TAG }];
+  const label = ref ? tagged(CAL_TAG, `${ref} cm`) : CAL_TAG;
+  return [{ ...pairStroke('cal', 'cal', pair), tag: withScreenAngle(label, pair.a, pair.b) }];
 }
 
 function lengthStrokes(
@@ -53,7 +63,11 @@ function lengthStrokes(
     if (onPath.has(pairKey(item.a, item.b))) return;
     rows.push({
       ...pairStroke(`len.${index}`, 'length', item),
-      tag: taggedMeasure(names[index] ?? 'L', meters[index], 'm', 3),
+      tag: withScreenAngle(
+        taggedMeasure(names[index] ?? 'L', meters[index], 'm', 3),
+        item.a,
+        item.b,
+      ),
     });
   });
   return rows;

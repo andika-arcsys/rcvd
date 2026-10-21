@@ -9,8 +9,8 @@ describe('log snapshot', () => {
     const log = logLines(draft, meters, [], []);
     expect(log.capped).toBe(true);
     expect(log.lines).toHaveLength(20);
-    expect(log.lines[0]?.text).toBe('L1# 1.000 m');
-    expect(log.lines[2]?.text).toBe('L3# 1.000 m');
+    expect(log.lines[0]?.text).toBe('L1# 1.000 m 90.0°');
+    expect(log.lines[2]?.text).toBe('L3# 1.000 m 90.0°');
     expect(log.lines[19]?.tag).toBe('L20#');
     const kept = savedWithinLog(draft);
     expect(kept.lengths).toHaveLength(20);
