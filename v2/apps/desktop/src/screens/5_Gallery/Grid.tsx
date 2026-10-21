@@ -1,5 +1,6 @@
 import { t } from '../../i18n';
 import type { Card } from './filter';
+import { pageRoll } from './window';
 
 export function CardGrid({
   cards,
@@ -22,6 +23,7 @@ export function CardGrid({
 }) {
   return (
     <div>
+      <WindowLine start={start} total={total} pageSize={pageSize} onStart={onStart} />
       <div className="grid grid-cols-3 gap-3 xl:grid-cols-4">
         {cards.map((card) => (
           <CardButton
@@ -33,13 +35,6 @@ export function CardGrid({
           />
         ))}
       </div>
-      <WindowLine
-        start={start}
-        count={cards.length}
-        total={total}
-        pageSize={pageSize}
-        onStart={onStart}
-      />
     </div>
   );
 }
@@ -59,7 +54,12 @@ function CardButton({
     <button
       type="button"
       aria-pressed={selected}
-      className="rounded border border-line bg-panel p-2 text-left text-sm"
+      data-selected={selected ? 'true' : 'false'}
+      className={
+        selected
+          ? 'rounded border-2 border-action bg-active p-2 text-left text-sm'
+          : 'rounded border border-line bg-panel p-2 text-left text-sm'
+      }
       onClick={() => onSelect(card.id)}
     >
       {thumb ? (
@@ -69,45 +69,85 @@ function CardButton({
       )}
       <b>{card.id}</b>
       <span className="block text-xs text-muted">{card.status}</span>
+      {selected ? (
+        <span className="mt-1 block text-xs font-semibold text-action">
+          {t('gallery.selected')}
+        </span>
+      ) : null}
     </button>
   );
 }
 
 function WindowLine({
   start,
-  count,
   total,
   pageSize,
   onStart,
 }: {
   start: number;
-  count: number;
   total: number;
   pageSize: number;
   onStart: (start: number) => void;
 }) {
   const size = Math.max(1, pageSize);
+  const pages = Math.ceil(total / size);
+  if (pages <= 1) return null;
+  const page = Math.min(pages, Math.floor(start / size) + 1);
+  const roll = pageRoll(page, pages);
   return (
-    <div className="mt-2 flex gap-2 text-sm">
-      <button
-        type="button"
-        className="rounded border border-line px-2 py-1 disabled:text-muted"
-        disabled={start <= 0}
-        onClick={() => onStart(Math.max(0, start - size))}
-      >
-        {t('gallery.prev')}
-      </button>
-      <span className="text-muted">
-        {start + 1}–{start + count} / {total}
-      </span>
-      <button
-        type="button"
-        className="rounded border border-line px-2 py-1 disabled:text-muted"
-        disabled={start + count >= total}
-        onClick={() => onStart(start + size)}
-      >
-        {t('gallery.next')}
-      </button>
-    </div>
+    <nav aria-label={t('gallery.pages')} className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+      <PagerButton
+        label={t('gallery.prev')}
+        disabled={page <= 1}
+        onClick={() => onStart((page - 2) * size)}
+      />
+      {roll.map((item, index) =>
+        item === 'gap' ? (
+          <span key={`gap-${index}`} className="px-1 text-muted" aria-hidden="true">
+            ..
+          </span>
+        ) : (
+          <PagerButton
+            key={item}
+            label={String(item)}
+            current={item === page}
+            onClick={() => onStart((item - 1) * size)}
+          />
+        ),
+      )}
+      <PagerButton
+        label={t('gallery.next')}
+        disabled={page >= pages}
+        onClick={() => onStart(page * size)}
+      />
+    </nav>
+  );
+}
+
+function PagerButton({
+  label,
+  disabled,
+  current,
+  onClick,
+}: {
+  label: string;
+  disabled?: boolean;
+  current?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={
+        current
+          ? 'rounded border border-action bg-active px-2 py-1 font-semibold'
+          : 'rounded border border-line px-2 py-1 disabled:text-muted'
+      }
+      disabled={disabled}
+      aria-current={current ? 'page' : undefined}
+      onClick={onClick}
+    >
+      {label}
+    </button>
   );
 }

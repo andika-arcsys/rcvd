@@ -1,4 +1,4 @@
-"""Simpan snapshot menghitung ulang, menolak tepi, dan tidak menimpa berkas."""
+"""Simpan snapshot menghitung ulang, menyimpan peringatan, dan menimpa berkas yang sama."""
 
 from __future__ import annotations
 
@@ -97,16 +97,16 @@ def test_save_recomputes_and_versions(client: TestClient, tmp_path: Path) -> Non
     second = _save(client, "frm-ukur")
     assert second.status_code == 200
     again = second.json()
-    assert again["id"] != body["id"]
+    assert again["id"] == body["id"]
     assert again["version"] == 2
-    assert again["supersedes"] == body["id"]
-    assert again["freeze_no"] == 2
+    assert again["supersedes"] is None
+    assert again["freeze_no"] == 1
     snaps = list((tmp_path / "snapshots").glob("*.json"))
-    assert len(snaps) == 2
+    assert len(snaps) == 1
     assert (tmp_path / "snapshots" / f"{body['id']}.jpg").is_file()
 
 
-def test_uncalibrated_and_edge_are_rejected(client: TestClient, tmp_path: Path) -> None:
+def test_uncalibrated_and_edge_are_saved(client: TestClient, tmp_path: Path) -> None:
     _paint(tmp_path / "evidence" / "frm-tolak.png", _gray(80, 80))
     short = client.post(
         "/snapshots",
@@ -120,9 +120,10 @@ def test_uncalibrated_and_edge_are_rejected(client: TestClient, tmp_path: Path) 
             "note": "",
         },
     )
-    assert short.status_code == 422
-    assert short.json()["code"] == "SNAP-001"
-    assert list((tmp_path / "snapshots").glob("*.json")) == []
+    assert short.status_code == 200
+    assert short.json()["calibration"]["status"] == "UNCALIBRATED"
+    assert any("ambang" in item for item in short.json()["warnings"])
+    assert list((tmp_path / "snapshots").glob("*.json"))
     image = np.zeros((64, 64, 3), np.uint8)
     image[:, 30] = 255
     _paint(tmp_path / "evidence" / "frm-tepi.png", image)
@@ -138,8 +139,8 @@ def test_uncalibrated_and_edge_are_rejected(client: TestClient, tmp_path: Path) 
             "note": "",
         },
     )
-    assert response.status_code == 422
-    assert response.json()["code"] == "EDGE-001"
+    assert response.status_code == 200
+    assert any("tepi" in item for item in response.json()["warnings"])
 
 
 def test_frozen_detail_uses_evidence_pixels(client: TestClient, tmp_path: Path) -> None:
@@ -196,6 +197,48 @@ def test_save_stores_length_and_area_tags(client: TestClient, tmp_path: Path) ->
     body = response.json()
     assert body["measurements"][0]["tag"] == "L-3"
     assert body["areas"][0]["tag"] == "AREA-9"
+
+
+def test_save_overwrites_the_named_snap(client: TestClient, tmp_path: Path) -> None:
+    _paint(tmp_path / "evidence" / "frm-sama.png", _gray(420, 420))
+    folder = tmp_path / "snapshots"
+    folder.mkdir()
+    name = "20261021134812_SNAP"
+    (folder / f"{name}.json").write_text(
+        json.dumps(
+            {
+                "id": name,
+                "version": 1,
+                "freeze_no": 1,
+                "frame": {"id": "frm-sama"},
+                "measurements": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (folder / f"{name}.jpg").write_bytes(b"lama")
+    body = {
+        "frame_id": "frm-sama",
+        "ref_cm": 10,
+        "file_id": name,
+        "calibration": {"a": {"x": 0, "y": 0}, "b": {"x": 100, "y": 0}},
+        "lengths": [{"a": {"x": 0, "y": 0}, "b": {"x": 300, "y": 400}}],
+        "areas": [],
+        "annotations": [],
+        "note": "",
+    }
+    first = client.post("/snapshots", json=body)
+    assert first.status_code == 200
+    assert first.json()["id"] == name
+    assert first.json()["version"] == 1
+    assert len(list(folder.glob("*.json"))) == 1
+    second = client.post("/snapshots", json=body)
+    assert second.status_code == 200
+    assert second.json()["id"] == name
+    assert second.json()["version"] == 2
+    assert len(list(folder.glob("*.json"))) == 1
+    stored = json.loads((folder / f"{name}.json").read_text(encoding="utf-8"))
+    assert stored["measurements"][0]["meters"] == 0.5
 
 
 def test_write_new_refuses_existing_name(tmp_path: Path) -> None:

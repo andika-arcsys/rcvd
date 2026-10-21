@@ -13,7 +13,15 @@ from pydantic import BaseModel, Field
 from ..core.errors import EngineError
 from ..measure.laser import detect_laser
 from ..measure.limits import limits_from_thresholds
-from ..measure.persist import build_record, prior_versions, write_new
+from ..measure.persist import (
+    build_record,
+    kept_freeze,
+    next_version,
+    prior_versions,
+    safe_snapshot_id,
+    write_over,
+)
+from ..measure.snapfile import split_name
 from ..measure.types import Camera, Point
 from ..video.decode import decode_png
 from ..video.encode import detail_quality, detail_side, encode_jpeg, fitted_size
@@ -63,6 +71,7 @@ class SaveIn(BaseModel):
     segment: str | None = None
     marker: Marker | None = None
     note: str = ""
+    file_id: str | None = None
 
 
 class FrameIn(BaseModel):
@@ -256,7 +265,7 @@ def measure_laser(body: FrameIn, request: Request) -> LaserOut:
 @measure.post("/snapshots", response_model=SnapshotOut)
 def save_snapshot(body: SaveIn, request: Request) -> SnapshotOut:
     record, jpeg = _compose(body, request)
-    json_path, jpeg_path = write_new(_snap_dir(request), record, jpeg)
+    json_path, jpeg_path = write_over(_snap_dir(request), record, jpeg)
     record["json_path"] = str(json_path)
     record["jpeg_path"] = str(jpeg_path)
     _audit(request, body.frame_id, str(record["id"]))
@@ -290,10 +299,10 @@ def _record(
     settings = request.app.state.settings
     folder = _snap_dir(request)
     priors = prior_versions(folder, body.frame_id)
-    version = 1 + max((_version(item) for item in priors), default=0)
-    previous = None if not priors else str(priors[-1].get("id"))
+    target = safe_snapshot_id(body.file_id) or _latest_id(priors)
+    existing = _stored(folder, target)
     serial = 1 + len(list(folder.glob("*.json"))) if folder.is_dir() else 1
-    return build_record(
+    record = build_record(
         frame_id=body.frame_id,
         width=width,
         height=height,
@@ -302,8 +311,8 @@ def _record(
         png_path=str(meta.get("path") or ""),
         session=request.app.state.session_id,
         serial=serial,
-        version=version,
-        supersedes=previous,
+        version=next_version(existing),
+        supersedes=None,
         ref_m=body.ref_cm / 100.0,
         click_sigma=settings.thresholds.calibration.click_sigma_px,
         camera=_camera(request),
@@ -322,8 +331,15 @@ def _record(
         preset=_text(meta.get("aquaclear_preset")),
         operator=request.app.state.office.user_id or "",
         note=body.note,
-        freeze_no=len(priors) + 1,
+        freeze_no=kept_freeze(existing, 1 if target else len(priors) + 1),
     )
+    if target:
+        record["id"] = target
+        parsed = split_name(target)
+        if parsed:
+            record["stamp"] = parsed[0]
+            record["suffix"] = parsed[1]
+    return record
 
 
 def _lines(body: SaveIn) -> list[tuple[Point, Point]]:
@@ -365,9 +381,23 @@ def _text(value: object) -> str | None:
     return value if isinstance(value, str) else None
 
 
-def _version(item: dict[str, object]) -> int:
-    raw = item.get("version")
-    return raw if isinstance(raw, int) else 1
+def _latest_id(priors: list[dict[str, object]]) -> str | None:
+    if not priors:
+        return None
+    raw = priors[-1].get("id")
+    return raw if isinstance(raw, str) else None
+
+
+def _stored(folder: Path, name: str | None) -> dict[str, object] | None:
+    if not name:
+        return None
+    path = folder / f"{name}.json"
+    if not path.is_file():
+        return None
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(loaded, dict):
+        return None
+    return {str(key): value for key, value in loaded.items()}
 
 
 def _camera(request: Request) -> Camera | None:

@@ -121,7 +121,7 @@ export function boardActions(board: ReturnType<typeof useBoard>) {
 async function saveDraft(board: ReturnType<typeof useBoard>) {
   const frameId = board.session.frozen?.frameId;
   if (!frameId) return;
-  const body = saveBody(board.store.draft, frameId);
+  const body = saveBody(board.store.draft, frameId, board.session.frozen?.fileId);
   if (!body) return;
   const result = await board.client.POST('/snapshots', { body });
   if (result.error || !result.data) {

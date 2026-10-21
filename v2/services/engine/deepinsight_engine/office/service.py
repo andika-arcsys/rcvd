@@ -338,8 +338,14 @@ class Office:
             remeasure=tasks,
         )
 
-    def add_finding(self, frame_id: str, jpeg_path: str, class_name: str | None = None) -> int:
-        row_id = insert_candidate(self.db, self.session_id, frame_id, jpeg_path, class_name)
+    def add_finding(
+        self,
+        frame_id: str,
+        jpeg_path: str,
+        class_name: str | None = None,
+        score: float | None = None,
+    ) -> int:
+        row_id = insert_candidate(self.db, self.session_id, frame_id, jpeg_path, class_name, score)
         detail = jpeg_path if not class_name else f"{jpeg_path}|{class_name}"
         self.audit(
             "mark_finding",

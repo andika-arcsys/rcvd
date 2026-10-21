@@ -81,7 +81,42 @@ describe('Gallery', () => {
     expect(await screen.findByRole('button', { name: /^20261020120000_SNAP/ })).toBeInTheDocument();
     expect(await screen.findByText('L1# 0.420 m')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^20200101000000_SNAP/ })).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Berikutnya' }));
+    expect(screen.getByRole('button', { name: '1' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: /^20261020120000_SNAP/ })).toHaveTextContent(
+      'Dipilih',
+    );
+    await user.click(screen.getByRole('button', { name: '2' }));
     expect(await screen.findByRole('button', { name: /^20200101000000_SNAP/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Berikutnya' })).toBeDisabled();
+  });
+
+  it('memfilter jenis berkas dan membalik urutan', async () => {
+    const user = userEvent.setup();
+    renderApp('/gallery', {
+      role: 'ketua_tim',
+      routes: {
+        'GET /gallery': [
+          card('20261021134812_SNAP', 'VALID'),
+          card('20261021134812_AQUA', 'VALID'),
+          card('20261020120000_HYDRO', 'UNCALIBRATED'),
+          card('20261020115900_SPATIAL', 'VALID'),
+        ],
+        'GET /config/risk': RISK,
+        'GET /pipelines': PIPE,
+      },
+    });
+    expect(await screen.findByRole('button', { name: /^20261021134812_SNAP/ })).toBeInTheDocument();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Jenis berkas' }), 'AQUA');
+    expect(await screen.findByRole('button', { name: /^20261021134812_AQUA/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^20261021134812_SNAP/ })).toBeNull();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Jenis berkas' }), 'HYDRO');
+    expect(
+      await screen.findByRole('button', { name: /^20261020120000_HYDRO/ }),
+    ).toBeInTheDocument();
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Jenis berkas' }), '');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Urutan' }), 'asc');
+    expect(
+      await screen.findByRole('button', { name: /^20261020115900_SPATIAL/ }),
+    ).toBeInTheDocument();
   });
 });

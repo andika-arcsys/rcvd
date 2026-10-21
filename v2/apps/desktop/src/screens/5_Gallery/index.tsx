@@ -3,17 +3,22 @@ import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
 import { WorkColumns } from '../../components/WorkColumns';
 import { Detail, ReviewLink } from './Detail';
-import { filterCards, newestFirst, segmentsOf, type Card, type GalleryQuery } from './filter';
+import {
+  EMPTY_QUERY,
+  filterCards,
+  ordered,
+  segmentsOf,
+  type Card,
+  type GalleryQuery,
+} from './filter';
 import { Filters } from './Filters';
 import { CardGrid } from './Grid';
 import { useGalleryData } from './load';
 import { rememberThumb, visibleSlice } from './window';
 
-const EMPTY: GalleryQuery = { segment: '', status: '' };
-
 export default function GalleryScreen() {
   const data = useGalleryData();
-  const [query, setQuery] = useState(EMPTY);
+  const [query, setQuery] = useState(EMPTY_QUERY);
   const [start, setStart] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [thumbs, setThumbs] = useState<Map<string, string>>(new Map());
@@ -25,18 +30,25 @@ export default function GalleryScreen() {
       </div>
     );
   }
-  const matched = filterCards(newestFirst(data.cards), query);
+  const matched = filterCards(ordered(data.cards, query.order), query);
   const windowSize = data.risk.gallery_window;
-  const visible = visibleSlice(matched, start, windowSize);
+  const pageSize = Math.max(1, windowSize);
+  const maxStart =
+    matched.length === 0 ? 0 : Math.floor((matched.length - 1) / pageSize) * pageSize;
+  const safeStart = Math.min(start, maxStart);
+  const visible = visibleSlice(matched, safeStart, windowSize);
   const card = matched.find((item) => item.id === selected) ?? visible[0] ?? null;
   return (
     <GalleryBody
       visible={visible}
       matched={matched.length}
-      start={start}
+      start={safeStart}
       setStart={setStart}
       query={query}
-      setQuery={setQuery}
+      setQuery={(next) => {
+        setQuery(next);
+        setStart(0);
+      }}
       segments={segmentsOf(data.cards)}
       pipes={data.pipes}
       risk={data.risk}
@@ -101,7 +113,9 @@ function GalleryMain(props: {
       />
       {props.matched === 0 ? (
         <p className="text-sm text-muted">
-          {props.query.segment || props.query.status ? t('gallery.noMatch') : t('gallery.empty')}
+          {props.query.segment || props.query.status || props.query.kind
+            ? t('gallery.noMatch')
+            : t('gallery.empty')}
         </p>
       ) : (
         <CardGrid

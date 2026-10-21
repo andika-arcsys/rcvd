@@ -109,6 +109,7 @@ def _migrate_review(conn: sqlite3.Connection) -> None:
         "created_at": "TEXT",
         "queue_status": "TEXT",
         "training": "INTEGER",
+        "score": "REAL",
     }
     for name, kind in extra.items():
         if name not in cols:

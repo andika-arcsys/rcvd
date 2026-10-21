@@ -88,6 +88,15 @@ def test_switch_runs_unload_then_load(client: TestClient) -> None:
     assert switched.json()["state"] == "ready"
 
 
+def test_old_finding_title_drops_the_uuid() -> None:
+    from deepinsight_engine.office.findings import display_title
+
+    old = "Kandidat Sandbag 01a15018-3bab-7d0f-908f-b8b62378d370"
+    assert display_title(old, None, None, None) == "Sandbag"
+    bare = "Kandidat 01a1596b-da84-7c98-bca2-5b6e50a2e26c"
+    assert display_title(bare, None, None, None) == ""
+
+
 def test_mark_finding_stores_raw_jpeg(client: TestClient) -> None:
     frames = client.post("/video/synthetic", json={"count": 1, "width": 32, "height": 24})
     frame_id = frames.json()["frame_ids"][0]
@@ -104,6 +113,15 @@ def test_mark_finding_stores_raw_jpeg(client: TestClient) -> None:
     assert body["sha256"] == hashlib.sha256(jpeg).hexdigest()
     listed = client.get("/findings").json()
     assert listed[0]["frame_id"] == frame_id
+    marked_class = client.post(
+        "/findings",
+        json={"frame_id": frame_id, "class_name": "Sandbag", "score": 0.86},
+    )
+    assert marked_class.status_code == 200
+    titles = [item["title"] for item in client.get("/findings").json()]
+    assert any(item.startswith("Sandbag ") and item.endswith(" 86%") for item in titles)
+    stamp = titles[0].split()[1]
+    assert len(stamp) == 14 and stamp.isdigit()
     with client.app.state.office.db.connect() as conn:
         row = conn.execute(
             "SELECT action FROM audit WHERE action='mark_finding' ORDER BY id DESC LIMIT 1"

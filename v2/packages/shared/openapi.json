@@ -6247,6 +6247,19 @@
               }
             ],
             "title": "Class Name"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
           }
         },
         "type": "object",
@@ -7761,6 +7774,17 @@
             "type": "string",
             "title": "Note",
             "default": ""
+          },
+          "file_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Id"
           }
         },
         "type": "object",

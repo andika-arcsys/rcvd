@@ -11,7 +11,7 @@ export function CandidateList({
 }: {
   items: Candidate[];
   concealed: number;
-  onMark: (name: string) => void;
+  onMark: (item: { class_name: string; score: number }) => void;
   note: string | null;
 }) {
   return (
@@ -34,11 +34,7 @@ export function CandidateList({
             <p>
               {item.class_name} {Math.round(item.score * 100)}%
             </p>
-            <button
-              type="button"
-              className="mt-1 text-info"
-              onClick={() => onMark(item.class_name)}
-            >
+            <button type="button" className="mt-1 text-info" onClick={() => onMark(item)}>
               {t('feature.markReview')}
             </button>
           </li>

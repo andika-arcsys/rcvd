@@ -267,6 +267,35 @@ describe('Live Operation', () => {
     expect(screen.queryByRole('heading', { name: 'Feature window' })).toBeNull();
   });
 
+  it('temuan sesi memakai kelas, waktu, dan persen', async () => {
+    renderApp('/live', {
+      role: 'pilot_drone',
+      routes: {
+        ...routes(),
+        'GET /findings': [
+          {
+            id: 1,
+            kind: 'candidate',
+            title: 'Kandidat Sandbag 01a15018-3bab-7d0f-908f-b8b62378d370',
+            frame_id: '01a15018-3bab-7d0f-908f-b8b62378d370',
+            jpeg_path: null,
+          },
+          {
+            id: 2,
+            kind: 'candidate',
+            title: 'Sandbag 20261021101130 86%',
+            frame_id: 'frm-2',
+            jpeg_path: null,
+          },
+        ],
+      },
+    });
+    expect(await screen.findByText('Sandbag 20261021101130 86%')).toBeInTheDocument();
+    expect(screen.getByText('Sandbag')).toBeInTheDocument();
+    expect(screen.queryByText(/01a15018/)).toBeNull();
+    expect(screen.queryByText(/Kandidat/)).toBeNull();
+  });
+
   it('LOST SIGNAL menonaktifkan FREEZE', async () => {
     renderApp('/live', {
       role: 'pilot_drone',

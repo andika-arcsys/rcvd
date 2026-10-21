@@ -6,6 +6,12 @@ type Risk = components['schemas']['RiskClasses'];
 type Pipe = components['schemas']['PipelineView'];
 
 const FIELD = 'rounded border border-line bg-bg px-2 py-1 text-sm';
+const KINDS = [
+  { value: 'AQUA', label: 'AQUA' },
+  { value: 'HYDRO', label: 'Hydro' },
+  { value: 'SNAP', label: 'SNAP' },
+  { value: 'SPATIAL', label: 'SPATIAL' },
+];
 
 export function Filters({
   query,
@@ -36,22 +42,45 @@ export function Filters({
         options={['VALID', 'ESTIMATE_ONLY', 'UNCALIBRATED']}
         onChange={(status) => setQuery({ ...query, status })}
       />
+      <Select
+        label={t('gallery.kind')}
+        value={query.kind}
+        options={KINDS}
+        onChange={(kind) => setQuery({ ...query, kind })}
+      />
+      <Select
+        label={t('gallery.sort')}
+        value={query.order}
+        allowEmpty={false}
+        options={[
+          { value: 'desc', label: t('gallery.newest') },
+          { value: 'asc', label: t('gallery.oldest') },
+        ]}
+        onChange={(order) => setQuery({ ...query, order: order === 'asc' ? 'asc' : 'desc' })}
+      />
       <Select label={t('gallery.class')} value="" options={classes} />
     </div>
   );
 }
+
+type Option = string | { value: string; label: string };
 
 function Select({
   label,
   value,
   options,
   onChange,
+  allowEmpty = true,
 }: {
   label: string;
   value: string;
-  options: string[];
+  options: Option[];
   onChange?: (value: string) => void;
+  allowEmpty?: boolean;
 }) {
+  const rows = options.map((option) =>
+    typeof option === 'string' ? { value: option, label: option } : option,
+  );
   return (
     <label className="flex flex-col gap-1 text-xs text-muted">
       {label}
@@ -61,10 +90,10 @@ function Select({
         value={value}
         onChange={(event) => onChange?.(event.target.value)}
       >
-        <option value="">{t('gallery.all')}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
+        {allowEmpty ? <option value="">{t('gallery.all')}</option> : null}
+        {rows.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>

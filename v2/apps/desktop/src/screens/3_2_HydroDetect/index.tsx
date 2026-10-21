@@ -106,7 +106,7 @@ function Aside({
   onTune: (confidence: number, imgsz: number) => void;
   shown: Vision['candidates'];
   concealed: number;
-  onMark: (name: string) => void;
+  onMark: (item: { class_name: string; score: number }) => void;
   note: string | null;
 }) {
   return (
@@ -172,10 +172,12 @@ function useHidden(classes: Chip[] | undefined) {
 function useMark(frameId: string | null) {
   const { client } = useEngine();
   const [note, setNote] = useState<string | null>(null);
-  const mark = (className: string) => {
+  const mark = (item: { class_name: string; score: number }) => {
     if (!frameId) return;
     void client
-      .POST('/findings', { body: { frame_id: frameId, class_name: className } })
+      .POST('/findings', {
+        body: { frame_id: frameId, class_name: item.class_name, score: item.score },
+      })
       .then((result) => {
         if (result.data) setNote(t('feature.markedReview'));
       });

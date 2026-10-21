@@ -86,10 +86,12 @@ function Detections({
   const [note, setNote] = useState<string | null>(null);
   const items = (vision?.candidates ?? []).filter((item) => !hidden.includes(item.class_name));
   const concealed = (vision?.candidates ?? []).length - items.length;
-  const mark = (name: string) => {
+  const mark = (item: { class_name: string; score: number }) => {
     if (!frameId) return;
     void client
-      .POST('/findings', { body: { frame_id: frameId, class_name: name } })
+      .POST('/findings', {
+        body: { frame_id: frameId, class_name: item.class_name, score: item.score },
+      })
       .then((result) => {
         if (result.data) setNote(t('feature.markedReview'));
       });
