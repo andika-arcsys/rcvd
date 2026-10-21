@@ -1,6 +1,6 @@
 """Pita ketidakpastian garis 3D dan koreksi siluet diameter.
 
-Pita = 2 × rel × panjang, dan 20% tetap batas bawah sampai ada uji akurasi di air.
+Pita = 2 × rel × panjang, dan 4% tetap batas bawah.
 rel_cal adalah simpangan baku relatif skala dari dua klik pada garis kalibrasi,
 bukan pita 2σ yang sudah ditampilkan di angka 2D.
 
@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import math
 
-FLOOR_REL = 0.20
+FLOOR_REL = 0.04
 FACING_STEPS = 3
 
 

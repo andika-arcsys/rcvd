@@ -50,7 +50,7 @@ def test_sparse_window_is_marked_uncertain() -> None:
     assert "kedalaman tidak yakin" in warnings
 
 
-def test_uncertainty_keeps_a_twenty_percent_floor() -> None:
+def test_uncertainty_keeps_a_four_percent_floor() -> None:
     depth = np.full((80, 500), 2.0, dtype=np.float32)
     scene = estimate_scene(
         depth,
@@ -67,7 +67,7 @@ def test_uncertainty_keeps_a_twenty_percent_floor() -> None:
     assert isinstance(lengths, list)
     distance = float(lengths[0]["distance_cm"])
     band = float(lengths[0]["uncertainty_cm"])
-    assert band >= distance * 0.20
+    assert band == pytest.approx(distance * 0.04)
     short = estimate_scene(
         np.full((40, 80), 2.0, dtype=np.float32),
         100.0,
@@ -81,7 +81,7 @@ def test_uncertainty_keeps_a_twenty_percent_floor() -> None:
     )
     row = short["lengths"]
     assert isinstance(row, list)
-    assert float(row[0]["uncertainty_cm"]) > float(row[0]["distance_cm"]) * 0.20
+    assert float(row[0]["uncertainty_cm"]) > float(row[0]["distance_cm"]) * 0.04
 
 
 def test_facing_width_recovers_the_far_diameter_when_focal_is_real() -> None:
