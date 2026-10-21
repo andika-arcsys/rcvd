@@ -14,6 +14,7 @@ export interface SavedLength {
   a: XY;
   b: XY;
   tag: string;
+  kind: 'span' | 'facing' | 'length3d';
 }
 
 export interface SavedArea {
@@ -93,7 +94,7 @@ export function savedWithinLog(draft: Draft): { lengths: SavedLength[]; areas: S
     lengths: draft.geometry.lengths.flatMap((item, index) => {
       const tag = names[index] ?? '';
       if (!kept.has(tag)) return [];
-      return [{ a: item.a, b: item.b, tag }];
+      return [{ a: item.a, b: item.b, tag, kind: item.kind ?? 'span' }];
     }),
     areas: draft.geometry.areas.flatMap((points, index) => {
       const tag = areaTag(index + 1);

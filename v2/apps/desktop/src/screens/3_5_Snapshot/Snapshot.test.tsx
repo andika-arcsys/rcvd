@@ -99,6 +99,17 @@ describe('Mode Snapshot', () => {
           backend: 'Apple Depth Pro',
           underwater_intrinsics: false,
           focal_px: 900,
+          intrinsics_source: 'camera_file',
+          model_id: 'depth-anything/DA3METRIC-LARGE',
+          process_res: 504,
+          resize_method: 'upper_bound_resize',
+          checkpoint: '',
+          conf_min: 0,
+          cal_depth: 1.2,
+          cal_u: 10,
+          cal_v: 20,
+          cal_map_u: 4,
+          cal_map_v: 8,
         },
       },
     });
@@ -111,6 +122,8 @@ describe('Mode Snapshot', () => {
     expect(await screen.findByText(/ESTIMATE_ONLY_SAME_FRAME/)).toBeInTheDocument();
     expect(screen.getByText(/Apple Depth Pro/)).toBeInTheDocument();
     expect(screen.getByText(/pixel scale/)).toBeInTheDocument();
+    expect(screen.getByText(/file kalibrasi kamera/)).toBeInTheDocument();
+    expect(screen.getByText(/DA3METRIC-LARGE/)).toBeInTheDocument();
   });
 
   it('satu titik laser meminta klik manual', async () => {

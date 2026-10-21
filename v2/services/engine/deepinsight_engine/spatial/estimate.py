@@ -5,13 +5,16 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from .da3_frame import ProcessGeometry, map_png_to_proc
 from .geometry import (
+    CameraIntrinsics,
     calculate_accumulated_path_distance,
     calculate_surface_area,
     calibration_from_reference,
     default_intrinsics,
     measure_span,
 )
+from .kinds import LineFigure, measure_kind
 
 BACKEND = "Apple Depth Pro"
 HOUSING_WARNING = "Model focal/depth belum divalidasi untuk housing/port underwater."
@@ -34,27 +37,72 @@ def estimate_scene(
     paths: Sequence[Sequence[Point]],
     backend: str = BACKEND,
     extra_warnings: tuple[str, ...] = (),
+    *,
+    conf: Any = None,
+    conf_min: float = 0.0,
+    click_sigma_px: float = 1.5,
+    intrinsics: CameraIntrinsics | None = None,
+    intrinsics_source: str | None = None,
+    model_id: str = "",
+    process_res: int = 0,
+    resize_method: str = "",
+    checkpoint: str = "",
+    length_kinds: Sequence[str] | None = None,
+    length_tags: Sequence[str] | None = None,
+    geom: ProcessGeometry | None = None,
 ) -> dict[str, object]:
     height, width = int(depth_m.shape[0]), int(depth_m.shape[1])
-    intrinsics = default_intrinsics(width, height, focal_px)
+    camera, source, shown_focal = _camera(width, height, focal_px, intrinsics, intrinsics_source)
     left, right = _pixel(calibration[0]), _pixel(calibration[1])
     scale = calibration_from_reference(
         left,
         right,
         known_m,
         depth_m,
-        intrinsics,
+        camera,
         source="REFERENCE_SCALED",
         frame_id=frame_id,
         backend_signature=backend,
-        intrinsics_source="MODEL_PREDICTED",
+        intrinsics_source=source,
+        conf=conf,
+        conf_min=conf_min,
+        click_sigma_px=click_sigma_px,
     )
-    measured = measure_span(left, right, depth_m, intrinsics, scale, frame_id=frame_id)
-    length_rows = [_length(item, depth_m, intrinsics, scale, frame_id) for item in lengths]
-    area_rows = [_area(item, depth_m, intrinsics, scale, frame_id) for item in areas]
-    path_rows = [_path(item, depth_m, intrinsics, scale, frame_id) for item in paths]
+    measured = measure_span(
+        left, right, depth_m, camera, scale, frame_id=frame_id, conf=conf, conf_min=conf_min
+    )
+    kinds = list(length_kinds or ())
+    tags = list(length_tags or ())
+    length_rows = [
+        _length(
+            item,
+            kinds[index] if index < len(kinds) else "span",
+            tags[index] if index < len(tags) else "",
+            depth_m,
+            camera,
+            scale,
+            frame_id,
+            conf,
+            conf_min,
+            geom,
+            left,
+            right,
+        )
+        for index, item in enumerate(lengths)
+    ]
+    area_rows = [_area(item, depth_m, camera, scale, frame_id) for item in areas]
+    path_rows = [_path(item, depth_m, camera, scale, frame_id) for item in paths]
     raw = scale.raw_reference_distance_m or 0.0
+    map_u, map_v = _map(scale.sample_u, scale.sample_v, geom)
     warnings = _warnings(extra_warnings, measured.warnings, length_rows, area_rows, path_rows)
+    if source == "longest_side":
+        note = "Sumber fokus: sisi terpanjang. Ini cadangan terakhir."
+        if note not in warnings:
+            warnings.append(note)
+    if geom is not None and not geom.matched:
+        mismatch = "Ukuran peta tidak sama dengan process_res. Peta diregangkan ke PNG."
+        if mismatch not in warnings:
+            warnings.append(mismatch)
     return {
         "frame_id": frame_id,
         "validity": measured.validity,
@@ -68,8 +116,19 @@ def estimate_scene(
         "warnings": warnings,
         "units": "METERS",
         "backend": backend,
-        "underwater_intrinsics": intrinsics.calibrated_underwater,
-        "focal_px": focal_px,
+        "underwater_intrinsics": camera.calibrated_underwater,
+        "focal_px": shown_focal,
+        "intrinsics_source": source,
+        "model_id": model_id,
+        "process_res": process_res,
+        "resize_method": resize_method,
+        "checkpoint": checkpoint,
+        "conf_min": conf_min,
+        "cal_depth": scale.depth_value,
+        "cal_u": scale.sample_u,
+        "cal_v": scale.sample_v,
+        "cal_map_u": map_u,
+        "cal_map_v": map_v,
     }
 
 
@@ -80,32 +139,66 @@ def scene_from_message(
     backend: str = BACKEND,
     extra_warnings: tuple[str, ...] = (),
 ) -> dict[str, object]:
+    specs = [_length_spec(item) for item in _rows(message.get("lengths"))]
+    intrinsics = message.get("intrinsics")
+    camera = intrinsics if isinstance(intrinsics, CameraIntrinsics) else None
+    geom = message.get("geom")
+    frame = geom if isinstance(geom, ProcessGeometry) else None
     return estimate_scene(
         depth_m,
         focal_px,
         str(message["frame_id"]),
         (_point(message["point_a"]), _point(message["point_b"])),
         float(message["known_m"]),
-        [_pair(item) for item in _rows(message.get("lengths"))],
+        [item[0] for item in specs],
         [_poly(item) for item in _rows(message.get("areas"))],
         [_poly(item) for item in _rows(message.get("paths"))],
         backend=backend,
         extra_warnings=extra_warnings,
+        conf=message.get("conf"),
+        conf_min=_float(message.get("conf_min"), 0.0),
+        click_sigma_px=_float(message.get("click_sigma_px"), 1.5),
+        intrinsics=camera,
+        intrinsics_source=_text(message.get("intrinsics_source")),
+        model_id=_text(message.get("model_id")) or "",
+        process_res=int(_float(message.get("process_res"), 0.0)),
+        resize_method=_text(message.get("resize_method")) or "",
+        checkpoint=_text(message.get("checkpoint")) or "",
+        length_kinds=[item[1] for item in specs],
+        length_tags=[item[2] for item in specs],
+        geom=frame,
     )
 
 
 def _length(
-    pair: Pair, depth_m: Any, intrinsics: Any, scale: Any, frame_id: str
+    pair: Pair,
+    kind: str,
+    tag: str,
+    depth_m: Any,
+    intrinsics: Any,
+    scale: Any,
+    frame_id: str,
+    conf: Any,
+    conf_min: float,
+    geom: ProcessGeometry | None,
+    cal_a: tuple[int, int],
+    cal_b: tuple[int, int],
 ) -> dict[str, object]:
-    measured = measure_span(
-        _pixel(pair[0]), _pixel(pair[1]), depth_m, intrinsics, scale, frame_id=frame_id
+    figure = measure_kind(
+        kind,
+        _pixel(pair[0]),
+        _pixel(pair[1]),
+        depth_m,
+        intrinsics,
+        scale,
+        cal_a=cal_a,
+        cal_b=cal_b,
+        frame_id=frame_id,
+        conf=conf,
+        conf_min=conf_min,
+        geom=geom,
     )
-    return {
-        "distance_cm": measured.distance_m * 100.0,
-        "uncertainty_cm": measured.uncertainty_m * 100.0,
-        "validity": measured.validity,
-        "warnings": list(measured.warnings),
-    }
+    return _figure(figure, tag)
 
 
 def _area(
@@ -151,6 +244,78 @@ def _warnings(*groups: object) -> list[str]:
         if item not in unique:
             unique.append(item)
     return unique
+
+
+def _camera(
+    width: int,
+    height: int,
+    focal_px: float | None,
+    intrinsics: CameraIntrinsics | None,
+    source: str | None,
+) -> tuple[CameraIntrinsics, str, float | None]:
+    if intrinsics is not None:
+        name = source or (
+            "camera_file" if intrinsics.calibrated_underwater else "prediction.intrinsics"
+        )
+        shown = None if name == "longest_side" else (intrinsics.fx + intrinsics.fy) / 2.0
+        if focal_px is not None and name != "longest_side":
+            shown = focal_px
+        return intrinsics, name, shown
+    if focal_px is not None:
+        return default_intrinsics(width, height, focal_px), source or "focal", focal_px
+    return default_intrinsics(width, height, None), "longest_side", None
+
+
+def _figure(figure: LineFigure, tag: str) -> dict[str, object]:
+    measured = figure.measurement
+    first = figure.samples[0]
+    second = figure.samples[1] if len(figure.samples) > 1 else None
+    return {
+        "distance_cm": measured.distance_m * 100.0,
+        "uncertainty_cm": measured.uncertainty_m * 100.0,
+        "validity": measured.validity,
+        "warnings": list(measured.warnings),
+        "kind": figure.kind,
+        "tag": tag,
+        "depth": first.depth,
+        "sample_u": first.u,
+        "sample_v": first.v,
+        "map_u": first.map_u,
+        "map_v": first.map_v,
+        "depth_b": None if second is None else second.depth,
+        "sample_u_b": None if second is None else second.u,
+        "sample_v_b": None if second is None else second.v,
+        "map_u_b": None if second is None else second.map_u,
+        "map_v_b": None if second is None else second.map_v,
+        "uncertain_depth": any(item.uncertain for item in figure.samples),
+    }
+
+
+def _map(u: float, v: float, geom: ProcessGeometry | None) -> tuple[float, float]:
+    if geom is None:
+        return u, v
+    return map_png_to_proc(u, v, geom)
+
+
+def _length_spec(value: object) -> tuple[Pair, str, str]:
+    if isinstance(value, dict):
+        pair = (_point(value.get("a")), _point(value.get("b")))
+        kind = value.get("kind")
+        tag = value.get("tag")
+        return pair, kind if kind in {"span", "facing", "length3d"} else "span", _text(tag) or ""
+    return _pair(value), "span", ""
+
+
+def _float(value: object, fallback: float) -> float:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return fallback
+    return float(value)
+
+
+def _text(value: object) -> str | None:
+    if isinstance(value, str):
+        return value
+    return None
 
 
 def _rows(value: object) -> list[object]:

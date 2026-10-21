@@ -147,6 +147,7 @@ function pendingStroke(draft: Draft): Stroke[] {
 }
 
 function pendingKind(tool: Draft['tool']): StrokeKind {
+  if (tool === 'facing' || tool === 'length3d') return 'length';
   if (tool === 'length' || tool === 'path' || tool === 'area' || tool === 'angle') return tool;
   return 'cal';
 }

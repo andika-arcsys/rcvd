@@ -25,6 +25,17 @@ function lengthDraft(): Draft {
 }
 
 describe('draf ukur', () => {
+  it('lebar menghadap kamera menyimpan jenis garis', () => {
+    let draft = setTool(emptyDraft(), 'facing');
+    draft = place(draft, { x: 0, y: 0 });
+    draft = place(draft, { x: 40, y: 0 });
+    expect(draft.geometry.lengths[0]?.kind).toBe('facing');
+    draft = setTool(draft, 'length3d');
+    draft = place(draft, { x: 0, y: 10 });
+    draft = place(draft, { x: 80, y: 30 });
+    expect(draft.geometry.lengths[1]?.kind).toBe('length3d');
+  });
+
   it('panjang 3-4-5 sama dengan vektor emas', () => {
     const view = previewOf(lengthDraft(), limits, 1.5);
     expect(view?.meters[0]).toBe(0.5);

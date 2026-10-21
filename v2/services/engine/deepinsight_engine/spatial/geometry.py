@@ -6,9 +6,12 @@ Angka di sini estimasi frame beku. Statusnya tidak sama dengan VALID pada ukur 2
 from __future__ import annotations
 
 import importlib
+import math
 from dataclasses import dataclass
 from itertools import pairwise
 from typing import Any
+
+from .band import uncertainty_m
 
 
 @dataclass(frozen=True)
@@ -30,6 +33,22 @@ class ScaleCalibration:
     backend_signature: str = "UNKNOWN"
     intrinsics_source: str = "ASSUMED"
     raw_reference_distance_m: float | None = None
+    click_sigma_px: float = 1.5
+    pixel_length: float = 0.0
+    depth_sigma: float = 0.0
+    depth_value: float = 0.0
+    sample_u: float = 0.0
+    sample_v: float = 0.0
+
+
+@dataclass(frozen=True)
+class DepthSample:
+    depth: float
+    sigma: float
+    count: int
+    uncertain: bool
+    u: int
+    v: int
 
 
 @dataclass(frozen=True)
@@ -75,19 +94,63 @@ def pixel_to_3d(point: tuple[int, int], depth_m: float, intrinsics: CameraIntrin
     )
 
 
-def local_depth(depth_m: Any, point: tuple[int, int], radius: int = 3) -> tuple[float, float]:
+def local_depth(
+    depth_m: Any,
+    point: tuple[int, int],
+    radius: int = 3,
+    conf: Any = None,
+    conf_min: float = 0.0,
+) -> tuple[float, float]:
+    sample = read_window(depth_m, point, radius, conf, conf_min)
+    return sample.depth, sample.sigma / max(sample.depth, 1e-6)
+
+
+def read_window(
+    depth_m: Any,
+    point: tuple[int, int] | tuple[float, float],
+    radius: int = 3,
+    conf: Any = None,
+    conf_min: float = 0.0,
+) -> DepthSample:
+    """Median 7×7 setelah piksel conf di bawah ambang dibuang. Sebaran = 1,4826 × MAD."""
     np = importlib.import_module("numpy")
-    x, y = point
+    x, y = int(round(point[0])), int(round(point[1]))
     height, width = depth_m.shape[:2]
     x0, x1 = max(0, x - radius), min(width, x + radius + 1)
     y0, y1 = max(0, y - radius), min(height, y + radius + 1)
-    samples = depth_m[y0:y1, x0:x1]
-    samples = samples[np.isfinite(samples) & (samples > 0)]
+    window = np.asarray(depth_m[y0:y1, x0:x1], dtype=np.float64)
+    mask = np.isfinite(window) & (window > 0)
+    if conf is not None:
+        conf_w = np.asarray(conf[y0:y1, x0:x1], dtype=np.float64)
+        if conf_w.shape == window.shape:
+            mask = mask & np.isfinite(conf_w) & (conf_w >= conf_min)
+    samples = window[mask]
     if samples.size == 0:
         raise ValueError("Depth tidak valid pada titik yang dipilih.")
     median = float(np.median(samples))
     mad = float(np.median(np.abs(samples - median)))
-    return median, mad / max(median, 1e-6)
+    return DepthSample(
+        depth=median,
+        sigma=1.4826 * mad,
+        count=int(samples.size),
+        uncertain=int(samples.size) < 10,
+        u=x,
+        v=y,
+    )
+
+
+def chord_gain(
+    point_a: tuple[int, int], point_b: tuple[int, int], intrinsics: CameraIntrinsics
+) -> float:
+    np = importlib.import_module("numpy")
+    start = pixel_to_3d(point_a, 1.0, intrinsics)
+    end = pixel_to_3d(point_b, 1.0, intrinsics)
+    return float(np.linalg.norm(start - end))
+
+
+def pixel_length(point_a: tuple[int, int], point_b: tuple[int, int]) -> float:
+    np = importlib.import_module("numpy")
+    return float(np.hypot(point_a[0] - point_b[0], point_a[1] - point_b[1]))
 
 
 def measure_distance(
@@ -98,22 +161,32 @@ def measure_distance(
     calibration: ScaleCalibration,
     *,
     frame_id: str | None = None,
+    conf: Any = None,
+    conf_min: float = 0.0,
 ) -> Measurement:
     np = importlib.import_module("numpy")
-    z_a, rel_a = local_depth(depth_m, point_a)
-    z_b, rel_b = local_depth(depth_m, point_b)
+    sample_a = read_window(depth_m, point_a, conf=conf, conf_min=conf_min)
+    sample_b = read_window(depth_m, point_b, conf=conf, conf_min=conf_min)
+    z_a, z_b = sample_a.depth, sample_b.depth
+    rel_a = sample_a.sigma / max(z_a, 1e-6)
+    rel_b = sample_b.sigma / max(z_b, 1e-6)
     p_a = pixel_to_3d(point_a, z_a * calibration.scale, intrinsics)
     p_b = pixel_to_3d(point_b, z_b * calibration.scale, intrinsics)
     distance = float(np.linalg.norm(p_a - p_b))
     validity, warnings = _distance_validity(calibration, intrinsics, frame_id, rel_a, rel_b)
-    relative_error = float(
-        np.sqrt(calibration.relative_uncertainty**2 + rel_a**2 + rel_b**2 + 0.02**2)
+    band, validity, warnings = _band(
+        distance,
+        calibration,
+        pixel_length(point_a, point_b),
+        rel_a,
+        rel_b,
+        validity,
+        warnings,
+        sample_a.uncertain or sample_b.uncertain,
     )
-    if validity != "VALID_SAME_FRAME":
-        relative_error = max(relative_error, 0.20)
     return Measurement(
         distance_m=distance,
-        uncertainty_m=distance * relative_error,
+        uncertainty_m=band,
         status=calibration.source,
         point_a_3d=(float(p_a[0]), float(p_a[1]), float(p_a[2])),
         point_b_3d=(float(p_b[0]), float(p_b[1]), float(p_b[2])),
@@ -133,6 +206,8 @@ def measure_span(
     calibration: ScaleCalibration,
     *,
     frame_id: str | None = None,
+    conf: Any = None,
+    conf_min: float = 0.0,
 ) -> Measurement:
     """Lebar pada bidang yang menghadap kamera, di kedalaman tengah garis.
 
@@ -141,20 +216,26 @@ def measure_span(
     """
     np = importlib.import_module("numpy")
     mid = ((point_a[0] + point_b[0]) // 2, (point_a[1] + point_b[1]) // 2)
-    z_mid, rel_mid = local_depth(depth_m, mid)
-    depth = z_mid * calibration.scale
+    sample = read_window(depth_m, mid, conf=conf, conf_min=conf_min)
+    rel_mid = sample.sigma / max(sample.depth, 1e-6)
+    depth = sample.depth * calibration.scale
     p_a = pixel_to_3d(point_a, depth, intrinsics)
     p_b = pixel_to_3d(point_b, depth, intrinsics)
     distance = float(np.linalg.norm(p_a - p_b))
-    validity, warnings = _distance_validity(
-        calibration, intrinsics, frame_id, rel_mid, rel_mid
+    validity, warnings = _distance_validity(calibration, intrinsics, frame_id, rel_mid, rel_mid)
+    band, validity, warnings = _band(
+        distance,
+        calibration,
+        pixel_length(point_a, point_b),
+        rel_mid,
+        0.0,
+        validity,
+        warnings,
+        sample.uncertain,
     )
-    relative_error = float(np.sqrt(calibration.relative_uncertainty**2 + rel_mid**2 + 0.02**2))
-    if validity != "VALID_SAME_FRAME":
-        relative_error = max(relative_error, 0.20)
     return Measurement(
         distance_m=distance,
-        uncertainty_m=distance * relative_error,
+        uncertainty_m=band,
         status=calibration.source,
         point_a_3d=(float(p_a[0]), float(p_a[1]), float(p_a[2])),
         point_b_3d=(float(p_b[0]), float(p_b[1]), float(p_b[2])),
@@ -177,6 +258,9 @@ def calibration_from_reference(
     frame_id: str | None = None,
     backend_signature: str = "UNKNOWN",
     intrinsics_source: str = "ASSUMED",
+    conf: Any = None,
+    conf_min: float = 0.0,
+    click_sigma_px: float = 1.5,
 ) -> ScaleCalibration:
     np = importlib.import_module("numpy")
     if known_length_m <= 0:
@@ -186,10 +270,14 @@ def calibration_from_reference(
         point_b,
         depth_m,
         intrinsics,
-        ScaleCalibration(relative_uncertainty=0.25),
+        ScaleCalibration(relative_uncertainty=0.25, click_sigma_px=click_sigma_px),
+        conf=conf,
+        conf_min=conf_min,
     )
     if raw.distance_m <= 1e-6:
         raise ValueError("Panjang referensi hasil depth nol/tidak valid.")
+    mid = ((point_a[0] + point_b[0]) // 2, (point_a[1] + point_b[1]) // 2)
+    sample = read_window(depth_m, mid, conf=conf, conf_min=conf_min)
     mad = raw.local_depth_relative_mad or (0.0, 0.0)
     spread = float(np.sqrt(mad[0] ** 2 + mad[1] ** 2 + 0.02**2 + 0.02**2))
     rel_uncertainty = min(0.35, max(0.08, spread))
@@ -202,6 +290,12 @@ def calibration_from_reference(
         backend_signature=backend_signature,
         intrinsics_source=intrinsics_source,
         raw_reference_distance_m=raw.distance_m,
+        click_sigma_px=click_sigma_px,
+        pixel_length=pixel_length(point_a, point_b),
+        depth_sigma=sample.sigma,
+        depth_value=sample.depth,
+        sample_u=float(sample.u),
+        sample_v=float(sample.v),
     )
 
 
@@ -269,6 +363,34 @@ def calculate_surface_area(
         warnings=tuple(warnings),
         sample_count=1,
     )
+
+
+def _band(
+    distance: float,
+    calibration: ScaleCalibration,
+    line_px: float,
+    rel_a: float,
+    rel_b: float,
+    validity: str,
+    warnings: list[str],
+    uncertain: bool,
+) -> tuple[float, str, list[str]]:
+    if uncertain:
+        warnings.append("kedalaman tidak yakin")
+        if validity == "VALID_SAME_FRAME":
+            validity = "ESTIMATE_ONLY_SAME_FRAME"
+    rel_z = math.sqrt(rel_a**2 + rel_b**2)
+    band = uncertainty_m(
+        distance,
+        calibration.click_sigma_px,
+        calibration.pixel_length,
+        line_px,
+        rel_z,
+        1.0,
+        calibration.depth_sigma,
+        calibration.depth_value,
+    )
+    return band, validity, warnings
 
 
 def _distance_validity(

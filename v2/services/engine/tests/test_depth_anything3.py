@@ -15,6 +15,7 @@ from deepinsight_engine.core.config import load_settings
 from deepinsight_engine.core.errors import EngineError
 from deepinsight_engine.gpu.depth_anything3_runtime import (
     DA3_WARNINGS,
+    Da3Observation,
     _guard_register,
     _open,
     _prepare_resolver,
@@ -23,6 +24,7 @@ from deepinsight_engine.gpu.depth_anything3_runtime import (
 )
 from deepinsight_engine.gpu.vision import RELATIVE_LABEL
 from deepinsight_engine.gpu.worker import _da3_depth, _geometry, _infer_da3, _load_spatial
+from deepinsight_engine.spatial.da3_frame import ProcessGeometry
 from deepinsight_engine.spatial.estimate import scene_from_message
 from deepinsight_engine.spatial.source import spatial_choice
 
@@ -71,6 +73,7 @@ def test_infer_depth_uses_mini_npz_and_resizes(monkeypatch: pytest.MonkeyPatch) 
     assert depth.shape == (6, 8)
     assert model.process_res == 672
     assert model.export_format == "mini_npz"
+    assert model.method == "upper_bound_resize"
     assert model.image[0][0, 0].tolist() == [30, 20, 10]
     assert torch.autocast_used is True
 
@@ -201,11 +204,22 @@ def test_frozen_geometry_names_depth_anything(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr("deepinsight_engine.gpu.worker._read_raw", lambda _message: image.tobytes())
     seen: dict[str, int] = {}
 
-    def fake(_bundle: dict[str, Any], _image: Any, size: int) -> Any:
+    def fake(_bundle: dict[str, Any], _image: Any, size: int) -> Da3Observation:
         seen["size"] = size
-        return np.full((8, 8), 2.0, dtype=np.float32)
+        depth = np.full((8, 8), 2.0, dtype=np.float32)
+        return Da3Observation(
+            depth=depth,
+            conf=None,
+            raw_intrinsics=None,
+            geometry=ProcessGeometry(8, 8, 8, 8, 8, 8, 0, 0, "upper_bound_resize"),
+            process_res=size,
+            resize_method="upper_bound_resize",
+            model_id="depth-anything/DA3METRIC-LARGE",
+            checkpoint="",
+            matched=True,
+        )
 
-    monkeypatch.setattr("deepinsight_engine.gpu.worker.infer_depth", fake)
+    monkeypatch.setattr("deepinsight_engine.gpu.worker.infer_observation", fake)
     event = _geometry(
         {
             "runtime": "depth_anything3",
@@ -244,12 +258,20 @@ class _FakeModel:
         self._depth = depth
         self.process_res = 0
         self.export_format = ""
+        self.method = ""
         self.image: list[Any] = []
 
-    def inference(self, image: list[Any], process_res: int, export_format: str) -> Any:
+    def inference(
+        self,
+        image: list[Any],
+        process_res: int,
+        export_format: str,
+        process_res_method: str = "upper_bound_resize",
+    ) -> Any:
         self.image = image
         self.process_res = process_res
         self.export_format = export_format
+        self.method = process_res_method
         return _Prediction(self._depth)
 
 

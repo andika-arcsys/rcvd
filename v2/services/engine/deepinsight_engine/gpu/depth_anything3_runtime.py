@@ -10,9 +10,16 @@ from __future__ import annotations
 
 import importlib
 import sys
+from dataclasses import dataclass
 from typing import Any
 
 from ..core.errors import EngineError
+from ..spatial.da3_frame import (
+    PROCESS_METHOD,
+    ProcessGeometry,
+    align_map,
+    geometry_for_map,
+)
 from .budget import cuda_status_note, try_limit_process_memory
 
 _INSTALL = (
@@ -37,6 +44,19 @@ DA3_WARNINGS = (
 )
 
 
+@dataclass
+class Da3Observation:
+    depth: Any
+    conf: Any
+    raw_intrinsics: Any
+    geometry: ProcessGeometry
+    process_res: int
+    resize_method: str
+    model_id: str
+    checkpoint: str
+    matched: bool
+
+
 def clamp_res(value: object) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         return DEFAULT_RES
@@ -57,7 +77,13 @@ def load_model(
         raise EngineError("MDL-003", "CUDA Depth Anything 3")
     cap = try_limit_process_memory(torch, vram_budget_mb)
     model = _open(torch, model_id)
-    bundle: dict[str, Any] = {"model": model, "torch": torch, "half": True, "model_id": model_id}
+    bundle: dict[str, Any] = {
+        "model": model,
+        "torch": torch,
+        "half": True,
+        "model_id": model_id,
+        "checkpoint": str(getattr(model, "_deepinsight_checkpoint", "") or ""),
+    }
     half = _warm(bundle, process_res)
     bundle["half"] = half
     suffix = "half" if half else "fp32"
@@ -67,14 +93,56 @@ def load_model(
 
 def infer_depth(bundle: dict[str, Any], frame_bgr: Any, process_res: int) -> Any:
     """Satu citra BGR. Hasilnya kisi kedalaman pada ukuran frame, bukan meter."""
+    return infer_observation(bundle, frame_bgr, process_res).depth
+
+
+def infer_observation(bundle: dict[str, Any], frame_bgr: Any, process_res: int) -> Da3Observation:
+    """Kedalaman, conf, dan intrinsik pada koordinat PNG."""
     cv2 = importlib.import_module("cv2")
     np = importlib.import_module("numpy")
     rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
     prediction = _invoke(bundle, rgb, process_res)
+    height, width = int(rgb.shape[0]), int(rgb.shape[1])
     depth = np.asarray(prediction.depth[0], dtype=np.float32)
-    if depth.shape[:2] != rgb.shape[:2]:
-        depth = cv2.resize(depth, (rgb.shape[1], rgb.shape[0]), interpolation=cv2.INTER_LINEAR)
-    return depth.astype(np.float32)
+    conf = _optional_map(np, getattr(prediction, "conf", None))
+    raw_k = _optional_matrix(np, getattr(prediction, "intrinsics", None))
+    geom = geometry_for_map(width, height, clamp_res(process_res), PROCESS_METHOD, depth.shape[:2])
+    aligned = align_map(depth, geom, nearest=False)
+    same = conf is not None and conf.shape[:2] == depth.shape[:2]
+    aligned_conf = None if not same else align_map(conf, geom, nearest=True)
+    return Da3Observation(
+        depth=aligned.astype(np.float32),
+        conf=None if aligned_conf is None else aligned_conf.astype(np.float32),
+        raw_intrinsics=raw_k,
+        geometry=geom,
+        process_res=clamp_res(process_res),
+        resize_method=PROCESS_METHOD,
+        model_id=str(bundle.get("model_id") or DEFAULT_MODEL),
+        checkpoint=str(bundle.get("checkpoint") or ""),
+        matched=geom.matched,
+    )
+
+
+def _optional_map(np: Any, value: Any) -> Any:
+    if value is None:
+        return None
+    grid = np.asarray(value, dtype=np.float32)
+    if grid.ndim == 3:
+        grid = grid[0]
+    if grid.ndim != 2:
+        return None
+    return grid
+
+
+def _optional_matrix(np: Any, value: Any) -> Any:
+    if value is None:
+        return None
+    matrix = np.asarray(value, dtype=np.float64)
+    if matrix.ndim == 3:
+        matrix = matrix[0]
+    if matrix.shape != (3, 3):
+        return None
+    return matrix
 
 
 def _torch() -> Any:
@@ -96,7 +164,11 @@ def _open(torch: Any, model_id: str) -> Any:
         raise EngineError("MDL-002", f"Depth Anything 3 gagal dimuat: {exc}") from exc
     try:
         model = api.DepthAnything3.from_pretrained(model_id)
-        return model.to(torch.device("cuda:0")).eval()
+        placed = model.to(torch.device("cuda:0")).eval()
+        commit = getattr(placed, "_commit_hash", None)
+        if commit:
+            placed._deepinsight_checkpoint = str(commit)
+        return placed
     except Exception as exc:  # noqa: BLE001 - unduh dan muat Hugging Face melempar error beragam
         raise EngineError("MDL-002", f"Depth Anything 3 gagal dimuat: {exc}") from exc
 
@@ -201,5 +273,15 @@ def _invoke(bundle: dict[str, Any], rgb: Any, process_res: int) -> Any:
     with torch.inference_mode():
         if bundle.get("half"):
             with torch.autocast(device_type="cuda", dtype=torch.float16):
-                return model.inference(image=[rgb], process_res=size, export_format="mini_npz")
-        return model.inference(image=[rgb], process_res=size, export_format="mini_npz")
+                return model.inference(
+                    image=[rgb],
+                    process_res=size,
+                    process_res_method=PROCESS_METHOD,
+                    export_format="mini_npz",
+                )
+        return model.inference(
+            image=[rgb],
+            process_res=size,
+            process_res_method=PROCESS_METHOD,
+            export_format="mini_npz",
+        )

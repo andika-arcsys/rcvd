@@ -47,6 +47,7 @@ class PairIn(BaseModel):
     a: Px
     b: Px
     tag: str = Field(default="", max_length=24)
+    kind: Literal["span", "facing", "length3d"] = "span"
 
 
 class PolyIn(BaseModel):
