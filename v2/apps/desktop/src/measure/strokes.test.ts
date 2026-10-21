@@ -46,13 +46,21 @@ describe('goresan kanvas', () => {
     length = place(length, { x: 40, y: 0 });
     const drawn = strokesOf(length, { meters: [1.25], areas: [], angles: [], refCm: '' });
     expect(drawn.map((stroke) => stroke.kind)).toEqual(['length']);
-    expect(drawn[0]?.tag).toBe('L1# 1.250 m');
+    expect(drawn[0]?.tag).toBe('L1# 1.250 m 0.0°');
 
     let cal = setTool(emptyDraft(), 'calibrate');
     cal = place(cal, { x: 0, y: 0 });
     cal = place(cal, { x: 80, y: 0 });
     const line = strokesOf(cal, { meters: [], areas: [], angles: [], refCm: '10' });
     expect(line[0]?.kind).toBe('cal');
-    expect(line[0]?.tag).toBe('CAL# 10 cm');
+    expect(line[0]?.tag).toBe('CAL# 10 cm 0.0°');
+  });
+
+  it('garis ke bawah menulis 90 derajat sesudah nilai ukur', () => {
+    let length = setTool(emptyDraft(), 'length');
+    length = place(length, { x: 10, y: 0 });
+    length = place(length, { x: 10, y: 40 });
+    const drawn = strokesOf(length, { meters: [0.4], areas: [], angles: [], refCm: '' });
+    expect(drawn[0]?.tag).toBe('L1# 0.400 m 90.0°');
   });
 });

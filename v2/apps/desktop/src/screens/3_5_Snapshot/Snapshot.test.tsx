@@ -91,7 +91,22 @@ describe('Mode Snapshot', () => {
           distance_uncertainty_cm: 2,
           scale: 1.25,
           raw_reference_cm: 8,
-          lengths: [],
+          lengths: [
+            {
+              distance_cm: 39.44,
+              uncertainty_cm: 7.89,
+              validity: 'ESTIMATE_ONLY_SAME_FRAME',
+              kind: 'span',
+              tag: 'L1',
+              angle_deg: 90,
+              uncertain_depth: false,
+              depth: 0.7,
+              sample_u: 10,
+              sample_v: 20,
+              map_u: 4,
+              map_v: 8,
+            },
+          ],
           areas: [],
           paths: [],
           warnings: ['Model focal/depth belum divalidasi untuk housing/port underwater.'],
@@ -110,6 +125,7 @@ describe('Mode Snapshot', () => {
           cal_v: 20,
           cal_map_u: 4,
           cal_map_v: 8,
+          cal_angle_deg: 0,
         },
       },
     });
@@ -119,11 +135,13 @@ describe('Mode Snapshot', () => {
     await userEvent.type(screen.getByLabelText('Calibration reference (cm)'), '10');
     expect(button).toBeEnabled();
     await userEvent.click(button);
-    expect(await screen.findByText(/ESTIMATE_ONLY_SAME_FRAME/)).toBeInTheDocument();
+    expect(await screen.findAllByText(/ESTIMATE_ONLY_SAME_FRAME/)).toHaveLength(2);
     expect(screen.getByText(/Apple Depth Pro/)).toBeInTheDocument();
     expect(screen.getByText(/lalu model dilepas/)).toBeInTheDocument();
     expect(screen.getByText(/file kalibrasi kamera/)).toBeInTheDocument();
     expect(screen.getByText(/DA3METRIC-LARGE/)).toBeInTheDocument();
+    expect(screen.getByText(/Sudut 0.0°/)).toBeInTheDocument();
+    expect(screen.getByText(/Sudut 90.0°/)).toBeInTheDocument();
   });
 
   it('satu titik laser meminta klik manual', async () => {

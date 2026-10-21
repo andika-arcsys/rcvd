@@ -15,6 +15,7 @@ from deepinsight_engine.spatial.geometry import (
     CameraIntrinsics,
     ScaleCalibration,
     calibration_from_reference,
+    clockwise_screen_deg,
     default_intrinsics,
     measure_distance,
 )
@@ -49,6 +50,29 @@ def test_flat_plane_matches_reference_scale() -> None:
     assert crossed.validity == "INVALID_CROSS_FRAME"
 
 
+def test_line_angle_is_clockwise_from_the_screen_horizontal() -> None:
+    assert clockwise_screen_deg((0.0, 0.0), (10.0, 0.0)) == pytest.approx(0.0)
+    assert clockwise_screen_deg((0.0, 0.0), (10.0, 10.0)) == pytest.approx(45.0)
+    assert clockwise_screen_deg((0.0, 0.0), (0.0, 10.0)) == pytest.approx(90.0)
+    assert clockwise_screen_deg((0.0, 0.0), (-10.0, 0.0)) == pytest.approx(180.0)
+    assert clockwise_screen_deg((0.0, 0.0), (0.0, -10.0)) == pytest.approx(270.0)
+    depth = np.full((40, 40), 2.0, dtype=np.float32)
+    scene = estimate_scene(
+        depth,
+        100.0,
+        "frm",
+        ((5.0, 20.0), (15.0, 20.0)),
+        0.4,
+        [((10.0, 8.0), (10.0, 28.0))],
+        [],
+        [],
+    )
+    lengths = scene["lengths"]
+    assert isinstance(lengths, list)
+    assert lengths[0]["angle_deg"] == pytest.approx(90.0)
+    assert scene["cal_angle_deg"] == pytest.approx(0.0)
+
+
 def test_scene_keeps_mesh_off_the_two_dimensional_status() -> None:
     depth = np.full((40, 40), 2.0, dtype=np.float32)
     scene = estimate_scene(
@@ -69,6 +93,8 @@ def test_scene_keeps_mesh_off_the_two_dimensional_status() -> None:
     assert isinstance(lengths, list)
     assert lengths[0]["distance_cm"] == pytest.approx(80.0)
     assert lengths[0]["validity"] == "ESTIMATE_ONLY_SAME_FRAME"
+    assert lengths[0]["angle_deg"] == pytest.approx(0.0)
+    assert scene["cal_angle_deg"] == pytest.approx(0.0)
     areas = scene["areas"]
     assert isinstance(areas, list)
     assert float(areas[0]["area_cm2"]) > 0

@@ -11,7 +11,18 @@ from dataclasses import dataclass
 from itertools import pairwise
 from typing import Any
 
-from .band import uncertainty_m
+from .band import FLOOR_REL, uncertainty_m
+
+
+def clockwise_screen_deg(start: tuple[float, float], end: tuple[float, float]) -> float:
+    """Derajat dari titik awal ke titik akhir, searah jarum jam.
+
+    0° mendatar ke kanan pada layar. Sumbu y bertambah ke bawah, jadi
+    ``atan2(dy, dx)`` sudah searah jarum jam. Hasil di rentang [0, 360).
+    """
+    dx = float(end[0]) - float(start[0])
+    dy = float(end[1]) - float(start[1])
+    return math.degrees(math.atan2(dy, dx)) % 360.0
 
 
 @dataclass(frozen=True)
@@ -324,7 +335,7 @@ def calculate_accumulated_path_distance(
         np.sqrt(calibration.relative_uncertainty**2 + max(local_mads) ** 2 + 0.02**2)
     )
     if validity != "VALID_SAME_FRAME":
-        relative_error = max(relative_error, 0.20)
+        relative_error = max(relative_error, FLOOR_REL)
     return GeometryMeasurement(
         kind="PATH_DISTANCE",
         value=distance * 100.0,

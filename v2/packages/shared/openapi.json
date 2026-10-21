@@ -5649,6 +5649,11 @@
               }
             ],
             "title": "Cal Map V"
+          },
+          "cal_angle_deg": {
+            "type": "number",
+            "title": "Cal Angle Deg",
+            "default": 0.0
           }
         },
         "type": "object",
@@ -6379,6 +6384,11 @@
             "type": "boolean",
             "title": "Uncertain Depth",
             "default": false
+          },
+          "angle_deg": {
+            "type": "number",
+            "title": "Angle Deg",
+            "default": 0.0
           },
           "warnings": {
             "items": {

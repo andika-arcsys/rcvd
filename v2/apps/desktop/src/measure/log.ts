@@ -1,4 +1,5 @@
 import type { Draft, Pair, XY } from './draft';
+import { screenAngleDeg } from './slope';
 
 /** Satu snapshot menyimpan paling banyak 20 baris log. */
 export const LOG_LIMIT = 20;
@@ -53,6 +54,11 @@ export function taggedMeasure(
   return tagged(tag, `${value.toFixed(digits)} ${unit}`);
 }
 
+/** `L1# 1.250 m 12.3°` — sudut di belakang nilai ukur. */
+export function withScreenAngle(label: string, start: XY, end: XY): string {
+  return `${label} ${screenAngleDeg(start, end).toFixed(1)}°`;
+}
+
 export function lengthNames(lengths: Pair[], paths: XY[][]): string[] {
   const pathOf = pathBySegment(paths);
   let shown = 0;
@@ -73,7 +79,7 @@ export function logLines(
   const names = lengthNames(draft.geometry.lengths, draft.geometry.paths);
   const text = new Map<string, string>();
   for (const line of [
-    ...lengthLines(names, meters),
+    ...lengthLines(names, meters, draft.geometry.lengths),
     ...pathLines(draft.geometry.paths, draft.geometry.lengths, names, meters),
     ...areaLines(areas),
     ...angleLines(angles),
@@ -114,11 +120,13 @@ function rowTags(draft: Draft): string[] {
   ];
 }
 
-function lengthLines(names: string[], meters: number[]): LogLine[] {
+function lengthLines(names: string[], meters: number[], lengths: Pair[]): LogLine[] {
   const rows: LogLine[] = [];
   names.forEach((tag, index) => {
     if (!isLengthTag(tag)) return;
-    rows.push({ tag, text: taggedMeasure(tag, meters[index], 'm', 3) });
+    const line = lengths[index];
+    const text = taggedMeasure(tag, meters[index], 'm', 3);
+    rows.push({ tag, text: line ? withScreenAngle(text, line.a, line.b) : text });
   });
   return rows;
 }
