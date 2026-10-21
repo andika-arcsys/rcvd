@@ -332,7 +332,7 @@
   },
   "spatial": {
     "title": "Depth estimate",
-    "hint": "This loads SpatialSight, then reads the depth tensor on the freeze-frame PNG. The console default is Depth Anything 3. The saved 2D record stays on the pixel scale.",
+    "hint": "Satu tekan menjalankan Depth Anything 3 sekali pada PNG beku untuk seluruh garis, lalu model dilepas. Tekan lagi untuk siklus baru. Angka simpan 2D tetap pada skala piksel.",
     "run": "Compute depth estimate",
     "busy": "Loading SpatialSight…",
     "failed": "Estimate failed",

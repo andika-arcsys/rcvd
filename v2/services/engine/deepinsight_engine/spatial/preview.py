@@ -45,7 +45,9 @@ def turbo_bgr(depth_m: Any) -> Any:
         return np.zeros((*data.shape, 3), dtype=np.uint8)
     near, far = np.percentile(valid, (2, 98))
     normalized = np.clip((data - near) / max(float(far - near), 1e-6), 0, 1)
-    image = ((1.0 - normalized) * 255).astype(np.uint8)
+    image = np.ascontiguousarray(((1.0 - normalized) * 255).astype(np.uint8))
+    if image.ndim != 2:
+        image = np.squeeze(image)
     return cv2.applyColorMap(image, cv2.COLORMAP_TURBO)
 
 
@@ -70,21 +72,22 @@ def _stride(width: int, height: int, max_side: int) -> int:
 
 
 def _turbo_jpeg(np: Any, depth_m: Any) -> str | None:
+    """JPEG pratinjau. Kegagalan warna tidak mematikan pekerja GPU."""
     try:
         cv2 = importlib.import_module("cv2")
-    except ImportError:
+        colored = np.ascontiguousarray(turbo_bgr(depth_m))
+        height, width = int(colored.shape[0]), int(colored.shape[1])
+        longest = max(height, width)
+        if longest > COLOR_SIDE:
+            scale = COLOR_SIDE / float(longest)
+            colored = cv2.resize(
+                colored,
+                (max(1, int(width * scale)), max(1, int(height * scale))),
+                interpolation=cv2.INTER_AREA,
+            )
+        ok, encoded = cv2.imencode(".jpg", colored, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+    except Exception:  # noqa: BLE001 - satu frame buruk, antrean live tetap hidup
         return None
-    colored = turbo_bgr(depth_m)
-    height, width = int(colored.shape[0]), int(colored.shape[1])
-    longest = max(height, width)
-    if longest > COLOR_SIDE:
-        scale = COLOR_SIDE / float(longest)
-        colored = cv2.resize(
-            colored,
-            (max(1, int(width * scale)), max(1, int(height * scale))),
-            interpolation=cv2.INTER_AREA,
-        )
-    ok, encoded = cv2.imencode(".jpg", colored, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
     if not ok:
         return None
     return base64.b64encode(np.asarray(encoded).tobytes()).decode("ascii")

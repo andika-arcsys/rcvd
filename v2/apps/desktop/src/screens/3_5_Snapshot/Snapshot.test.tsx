@@ -121,7 +121,7 @@ describe('Mode Snapshot', () => {
     await userEvent.click(button);
     expect(await screen.findByText(/ESTIMATE_ONLY_SAME_FRAME/)).toBeInTheDocument();
     expect(screen.getByText(/Apple Depth Pro/)).toBeInTheDocument();
-    expect(screen.getByText(/pixel scale/)).toBeInTheDocument();
+    expect(screen.getByText(/lalu model dilepas/)).toBeInTheDocument();
     expect(screen.getByText(/file kalibrasi kamera/)).toBeInTheDocument();
     expect(screen.getByText(/DA3METRIC-LARGE/)).toBeInTheDocument();
   });

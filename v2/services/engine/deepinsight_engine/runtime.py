@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import sys
 import threading
 import time
 from collections.abc import Callable
@@ -553,22 +554,48 @@ class Runtime:
         return preset if isinstance(preset, str) else None
 
     def estimate_spatial(self, frame_id: str, spec: dict[str, object]) -> dict[str, object]:
-        """Muat SpatialSight bila perlu, lalu inferensi pada PNG bukti. Span 2D tidak ditulis."""
+        """Satu forward pass untuk seluruh garis pada PNG beku, lalu lepas SpatialSight.
+
+        Model tidak dibiarkan aktif. Frame video berikut tidak masuk GPU sampai tombol
+        ukur ditekan lagi.
+        """
         path = self._evidence / f"{frame_id}.png"
         if not path.is_file():
             raise EngineError("VID-002", frame_id)
         from .video.decode import decode_png
 
         width, height, raw = decode_png(path.read_bytes())
+        self._live_infer.cancel()
+        finished = False
         with self._assist_lock:
-            self._ensure_spatial()
-            event = self.models.geometry(raw, width, height, frame_id, spec)
-        return {key: value for key, value in event.items() if key != "event"}
+            try:
+                self._ensure_spatial()
+                event = self.models.geometry(raw, width, height, frame_id, spec)
+                finished = True
+                return {key: value for key, value in event.items() if key != "event"}
+            finally:
+                self._release_spatial_after_cycle(spec, finished)
 
     def _ensure_spatial(self) -> None:
         if self.models.state == "ready" and self.models.active == "spatialsight":
             return
         self.models.switch("spatialsight")
+
+    def _release_spatial_after_cycle(self, spec: dict[str, object], finished: bool) -> None:
+        """Batalkan antrean live, lalu kosongkan VRAM SpatialSight."""
+        self._live_infer.cancel()
+        if self.models.active != "spatialsight":
+            return
+        with contextlib.suppress(EngineError):
+            self.models.switch("optical")
+        lengths = spec.get("lengths")
+        count = len(lengths) if isinstance(lengths, list) else 0
+        if finished:
+            note = f"SpatialSight satu siklus selesai, {count} garis. Prediksi dihentikan."
+        else:
+            note = "SpatialSight prediksi dihentikan."
+        sys.stderr.write(note + "\n")
+        sys.stderr.flush()
 
     def compare_view(self) -> dict[str, object]:
         from .video.compare import compare_payload

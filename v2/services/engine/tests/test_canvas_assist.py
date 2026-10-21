@@ -97,6 +97,10 @@ def test_estimate_loads_spatialsight_before_refusing(client: TestClient) -> None
     body = response.json()
     assert body["code"] in {"MDL-002", "MDL-003"}
     assert body["detail"] != "SpatialSight belum dimuat"
+    models = client.get("/models")
+    assert models.status_code == 200
+    assert models.json()["active"] is None
+    assert models.json()["state"] == "optical"
 
 
 def test_missing_evidence_is_rejected(client: TestClient) -> None:
