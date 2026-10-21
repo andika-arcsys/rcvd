@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Kalibrasi kamera</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0B131B}a{color:#7CC4F0}</style>
+</helmet>
+<div style="min-height: 900px; background: #0B131B; color: #E6EDF3; font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-wrap: wrap">
+  <dc-import name="Nav" active="Kalibrasi kamera" hint-size="220px,900px"></dc-import>
+  <main style="flex: 999 1 640px; min-width: 0; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+    <div>
+      <div style="font-size: 13px; color: #93A4B5">Di atas Live Operation</div>
+      <h1 style="margin: 4px 0 0; font-size: 26px; font-weight: 600">Kalibrasi kamera</h1>
+    </div>
+    <p style="margin: 0; font-size: 14px; color: #93A4B5">Kalibrasi intrinsik kamera, lalu baca kedalaman marker ArUco pada satu foto.</p>
+    <ol style="margin: 0; padding-left: 18px; font-size: 14px; display: flex; flex-direction: column; gap: 6px">
+      <li>Hitung sudut dalam, bukan jumlah kotak. Tutorial memakai 8 × 6. Ukur satu kotak dengan penggaris.</li>
+      <li>Ambil 15 sampai 20 foto dari pose berbeda. Papan utuh dan tidak silau.</li>
+      <li>Untuk kerja di air, potret di dalam air. Kalibrasi udara tidak setara.</li>
+      <li>RMS ≤ 0,5 px ditulis. Sampai 1,0 px ditulis dengan peringatan. Di atas 1,0 px tidak ditulis.</li>
+      <li>Cetak marker DICT_4X4_50, ukur satu sisi, jangan diubah ukurannya setelah diukur.</li>
+      <li>X ke kanan, Y ke bawah, Z kedalaman, jarak ke pusat marker, satuan milimeter.</li>
+    </ol>
+    <p style="margin: 0; display: flex; gap: 16px; font-size: 14px">
+      <a href="https://visionbrick.com/camera-calibration-with-opencv/">Kalibrasi papan catur</a>
+      <a href="https://visionbrick.com/measuring-depth-from-a-single-camera-using-aruco-markers-in-opencv/">Kedalaman satu kamera dengan ArUco</a>
+      <a href="https://www.youtube.com/watch?v=TaNCWCANeAo">Video tutorial</a>
+    </p>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+      <section style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+        <b>Papan catur</b>
+        <label style="font-size: 13px; color: #93A4B5">ID kamera<input value="" style="display: block; width: 100%; margin-top: 4px; background: #0B131B; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px"></label>
+        <label style="font-size: 13px; color: #93A4B5">Sudut dalam, kolom × baris<input value="8 × 6" style="display: block; width: 100%; margin-top: 4px; background: #0B131B; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px"></label>
+        <label style="font-size: 13px; color: #93A4B5">Ukuran satu kotak (mm)<input value="" style="display: block; width: 100%; margin-top: 4px; background: #0B131B; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px"></label>
+        <button style="width: fit-content; background: #3DDC97; color: #0B131B; border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 600">Hitung kalibrasi</button>
+      </section>
+      <section style="background: #101B25; border: 1px solid #22313F; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+        <b>Kedalaman ArUco</b>
+        <div style="font-size: 13px; color: #93A4B5">Kamus tetap DICT_4X4_50</div>
+        <label style="font-size: 13px; color: #93A4B5">Berkas kamera<input value="" style="display: block; width: 100%; margin-top: 4px; background: #0B131B; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px"></label>
+        <label style="font-size: 13px; color: #93A4B5">Panjang sisi marker (mm)<input value="" style="display: block; width: 100%; margin-top: 4px; background: #0B131B; color: #E6EDF3; border: 1px solid #2A3A4B; border-radius: 8px; padding: 10px"></label>
+        <button style="width: fit-content; background: #3DDC97; color: #0B131B; border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 600">Ukur kedalaman</button>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+</body>
+</html>

@@ -16,6 +16,7 @@ default_admin_roles: [ketua_tim, teknisi_program]
 menus:
   dashboard:      {ketua_tim: full, pilot_drone: full, ahli_ukur: full, pengelola_data: full, teknisi_program: full, pemeriksa_teknik: full, manajemen: view}
   misi:           {ketua_tim: full, pilot_drone: view, ahli_ukur: view, pengelola_data: view, teknisi_program: view, pemeriksa_teknik: view, manajemen: none}
+  kalibrasi_kamera: {ketua_tim: full, pilot_drone: full, ahli_ukur: full, pengelola_data: view, teknisi_program: full, pemeriksa_teknik: view, manajemen: none}
   live_operation: {ketua_tim: full, pilot_drone: full, ahli_ukur: full, pengelola_data: view, teknisi_program: view, pemeriksa_teknik: view, manajemen: none}
   review:         {ketua_tim: full, pilot_drone: none, ahli_ukur: view, pengelola_data: none, teknisi_program: none, pemeriksa_teknik: full, manajemen: none}
   gallery:        {ketua_tim: full, pilot_drone: view, ahli_ukur: full, pengelola_data: full, teknisi_program: view, pemeriksa_teknik: full, manajemen: none}

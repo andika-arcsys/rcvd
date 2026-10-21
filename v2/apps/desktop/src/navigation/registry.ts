@@ -1,6 +1,7 @@
 export type MenuId =
   | 'dashboard'
   | 'misi'
+  | 'kalibrasi_kamera'
   | 'live_operation'
   | 'review'
   | 'gallery'
@@ -17,10 +18,11 @@ export interface MenuItem {
   path: string;
 }
 
-/** 12 menu sidebar (SPEC: Sidebar global). */
+/** 13 menu sidebar. Kalibrasi kamera berada di atas Live Operation. */
 export const MENU_ITEMS: readonly MenuItem[] = [
   { id: 'dashboard', path: '/dashboard' },
   { id: 'misi', path: '/misi' },
+  { id: 'kalibrasi_kamera', path: '/kalibrasi-kamera' },
   { id: 'live_operation', path: '/live' },
   { id: 'review', path: '/review' },
   { id: 'gallery', path: '/gallery' },
@@ -53,6 +55,13 @@ export const SCREENS: readonly ScreenDef[] = [
   { code: '0.2', path: '/peran', mockup: 'Peran', menu: null, kind: 'screen' },
   { code: '1', path: '/dashboard', mockup: 'Dashboard', menu: 'dashboard', kind: 'screen' },
   { code: '2', path: '/misi', mockup: 'Misi', menu: 'misi', kind: 'screen' },
+  {
+    code: '2.5',
+    path: '/kalibrasi-kamera',
+    mockup: 'KalibrasiKamera',
+    menu: 'kalibrasi_kamera',
+    kind: 'screen',
+  },
   { code: '3', path: '/live', mockup: 'Main', menu: 'live_operation', kind: 'screen' },
   { code: '3.0', path: '/live/ganti-window', mockup: 'GantiWindow', menu: null, kind: 'dialog' },
   {

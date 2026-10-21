@@ -7,10 +7,10 @@ import { TRANSITIONS, entriesTo, exitsFrom } from './transitions';
 const V2_ROOT = resolve(__dirname, '../../../..');
 
 describe('registry layar', () => {
-  it('memuat 24 layar dengan kode dan path unik', () => {
-    expect(SCREENS).toHaveLength(24);
-    expect(new Set(SCREENS.map((s) => s.code)).size).toBe(24);
-    expect(new Set(SCREENS.map((s) => s.path)).size).toBe(24);
+  it('memuat 25 layar dengan kode dan path unik', () => {
+    expect(SCREENS).toHaveLength(25);
+    expect(new Set(SCREENS.map((s) => s.code)).size).toBe(25);
+    expect(new Set(SCREENS.map((s) => s.path)).size).toBe(25);
   });
 
   it('setiap layar punya berkas mockup dan folder layar', () => {
@@ -27,8 +27,8 @@ describe('registry layar', () => {
     expect(noSidebar.sort()).toEqual(['0', '0.1', '0.2', '12', '3.0', '3.5.3', '3.9'].sort());
   });
 
-  it('memuat 12 menu sidebar yang cocok dengan config/roles.yaml', () => {
-    expect(MENU_ITEMS).toHaveLength(12);
+  it('memuat 13 menu sidebar yang cocok dengan config/roles.yaml', () => {
+    expect(MENU_ITEMS).toHaveLength(13);
     const yaml = readFileSync(resolve(V2_ROOT, 'config/roles.yaml'), 'utf-8');
     for (const item of MENU_ITEMS) expect(yaml).toContain(`  ${item.id}:`);
   });
@@ -50,7 +50,7 @@ describe('transisi layar', () => {
     }
   });
 
-  it('semua 24 layar dapat dicapai dari Splash lewat transisi dan sidebar', () => {
+  it('semua 25 layar dapat dicapai dari Splash lewat transisi dan sidebar', () => {
     const start = SCREENS.find((s) => s.path === START_PATH)?.code ?? '0';
     const menuTargets = MENU_ITEMS.map((m) => SCREENS.find((s) => s.path === m.path)?.code ?? '');
     const seen = new Set([start]);

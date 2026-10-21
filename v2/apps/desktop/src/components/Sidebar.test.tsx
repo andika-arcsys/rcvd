@@ -7,6 +7,7 @@ import { Sidebar, type AccessMap } from './Sidebar';
 const FULL: AccessMap = {
   dashboard: 'full',
   misi: 'full',
+  kalibrasi_kamera: 'full',
   live_operation: 'full',
   review: 'full',
   gallery: 'full',
@@ -39,9 +40,11 @@ function renderSidebar(
 }
 
 describe('Sidebar', () => {
-  it('menampilkan 12 menu dan menyorot menu aktif', () => {
+  it('menampilkan 13 menu dan menyorot menu aktif', () => {
     renderSidebar(FULL, 'gallery');
-    expect(screen.getAllByRole('link')).toHaveLength(12);
+    expect(screen.getAllByRole('link')).toHaveLength(13);
+    const links = screen.getAllByRole('link').map((item) => item.textContent ?? '');
+    expect(links.indexOf('Kalibrasi kamera')).toBeLessThan(links.indexOf('Live Operation'));
     expect(screen.getByRole('link', { name: 'Canvas' })).toHaveAttribute('href', '/live/canvas');
     expect(screen.getByRole('button', { name: 'Keluar' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Gallery' })).toHaveAttribute('aria-current', 'page');

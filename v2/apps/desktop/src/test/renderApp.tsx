@@ -22,6 +22,7 @@ const ROLES = {
     [
       'dashboard',
       'misi',
+      'kalibrasi_kamera',
       'live_operation',
       'review',
       'gallery',
@@ -38,7 +39,7 @@ const ROLES = {
         ketua_tim: 'full',
         pilot_drone: menu === 'pims_rbi' || menu === 'review' ? 'none' : 'full',
         ahli_ukur: 'full',
-        manajemen: menu === 'pengaturan' ? 'none' : 'view',
+        manajemen: menu === 'pengaturan' || menu === 'kalibrasi_kamera' ? 'none' : 'view',
       },
     ]),
   ),

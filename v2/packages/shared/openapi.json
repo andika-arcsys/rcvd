@@ -271,6 +271,248 @@
         }
       }
     },
+    "/cameras/pattern/chessboard": {
+      "get": {
+        "tags": [
+          "kamera"
+        ],
+        "summary": "Chessboard Pattern",
+        "operationId": "chessboard_pattern_cameras_pattern_chessboard_get",
+        "parameters": [
+          {
+            "name": "cols",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 8,
+              "title": "Cols"
+            }
+          },
+          {
+            "name": "rows",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 6,
+              "title": "Rows"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cameras/pattern/aruco": {
+      "get": {
+        "tags": [
+          "kamera"
+        ],
+        "summary": "Aruco Pattern",
+        "operationId": "aruco_pattern_cameras_pattern_aruco_get",
+        "parameters": [
+          {
+            "name": "marker_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Marker Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cameras/calibrate": {
+      "post": {
+        "tags": [
+          "kamera"
+        ],
+        "summary": "Calibrate",
+        "operationId": "calibrate_cameras_calibrate_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_calibrate_cameras_calibrate_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalibrationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cameras/aruco": {
+      "post": {
+        "tags": [
+          "kamera"
+        ],
+        "summary": "Aruco Depth",
+        "operationId": "aruco_depth_cameras_aruco_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_aruco_depth_cameras_aruco_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArucoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/models": {
       "get": {
         "tags": [
@@ -3976,6 +4218,53 @@
         ],
         "title": "AreaView"
       },
+      "ArucoOut": {
+        "properties": {
+          "camera_id": {
+            "type": "string",
+            "title": "Camera Id"
+          },
+          "marker_mm": {
+            "type": "number",
+            "title": "Marker Mm"
+          },
+          "dictionary": {
+            "type": "string",
+            "title": "Dictionary"
+          },
+          "markers": {
+            "items": {
+              "$ref": "#/components/schemas/MarkerOut"
+            },
+            "type": "array",
+            "title": "Markers"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "preview_jpeg": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview Jpeg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "camera_id",
+          "marker_mm",
+          "dictionary",
+          "markers",
+          "message"
+        ],
+        "title": "ArucoOut"
+      },
       "AssessIn": {
         "properties": {
           "segments": {
@@ -4292,6 +4581,77 @@
         ],
         "title": "Auth"
       },
+      "Body_aruco_depth_cameras_aruco_post": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "camera_id": {
+            "type": "string",
+            "title": "Camera Id"
+          },
+          "marker_mm": {
+            "type": "number",
+            "title": "Marker Mm"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "camera_id",
+          "marker_mm",
+          "file"
+        ],
+        "title": "Body_aruco_depth_cameras_aruco_post"
+      },
+      "Body_calibrate_cameras_calibrate_post": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "camera_id": {
+            "type": "string",
+            "title": "Camera Id"
+          },
+          "square_mm": {
+            "type": "number",
+            "title": "Square Mm"
+          },
+          "corners_cols": {
+            "type": "integer",
+            "title": "Corners Cols"
+          },
+          "corners_rows": {
+            "type": "integer",
+            "title": "Corners Rows"
+          },
+          "files": {
+            "items": {
+              "type": "string",
+              "contentMediaType": "application/octet-stream"
+            },
+            "type": "array",
+            "title": "Files"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "camera_id",
+          "square_mm",
+          "corners_cols",
+          "corners_rows",
+          "files"
+        ],
+        "title": "Body_calibrate_cameras_calibrate_post"
+      },
       "Body_upload_video_video_upload_post": {
         "properties": {
           "file": {
@@ -4530,6 +4890,111 @@
           "min_baseline_px"
         ],
         "title": "Calibration"
+      },
+      "CalibrationOut": {
+        "properties": {
+          "code": {
+            "type": "integer",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "photos": {
+            "type": "integer",
+            "title": "Photos"
+          },
+          "readable": {
+            "type": "integer",
+            "title": "Readable"
+          },
+          "rms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rms"
+          },
+          "band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band"
+          },
+          "camera_matrix": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera Matrix"
+          },
+          "dist_coeffs": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dist Coeffs"
+          },
+          "image_width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Width"
+          },
+          "image_height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Height"
+          },
+          "written": {
+            "type": "boolean",
+            "title": "Written"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "photos",
+          "readable",
+          "written"
+        ],
+        "title": "CalibrationOut"
       },
       "CameraThresholds": {
         "properties": {
@@ -6542,6 +7007,39 @@
           "sha256"
         ],
         "title": "MarkResult"
+      },
+      "MarkerOut": {
+        "properties": {
+          "marker_id": {
+            "type": "integer",
+            "title": "Marker Id"
+          },
+          "x_mm": {
+            "type": "number",
+            "title": "X Mm"
+          },
+          "y_mm": {
+            "type": "number",
+            "title": "Y Mm"
+          },
+          "z_mm": {
+            "type": "number",
+            "title": "Z Mm"
+          },
+          "distance_mm": {
+            "type": "number",
+            "title": "Distance Mm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "marker_id",
+          "x_mm",
+          "y_mm",
+          "z_mm",
+          "distance_mm"
+        ],
+        "title": "MarkerOut"
       },
       "MeasView": {
         "properties": {
