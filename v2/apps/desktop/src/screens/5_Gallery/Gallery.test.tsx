@@ -62,4 +62,26 @@ describe('Gallery', () => {
     expect(await screen.findByRole('button', { name: /^b ESTIMATE_ONLY/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^a VALID/ })).toBeNull();
   });
+
+  it('menaruh foto terbaru di atas lalu melanjutkan ke halaman berikut', async () => {
+    const user = userEvent.setup();
+    const older = card('20200101000000_SNAP', 'VALID');
+    const newer = card('20261020120000_SNAP', 'VALID');
+    renderApp('/gallery', {
+      role: 'ketua_tim',
+      routes: {
+        'GET /gallery': [older, newer],
+        'GET /config/risk': RISK,
+        'GET /pipelines': PIPE,
+        'GET /gallery/20261020120000_SNAP': {
+          log: [{ tag: 'L1#', text: 'L1# 0.420 m' }],
+        },
+      },
+    });
+    expect(await screen.findByRole('button', { name: /^20261020120000_SNAP/ })).toBeInTheDocument();
+    expect(await screen.findByText('L1# 0.420 m')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^20200101000000_SNAP/ })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Berikutnya' }));
+    expect(await screen.findByRole('button', { name: /^20200101000000_SNAP/ })).toBeInTheDocument();
+  });
 });

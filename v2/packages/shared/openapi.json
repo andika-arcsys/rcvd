@@ -5173,6 +5173,14 @@
           "note": {
             "type": "string",
             "title": "Note"
+          },
+          "log": {
+            "items": {
+              "$ref": "#/components/schemas/LogLine"
+            },
+            "type": "array",
+            "title": "Log",
+            "default": []
           }
         },
         "type": "object",
@@ -6159,6 +6167,24 @@
           "validity"
         ],
         "title": "LengthEstimate"
+      },
+      "LogLine": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag",
+          "text"
+        ],
+        "title": "LogLine"
       },
       "LoginRequest": {
         "properties": {

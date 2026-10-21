@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useEngine } from '../../engine/EngineProvider';
 import { t } from '../../i18n';
 import { PresetPanel } from '../3_1_AquaClear/Presets';
+import { CandidateList } from '../3_2_HydroDetect/Candidates';
 import { DetectControls } from '../3_2_HydroDetect/DetectControls';
 import { ClassFilter } from '../3_2_HydroDetect/Filter';
 import type { MaskStyle } from '../3_2_HydroDetect/overlay';
@@ -21,11 +22,13 @@ export function LiveFeaturePanel({
   vision,
   hydro,
   spatial,
+  frameId,
 }: {
   active: string;
   vision: Vision | null;
   hydro: ReturnType<typeof useHydroControls>;
   spatial: ReturnType<typeof useSpatialControls>;
+  frameId: string | null;
 }) {
   if (active === 'F2') {
     return (
@@ -45,6 +48,7 @@ export function LiveFeaturePanel({
           onTune={hydro.send}
         />
         <ClassFilter vision={vision} hidden={hydro.hidden} onToggle={hydro.hide} />
+        <Detections vision={vision} hidden={hydro.hidden} frameId={frameId} />
       </section>
     );
   }
@@ -67,6 +71,30 @@ export function LiveFeaturePanel({
     );
   }
   return null;
+}
+
+function Detections({
+  vision,
+  hidden,
+  frameId,
+}: {
+  vision: Vision | null;
+  hidden: string[];
+  frameId: string | null;
+}) {
+  const { client } = useEngine();
+  const [note, setNote] = useState<string | null>(null);
+  const items = (vision?.candidates ?? []).filter((item) => !hidden.includes(item.class_name));
+  const concealed = (vision?.candidates ?? []).length - items.length;
+  const mark = (name: string) => {
+    if (!frameId) return;
+    void client
+      .POST('/findings', { body: { frame_id: frameId, class_name: name } })
+      .then((result) => {
+        if (result.data) setNote(t('feature.markedReview'));
+      });
+  };
+  return <CandidateList items={items} concealed={concealed} onMark={mark} note={note} />;
 }
 
 function useHydroControls(vision: Vision | null) {

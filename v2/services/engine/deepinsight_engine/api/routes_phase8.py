@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from pathlib import Path
 from typing import Literal
@@ -71,6 +72,11 @@ class AssessOut(BaseModel):
     rod_passed: bool | None
 
 
+class LogLine(BaseModel):
+    tag: str
+    text: str
+
+
 class DetailOut(BaseModel):
     id: str
     version: int
@@ -87,6 +93,7 @@ class DetailOut(BaseModel):
     preset: str | None
     frame_id: str
     note: str
+    log: list[LogLine] = []
 
 
 class CardOut(BaseModel):
@@ -146,7 +153,8 @@ class BundleOut(BaseModel):
 
 @phase8.get("/gallery", response_model=list[CardOut])
 def gallery(request: Request) -> list[CardOut]:
-    return [_card(path) for path in sorted(_snap_dir(request).glob("*.json"))]
+    paths = sorted(_snap_dir(request).glob("*.json"), key=_gallery_rank, reverse=True)
+    return [_card(path) for path in paths]
 
 
 @phase8.get("/gallery/{snapshot_id}", response_model=DetailOut)
@@ -337,6 +345,21 @@ def review_decision(item_id: int, body: DecisionIn, request: Request) -> Decisio
     return DecisionOut(status=status, version=int(version["n"]) if version else 0)
 
 
+_STAMP = re.compile(r"(\d{14})")
+_SESSION = re.compile(r"(\d{8})-(\d{4})")
+
+
+def _gallery_rank(path: Path) -> tuple[str, str]:
+    stem = path.stem
+    stamp = _STAMP.search(stem)
+    if stamp:
+        return (stamp.group(1), stem)
+    session = _SESSION.search(stem)
+    if session:
+        return (session.group(1) + session.group(2) + "00", stem)
+    return (f"{int(path.stat().st_mtime):014d}", stem)
+
+
 def _snap_dir(request: Request) -> Path:
     return Path(request.app.state.data_dir) / "snapshots"
 
@@ -369,6 +392,7 @@ def _detail(path: Path) -> DetailOut:
         preset=card.preset,
         frame_id=_text(frame.get("id")) or "",
         note=_text(body.get("note")) or "",
+        log=_log(body),
     )
 
 
@@ -402,6 +426,68 @@ def _card(path: Path) -> CardOut:
         preset=_text(body.get("aquaclear_preset")),
         frame_id=_text(frame.get("id")) or "",
     )
+
+
+def _log(body: dict[str, object]) -> list[LogLine]:
+    lines: list[LogLine] = []
+    cal = _mapping(body.get("calibration"))
+    ref = _number(cal.get("ref_m"))
+    if ref is not None:
+        lines.append(LogLine(tag="CAL#", text=f"CAL# {ref * 100:.2f} cm"))
+    lines.extend(_measure_lines(body))
+    lines.extend(_area_lines(body))
+    lines.extend(_note_lines(body))
+    note = _text(body.get("note"))
+    if note:
+        lines.append(LogLine(tag="NOTE", text=note))
+    return lines
+
+
+def _measure_lines(body: dict[str, object]) -> list[LogLine]:
+    raw = body.get("measurements")
+    if not isinstance(raw, list):
+        return []
+    lines: list[LogLine] = []
+    for index, item in enumerate(raw):
+        row = _mapping(item)
+        meters = _number(row.get("meters"))
+        if meters is None:
+            continue
+        tag = _text(row.get("tag")) or f"L{index + 1}#"
+        band = _number(row.get("uncertainty_2sigma_m"))
+        text = f"{tag} {meters:.3f} m"
+        if band is not None:
+            text = f"{text} ± {band:.3f} m"
+        lines.append(LogLine(tag=tag, text=text))
+    return lines
+
+
+def _area_lines(body: dict[str, object]) -> list[LogLine]:
+    raw = body.get("areas")
+    if not isinstance(raw, list):
+        return []
+    lines: list[LogLine] = []
+    for index, item in enumerate(raw):
+        row = _mapping(item)
+        area = _number(row.get("area_m2"))
+        if area is None:
+            continue
+        tag = _text(row.get("tag")) or f"AREA{index + 1}#"
+        lines.append(LogLine(tag=tag, text=f"{tag} {area:.4f} m²"))
+    return lines
+
+
+def _note_lines(body: dict[str, object]) -> list[LogLine]:
+    raw = body.get("annotations")
+    if not isinstance(raw, list):
+        return []
+    lines: list[LogLine] = []
+    for item in raw:
+        row = _mapping(item)
+        shape = _text(row.get("shape")) or "anotasi"
+        color = _text(row.get("color")) or ""
+        lines.append(LogLine(tag="ANOTE", text=f"{shape} {color}".strip()))
+    return lines
 
 
 def _meters(body: dict[str, object]) -> list[float]:

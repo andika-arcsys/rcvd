@@ -79,6 +79,26 @@ def test_scene_keeps_mesh_off_the_two_dimensional_status() -> None:
     assert any("housing" in item for item in warnings)
 
 
+def test_farther_span_uses_midpoint_depth_not_the_rims() -> None:
+    depth = np.full((40, 80), 2.0, dtype=np.float32)
+    depth[17:24, 17:24] = 4.0
+    depth[20, 10] = 8.0
+    depth[20, 30] = 0.4
+    scene = estimate_scene(
+        depth,
+        100.0,
+        "frm",
+        ((10.0, 10.0), (20.0, 10.0)),
+        0.4,
+        [((10.0, 20.0), (30.0, 20.0))],
+        [],
+        [],
+    )
+    lengths = scene["lengths"]
+    assert isinstance(lengths, list)
+    assert lengths[0]["distance_cm"] == pytest.approx(160.0)
+
+
 def test_nearer_depth_is_brighter_in_the_relative_preview() -> None:
     depth = np.ones((4, 4), dtype=np.float32)
     depth[0, 0] = 10.0

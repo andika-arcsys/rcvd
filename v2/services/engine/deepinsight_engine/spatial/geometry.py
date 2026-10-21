@@ -125,6 +125,47 @@ def measure_distance(
     )
 
 
+def measure_span(
+    point_a: tuple[int, int],
+    point_b: tuple[int, int],
+    depth_m: Any,
+    intrinsics: CameraIntrinsics,
+    calibration: ScaleCalibration,
+    *,
+    frame_id: str | None = None,
+) -> Measurement:
+    """Lebar pada bidang yang menghadap kamera, di kedalaman tengah garis.
+
+    Tepi pipa sering dapat kedalaman latar. Memakai kedua tepi itu memanjangkan
+    jarak. Focal tetap di rumus, lalu terbagi oleh garis kalibrasi yang sama.
+    """
+    np = importlib.import_module("numpy")
+    mid = ((point_a[0] + point_b[0]) // 2, (point_a[1] + point_b[1]) // 2)
+    z_mid, rel_mid = local_depth(depth_m, mid)
+    depth = z_mid * calibration.scale
+    p_a = pixel_to_3d(point_a, depth, intrinsics)
+    p_b = pixel_to_3d(point_b, depth, intrinsics)
+    distance = float(np.linalg.norm(p_a - p_b))
+    validity, warnings = _distance_validity(
+        calibration, intrinsics, frame_id, rel_mid, rel_mid
+    )
+    relative_error = float(np.sqrt(calibration.relative_uncertainty**2 + rel_mid**2 + 0.02**2))
+    if validity != "VALID_SAME_FRAME":
+        relative_error = max(relative_error, 0.20)
+    return Measurement(
+        distance_m=distance,
+        uncertainty_m=distance * relative_error,
+        status=calibration.source,
+        point_a_3d=(float(p_a[0]), float(p_a[1]), float(p_a[2])),
+        point_b_3d=(float(p_b[0]), float(p_b[1]), float(p_b[2])),
+        validity=validity,
+        warnings=tuple(warnings),
+        depth_a_m=depth,
+        depth_b_m=depth,
+        local_depth_relative_mad=(rel_mid, rel_mid),
+    )
+
+
 def calibration_from_reference(
     point_a: tuple[int, int],
     point_b: tuple[int, int],
@@ -140,7 +181,7 @@ def calibration_from_reference(
     np = importlib.import_module("numpy")
     if known_length_m <= 0:
         raise ValueError("Panjang referensi harus lebih besar dari nol.")
-    raw = measure_distance(
+    raw = measure_span(
         point_a,
         point_b,
         depth_m,

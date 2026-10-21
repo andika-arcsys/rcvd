@@ -156,6 +156,7 @@ function LiveBody({
             vision={vision}
             hydro={controls.hydro}
             spatial={controls.spatial}
+            frameId={status?.frame_id ?? null}
           />
           <SideColumn status={status} mission={mission} findings={findings} />
         </div>
