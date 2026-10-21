@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from .band import gradient_note
 from .da3_frame import ProcessGeometry, map_png_to_proc
 from .geometry import (
     CameraIntrinsics,
@@ -235,7 +236,7 @@ def _path(
 
 
 def _warnings(*groups: object) -> list[str]:
-    found = [HOUSING_WARNING, SPAN_WARNING]
+    found = [HOUSING_WARNING, SPAN_WARNING, gradient_note()]
     for group in groups:
         if isinstance(group, tuple):
             found.extend(str(item) for item in group)

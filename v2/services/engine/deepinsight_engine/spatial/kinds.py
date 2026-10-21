@@ -15,7 +15,7 @@ import importlib
 from dataclasses import dataclass
 from typing import Any
 
-from .band import facing_scale, silhouette_depth, uncertainty_m
+from .band import facing_scale, scored_depth, silhouette_depth, uncertainty_m
 from .da3_frame import ProcessGeometry, map_png_to_proc
 from .geometry import (
     CameraIntrinsics,
@@ -196,8 +196,10 @@ def _length3d(
     near_b = _inset(point_b, point_a, INSET)
     sample_a = read_window(depth_m, near_a, conf=conf, conf_min=conf_min)
     sample_b = read_window(depth_m, near_b, conf=conf, conf_min=conf_min)
-    p_a = pixel_to_3d(point_a, sample_a.depth * calibration.scale, intrinsics)
-    p_b = pixel_to_3d(point_b, sample_b.depth * calibration.scale, intrinsics)
+    z_a = scored_depth(sample_a.depth, calibration.depth_value)
+    z_b = scored_depth(sample_b.depth, calibration.depth_value)
+    p_a = pixel_to_3d(point_a, z_a * calibration.scale, intrinsics)
+    p_b = pixel_to_3d(point_b, z_b * calibration.scale, intrinsics)
     distance = float(np.linalg.norm(p_a - p_b))
     rel_a = sample_a.sigma / max(sample_a.depth, 1e-6)
     rel_b = sample_b.sigma / max(sample_b.depth, 1e-6)
@@ -236,8 +238,8 @@ def _length3d(
         point_b_3d=(float(p_b[0]), float(p_b[1]), float(p_b[2])),
         validity=validity,
         warnings=tuple(dict.fromkeys(warnings)),
-        depth_a_m=sample_a.depth * calibration.scale,
-        depth_b_m=sample_b.depth * calibration.scale,
+        depth_a_m=z_a * calibration.scale,
+        depth_b_m=z_b * calibration.scale,
         local_depth_relative_mad=(rel_a, rel_b),
     )
     return LineFigure(measured, "length3d", (_log(sample_a, geom), _log(sample_b, geom)))

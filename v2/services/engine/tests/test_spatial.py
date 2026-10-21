@@ -10,6 +10,7 @@ import pytest
 
 from deepinsight_engine.core.errors import EngineError
 from deepinsight_engine.gpu.vision import RELATIVE_LABEL
+from deepinsight_engine.spatial.band import scored_depth
 from deepinsight_engine.spatial.estimate import estimate_scene
 from deepinsight_engine.spatial.geometry import (
     CameraIntrinsics,
@@ -123,7 +124,9 @@ def test_farther_span_uses_midpoint_depth_not_the_rims() -> None:
     )
     lengths = scene["lengths"]
     assert isinstance(lengths, list)
-    assert lengths[0]["distance_cm"] == pytest.approx(160.0)
+    assert scene["distance_cm"] == pytest.approx(40.0)
+    assert lengths[0]["distance_cm"] == pytest.approx(160.0 * scored_depth(4.0, 2.0) / 4.0)
+    assert lengths[0]["depth"] == pytest.approx(4.0)
 
 
 def test_nearer_depth_is_brighter_in_the_relative_preview() -> None:
