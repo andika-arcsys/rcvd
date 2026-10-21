@@ -1,8 +1,19 @@
-"""Pita ketidakpastian garis 3D dan koreksi siluet diameter.
+"""Pita ketidakpastian garis 3D, rasio gradasi, dan koreksi siluet diameter.
 
-Pita = 2 × rel × panjang, dan 20% tetap batas bawah sampai ada uji akurasi di air.
+Pita = 2 × rel × panjang, dan 5% tetap batas bawah. Garis yang kliknya
+lebih kasar dari 5% tetap memakai pita klik itu.
 rel_cal adalah simpangan baku relatif skala dari dua klik pada garis kalibrasi,
 bukan pita 2σ yang sudah ditampilkan di angka 2D.
+
+Skor kedalaman membuka rasio model terhadap kedalaman kalibrasi:
+
+    z' = z_kal × (z / z_kal) ** 1.5
+
+Depth Anything 3 merapatkan jauh-bagi-dekat pada permukaan yang menjauh.
+Pada frame pipa, piksel menyusut kira-kira 3 kali sementara kedalaman model
+hanya naik kira-kira 2 kali. Pangkat 1.5 membuka selisih itu. Garis yang
+kedalamannya sama dengan kalibrasi tidak berubah. Peta seragam tidak berubah.
+Warna termal tetap rentang persentil 2–98, bukan bobot meter.
 
 Kedalaman siluet silinder, bila peta membaca permukaan depan:
 
@@ -11,13 +22,15 @@ Kedalaman siluet silinder, bila peta membaca permukaan depan:
 Menambah R penuh menaruh kedalaman di sumbu dan memanjangkan diameter.
 Skala bergantung pada z_sil, jadi skala dihitung ulang 3 kali dengan redaman
 setengah. Tanpa redaman, tiga langkah berosilasi dan tidak mendekati titik tetap.
+Koreksi siluet tetap pada kedalaman mentah model, sebelum pangkat gradasi.
 """
 
 from __future__ import annotations
 
 import math
 
-FLOOR_REL = 0.20
+FLOOR_REL = 0.05
+GRADIENT_GAIN = 1.5
 FACING_STEPS = 3
 
 
@@ -37,6 +50,20 @@ def uncertainty_m(
     rel_c = sigma_cal / max(abs(depth_cal), 1e-6)
     rel = math.sqrt(rel_cal**2 + click**2 + rel_z**2 + rel_c**2)
     return max(2.0 * rel, FLOOR_REL) * distance_m
+
+
+def scored_depth(depth: float, cal_depth: float, gain: float = GRADIENT_GAIN) -> float:
+    """Kedalaman untuk centimeter. Mentah bila kalibrasi belum punya kedalaman."""
+    if depth <= 0 or cal_depth <= 0 or gain == 1.0:
+        return depth
+    return float(cal_depth * (depth / cal_depth) ** gain)
+
+
+def gradient_note() -> str:
+    return (
+        f"Rasio gradasi {GRADIENT_GAIN:.2f} terhadap kedalaman kalibrasi. "
+        "Warna termal tetap persentil, bukan meter."
+    )
 
 
 def silhouette_depth(z_front_m: float, radius_m: float) -> float:
