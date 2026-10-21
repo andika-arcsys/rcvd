@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from itertools import pairwise
 from typing import Any
 
-from .band import uncertainty_m
+from .band import FLOOR_REL, uncertainty_m
 
 
 @dataclass(frozen=True)
@@ -324,7 +324,7 @@ def calculate_accumulated_path_distance(
         np.sqrt(calibration.relative_uncertainty**2 + max(local_mads) ** 2 + 0.02**2)
     )
     if validity != "VALID_SAME_FRAME":
-        relative_error = max(relative_error, 0.20)
+        relative_error = max(relative_error, FLOOR_REL)
     return GeometryMeasurement(
         kind="PATH_DISTANCE",
         value=distance * 100.0,
