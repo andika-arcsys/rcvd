@@ -4517,6 +4517,16 @@
               }
             ],
             "title": "Preview Jpeg"
+          },
+          "frame_width": {
+            "type": "integer",
+            "title": "Frame Width",
+            "default": 0
+          },
+          "frame_height": {
+            "type": "integer",
+            "title": "Frame Height",
+            "default": 0
           }
         },
         "type": "object",
@@ -7460,6 +7470,28 @@
             "type": "number",
             "title": "Center V",
             "default": 0.0
+          },
+          "corners": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Corners",
+            "default": []
+          },
+          "axis": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Axis",
+            "default": []
           }
         },
         "type": "object",

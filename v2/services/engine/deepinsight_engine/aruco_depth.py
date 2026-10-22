@@ -30,6 +30,8 @@ class MarkerPose:
     distance_mm: float
     center_u: float = 0.0
     center_v: float = 0.0
+    corners: tuple[tuple[float, float], ...] = ()
+    axis: tuple[tuple[float, float], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -37,6 +39,8 @@ class ArucoScan:
     markers: tuple[MarkerPose, ...]
     preview_jpeg: bytes | None
     message: str
+    width: int = 0
+    height: int = 0
 
 
 def marker_png(
@@ -93,9 +97,34 @@ def measure_markers(
     dist = np.array(dist_coeffs, dtype=np.float64).reshape(-1, 1)
     poses = _poses(cv2, corners, ids, matrix, dist, marker_mm)
     preview = _preview(cv2, image, corners, ids, matrix, dist, poses, marker_mm)
+    height, width = int(image.shape[0]), int(image.shape[1])
     if not poses:
-        return ArucoScan((), preview, f"Tidak ada marker {dictionary_name} pada foto.")
-    return ArucoScan(tuple(poses), preview, f"{len(poses)} marker {dictionary_name} terbaca.")
+        note = f"Tidak ada marker {dictionary_name} pada foto."
+        return ArucoScan((), preview, note, width, height)
+    note = f"{len(poses)} marker {dictionary_name} terbaca."
+    return ArucoScan(tuple(poses), preview, note, width, height)
+
+
+def _quad(image_pts: Any) -> tuple[tuple[float, float], ...]:
+    return tuple((float(image_pts[index, 0]), float(image_pts[index, 1])) for index in range(4))
+
+
+def _axis_pixels(
+    cv2: Any, rvec: Any, tvec: Any, matrix: object, dist: object, marker_mm: float
+) -> tuple[tuple[float, float], ...]:
+    length = float(marker_mm) / 1000.0 * 0.5
+    obj = np.array(
+        [[0, 0, 0], [length, 0, 0], [0, length, 0], [0, 0, length]],
+        dtype=np.float32,
+    )
+    try:
+        projected, _jacobian = cv2.projectPoints(obj, rvec, tvec, matrix, dist)
+    except cv2.error:
+        return ()
+    points = np.asarray(projected, dtype=np.float64).reshape(-1, 2)
+    if len(points) != 4:
+        return ()
+    return tuple((float(point[0]), float(point[1])) for point in points)
 
 
 def _cv2() -> Any | str:
@@ -139,7 +168,7 @@ def _poses(
         if index >= len(corner_list):
             break
         image_pts = np.asarray(corner_list[index], dtype=np.float32).reshape(4, 2)
-        ok, _rvec, tvec = cv2.solvePnP(obj, image_pts, matrix, dist)
+        ok, rvec, tvec = cv2.solvePnP(obj, image_pts, matrix, dist)
         if not ok:
             continue
         flat = np.asarray(tvec, dtype=np.float64).reshape(3)
@@ -153,6 +182,8 @@ def _poses(
                 distance_mm=distance * 1000.0,
                 center_u=float(image_pts[:, 0].mean()),
                 center_v=float(image_pts[:, 1].mean()),
+                corners=_quad(image_pts),
+                axis=_axis_pixels(cv2, rvec, tvec, matrix, dist, marker_mm),
             )
         )
     return poses

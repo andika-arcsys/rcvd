@@ -53,6 +53,8 @@ class MarkerOut(BaseModel):
     distance_mm: float
     center_u: float = 0.0
     center_v: float = 0.0
+    corners: list[list[float]] = []
+    axis: list[list[float]] = []
 
 
 class K3Out(BaseModel):
@@ -70,6 +72,8 @@ class ArucoOut(BaseModel):
     markers: list[MarkerOut]
     message: str
     preview_jpeg: str | None = None
+    frame_width: int = 0
+    frame_height: int = 0
 
 
 class ReferenceOut(BaseModel):
@@ -332,12 +336,20 @@ def _scan_out(camera_id: str, marker_mm: float, dictionary: str, scan: ArucoScan
                 distance_mm=item.distance_mm,
                 center_u=item.center_u,
                 center_v=item.center_v,
+                corners=_pairs(item.corners),
+                axis=_pairs(item.axis),
             )
             for item in scan.markers
         ],
         message=scan.message,
         preview_jpeg=preview,
+        frame_width=scan.width,
+        frame_height=scan.height,
     )
+
+
+def _pairs(points: tuple[tuple[float, float], ...]) -> list[list[float]]:
+    return [[point[0], point[1]] for point in points]
 
 
 def _matrix_for_frame(camera: CameraFile, width: int, height: int) -> list[float]:

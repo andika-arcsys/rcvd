@@ -7,7 +7,6 @@ import { ArucoPanel } from './ArucoPanel';
 import { ChessPanel } from './ChessPanel';
 import { comma } from './engineForm';
 import { K3Panel } from './K3Panel';
-import { LiveCalib } from './LiveCalib';
 import { markerPreset } from './preset';
 import { ReferenceCard, asReference, squareHint } from './ReferenceCard';
 import { ARUCO_URL, BOARD_URL, VIDEO_URL, type ReferenceView } from './types';
@@ -45,12 +44,6 @@ export default function KalibrasiKameraScreen() {
         />
         <K3Panel cameras={cameras} />
       </div>
-      <LiveCalib
-        role={role}
-        allowed={WRITERS.has(role)}
-        cameras={cameras}
-        preset={markerPreset(profile)}
-      />
       <Stage title={t('calib.stage4')} body={t('calib.stage4body')} />
     </div>
   );

@@ -1292,6 +1292,16 @@ export interface components {
             message: string;
             /** Preview Jpeg */
             preview_jpeg?: string | null;
+            /**
+             * Frame Width
+             * @default 0
+             */
+            frame_width: number;
+            /**
+             * Frame Height
+             * @default 0
+             */
+            frame_height: number;
         };
         /** AssessIn */
         AssessIn: {
@@ -2299,6 +2309,16 @@ export interface components {
              * @default 0
              */
             center_v: number;
+            /**
+             * Corners
+             * @default []
+             */
+            corners: number[][];
+            /**
+             * Axis
+             * @default []
+             */
+            axis: number[][];
         };
         /** MeasView */
         MeasView: {

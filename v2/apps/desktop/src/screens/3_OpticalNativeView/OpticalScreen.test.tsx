@@ -305,6 +305,85 @@ describe('Live Operation', () => {
     expect(screen.getByRole('button', { name: 'FREEZE' })).toBeDisabled();
   });
 
+  it('tab Kalibrasi F5 tetap di Live Operation dengan jendela Optical', async () => {
+    renderApp('/live', {
+      role: 'pilot_drone',
+      routes: {
+        ...routes(),
+        'GET /cameras': [],
+        'POST /models/switch': () => jsonResponse(200, { active: 'optical', state: 'ready' }),
+      },
+    });
+    expect(await screen.findByRole('tab', { name: /Kalibrasi/ })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /Canvas/ })).toBeNull();
+    await userEvent.click(screen.getByRole('tab', { name: /Kalibrasi/ }));
+    expect(screen.getByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Video asli · tanpa pengolahan')).toBeInTheDocument();
+    const camera = screen.getByLabelText('Berkas kamera live');
+    const video = screen.getByLabelText('Video asli · tanpa pengolahan');
+    expect(camera.compareDocumentPosition(video) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(camera).toBeDisabled();
+    expect(screen.getByLabelText('Sisi marker live (mm)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Kamus marker live')).toHaveValue('DICT_4X4_50');
+    expect(screen.getByRole('button', { name: 'Mulai' })).toBeDisabled();
+    expect(
+      screen.getByText(/Parameter di kolom kiri\. Jendela video sama dengan Optical/),
+    ).toBeInTheDocument();
+  });
+
+  it('F5 tidak membuka Canvas dan mengisi prior generic', async () => {
+    renderApp('/live', {
+      role: 'ahli_ukur',
+      routes: {
+        ...routes(),
+        'GET /cameras': [{ id: 'generic' }],
+        'GET /cameras/reference': {
+          id: 'generic',
+          origin: 'reference',
+          board: 'chessboard',
+          square_mm: 25,
+          corners_cols: 9,
+          corners_rows: 6,
+          image_width: 1920,
+          image_height: 1080,
+          marker_mm: 100,
+          dictionary: 'DICT_4X4_50',
+          camera_matrix: [1920, 0, 960, 0, 1920, 540, 0, 0, 1],
+          dist_coeffs: [0, 0, 0, 0, 0],
+          focal_px: 1920,
+          principal_u: 960,
+          principal_v: 540,
+          marker_source_cm: 10,
+          calibrated_underwater: false,
+          matches_formula: true,
+        },
+        'POST /models/switch': () => jsonResponse(200, { active: 'optical', state: 'ready' }),
+      },
+    });
+    await screen.findByRole('tab', { name: /Optical/ });
+    await userEvent.keyboard('[F5]');
+    expect(screen.getByRole('heading', { name: 'Live Operation' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save as snapshot' })).toBeNull();
+    expect(await screen.findByLabelText('Berkas kamera live')).toHaveValue('generic');
+    expect(screen.getByLabelText('Sisi marker live (mm)')).toHaveValue('100');
+    expect(screen.getByRole('button', { name: 'Mulai' })).toBeEnabled();
+    expect(screen.getByLabelText('Video asli · tanpa pengolahan')).toBeInTheDocument();
+  });
+
+  it('peran lihat tidak dapat memulai kalibrasi live', async () => {
+    renderApp('/live', {
+      role: 'pengelola_data',
+      routes: {
+        ...routes(),
+        'GET /cameras': [{ id: 'generic' }],
+        'POST /models/switch': () => jsonResponse(200, { active: 'optical', state: 'ready' }),
+      },
+    });
+    await userEvent.click(await screen.findByRole('tab', { name: /Kalibrasi/ }));
+    expect(screen.getByLabelText('Berkas kamera live')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Mulai' })).toBeDisabled();
+  });
+
   it('Selesai sesi meminta konfirmasi', async () => {
     renderApp('/live', { role: 'pilot_drone', routes: routes() });
     await userEvent.click(await screen.findByRole('button', { name: 'Selesai sesi' }));

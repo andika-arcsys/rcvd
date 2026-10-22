@@ -223,7 +223,8 @@
     "tabAquaclear": "AquaClear",
     "tabHydro": "HydroDetect",
     "tabSpatial": "SpatialSight",
-    "tabCanvas": "Canvas",
+    "tabCalibration": "Kalibrasi",
+    "calibSide": "Parameter di kolom kiri. Jendela video sama dengan Optical. Prior generic tidak memberi status VALID.",
     "ratio": "Rasio jendela",
     "sourceTitle": "Sumber video",
     "sourceCamera": "Kamera laptop",
@@ -644,7 +645,7 @@
   "calib": {
     "intro": "Empat tahap: kunci perangkat, geometri K1, jangkar K2 dengan profil K3, lalu cek fisik. Tiga tautan di bawah adalah sumber langkah OpenCV.",
     "stage1": "Tahap 1. Kunci perangkat",
-    "stage1body": "Tombol Kalibrasi live membuka sumber yang sama dengan Live Operation: kamera laptop, berkas video, atau RTSP. Kunci resolusi ke resolusi inspeksi, fokus manual sekitar 1 m, matikan zoom, penstabil, dan OSD. Isi port dan air di tahap 2.",
+    "stage1body": "Tab Kalibrasi (F5) di Live Operation memakai jendela video Optical. Sumbernya kamera laptop, berkas video, atau RTSP. Kunci resolusi ke resolusi inspeksi, fokus manual sekitar 1 m, matikan zoom, penstabil, dan OSD. Isi port dan air di tahap 2.",
     "stage2": "Tahap 2. Geometri K1",
     "stage2body": "Papan catur memakai sudut dalam. ChArUco memakai jumlah kotak. Contoh papan catur 9 × 6 sudut dalam. Contoh ChArUco 8 × 6 kotak, sisi marker lebih kecil dari sisi kotak. Ukur satu kotak dengan penggaris. Angka pada panel referensi berasal dari config, bukan ukuran papan Anda. Untuk air, potret di dalam air dengan port yang sama. Kumpulkan 25 sampai 40 foto bila memungkinkan, jarak sekitar 0,5 m sampai 2 m, kemiringan sampai sekitar ±45°. Mesin menerima minimal 3 foto terbaca, satu resolusi.",
     "genericTitle": "Referensi generik",

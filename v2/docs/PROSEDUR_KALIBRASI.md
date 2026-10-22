@@ -54,7 +54,7 @@ Kolom ukuran kotak di tahap 2 tetap diketik dari penggaris. Angka 25 mm hanya co
 
 Kerjakan sebelum memotret papan.
 
-1. Pada layar Kalibrasi kamera, tombol **Kalibrasi live** membuka sumber video yang sama dengan Live Operation: kamera laptop, berkas, atau RTSP.
+1. Di Live Operation, tab **Kalibrasi (F5)** memakai jendela video yang sama dengan Optical. Sumbernya kamera laptop, berkas, atau RTSP. Parameter ada di kolom kiri.
 2. Kunci resolusi ke resolusi yang dipakai saat mengukur. Semua foto satu tahap harus ukuran yang sama. Program menolak kumpulan yang campur.
 3. Fokus manual, jarak kerja sekitar 1 m. Matikan zoom, penstabil elektronik, dan OSD.
 4. Catat identitas kamera. Di tahap 2 isi port `kubah` atau `datar`, dan air `laut` atau `tawar`.
@@ -114,20 +114,20 @@ Perintah baris hanya menjalankan papan catur, dengan arti sudut dalam yang sama.
 1. Pilih berkas kamera. Sebelum foto K1 ada, pilih `generic`. Jarak yang tampil memakai prior, bukan status VALID.
 2. Cetak marker dari kamus yang sama dengan yang dipilih: `DICT_4X4_50` (nomor 0–49) atau `DICT_6X6_250` (nomor 0–249).
 3. Ukur satu sisi dengan penggaris, dalam milimeter. Video contoh memakai 27 mm di ponsel. Contoh lapangan 100 mm. Yang dipakai adalah ukuran cetakan sendiri. Jangan perbesar atau perkecil setelah diukur.
-4. Unggah satu foto. **Ukur kedalaman.** Atau pakai **Kalibrasi live** bila kertas marker ada di depan kamera.
+4. Unggah satu foto. **Ukur kedalaman.** Atau buka Live Operation, tab **Kalibrasi (F5)**, bila kertas marker ada di depan kamera.
 
 ### K2, kalibrasi live
 
-1. Pilih berkas. `generic` boleh dipakai sebelum foto K1. Sisi marker terisi dari referensi 100 mm bila config masih `laser.ref_cm` 10. Ganti dengan ukuran cetakan sendiri.
-2. **Kalibrasi live**, lalu buka sumber: kamera laptop (nomor kamera, biasanya 0), berkas video, atau RTSP.
-3. **Mulai.** Program mengambil bingkai terbaru dari sumber yang sedang jalan, mencari marker, menggambar kotak dan sumbu, lalu menampilkan X, Y, Z, dan jarak dalam meter.
+1. Di Live Operation buka tab **Kalibrasi (F5)**. `generic` boleh dipakai sebelum foto K1. Sisi marker terisi dari referensi 100 mm bila config masih `laser.ref_cm` 10. Ganti dengan ukuran cetakan sendiri.
+2. Buka sumber di atas jendela video: kamera laptop (nomor kamera, biasanya 0), berkas video, atau RTSP. Jendelanya sama dengan Optical.
+3. **Mulai** di kolom kiri. Program mengambil bingkai terbaru, mencari marker, menggambar kotak dan sumbu pada jendela video, lalu menampilkan X, Y, Z, dan jarak dalam meter.
 4. **Berhenti** menghentikan pembacaan. Gambar terakhir tetap di layar.
 
 Ukuran gambar live yang berbeda dari foto K1 membuat matriks diskalakan ke lebar dan tinggi bingkai itu. Sisi marker ditulis ke berkas kamera saat angkanya berubah, tidak pada setiap bingkai. Sumber yang belum punya gambar menampilkan pesan, tanpa angka jarak.
 
 Program memanggil `solvePnP`. Sudut objek: kiri-atas, kanan-atas, kanan-bawah, kiri-bawah, sumbu Y marker ke atas. Hasil vektor ada di bingkai kamera: X ke kanan gambar, Y ke bawah gambar, Z menjauh. Jarak adalah panjang vektor ke pusat marker.
 
-Layar menampilkan meter. Berkas respons tetap menyimpan milimeter (meter kali 1000) supaya hitungan lama tetap sama. Sumbu digambar pada pratinjau, panjangnya setengah sisi marker.
+Layar menampilkan meter. Berkas respons tetap menyimpan milimeter (meter kali 1000) supaya hitungan lama tetap sama. Sumbu digambar pada jendela video Optical, panjangnya setengah sisi marker.
 
 Sisi yang diketik dan kamus yang dipilih ditulis ke berkas kamera pada permintaan ini, termasuk bila marker tidak terbaca. Perkiraan berikutnya memakai sisi itu.
 

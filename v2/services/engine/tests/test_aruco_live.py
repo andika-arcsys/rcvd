@@ -31,6 +31,8 @@ def test_live_without_a_picture_asks_for_a_source(tmp_path: Path) -> None:
         assert body["markers"] == []
         assert "Sumber video" in body["message"]
         assert body["preview_jpeg"] is None
+        assert body["frame_width"] == 0
+        assert body["frame_height"] == 0
 
 
 def test_live_frame_reports_the_marker_in_metres(tmp_path: Path) -> None:
@@ -47,8 +49,13 @@ def test_live_frame_reports_the_marker_in_metres(tmp_path: Path) -> None:
         found = client.post("/cameras/aruco/live", data=_live("pilot_drone"))
         assert found.status_code == 200, found.text
         body = found.json()
-        assert body["markers"][0]["marker_id"] == 3
-        assert body["markers"][0]["z_mm"] > 0
+        marker = body["markers"][0]
+        assert marker["marker_id"] == 3
+        assert marker["z_mm"] > 0
+        assert len(marker["corners"]) == 4
+        assert len(marker["axis"]) == 4
+        assert body["frame_width"] == width
+        assert body["frame_height"] == height
         assert body["preview_jpeg"]
     saved = yaml.safe_load((cfg / "cameras" / "rov01.yaml").read_text(encoding="utf-8"))
     assert saved["marker_mm"] == 40

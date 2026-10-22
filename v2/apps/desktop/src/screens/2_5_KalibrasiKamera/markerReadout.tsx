@@ -2,7 +2,13 @@ import { t } from '../../i18n';
 import { comma } from './engineForm';
 import type { ArucoOut, MarkerOut } from './types';
 
-export function MarkerTable({ result }: { result: ArucoOut }) {
+export function MarkerTable({
+  result,
+  showPreview = true,
+}: {
+  result: ArucoOut;
+  showPreview?: boolean;
+}) {
   return (
     <div className="flex flex-col gap-3">
       {result.markers.length === 0 ? null : (
@@ -23,7 +29,7 @@ export function MarkerTable({ result }: { result: ArucoOut }) {
           </tbody>
         </table>
       )}
-      {result.preview_jpeg ? (
+      {showPreview && result.preview_jpeg ? (
         <img
           alt={t('calib.arucoTitle')}
           className="max-h-96 max-w-full rounded border border-line object-contain"
@@ -45,6 +51,8 @@ export function asAruco(value: unknown): ArucoOut | null {
     markers: row.markers.filter(isMarker),
     message: row.message,
     preview_jpeg: row.preview_jpeg ?? null,
+    frame_width: row.frame_width ?? 0,
+    frame_height: row.frame_height ?? 0,
   };
 }
 

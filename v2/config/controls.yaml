@@ -8,7 +8,7 @@ keyboard:
   tab_aquaclear: F2
   tab_hydrodetect: F3
   tab_spatialsight: F4
-  tab_canvas: F5
+  tab_calibration: F5
 
 gamepad:            # layout Xbox / XInput
   freeze: A

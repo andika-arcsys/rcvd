@@ -18,6 +18,8 @@ export interface MarkerOut {
   y_mm: number;
   z_mm: number;
   distance_mm: number;
+  corners?: number[][];
+  axis?: number[][];
 }
 
 export interface ArucoOut {
@@ -27,6 +29,8 @@ export interface ArucoOut {
   markers: MarkerOut[];
   message: string;
   preview_jpeg: string | null;
+  frame_width: number;
+  frame_height: number;
 }
 
 export interface ReferenceView {

@@ -84,9 +84,7 @@ describe('Kalibrasi kamera', () => {
     expect(screen.getByText(/Diterima/)).toBeInTheDocument();
     expect(screen.getByText('Berkas ditulis ke config/cameras.')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledOnce();
-    await userEvent.click(screen.getByRole('button', { name: 'Kalibrasi live' }));
-    expect(screen.getByText('Sumber video')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Mulai' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Kalibrasi live' })).toBeNull();
   });
 
   it('menampilkan prior generik tanpa mengisi ukuran kotak', async () => {
@@ -123,10 +121,8 @@ describe('Kalibrasi kamera', () => {
     expect(screen.getByLabelText('Ukuran satu kotak (mm)')).toHaveValue('');
     expect(screen.getByText(/25 mm, 9 × 6/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Hitung kalibrasi' })).toBeDisabled();
-    await userEvent.click(screen.getByRole('button', { name: 'Kalibrasi live' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Mulai' })).toBeEnabled());
-    expect(screen.getByLabelText('Sisi marker live (mm)')).toHaveValue('100');
-    expect(screen.getByLabelText('Berkas kamera live')).toHaveValue('generic');
+    expect(screen.queryByRole('button', { name: 'Kalibrasi live' })).toBeNull();
+    expect(screen.queryByLabelText('Sisi marker live (mm)')).toBeNull();
   });
 
   it('peran lihat tidak dapat menghitung', async () => {
@@ -134,7 +130,7 @@ describe('Kalibrasi kamera', () => {
     expect(await screen.findByRole('button', { name: 'Hitung kalibrasi' })).toBeDisabled();
     expect(screen.getByLabelText('ID kamera')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Ukur kedalaman' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Kalibrasi live' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Kalibrasi live' })).toBeNull();
     expect(screen.getByText(/hanya dapat melihat/)).toBeInTheDocument();
   });
 });
