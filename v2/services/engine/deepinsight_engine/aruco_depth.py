@@ -1,12 +1,13 @@
 """Kedalaman satu kamera dari marker ArUco.
 
 Urutan sudut objek mengikuti tutorial VisionBrick: kiri-atas, kanan-atas,
-kanan-bawah, kiri-bawah, sumbu Y marker ke atas. solvePnP memakai matriks
-hasil kalibrasi papan. Titik objek dalam meter (sisi milimeter dibagi 1000)
-supaya tvec satu satuan dengan kedalaman video. Hasil tetap disimpan dalam
-milimeter: nilai meter dikali 1000. X dan Y adalah bingkai kamera OpenCV
-(kanan dan bawah). Z menjauh dari kamera. Jarak adalah panjang vektor ke
-pusat marker.
+kanan-bawah, kiri-bawah, sumbu Y marker ke atas. Pose planar memakai SVD
+homografi di CUDA bila PyTorch melihat GPU, rumus yang sama di CPU bila tidak,
+dan solvePnP hanya bila rumus itu gagal. Titik objek dalam meter (sisi
+milimeter dibagi 1000) supaya tvec satu satuan dengan kedalaman video. Hasil
+tetap disimpan dalam milimeter: nilai meter dikali 1000. X dan Y adalah
+bingkai kamera OpenCV (kanan dan bawah). Z menjauh dari kamera. Jarak adalah
+panjang vektor ke pusat marker.
 """
 
 from __future__ import annotations
@@ -16,6 +17,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+
+from .pose_gpu import solve_planar
 
 DICTIONARY = "DICT_4X4_50"
 DICTIONARIES: dict[str, int] = {"DICT_4X4_50": 49, "DICT_6X6_250": 249}
@@ -95,13 +98,13 @@ def measure_markers(
     corners, ids = _detect(cv2, gray, dictionary_name)
     matrix = np.array(camera_matrix, dtype=np.float64).reshape(3, 3)
     dist = np.array(dist_coeffs, dtype=np.float64).reshape(-1, 1)
-    poses = _poses(cv2, corners, ids, matrix, dist, marker_mm)
+    poses, device = _poses(cv2, corners, ids, matrix, dist, marker_mm)
     preview = _preview(cv2, image, corners, ids, matrix, dist, poses, marker_mm)
     height, width = int(image.shape[0]), int(image.shape[1])
     if not poses:
         note = f"Tidak ada marker {dictionary_name} pada foto."
         return ArucoScan((), preview, note, width, height)
-    note = f"{len(poses)} marker {dictionary_name} terbaca."
+    note = f"{len(poses)} marker {dictionary_name} terbaca. Pose {device}."
     return ArucoScan(tuple(poses), preview, note, width, height)
 
 
@@ -152,41 +155,70 @@ def _poses(
     matrix: object,
     dist: object,
     marker_mm: float,
-) -> list[MarkerPose]:
+) -> tuple[list[MarkerPose], str]:
     if ids is None:
-        return []
+        return [], "CPU"
     found = list(ids)
     corner_list = list(corners) if corners is not None else []
+    obj = _marker_object(marker_mm)
+    poses: list[MarkerPose] = []
+    labels: list[str] = []
+    for index, marker_id in enumerate(found):
+        solved = _one_pose(cv2, corner_list, index, marker_id, obj, matrix, dist, marker_mm)
+        if solved is None:
+            continue
+        pose, label = solved
+        poses.append(pose)
+        labels.append(label)
+    return poses, _pose_device(labels)
+
+
+def _pose_device(labels: list[str]) -> str:
+    if labels and all(label == "GPU" for label in labels):
+        return "GPU"
+    return "CPU"
+
+
+def _marker_object(marker_mm: float) -> np.ndarray:
     half = float(marker_mm) / 2000.0
-    # Y objek ke atas, sama dengan tutorial. solvePnP menaruh tvec di bingkai kamera.
-    obj = np.array(
+    # Y objek ke atas, sama dengan tutorial. tvec tetap di bingkai kamera.
+    return np.array(
         [[-half, half, 0], [half, half, 0], [half, -half, 0], [-half, -half, 0]],
         dtype=np.float32,
     )
-    poses: list[MarkerPose] = []
-    for index, marker_id in enumerate(found):
-        if index >= len(corner_list):
-            break
-        image_pts = np.asarray(corner_list[index], dtype=np.float32).reshape(4, 2)
-        ok, rvec, tvec = cv2.solvePnP(obj, image_pts, matrix, dist)
-        if not ok:
-            continue
-        flat = np.asarray(tvec, dtype=np.float64).reshape(3)
-        distance = float(np.linalg.norm(flat))
-        poses.append(
-            MarkerPose(
-                marker_id=int(np.asarray(marker_id).reshape(-1)[0]),
-                x_mm=float(flat[0]) * 1000.0,
-                y_mm=float(flat[1]) * 1000.0,
-                z_mm=float(flat[2]) * 1000.0,
-                distance_mm=distance * 1000.0,
-                center_u=float(image_pts[:, 0].mean()),
-                center_v=float(image_pts[:, 1].mean()),
-                corners=_quad(image_pts),
-                axis=_axis_pixels(cv2, rvec, tvec, matrix, dist, marker_mm),
-            )
-        )
-    return poses
+
+
+def _one_pose(
+    cv2: Any,
+    corner_list: list[Any],
+    index: int,
+    marker_id: Any,
+    obj: np.ndarray,
+    matrix: object,
+    dist: object,
+    marker_mm: float,
+) -> tuple[MarkerPose, str] | None:
+    if index >= len(corner_list):
+        return None
+    image_pts = np.asarray(corner_list[index], dtype=np.float32).reshape(4, 2)
+    posed = solve_planar(cv2, obj, image_pts, np.asarray(matrix), np.asarray(dist))
+    if posed is None:
+        return None
+    rvec, tvec, label = posed
+    flat = np.asarray(tvec, dtype=np.float64).reshape(3)
+    distance = float(np.linalg.norm(flat))
+    pose = MarkerPose(
+        marker_id=int(np.asarray(marker_id).reshape(-1)[0]),
+        x_mm=float(flat[0]) * 1000.0,
+        y_mm=float(flat[1]) * 1000.0,
+        z_mm=float(flat[2]) * 1000.0,
+        distance_mm=distance * 1000.0,
+        center_u=float(image_pts[:, 0].mean()),
+        center_v=float(image_pts[:, 1].mean()),
+        corners=_quad(image_pts),
+        axis=_axis_pixels(cv2, rvec, tvec, matrix, dist, marker_mm),
+    )
+    return pose, label
 
 
 def _preview(
@@ -224,11 +256,7 @@ def _draw_axes(
 ) -> None:
     if not poses or corners is None or not hasattr(cv2, "drawFrameAxes"):
         return
-    half = float(marker_mm) / 2000.0
-    obj = np.array(
-        [[-half, half, 0], [half, half, 0], [half, -half, 0], [-half, -half, 0]],
-        dtype=np.float32,
-    )
+    obj = _marker_object(marker_mm)
     corner_list = list(corners)
     axis = float(marker_mm) / 1000.0 * 0.5
     for index, pose in enumerate(poses):

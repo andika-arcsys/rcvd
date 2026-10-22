@@ -46,6 +46,12 @@ from .yolo_seg import decode_yolo_seg
 
 
 def main() -> None:
+    from ..stop import run_until_stopped
+
+    run_until_stopped(_listen, stream=sys.stderr)
+
+
+def _listen() -> None:
     from .tensorflow_mem import enable_memory_growth
 
     enable_memory_growth()

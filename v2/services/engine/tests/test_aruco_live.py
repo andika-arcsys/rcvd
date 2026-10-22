@@ -57,6 +57,7 @@ def test_live_frame_reports_the_marker_in_metres(tmp_path: Path) -> None:
         assert body["frame_width"] == width
         assert body["frame_height"] == height
         assert body["preview_jpeg"]
+        assert body["message"].endswith("Pose CPU.") or body["message"].endswith("Pose GPU.")
     saved = yaml.safe_load((cfg / "cameras" / "rov01.yaml").read_text(encoding="utf-8"))
     assert saved["marker_mm"] == 40
     assert saved["dictionary"] == "DICT_4X4_50"

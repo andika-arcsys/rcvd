@@ -70,6 +70,7 @@ def test_upright_aruco_depth_matches_the_pinhole() -> None:
     dist = [0, 0, 0, 0, 0]
     scan = measure_markers(_upright_marker(3, side), matrix, dist, marker_mm)
     assert scan.message.startswith("1 marker")
+    assert scan.message.endswith("Pose CPU.") or scan.message.endswith("Pose GPU.")
     assert len(scan.markers) == 1
     pose = scan.markers[0]
     assert pose.marker_id == 3
