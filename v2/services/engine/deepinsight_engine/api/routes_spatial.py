@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field, ValidationError
 
 from ..core.camera_file import CameraFile
+from ..k3_align import alignment_status
 from .routes_measure import PairIn, PolyIn, Px
 from .security import require_token
 
@@ -147,11 +148,27 @@ def _camera_file(request: Request, camera_id: str | None) -> dict[str, object] |
         return None
     if camera.camera_matrix is None:
         return None
-    return {
+    profile = Path(office.config_dir) / "calibration" / f"{chosen}.json"
+    found: dict[str, object] = {
         "camera_matrix": camera.camera_matrix,
         "camera_width": camera.image_width,
         "camera_height": camera.image_height,
+        "k3_path": str(profile),
+        "k3_camera_id": chosen,
     }
+    if camera.dist_coeffs is not None:
+        found["dist_coeffs"] = camera.dist_coeffs
+    if camera.marker_mm is not None and camera.marker_mm > 0:
+        found["marker_mm"] = camera.marker_mm
+    if camera.dictionary:
+        found["dictionary"] = camera.dictionary
+    if camera.origin:
+        found["camera_origin"] = camera.origin
+    status = alignment_status(profile)
+    if status.a is not None and status.b is not None:
+        found["k3_a"] = status.a
+        found["k3_b"] = status.b
+    return found
 
 
 def _mission_camera(office: object) -> str | None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Literal
 
@@ -111,11 +112,41 @@ class Cache(_Strict):
     max_mb: int
 
 
+_CAMERA_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$")
+
+
+class CameraReference(_Strict):
+    """Contoh papan dan distorsi nol. Bukan pengukuran lensa."""
+
+    id: str
+    board: Literal["chessboard"]
+    corners_cols: int
+    corners_rows: int
+    square_mm: float
+    dictionary: str
+    dist_coeffs: list[float]
+
+    @model_validator(mode="after")
+    def _prior(self) -> CameraReference:
+        if _CAMERA_ID.fullmatch(self.id) is None:
+            raise ValueError("id referensi kamera tidak valid")
+        if self.corners_cols < 2 or self.corners_rows < 2:
+            raise ValueError("sudut referensi minimal 2")
+        if self.square_mm <= 0:
+            raise ValueError("square_mm referensi harus positif")
+        if not self.dictionary.strip():
+            raise ValueError("kamus referensi kosong")
+        if len(self.dist_coeffs) not in {4, 5, 8}:
+            raise ValueError("dist_coeffs referensi harus 4, 5, atau 8 angka")
+        return self
+
+
 class CameraThresholds(_Strict):
     """Pita RMS reprojeksi. USULAN, praktik umum OpenCV, bukan angka prosedur JOB Tomori."""
 
     rms_good_px: float
     rms_max_px: float
+    reference: CameraReference
 
     @model_validator(mode="after")
     def _band(self) -> CameraThresholds:

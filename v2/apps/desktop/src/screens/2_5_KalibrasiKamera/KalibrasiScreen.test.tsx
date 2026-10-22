@@ -84,6 +84,45 @@ describe('Kalibrasi kamera', () => {
     expect(screen.getByText(/Diterima/)).toBeInTheDocument();
     expect(screen.getByText('Berkas ditulis ke config/cameras.')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: 'Kalibrasi live' })).toBeNull();
+  });
+
+  it('menampilkan prior generik tanpa mengisi ukuran kotak', async () => {
+    renderApp('/kalibrasi-kamera', {
+      role: 'ahli_ukur',
+      routes: {
+        'GET /cameras': [{ id: 'generic' }],
+        'GET /cameras/reference': {
+          id: 'generic',
+          origin: 'reference',
+          board: 'chessboard',
+          square_mm: 25,
+          corners_cols: 9,
+          corners_rows: 6,
+          image_width: 1920,
+          image_height: 1080,
+          marker_mm: 100,
+          dictionary: 'DICT_4X4_50',
+          camera_matrix: [1920, 0, 960, 0, 1920, 540, 0, 0, 1],
+          dist_coeffs: [0, 0, 0, 0, 0],
+          focal_px: 1920,
+          principal_u: 960,
+          principal_v: 540,
+          marker_source_cm: 10,
+          calibrated_underwater: false,
+          matches_formula: true,
+        },
+      },
+    });
+    expect(await screen.findByRole('heading', { name: 'Referensi generik' })).toBeInTheDocument();
+    expect(screen.getByText(/fx = fy = 1920 px/)).toBeInTheDocument();
+    expect(screen.getByText(/100 mm = 10 cm/)).toBeInTheDocument();
+    expect(screen.getByText('Berkas sama dengan rumus config.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Ukuran satu kotak (mm)')).toHaveValue('');
+    expect(screen.getByText(/25 mm, 9 × 6/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hitung kalibrasi' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Kalibrasi live' })).toBeNull();
+    expect(screen.queryByLabelText('Sisi marker live (mm)')).toBeNull();
   });
 
   it('peran lihat tidak dapat menghitung', async () => {
@@ -91,6 +130,7 @@ describe('Kalibrasi kamera', () => {
     expect(await screen.findByRole('button', { name: 'Hitung kalibrasi' })).toBeDisabled();
     expect(screen.getByLabelText('ID kamera')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Ukur kedalaman' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Kalibrasi live' })).toBeNull();
     expect(screen.getByText(/hanya dapat melihat/)).toBeInTheDocument();
   });
 });

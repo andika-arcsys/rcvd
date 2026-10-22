@@ -18,6 +18,7 @@ from .api.app import create_app
 from .core.config import Settings, load_settings
 from .core.paths import default_config_dir
 from .diagnostics import probe_gpu
+from .stop import run_until_stopped
 
 REQUIRED = ("fastapi", "uvicorn", "yaml", "cv2", "numpy", "pydantic", "argon2")
 UI_FILTER = "@deepinsight/desktop"
@@ -98,7 +99,7 @@ def serve(
     app = create_app(config_dir=config_dir)
     if open_browser:
         _open_later(host, port)
-    uvicorn.run(app, host=host, port=port, log_config=None)
+    run_until_stopped(lambda: uvicorn.run(app, host=host, port=port, log_config=None))
 
 
 def prepare(root: Path, lan: bool, config_dir: Path | None = None) -> tuple[Settings, str]:
@@ -116,6 +117,9 @@ def prepare(root: Path, lan: bool, config_dir: Path | None = None) -> tuple[Sett
         if pin_problem:
             raise SystemExit(pin_problem)
     ensure_ui(root)
+    from .gpu.depth_anything3_runtime import quiet_unused_gsplat
+
+    quiet_unused_gsplat()
     info = probe_gpu()
     print(gpu_mode_label(info.available))
     return settings, gpu_mode_label(info.available)

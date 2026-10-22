@@ -11,7 +11,8 @@ from fastapi.testclient import TestClient
 from deepinsight_engine.api.app import create_app
 from deepinsight_engine.api.spa import _static_file
 from deepinsight_engine.gpu.tensorflow_mem import enable_memory_growth
-from deepinsight_engine.launch import ensure_ui, gpu_mode_label, lan_pin_problem, python_ok
+from deepinsight_engine.launch import ensure_ui, gpu_mode_label, lan_pin_problem, prepare, python_ok
+from deepinsight_engine.stop import run_until_stopped
 
 
 def test_python_must_be_3_12() -> None:
@@ -23,6 +24,64 @@ def test_lan_requires_pin() -> None:
     assert lan_pin_problem([]) is not None
     assert lan_pin_problem(["  "]) is not None
     assert lan_pin_problem(["hash"]) is None
+
+
+def test_ctrl_c_prints_stopped(capsys: pytest.CaptureFixture[str]) -> None:
+    def _stop() -> None:
+        raise KeyboardInterrupt
+
+    run_until_stopped(_stop)
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "Layanan dihentikan."
+    assert "Traceback" not in captured.err
+
+
+def test_worker_ctrl_c_prints_on_stderr(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from deepinsight_engine.gpu.worker import main
+
+    def _stop() -> None:
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr("deepinsight_engine.gpu.worker._listen", _stop)
+    main()
+    captured = capsys.readouterr()
+    assert captured.err.strip() == "Layanan dihentikan."
+    assert captured.out == ""
+
+
+def test_ctrl_c_on_the_worker_uses_stderr() -> None:
+    import io
+
+    buffer = io.StringIO()
+
+    def _stop() -> None:
+        raise KeyboardInterrupt
+
+    run_until_stopped(_stop, stream=buffer)
+    assert buffer.getvalue().strip() == "Layanan dihentikan."
+
+
+def test_prepare_silences_the_gsplat_warning(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: list[str] = []
+    monkeypatch.setattr("deepinsight_engine.launch.python_ok", lambda version=None: None)
+    monkeypatch.setattr("deepinsight_engine.launch.missing_packages", lambda names=(): [])
+    monkeypatch.setattr("deepinsight_engine.launch.load_settings", lambda _path: object())
+    monkeypatch.setattr("deepinsight_engine.launch.ensure_ui", lambda root, build=True: root)
+    monkeypatch.setattr(
+        "deepinsight_engine.launch.probe_gpu",
+        lambda: types.SimpleNamespace(available=False),
+    )
+    monkeypatch.setattr(
+        "deepinsight_engine.gpu.depth_anything3_runtime.quiet_unused_gsplat",
+        lambda: seen.append("quiet"),
+    )
+    _settings, label = prepare(tmp_path, lan=False, config_dir=tmp_path)
+    assert seen == ["quiet"]
+    assert "GPU-001" in label
 
 
 def test_gpu_mode_label() -> None:

@@ -12,25 +12,49 @@ const BAND: Record<string, string> = {
 export function ChessPanel({
   role,
   allowed,
+  hint,
   onSaved,
 }: {
   role: string;
   allowed: boolean;
+  hint: string | null;
   onSaved: () => void;
 }) {
+  const [board, setBoard] = useState('chessboard');
   const [cameraId, setCameraId] = useState('');
-  const [cols, setCols] = useState('8');
+  const [cols, setCols] = useState('9');
   const [rows, setRows] = useState('6');
   const [square, setSquare] = useState('');
+  const [marker, setMarker] = useState('');
+  const [port, setPort] = useState('');
+  const [water, setWater] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [result, setResult] = useState<CalibrationOut | null>(null);
   const squareMm = positive(square);
-  const ready = allowed && validId(cameraId) && squareMm !== null && files.length > 0 && !busy;
+  const markerMm = positive(marker);
+  const charuco = board === 'charuco';
+  const markerOk = !charuco || (markerMm !== null && squareMm !== null && markerMm < squareMm);
+  const ready =
+    allowed && validId(cameraId) && squareMm !== null && markerOk && files.length > 0 && !busy;
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-line bg-panel p-4">
-      <h2 className="text-sm font-semibold">{t('calib.boardTitle')}</h2>
+      <h2 className="text-sm font-semibold">{t('calib.stage2')}</h2>
+      <p className="text-xs text-muted">{t('calib.stage2body')}</p>
+      <label className="text-xs text-muted">
+        {t('calib.boardKind')}
+        <select
+          aria-label={t('calib.boardKind')}
+          className={INPUT}
+          value={board}
+          disabled={!allowed}
+          onChange={(event) => chooseBoard(event.target.value)}
+        >
+          <option value="chessboard">{t('calib.chess')}</option>
+          <option value="charuco">{t('calib.charuco')}</option>
+        </select>
+      </label>
       <Field
         label={t('calib.cameraId')}
         value={cameraId}
@@ -38,10 +62,53 @@ export function ChessPanel({
         onChange={setCameraId}
       />
       <div className="grid grid-cols-2 gap-3">
-        <Field label={t('calib.cols')} value={cols} disabled={!allowed} onChange={setCols} />
-        <Field label={t('calib.rows')} value={rows} disabled={!allowed} onChange={setRows} />
+        <Field
+          label={charuco ? t('calib.squareCols') : t('calib.cols')}
+          value={cols}
+          disabled={!allowed}
+          onChange={setCols}
+        />
+        <Field
+          label={charuco ? t('calib.squareRows') : t('calib.rows')}
+          value={rows}
+          disabled={!allowed}
+          onChange={setRows}
+        />
       </div>
       <Field label={t('calib.square')} value={square} disabled={!allowed} onChange={setSquare} />
+      {hint ? <p className="text-xs text-muted">{hint}</p> : null}
+      {charuco ? (
+        <Field
+          label={t('calib.charucoMarker')}
+          value={marker}
+          disabled={!allowed}
+          onChange={setMarker}
+        />
+      ) : null}
+      <div className="grid grid-cols-2 gap-3">
+        <Select
+          label={t('calib.port')}
+          value={port}
+          disabled={!allowed}
+          onChange={setPort}
+          options={[
+            ['', t('calib.portEmpty')],
+            ['dome', t('calib.portDome')],
+            ['flat', t('calib.portFlat')],
+          ]}
+        />
+        <Select
+          label={t('calib.water')}
+          value={water}
+          disabled={!allowed}
+          onChange={setWater}
+          options={[
+            ['', t('calib.waterEmpty')],
+            ['laut', t('calib.waterSea')],
+            ['tawar', t('calib.waterFresh')],
+          ]}
+        />
+      </div>
       <label className="text-xs text-muted">
         {t('calib.photos')}
         <input
@@ -80,6 +147,10 @@ export function ChessPanel({
     body.append('square_mm', String(squareMm));
     body.append('corners_cols', cols.trim());
     body.append('corners_rows', rows.trim());
+    body.append('board', board);
+    body.append('port', port);
+    body.append('water', water);
+    if (charuco && markerMm !== null) body.append('marker_mm', String(markerMm));
     for (const file of files) body.append('files', file);
     const response = await postForm('/cameras/calibrate', body);
     setBusy(false);
@@ -97,10 +168,64 @@ export function ChessPanel({
     if (parsed.written) onSaved();
   }
 
+  function chooseBoard(next: string) {
+    setBoard(next);
+    if (next === 'charuco') {
+      setCols('8');
+      setRows('6');
+      return;
+    }
+    setCols('9');
+    setRows('6');
+  }
+
   async function pattern() {
+    if (charuco) {
+      const query = new URLSearchParams({
+        squares_x: cols,
+        squares_y: rows,
+        square_mm: String(squareMm ?? ''),
+        marker_mm: String(markerMm ?? ''),
+      });
+      setNote(await downloadFile(`/cameras/pattern/charuco?${query}`, 'papan-charuco.png'));
+      return;
+    }
     const query = `cols=${encodeURIComponent(cols)}&rows=${encodeURIComponent(rows)}`;
     setNote(await downloadFile(`/cameras/pattern/chessboard?${query}`, 'papan-catur.png'));
   }
+}
+
+function Select({
+  label,
+  value,
+  disabled,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+  options: [string, string][];
+}) {
+  return (
+    <label className="text-xs text-muted">
+      {label}
+      <select
+        aria-label={label}
+        className={INPUT}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {options.map(([key, text]) => (
+          <option key={key || 'empty'} value={key}>
+            {text}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 }
 
 function Field({

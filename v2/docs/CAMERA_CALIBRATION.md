@@ -1,6 +1,8 @@
 # Kalibrasi kamera
 
-Berkas ini menjelaskan cara mengisi `config/cameras/<id>.yaml`. Tanpa berkas itu, kalibrasi laser tetap jalan. Status ukur paling tinggi `ESTIMATE_ONLY`.
+Pemakaian di konsol dan alur K1, K2, K3 ada di [PROSEDUR_KALIBRASI.md](PROSEDUR_KALIBRASI.md). Berkas ini tetap menjelaskan perintah baris untuk papan catur.
+
+Tanpa `config/cameras/<id>.yaml`, kalibrasi laser tetap jalan. Status ukur paling tinggi `ESTIMATE_ONLY`.
 
 ## Perintah
 
@@ -29,6 +31,8 @@ Arti argumen:
 - Hasil ditulis ke `config/cameras/rov01.yaml`: matriks intrinsik, koefisien distorsi, RMS reprojeksi, ukuran gambar, dan tanggal.
 
 Sesuaikan `9x6` dan `25` dengan papan yang dipakai. Templat `config/cameras/_template.yaml` tidak muncul sebagai kamera. Jangan mengisi angkanya dengan tangan.
+
+`config/cameras/generic.yaml` bukan templat yang diisi tangan. Berkas itu prior: matriks pinhole pada resolusi video, papan contoh 9×6 dan 25 mm, sisi marker dari `laser.ref_cm`. `origin: reference` membuat status ukur tidak menjadi VALID. Foto K1 yang lolos pita menggantikannya. Rinciannya di [PROSEDUR_KALIBRASI.md](PROSEDUR_KALIBRASI.md).
 
 ## Pita RMS
 

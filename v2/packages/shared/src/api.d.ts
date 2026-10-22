@@ -140,6 +140,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cameras/pattern/charuco": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Charuco Pattern */
+        get: operations["charuco_pattern_cameras_pattern_charuco_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras/reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Camera Reference */
+        get: operations["camera_reference_cameras_reference_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras/k3": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** K3 Profile */
+        get: operations["k3_profile_cameras_k3_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/cameras/calibrate": {
         parameters: {
             query?: never;
@@ -168,6 +219,26 @@ export interface paths {
         put?: never;
         /** Aruco Depth */
         post: operations["aruco_depth_cameras_aruco_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras/aruco/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aruco Live
+         * @description Pose marker pada bingkai sumber video yang sedang jalan.
+         */
+        post: operations["aruco_live_cameras_aruco_live_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1221,6 +1292,16 @@ export interface components {
             message: string;
             /** Preview Jpeg */
             preview_jpeg?: string | null;
+            /**
+             * Frame Width
+             * @default 0
+             */
+            frame_width: number;
+            /**
+             * Frame Height
+             * @default 0
+             */
+            frame_height: number;
         };
         /** AssessIn */
         AssessIn: {
@@ -1317,6 +1398,25 @@ export interface components {
             marker_mm: number;
             /** File */
             file: string;
+            /**
+             * Dictionary
+             * @default DICT_4X4_50
+             */
+            dictionary: string;
+        };
+        /** Body_aruco_live_cameras_aruco_live_post */
+        Body_aruco_live_cameras_aruco_live_post: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Marker Mm */
+            marker_mm: number;
+            /**
+             * Dictionary
+             * @default DICT_4X4_50
+             */
+            dictionary: string;
         };
         /** Body_calibrate_cameras_calibrate_post */
         Body_calibrate_cameras_calibrate_post: {
@@ -1332,6 +1432,23 @@ export interface components {
             corners_rows: number;
             /** Files */
             files: string[];
+            /**
+             * Board
+             * @default chessboard
+             */
+            board: string;
+            /** Marker Mm */
+            marker_mm?: number | null;
+            /**
+             * Port
+             * @default
+             */
+            port: string;
+            /**
+             * Water
+             * @default
+             */
+            water: string;
         };
         /** Body_upload_video_video_upload_post */
         Body_upload_video_video_upload_post: {
@@ -1452,6 +1569,29 @@ export interface components {
             written: boolean;
         };
         /**
+         * CameraReference
+         * @description Contoh papan dan distorsi nol. Bukan pengukuran lensa.
+         */
+        CameraReference: {
+            /** Id */
+            id: string;
+            /**
+             * Board
+             * @constant
+             */
+            board: "chessboard";
+            /** Corners Cols */
+            corners_cols: number;
+            /** Corners Rows */
+            corners_rows: number;
+            /** Square Mm */
+            square_mm: number;
+            /** Dictionary */
+            dictionary: string;
+            /** Dist Coeffs */
+            dist_coeffs: number[];
+        };
+        /**
          * CameraThresholds
          * @description Pita RMS reprojeksi. USULAN, praktik umum OpenCV, bukan angka prosedur JOB Tomori.
          */
@@ -1460,6 +1600,7 @@ export interface components {
             rms_good_px: number;
             /** Rms Max Px */
             rms_max_px: number;
+            reference: components["schemas"]["CameraReference"];
         };
         /** CameraView */
         CameraView: {
@@ -2000,6 +2141,19 @@ export interface components {
             /** Moderate And Above */
             moderate_and_above: number;
         };
+        /** K3Out */
+        K3Out: {
+            /** Camera Id */
+            camera_id: string;
+            /** A */
+            a?: number | null;
+            /** B */
+            b?: number | null;
+            /** Samples */
+            samples: number;
+            /** Ready */
+            ready: boolean;
+        };
         /**
          * Laser
          * @description Jarak dua titik laser, sentimeter. Hue mengikuti OpenCV 0–180.
@@ -2145,6 +2299,26 @@ export interface components {
             z_mm: number;
             /** Distance Mm */
             distance_mm: number;
+            /**
+             * Center U
+             * @default 0
+             */
+            center_u: number;
+            /**
+             * Center V
+             * @default 0
+             */
+            center_v: number;
+            /**
+             * Corners
+             * @default []
+             */
+            corners: number[][];
+            /**
+             * Axis
+             * @default []
+             */
+            axis: number[][];
         };
         /** MeasView */
         MeasView: {
@@ -2479,6 +2653,45 @@ export interface components {
             span_m: number | null;
             /** Training */
             training: boolean;
+        };
+        /** ReferenceOut */
+        ReferenceOut: {
+            /** Id */
+            id: string;
+            /** Origin */
+            origin: string;
+            /** Board */
+            board?: string | null;
+            /** Square Mm */
+            square_mm?: number | null;
+            /** Corners Cols */
+            corners_cols?: number | null;
+            /** Corners Rows */
+            corners_rows?: number | null;
+            /** Image Width */
+            image_width?: number | null;
+            /** Image Height */
+            image_height?: number | null;
+            /** Marker Mm */
+            marker_mm?: number | null;
+            /** Dictionary */
+            dictionary?: string | null;
+            /** Camera Matrix */
+            camera_matrix: number[];
+            /** Dist Coeffs */
+            dist_coeffs: number[];
+            /** Focal Px */
+            focal_px: number;
+            /** Principal U */
+            principal_u: number;
+            /** Principal V */
+            principal_v: number;
+            /** Marker Source Cm */
+            marker_source_cm?: number | null;
+            /** Calibrated Underwater */
+            calibrated_underwater: boolean;
+            /** Matches Formula */
+            matches_formula: boolean;
         };
         /** ReleaseIn */
         ReleaseIn: {
@@ -3233,6 +3446,7 @@ export interface operations {
         parameters: {
             query?: {
                 marker_id?: number;
+                dictionary?: string;
             };
             header?: {
                 "x-deepinsight-token"?: string | null;
@@ -3249,6 +3463,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    charuco_pattern_cameras_pattern_charuco_get: {
+        parameters: {
+            query?: {
+                squares_x?: number;
+                squares_y?: number;
+                square_mm?: number;
+                marker_mm?: number;
+            };
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    camera_reference_cameras_reference_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    k3_profile_cameras_k3_get: {
+        parameters: {
+            query: {
+                camera_id: string;
+            };
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["K3Out"];
                 };
             };
             /** @description Validation Error */
@@ -3309,6 +3623,41 @@ export interface operations {
         requestBody: {
             content: {
                 "multipart/form-data": components["schemas"]["Body_aruco_depth_cameras_aruco_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArucoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aruco_live_cameras_aruco_live_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/x-www-form-urlencoded": components["schemas"]["Body_aruco_live_cameras_aruco_live_post"];
             };
         };
         responses: {

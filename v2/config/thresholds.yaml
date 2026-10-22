@@ -77,6 +77,18 @@ cache:
 camera:
   rms_good_px: 0.5                # USULAN – praktik umum OpenCV. RMS <= nilai ini diterima.
   rms_max_px: 1.0                 # USULAN – praktik umum OpenCV. Di atas good sampai nilai ini: peringatan. Di atas ini: ditolak.
+  # Referensi generik sebelum foto K1. Bukan RMS dan bukan kalibrasi di air.
+  # Sudut dan kotak: contoh perintah di docs/CAMERA_CALIBRATION.md (9x6, 25 mm).
+  # Kamus: bawaan program DICT_4X4_50. Distorsi nol = model pinhole, belum diukur.
+  # Ukuran gambar memakai video.width dan video.height. Sisi marker memakai laser.ref_cm.
+  reference:
+    id: generic
+    board: chessboard
+    corners_cols: 9
+    corners_rows: 6
+    square_mm: 25
+    dictionary: DICT_4X4_50
+    dist_coeffs: [0, 0, 0, 0, 0]
 
 laser:
   ref_cm: 10                      # SUMBER: tim. Dua titik laser berjarak 10 cm.

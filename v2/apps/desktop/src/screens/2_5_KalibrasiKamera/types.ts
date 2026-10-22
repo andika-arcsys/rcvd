@@ -18,6 +18,8 @@ export interface MarkerOut {
   y_mm: number;
   z_mm: number;
   distance_mm: number;
+  corners?: number[][];
+  axis?: number[][];
 }
 
 export interface ArucoOut {
@@ -27,6 +29,42 @@ export interface ArucoOut {
   markers: MarkerOut[];
   message: string;
   preview_jpeg: string | null;
+  frame_width: number;
+  frame_height: number;
+}
+
+export interface ReferenceView {
+  id: string;
+  origin: string;
+  board: string | null;
+  square_mm: number | null;
+  corners_cols: number | null;
+  corners_rows: number | null;
+  image_width: number | null;
+  image_height: number | null;
+  marker_mm: number | null;
+  dictionary: string | null;
+  camera_matrix: number[];
+  dist_coeffs: number[];
+  focal_px: number;
+  principal_u: number;
+  principal_v: number;
+  marker_source_cm: number | null;
+  calibrated_underwater: boolean;
+  matches_formula: boolean;
+}
+
+export interface MarkerPreset {
+  cameraId: string;
+  markerMm: string;
+}
+
+export interface K3Out {
+  camera_id: string;
+  a: number | null;
+  b: number | null;
+  samples: number;
+  ready: boolean;
 }
 
 export const BOARD_URL = 'https://visionbrick.com/camera-calibration-with-opencv/';

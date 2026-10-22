@@ -27,7 +27,7 @@ export const TRANSITIONS: readonly Transition[] = [
   t('3', '3.0', 'Tab HydroDetect (F3)'),
   t('3', '3.0', 'Tab SpatialSight (F4)'),
   t('3', '3.0', 'Ganti fitur (LB/RB)'),
-  t('3', '3.4', 'Tab Canvas (F5)'),
+  t('3', '3.4', 'Menu samping Canvas'),
   t('3', '3.5', 'FREEZE'),
   t('3', '4', 'Tandai temuan'),
   t('3', '12', 'Selesai sesi'),
