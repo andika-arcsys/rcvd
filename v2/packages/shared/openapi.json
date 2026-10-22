@@ -492,6 +492,55 @@
         }
       }
     },
+    "/cameras/reference": {
+      "get": {
+        "tags": [
+          "kamera"
+        ],
+        "summary": "Camera Reference",
+        "operationId": "camera_reference_cameras_reference_get",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/cameras/k3": {
       "get": {
         "tags": [
@@ -5270,6 +5319,55 @@
         ],
         "title": "CalibrationOut"
       },
+      "CameraReference": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "board": {
+            "type": "string",
+            "const": "chessboard",
+            "title": "Board"
+          },
+          "corners_cols": {
+            "type": "integer",
+            "title": "Corners Cols"
+          },
+          "corners_rows": {
+            "type": "integer",
+            "title": "Corners Rows"
+          },
+          "square_mm": {
+            "type": "number",
+            "title": "Square Mm"
+          },
+          "dictionary": {
+            "type": "string",
+            "title": "Dictionary"
+          },
+          "dist_coeffs": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Dist Coeffs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "board",
+          "corners_cols",
+          "corners_rows",
+          "square_mm",
+          "dictionary",
+          "dist_coeffs"
+        ],
+        "title": "CameraReference",
+        "description": "Contoh papan dan distorsi nol. Bukan pengukuran lensa."
+      },
       "CameraThresholds": {
         "properties": {
           "rms_good_px": {
@@ -5279,13 +5377,17 @@
           "rms_max_px": {
             "type": "number",
             "title": "Rms Max Px"
+          },
+          "reference": {
+            "$ref": "#/components/schemas/CameraReference"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "rms_good_px",
-          "rms_max_px"
+          "rms_max_px",
+          "reference"
         ],
         "title": "CameraThresholds",
         "description": "Pita RMS reprojeksi. USULAN, praktik umum OpenCV, bukan angka prosedur JOB Tomori."
@@ -8399,6 +8501,164 @@
           "training"
         ],
         "title": "QueueItem"
+      },
+      "ReferenceOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "origin": {
+            "type": "string",
+            "title": "Origin"
+          },
+          "board": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Board"
+          },
+          "square_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Square Mm"
+          },
+          "corners_cols": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corners Cols"
+          },
+          "corners_rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corners Rows"
+          },
+          "image_width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Width"
+          },
+          "image_height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Height"
+          },
+          "marker_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marker Mm"
+          },
+          "dictionary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dictionary"
+          },
+          "camera_matrix": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Camera Matrix"
+          },
+          "dist_coeffs": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Dist Coeffs"
+          },
+          "focal_px": {
+            "type": "number",
+            "title": "Focal Px"
+          },
+          "principal_u": {
+            "type": "number",
+            "title": "Principal U"
+          },
+          "principal_v": {
+            "type": "number",
+            "title": "Principal V"
+          },
+          "marker_source_cm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marker Source Cm"
+          },
+          "calibrated_underwater": {
+            "type": "boolean",
+            "title": "Calibrated Underwater"
+          },
+          "matches_formula": {
+            "type": "boolean",
+            "title": "Matches Formula"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "origin",
+          "camera_matrix",
+          "dist_coeffs",
+          "focal_px",
+          "principal_u",
+          "principal_v",
+          "calibrated_underwater",
+          "matches_formula"
+        ],
+        "title": "ReferenceOut"
       },
       "ReleaseIn": {
         "properties": {

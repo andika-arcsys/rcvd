@@ -542,7 +542,7 @@ def _camera_intrinsics(message: dict[str, Any]) -> CameraIntrinsics | None:
         int(calib_w) if isinstance(calib_w, int) else None,
         int(calib_h) if isinstance(calib_h, int) else None,
     )
-    return CameraIntrinsics(fx, fy, cx, cy, calibrated_underwater=True)
+    return CameraIntrinsics(fx, fy, cx, cy, calibrated_underwater=_underwater(message))
 
 
 def _remember_k3(message: dict[str, Any], depth_m: Any) -> None:
@@ -553,7 +553,14 @@ def _remember_k3(message: dict[str, Any], depth_m: Any) -> None:
         sys.stderr.flush()
 
 
+def _underwater(message: dict[str, Any]) -> bool:
+    """Origin reference adalah prior, bukan lensa yang diukur di air."""
+    return message.get("camera_origin") != "reference"
+
+
 def _remember_k3_inner(message: dict[str, Any], depth_m: Any) -> None:
+    if message.get("camera_origin") == "reference":
+        return
     path = message.get("k3_path")
     camera_id = message.get("k3_camera_id")
     marker = message.get("marker_mm")

@@ -3,16 +3,19 @@ import { SourcePicker } from '../3_OpticalNativeView/SourcePicker';
 import { t } from '../../i18n';
 import { ACTION, INPUT, positive, postForm } from './engineForm';
 import { MarkerTable, asAruco } from './markerReadout';
-import type { ArucoOut } from './types';
+import { usePreset } from './preset';
+import type { ArucoOut, MarkerPreset } from './types';
 
 export function LiveCalib({
   role,
   allowed,
   cameras,
+  preset,
 }: {
   role: string;
   allowed: boolean;
   cameras: string[];
+  preset: MarkerPreset | null;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -28,7 +31,7 @@ export function LiveCalib({
       >
         {open ? t('calib.liveClose') : t('calib.liveTitle')}
       </button>
-      {open ? <LiveBody role={role} allowed={allowed} cameras={cameras} /> : null}
+      {open ? <LiveBody role={role} allowed={allowed} cameras={cameras} preset={preset} /> : null}
     </section>
   );
 }
@@ -37,13 +40,14 @@ function LiveBody({
   role,
   allowed,
   cameras,
+  preset,
 }: {
   role: string;
   allowed: boolean;
   cameras: string[];
+  preset: MarkerPreset | null;
 }) {
-  const [cameraId, setCameraId] = useState('');
-  const [markerMm, setMarkerMm] = useState('');
+  const { cameraId, markerMm, setCameraId, setMarkerMm } = usePreset(preset, cameras);
   const [dictionary, setDictionary] = useState('DICT_4X4_50');
   const [running, setRunning] = useState(false);
   const [note, setNote] = useState<string | null>(null);

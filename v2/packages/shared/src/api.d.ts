@@ -157,6 +157,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cameras/reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Camera Reference */
+        get: operations["camera_reference_cameras_reference_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/cameras/k3": {
         parameters: {
             query?: never;
@@ -1542,6 +1559,29 @@ export interface components {
             written: boolean;
         };
         /**
+         * CameraReference
+         * @description Contoh papan dan distorsi nol. Bukan pengukuran lensa.
+         */
+        CameraReference: {
+            /** Id */
+            id: string;
+            /**
+             * Board
+             * @constant
+             */
+            board: "chessboard";
+            /** Corners Cols */
+            corners_cols: number;
+            /** Corners Rows */
+            corners_rows: number;
+            /** Square Mm */
+            square_mm: number;
+            /** Dictionary */
+            dictionary: string;
+            /** Dist Coeffs */
+            dist_coeffs: number[];
+        };
+        /**
          * CameraThresholds
          * @description Pita RMS reprojeksi. USULAN, praktik umum OpenCV, bukan angka prosedur JOB Tomori.
          */
@@ -1550,6 +1590,7 @@ export interface components {
             rms_good_px: number;
             /** Rms Max Px */
             rms_max_px: number;
+            reference: components["schemas"]["CameraReference"];
         };
         /** CameraView */
         CameraView: {
@@ -2593,6 +2634,45 @@ export interface components {
             /** Training */
             training: boolean;
         };
+        /** ReferenceOut */
+        ReferenceOut: {
+            /** Id */
+            id: string;
+            /** Origin */
+            origin: string;
+            /** Board */
+            board?: string | null;
+            /** Square Mm */
+            square_mm?: number | null;
+            /** Corners Cols */
+            corners_cols?: number | null;
+            /** Corners Rows */
+            corners_rows?: number | null;
+            /** Image Width */
+            image_width?: number | null;
+            /** Image Height */
+            image_height?: number | null;
+            /** Marker Mm */
+            marker_mm?: number | null;
+            /** Dictionary */
+            dictionary?: string | null;
+            /** Camera Matrix */
+            camera_matrix: number[];
+            /** Dist Coeffs */
+            dist_coeffs: number[];
+            /** Focal Px */
+            focal_px: number;
+            /** Principal U */
+            principal_u: number;
+            /** Principal V */
+            principal_v: number;
+            /** Marker Source Cm */
+            marker_source_cm?: number | null;
+            /** Calibrated Underwater */
+            calibrated_underwater: boolean;
+            /** Matches Formula */
+            matches_formula: boolean;
+        };
         /** ReleaseIn */
         ReleaseIn: {
             /** Role */
@@ -3399,6 +3479,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    camera_reference_cameras_reference_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceOut"];
                 };
             };
             /** @description Validation Error */

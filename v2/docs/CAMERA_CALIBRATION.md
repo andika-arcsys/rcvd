@@ -32,6 +32,8 @@ Arti argumen:
 
 Sesuaikan `9x6` dan `25` dengan papan yang dipakai. Templat `config/cameras/_template.yaml` tidak muncul sebagai kamera. Jangan mengisi angkanya dengan tangan.
 
+`config/cameras/generic.yaml` bukan templat yang diisi tangan. Berkas itu prior: matriks pinhole pada resolusi video, papan contoh 9×6 dan 25 mm, sisi marker dari `laser.ref_cm`. `origin: reference` membuat status ukur tidak menjadi VALID. Foto K1 yang lolos pita menggantikannya. Rinciannya di [PROSEDUR_KALIBRASI.md](PROSEDUR_KALIBRASI.md).
+
 ## Pita RMS
 
 Ambang ada di `config/thresholds.yaml` pada `camera.rms_good_px` (0,5) dan `camera.rms_max_px` (1,0). Keduanya USULAN, praktik umum kalibrasi OpenCV, bukan angka prosedur JOB Tomori. Tim boleh mengubahnya di config.

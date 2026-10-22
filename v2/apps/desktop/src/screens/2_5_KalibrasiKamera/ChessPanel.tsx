@@ -12,10 +12,12 @@ const BAND: Record<string, string> = {
 export function ChessPanel({
   role,
   allowed,
+  hint,
   onSaved,
 }: {
   role: string;
   allowed: boolean;
+  hint: string | null;
   onSaved: () => void;
 }) {
   const [board, setBoard] = useState('chessboard');
@@ -74,6 +76,7 @@ export function ChessPanel({
         />
       </div>
       <Field label={t('calib.square')} value={square} disabled={!allowed} onChange={setSquare} />
+      {hint ? <p className="text-xs text-muted">{hint}</p> : null}
       {charuco ? (
         <Field
           label={t('calib.charucoMarker')}

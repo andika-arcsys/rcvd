@@ -89,6 +89,46 @@ describe('Kalibrasi kamera', () => {
     expect(screen.getByRole('button', { name: 'Mulai' })).toBeDisabled();
   });
 
+  it('menampilkan prior generik tanpa mengisi ukuran kotak', async () => {
+    renderApp('/kalibrasi-kamera', {
+      role: 'ahli_ukur',
+      routes: {
+        'GET /cameras': [{ id: 'generic' }],
+        'GET /cameras/reference': {
+          id: 'generic',
+          origin: 'reference',
+          board: 'chessboard',
+          square_mm: 25,
+          corners_cols: 9,
+          corners_rows: 6,
+          image_width: 1920,
+          image_height: 1080,
+          marker_mm: 100,
+          dictionary: 'DICT_4X4_50',
+          camera_matrix: [1920, 0, 960, 0, 1920, 540, 0, 0, 1],
+          dist_coeffs: [0, 0, 0, 0, 0],
+          focal_px: 1920,
+          principal_u: 960,
+          principal_v: 540,
+          marker_source_cm: 10,
+          calibrated_underwater: false,
+          matches_formula: true,
+        },
+      },
+    });
+    expect(await screen.findByRole('heading', { name: 'Referensi generik' })).toBeInTheDocument();
+    expect(screen.getByText(/fx = fy = 1920 px/)).toBeInTheDocument();
+    expect(screen.getByText(/100 mm = 10 cm/)).toBeInTheDocument();
+    expect(screen.getByText('Berkas sama dengan rumus config.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Ukuran satu kotak (mm)')).toHaveValue('');
+    expect(screen.getByText(/25 mm, 9 × 6/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hitung kalibrasi' })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Kalibrasi live' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mulai' })).toBeEnabled());
+    expect(screen.getByLabelText('Sisi marker live (mm)')).toHaveValue('100');
+    expect(screen.getByLabelText('Berkas kamera live')).toHaveValue('generic');
+  });
+
   it('peran lihat tidak dapat menghitung', async () => {
     renderApp('/kalibrasi-kamera', { role: 'pengelola_data' });
     expect(await screen.findByRole('button', { name: 'Hitung kalibrasi' })).toBeDisabled();

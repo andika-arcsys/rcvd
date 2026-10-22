@@ -8,7 +8,9 @@ import { ChessPanel } from './ChessPanel';
 import { comma } from './engineForm';
 import { K3Panel } from './K3Panel';
 import { LiveCalib } from './LiveCalib';
-import { ARUCO_URL, BOARD_URL, VIDEO_URL } from './types';
+import { markerPreset } from './preset';
+import { ReferenceCard, asReference, squareHint } from './ReferenceCard';
+import { ARUCO_URL, BOARD_URL, VIDEO_URL, type ReferenceView } from './types';
 
 const WRITERS = new Set(['ketua_tim', 'pilot_drone', 'ahli_ukur', 'teknisi_program']);
 type Thresholds = components['schemas']['Thresholds'];
@@ -18,24 +20,37 @@ export default function KalibrasiKameraScreen() {
   const { role } = useSession();
   const [cameras, setCameras] = useState<string[]>([]);
   const [band, setBand] = useState<string | null>(null);
+  const [profile, setProfile] = useState<ReferenceView | null>(null);
   useEffect(() => {
-    void load(client, setCameras, setBand);
+    void load(client, setCameras, setBand, setProfile);
   }, [client]);
   return (
     <div className="flex flex-col gap-4 p-4">
       <Intro band={band} />
       {WRITERS.has(role) ? null : <p className="text-sm">{t('calib.denied')}</p>}
       <Stage title={t('calib.stage1')} body={t('calib.stage1body')} />
+      <ReferenceCard profile={profile} />
       <ChessPanel
         role={role}
         allowed={WRITERS.has(role)}
+        hint={squareHint(profile)}
         onSaved={() => void loadCameras(client, setCameras)}
       />
       <div className="grid gap-4 xl:grid-cols-2">
-        <ArucoPanel role={role} allowed={WRITERS.has(role)} cameras={cameras} />
+        <ArucoPanel
+          role={role}
+          allowed={WRITERS.has(role)}
+          cameras={cameras}
+          preset={markerPreset(profile)}
+        />
         <K3Panel cameras={cameras} />
       </div>
-      <LiveCalib role={role} allowed={WRITERS.has(role)} cameras={cameras} />
+      <LiveCalib
+        role={role}
+        allowed={WRITERS.has(role)}
+        cameras={cameras}
+        preset={markerPreset(profile)}
+      />
       <Stage title={t('calib.stage4')} body={t('calib.stage4body')} />
     </div>
   );
@@ -74,10 +89,13 @@ async function load(
   client: ReturnType<typeof useEngine>['client'],
   setCameras: (ids: string[]) => void,
   setBand: (text: string | null) => void,
+  setProfile: (profile: ReferenceView | null) => void,
 ) {
   await loadCameras(client, setCameras);
   const { data } = await client.GET('/config/thresholds');
   setBand(bandText(data));
+  const reference = await client.GET('/cameras/reference');
+  setProfile(asReference(reference.data));
 }
 
 async function loadCameras(

@@ -2,19 +2,21 @@ import { useState } from 'react';
 import { t } from '../../i18n';
 import { ACTION, INPUT, downloadFile, positive, postForm } from './engineForm';
 import { MarkerTable, asAruco } from './markerReadout';
-import type { ArucoOut } from './types';
+import { usePreset } from './preset';
+import type { ArucoOut, MarkerPreset } from './types';
 
 export function ArucoPanel({
   role,
   allowed,
   cameras,
+  preset,
 }: {
   role: string;
   allowed: boolean;
   cameras: string[];
+  preset: MarkerPreset | null;
 }) {
-  const [cameraId, setCameraId] = useState('');
-  const [markerMm, setMarkerMm] = useState('');
+  const { cameraId, markerMm, setCameraId, setMarkerMm } = usePreset(preset, cameras);
   const [markerId, setMarkerId] = useState('0');
   const [dictionary, setDictionary] = useState('DICT_4X4_50');
   const [file, setFile] = useState<File | null>(null);

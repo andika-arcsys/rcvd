@@ -16,11 +16,31 @@ Perintah baris papan catur tetap di [CAMERA_CALIBRATION.md](CAMERA_CALIBRATION.m
 | K2 | Jarak satu marker yang sisinya diukur penggaris | Sisi marker dan kamus ke berkas kamera yang sama. Angka X, Y, Z, jarak pada foto yang diunggah |
 | K3 | Selisih kedalaman model terhadap Z marker pada dua jarak atau lebih | `config/calibration/<id>.json`: pasangan mentah, lalu `a` dan `b` pada `Z = a·Z_model + b` |
 
-K1 adalah jangkar arah sinar. Berkas itu sudah masuk ke SpatialSight: bila ada, fokus dan pusat optik diambil dari matriks, dan intrinsik ditandai kalibrasi bawah air. Tanpa berkas, model memakai intrinsik prediksinya sendiri atau sisi terpanjang gambar.
+K1 adalah jangkar arah sinar. Berkas yang diukur, yaitu berkas tanpa `origin: reference`, masuk ke SpatialSight: fokus dan pusat optik diambil dari matriks, dan intrinsik ditandai kalibrasi bawah air. Berkas `origin: reference` memakai matriks yang sama tetapi tidak menandai kalibrasi bawah air, jadi status garis paling tinggi tetap `ESTIMATE_ONLY_SAME_FRAME`. Tanpa berkas, model memakai intrinsik prediksinya sendiri atau sisi terpanjang gambar.
 
 K2 adalah jangkar satu titik dalam meter. K3 merentangkan jangkar itu ke seluruh peta kedalaman.
 
 Satu pengali `k = Z_marker / Z_model` pada seluruh peta tidak disimpan. Garis referensi pada frame yang sama ikut terkalikan, jadi rasio lebar tidak berubah. Yang disimpan adalah garis dengan dua suku, `a` dan `b`, dari sedikitnya dua kedalaman model yang berbeda.
+
+## Referensi generik, sebelum ada foto
+
+Parameter yang belum diukur tidak dikosongkan diam-diam dan tidak diisi tebakan. Layar menampilkan berkas `config/cameras/generic.yaml`. Angkanya dihitung dari config yang sudah ada:
+
+| Yang diisi | Nilai pada config sekarang | Sumber |
+| --- | --- | --- |
+| Resolusi | 1920 × 1080 | `thresholds.video.width` dan `thresholds.video.height` |
+| Fokus | fx = fy = 1920 px | rumus `default_intrinsics`: sisi terpanjang gambar |
+| Pusat optik | cx 960, cy 540 | rumus yang sama, tengah gambar |
+| Distorsi | 0, 0, 0, 0, 0 | `camera.reference.dist_coeffs`, model pinhole, belum diukur |
+| Papan | catur, sudut dalam 9 × 6, kotak 25 mm | `camera.reference`, contoh perintah di [CAMERA_CALIBRATION.md](CAMERA_CALIBRATION.md) |
+| Sisi marker | 100 mm | `laser.ref_cm` 10 cm, dikali 10 menjadi milimeter |
+| Kamus | `DICT_4X4_50` | `camera.reference.dictionary` |
+
+RMS dan tanggal kalibrasi kosong. Tidak ada reprojeksi, jadi tidak ada angka RMS yang diklaim. Port, air, dan profil K3 (`a`, `b`) tetap kosong. Contoh 40 mm pada kajian bukan isian ini.
+
+`origin: reference` membedakan prior dari hasil foto. Kelengkapan Dashboard D-04 tetap kosong selama yang ada hanya berkas ini. Pasangan K3 tidak dicatat pada origin ini. Foto K1 yang lolos pita RMS menulis berkas baru, atau menimpa id yang sama, tanpa origin reference. Itulah yang menandai kalibrasi bawah air.
+
+Kolom ukuran kotak di tahap 2 tetap diketik dari penggaris. Angka 25 mm hanya contoh papan pada config, ditampilkan di panel, tidak disisipkan ke kolom.
 
 ## Yang layar ini tidak lakukan
 
@@ -50,7 +70,7 @@ Buka **Kalibrasi kamera**. Peran yang boleh menghitung: ketua tim, pilot, ahli u
 - **Papan catur.** Isi sudut dalam, bukan jumlah kotak. Contoh yang cocok dengan perintah baris: 9 × 6. Tutorial VisionBrick memakai contoh lain; yang berlaku adalah papan yang dicetak.
 - **ChArUco.** Isi jumlah kotak, bukan sudut dalam. Contoh 8 × 6. Marker papan memakai kamus `DICT_4X4_50`. Sisi marker harus lebih kecil dari sisi kotak. ChArUco tetap kebaca bila sebagian papan tertutup, jadi cocok untuk air keruh. OpenCV di program ini tidak punya `calibrateCameraCharuco`. Program membaca papan lewat `CharucoDetector`, mencocokkan titik dengan `matchImagePoints`, lalu memanggil `calibrateCamera`.
 
-Ukuran satu kotak dalam milimeter, diukur penggaris. Contoh 40 mm pada kajian hanyalah contoh. Kolom ukuran dikosongkan sampai diukur. Jangan mengisi dari tebakan.
+Ukuran satu kotak dalam milimeter, diukur penggaris. Panel referensi menampilkan 25 mm dari config sebagai contoh papan proyek. Contoh 40 mm pada kajian juga hanya contoh. Kolom ukuran tetap kosong sampai diukur. Jangan menyalin angka referensi bila papan fisik berbeda.
 
 Unduh pola dari layar bila papan fisik belum ada. Cetak tanpa mengubah skala setelah diukur.
 
@@ -91,14 +111,14 @@ Perintah baris hanya menjalankan papan catur, dengan arti sudut dalam yang sama.
 
 ### K2, satu foto marker
 
-1. Berkas K1 untuk kamera itu sudah ada. Pilih di daftar.
+1. Pilih berkas kamera. Sebelum foto K1 ada, pilih `generic`. Jarak yang tampil memakai prior, bukan status VALID.
 2. Cetak marker dari kamus yang sama dengan yang dipilih: `DICT_4X4_50` (nomor 0–49) atau `DICT_6X6_250` (nomor 0–249).
 3. Ukur satu sisi dengan penggaris, dalam milimeter. Video contoh memakai 27 mm di ponsel. Contoh lapangan 100 mm. Yang dipakai adalah ukuran cetakan sendiri. Jangan perbesar atau perkecil setelah diukur.
 4. Unggah satu foto. **Ukur kedalaman.** Atau pakai **Kalibrasi live** bila kertas marker ada di depan kamera.
 
 ### K2, kalibrasi live
 
-1. Berkas K1 sudah ada. Isi sisi marker dan kamus yang sama dengan kertas.
+1. Pilih berkas. `generic` boleh dipakai sebelum foto K1. Sisi marker terisi dari referensi 100 mm bila config masih `laser.ref_cm` 10. Ganti dengan ukuran cetakan sendiri.
 2. **Kalibrasi live**, lalu buka sumber: kamera laptop (nomor kamera, biasanya 0), berkas video, atau RTSP.
 3. **Mulai.** Program mengambil bingkai terbaru dari sumber yang sedang jalan, mencari marker, menggambar kotak dan sumbu, lalu menampilkan X, Y, Z, dan jarak dalam meter.
 4. **Berhenti** menghentikan pembacaan. Gambar terakhir tetap di layar.
@@ -119,7 +139,7 @@ Profil kosong sampai ada dua pasangan yang kedalaman modelnya berbeda.
 
 Cara mengumpulkan pasangan:
 
-1. Sisi marker sudah tersimpan, dan berkas kamera punya matriks serta distorsi.
+1. Sisi marker sudah tersimpan, dan berkas kamera punya matriks serta distorsi. Berkas `origin: reference` tidak menambah pasangan.
 2. Pada bingkai inspeksi, marker terlihat utuh. Buka bingkai itu di SpatialSight dan tekan ukur, dengan garis referensi seperti biasa.
 3. Sebelum angka garis dihitung, program mencari marker pada gambar mentah. Di pusat marker, kedalaman model diambil sebagai median jendela 5×5 yang nilainya positif. Itu `Z_model`. `Z_fisik` adalah Z `solvePnP` dalam meter.
 4. Pasangan ditambah ke `config/calibration/<id>.json`. Paling banyak 12 pasangan terakhir. Gagal membaca marker tidak menggagalkan ukur.

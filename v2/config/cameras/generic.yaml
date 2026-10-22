@@ -1,0 +1,26 @@
+# Profil generik. Bukan hasil foto K1 dan bukan isian tangan di luar rumus config.
+# Matriks: default_intrinsics pada video.width × video.height (1920 × 1080).
+# fx = fy = max(lebar, tinggi) = 1920. Pusat optik di tengah: cx 960, cy 540.
+# Distorsi nol dari camera.reference.dist_coeffs.
+# Papan 9 × 6 dan kotak 25 mm dari camera.reference, contoh di CAMERA_CALIBRATION.md.
+# Sisi marker 100 mm = laser.ref_cm 10 cm, dikali 10 untuk milimeter.
+# origin reference: matriks dipakai, calibrated_underwater tetap mati.
+# RMS dan tanggal kosong karena tidak ada reprojeksi.
+# Port, air, dan profil K3 tidak diisi.
+schema_version: 1
+id: generic
+square_mm: 25.0
+image_width: 1920
+image_height: 1080
+corners_cols: 9
+corners_rows: 6
+camera_matrix: [1920.0, 0.0, 960.0, 0.0, 1920.0, 540.0, 0.0, 0.0, 1.0]
+dist_coeffs: [0.0, 0.0, 0.0, 0.0, 0.0]
+rms: null
+calibrated_at: null
+board: chessboard
+marker_mm: 100.0
+port: null
+water: null
+dictionary: DICT_4X4_50
+origin: reference

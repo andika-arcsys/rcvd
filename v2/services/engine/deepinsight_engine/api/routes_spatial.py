@@ -162,6 +162,8 @@ def _camera_file(request: Request, camera_id: str | None) -> dict[str, object] |
         found["marker_mm"] = camera.marker_mm
     if camera.dictionary:
         found["dictionary"] = camera.dictionary
+    if camera.origin:
+        found["camera_origin"] = camera.origin
     status = alignment_status(profile)
     if status.a is not None and status.b is not None:
         found["k3_a"] = status.a

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, model_validator
+import yaml
+from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
 from .errors import EngineError
 
@@ -30,6 +32,7 @@ class CameraFile(_Strict):
     port: str | None = None
     water: str | None = None
     dictionary: str | None = None
+    origin: Literal["reference", "measured"] | None = None
 
     @model_validator(mode="after")
     def _shape(self) -> CameraFile:
@@ -53,6 +56,20 @@ def camera_ids(folder: Path) -> list[str]:
     if not folder.is_dir():
         return []
     return sorted(path.stem for path in folder.glob("*.yaml") if not path.name.startswith("_"))
+
+
+def measured_camera_ids(folder: Path) -> list[str]:
+    """Berkas yang benar-benar diukur. Origin reference tidak mengisi kelengkapan D-04."""
+    return [item for item in camera_ids(folder) if _origin(folder / f"{item}.yaml") != "reference"]
+
+
+def _origin(path: Path) -> str | None:
+    try:
+        loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+        camera = CameraFile.model_validate(loaded)
+    except (OSError, yaml.YAMLError, ValidationError):
+        return None
+    return camera.origin
 
 
 def validate_camera_files(folder: Path, validate: object) -> None:

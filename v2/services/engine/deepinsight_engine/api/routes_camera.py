@@ -20,6 +20,7 @@ from ..core.camera_file import CameraFile
 from ..core.errors import EngineError
 from ..k3_align import alignment_status
 from ..office.service import Office
+from ..reference_camera import reference_camera
 from ..spatial.da3_frame import camera_k
 from .security import require_token
 
@@ -71,6 +72,27 @@ class ArucoOut(BaseModel):
     preview_jpeg: str | None = None
 
 
+class ReferenceOut(BaseModel):
+    id: str
+    origin: str
+    board: str | None = None
+    square_mm: float | None = None
+    corners_cols: int | None = None
+    corners_rows: int | None = None
+    image_width: int | None = None
+    image_height: int | None = None
+    marker_mm: float | None = None
+    dictionary: str | None = None
+    camera_matrix: list[float]
+    dist_coeffs: list[float]
+    focal_px: float
+    principal_u: float
+    principal_v: float
+    marker_source_cm: float | None = None
+    calibrated_underwater: bool
+    matches_formula: bool
+
+
 @camera.get("/cameras/pattern/chessboard")
 def chessboard_pattern(cols: int = 9, rows: int = 6) -> Response:
     payload = chessboard_png(cols, rows)
@@ -96,6 +118,35 @@ def charuco_pattern(
     if isinstance(payload, str):
         raise EngineError("API-002", payload)
     return _png(payload, "papan-charuco.png")
+
+
+@camera.get("/cameras/reference", response_model=ReferenceOut)
+def camera_reference(request: Request) -> ReferenceOut:
+    settings = request.app.state.settings
+    formula = reference_camera(settings)
+    shown = _stored_reference(request, formula)
+    matrix = shown.camera_matrix or formula.camera_matrix or []
+    dist = shown.dist_coeffs or formula.dist_coeffs or []
+    return ReferenceOut(
+        id=shown.id,
+        origin=shown.origin or "",
+        board=shown.board,
+        square_mm=shown.square_mm,
+        corners_cols=shown.corners_cols,
+        corners_rows=shown.corners_rows,
+        image_width=shown.image_width,
+        image_height=shown.image_height,
+        marker_mm=shown.marker_mm,
+        dictionary=shown.dictionary,
+        camera_matrix=matrix,
+        dist_coeffs=dist,
+        focal_px=float(matrix[0]),
+        principal_u=float(matrix[2]),
+        principal_v=float(matrix[5]),
+        marker_source_cm=settings.thresholds.laser.ref_cm,
+        calibrated_underwater=shown.origin != "reference",
+        matches_formula=shown.model_dump() == formula.model_dump(),
+    )
 
 
 @camera.get("/cameras/k3", response_model=K3Out)
@@ -312,6 +363,20 @@ def _remember_marker(config_dir: Path, camera_id: str, marker_mm: float, diction
     comment = "".join(line for line in text.splitlines(True) if line.startswith("#"))
     body = yaml.safe_dump(updated.model_dump(), sort_keys=False, allow_unicode=True)
     path.write_text(comment + body, encoding="utf-8")
+
+
+def _stored_reference(request: Request, formula: CameraFile) -> CameraFile:
+    office = request.app.state.office
+    path = Path(office.config_dir) / "cameras" / f"{formula.id}.yaml"
+    if not path.is_file():
+        return formula
+    try:
+        loaded = CameraFile.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
+    except (OSError, yaml.YAMLError, ValidationError):
+        return formula
+    if loaded.camera_matrix is None or loaded.dist_coeffs is None:
+        return formula
+    return loaded
 
 
 def _load_camera(config_dir: Path, camera_id: str) -> CameraFile:
