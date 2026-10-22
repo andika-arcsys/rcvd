@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { t } from '../../i18n';
-import { ACTION, INPUT, comma, downloadFile, positive, postForm } from './engineForm';
-import type { ArucoOut, MarkerOut } from './types';
+import { ACTION, INPUT, downloadFile, positive, postForm } from './engineForm';
+import { MarkerTable, asAruco } from './markerReadout';
+import type { ArucoOut } from './types';
 
 export function ArucoPanel({
   role,
@@ -132,78 +133,4 @@ export function ArucoPanel({
     const query = `marker_id=${id}&dictionary=${encodeURIComponent(dictionary)}`;
     setNote(await downloadFile(`/cameras/pattern/aruco?${query}`, `aruco-${name}-${id}.png`));
   }
-}
-
-function MarkerTable({ result }: { result: ArucoOut }) {
-  return (
-    <div className="flex flex-col gap-3">
-      {result.markers.length === 0 ? null : (
-        <table className="w-full text-left text-sm">
-          <thead className="text-xs text-muted">
-            <tr>
-              <th>{t('calib.marker')}</th>
-              <th>{t('calib.x')}</th>
-              <th>{t('calib.y')}</th>
-              <th>{t('calib.z')}</th>
-              <th>{t('calib.distance')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.markers.map((item) => (
-              <MarkerRow key={item.marker_id} item={item} />
-            ))}
-          </tbody>
-        </table>
-      )}
-      {result.preview_jpeg ? (
-        <img
-          alt={t('calib.arucoTitle')}
-          className="max-w-full rounded border border-line"
-          src={`data:image/jpeg;base64,${result.preview_jpeg}`}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function MarkerRow({ item }: { item: MarkerOut }) {
-  return (
-    <tr className="font-mono text-xs">
-      <td>{item.marker_id}</td>
-      <td>{cell(item.x_mm)}</td>
-      <td>{cell(item.y_mm)}</td>
-      <td>{cell(item.z_mm)}</td>
-      <td>{cell(item.distance_mm)}</td>
-    </tr>
-  );
-}
-
-function cell(mm: number): string {
-  return `${comma(mm / 1000, 3)} m`;
-}
-
-function asAruco(value: unknown): ArucoOut | null {
-  if (!value || typeof value !== 'object') return null;
-  const row = value as Partial<ArucoOut>;
-  if (typeof row.message !== 'string' || !Array.isArray(row.markers)) return null;
-  return {
-    camera_id: row.camera_id ?? '',
-    marker_mm: row.marker_mm ?? 0,
-    dictionary: row.dictionary ?? 'DICT_4X4_50',
-    markers: row.markers.filter(isMarker),
-    message: row.message,
-    preview_jpeg: row.preview_jpeg ?? null,
-  };
-}
-
-function isMarker(value: unknown): value is MarkerOut {
-  if (!value || typeof value !== 'object') return false;
-  const row = value as Partial<MarkerOut>;
-  return (
-    typeof row.marker_id === 'number' &&
-    typeof row.x_mm === 'number' &&
-    typeof row.y_mm === 'number' &&
-    typeof row.z_mm === 'number' &&
-    typeof row.distance_mm === 'number'
-  );
 }

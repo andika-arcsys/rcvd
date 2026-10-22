@@ -34,7 +34,7 @@ Satu pengali `k = Z_marker / Z_model` pada seluruh peta tidak disimpan. Garis re
 
 Kerjakan sebelum memotret papan.
 
-1. Pilih sumber video inspeksi.
+1. Pada layar Kalibrasi kamera, tombol **Kalibrasi live** membuka sumber video yang sama dengan Live Operation: kamera laptop, berkas, atau RTSP.
 2. Kunci resolusi ke resolusi yang dipakai saat mengukur. Semua foto satu tahap harus ukuran yang sama. Program menolak kumpulan yang campur.
 3. Fokus manual, jarak kerja sekitar 1 m. Matikan zoom, penstabil elektronik, dan OSD.
 4. Catat identitas kamera. Di tahap 2 isi port `kubah` atau `datar`, dan air `laut` atau `tawar`.
@@ -94,7 +94,16 @@ Perintah baris hanya menjalankan papan catur, dengan arti sudut dalam yang sama.
 1. Berkas K1 untuk kamera itu sudah ada. Pilih di daftar.
 2. Cetak marker dari kamus yang sama dengan yang dipilih: `DICT_4X4_50` (nomor 0–49) atau `DICT_6X6_250` (nomor 0–249).
 3. Ukur satu sisi dengan penggaris, dalam milimeter. Video contoh memakai 27 mm di ponsel. Contoh lapangan 100 mm. Yang dipakai adalah ukuran cetakan sendiri. Jangan perbesar atau perkecil setelah diukur.
-4. Unggah satu foto. **Ukur kedalaman.**
+4. Unggah satu foto. **Ukur kedalaman.** Atau pakai **Kalibrasi live** bila kertas marker ada di depan kamera.
+
+### K2, kalibrasi live
+
+1. Berkas K1 sudah ada. Isi sisi marker dan kamus yang sama dengan kertas.
+2. **Kalibrasi live**, lalu buka sumber: kamera laptop (nomor kamera, biasanya 0), berkas video, atau RTSP.
+3. **Mulai.** Program mengambil bingkai terbaru dari sumber yang sedang jalan, mencari marker, menggambar kotak dan sumbu, lalu menampilkan X, Y, Z, dan jarak dalam meter.
+4. **Berhenti** menghentikan pembacaan. Gambar terakhir tetap di layar.
+
+Ukuran gambar live yang berbeda dari foto K1 membuat matriks diskalakan ke lebar dan tinggi bingkai itu. Sisi marker ditulis ke berkas kamera saat angkanya berubah, tidak pada setiap bingkai. Sumber yang belum punya gambar menampilkan pesan, tanpa angka jarak.
 
 Program memanggil `solvePnP`. Sudut objek: kiri-atas, kanan-atas, kanan-bawah, kiri-bawah, sumbu Y marker ke atas. Hasil vektor ada di bingkai kamera: X ke kanan gambar, Y ke bawah gambar, Z menjauh. Jarak adalah panjang vektor ke pusat marker.
 

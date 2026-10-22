@@ -84,6 +84,9 @@ describe('Kalibrasi kamera', () => {
     expect(screen.getByText(/Diterima/)).toBeInTheDocument();
     expect(screen.getByText('Berkas ditulis ke config/cameras.')).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledOnce();
+    await userEvent.click(screen.getByRole('button', { name: 'Kalibrasi live' }));
+    expect(screen.getByText('Sumber video')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Mulai' })).toBeDisabled();
   });
 
   it('peran lihat tidak dapat menghitung', async () => {
@@ -91,6 +94,7 @@ describe('Kalibrasi kamera', () => {
     expect(await screen.findByRole('button', { name: 'Hitung kalibrasi' })).toBeDisabled();
     expect(screen.getByLabelText('ID kamera')).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Ukur kedalaman' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Kalibrasi live' })).toBeDisabled();
     expect(screen.getByText(/hanya dapat melihat/)).toBeInTheDocument();
   });
 });

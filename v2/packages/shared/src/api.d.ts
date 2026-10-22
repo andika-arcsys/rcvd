@@ -208,6 +208,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cameras/aruco/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aruco Live
+         * @description Pose marker pada bingkai sumber video yang sedang jalan.
+         */
+        post: operations["aruco_live_cameras_aruco_live_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/models": {
         parameters: {
             query?: never;
@@ -1351,6 +1371,20 @@ export interface components {
             marker_mm: number;
             /** File */
             file: string;
+            /**
+             * Dictionary
+             * @default DICT_4X4_50
+             */
+            dictionary: string;
+        };
+        /** Body_aruco_live_cameras_aruco_live_post */
+        Body_aruco_live_cameras_aruco_live_post: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Marker Mm */
+            marker_mm: number;
             /**
              * Dictionary
              * @default DICT_4X4_50
@@ -3458,6 +3492,41 @@ export interface operations {
         requestBody: {
             content: {
                 "multipart/form-data": components["schemas"]["Body_aruco_depth_cameras_aruco_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArucoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aruco_live_cameras_aruco_live_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/x-www-form-urlencoded": components["schemas"]["Body_aruco_live_cameras_aruco_live_post"];
             };
         };
         responses: {

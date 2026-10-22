@@ -7,6 +7,7 @@ import { ArucoPanel } from './ArucoPanel';
 import { ChessPanel } from './ChessPanel';
 import { comma } from './engineForm';
 import { K3Panel } from './K3Panel';
+import { LiveCalib } from './LiveCalib';
 import { ARUCO_URL, BOARD_URL, VIDEO_URL } from './types';
 
 const WRITERS = new Set(['ketua_tim', 'pilot_drone', 'ahli_ukur', 'teknisi_program']);
@@ -34,6 +35,7 @@ export default function KalibrasiKameraScreen() {
         <ArucoPanel role={role} allowed={WRITERS.has(role)} cameras={cameras} />
         <K3Panel cameras={cameras} />
       </div>
+      <LiveCalib role={role} allowed={WRITERS.has(role)} cameras={cameras} />
       <Stage title={t('calib.stage4')} body={t('calib.stage4body')} />
     </div>
   );

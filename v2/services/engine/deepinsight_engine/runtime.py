@@ -360,6 +360,20 @@ class Runtime:
         )
         return str(path), digest
 
+    def current_frame_jpeg(self) -> tuple[bytes, int, int] | None:
+        """JPEG bingkai live ukuran penuh. None bila sumber belum punya gambar."""
+        with self._lock:
+            if self.pipeline.state != "live":
+                return None
+            frame = self.pipeline.ring.latest()
+            if frame is None:
+                return None
+            bgr, width, height = frame.bgr, frame.width, frame.height
+            quality = self._settings.thresholds.video.display_jpeg_quality
+        from .video.encode import encode_jpeg
+
+        return encode_jpeg(bgr, width, height, max(width, height), quality), width, height
+
     def video_view(self) -> dict[str, object]:
         with self._lock:
             shown = self.pipeline.last_display

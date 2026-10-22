@@ -14,12 +14,13 @@ from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
 
-from ..aruco_depth import DICTIONARIES, DICTIONARY, marker_png, measure_markers
+from ..aruco_depth import DICTIONARIES, DICTIONARY, ArucoScan, marker_png, measure_markers
 from ..camera_calib import calibrate_report, charuco_png, chessboard_png, valid_camera_id
 from ..core.camera_file import CameraFile
 from ..core.errors import EngineError
 from ..k3_align import alignment_status
 from ..office.service import Office
+from ..spatial.da3_frame import camera_k
 from .security import require_token
 
 camera = APIRouter(dependencies=[Depends(require_token)], tags=["kamera"])
@@ -177,12 +178,18 @@ async def aruco_depth(
     office, user_id = _require_writer(request, role)
     if dictionary not in DICTIONARIES:
         raise EngineError("API-002", "Kamus marker tidak dikenal.")
-    matrix, dist = _intrinsics(office.config_dir, camera_id.strip())
+    camera = _load_camera(office.config_dir, camera_id.strip())
     payload = await file.read()
     if len(payload) > _MAX_BYTES:
         raise EngineError("API-002", "Foto terlalu besar. Maksimum 20 MB.")
-    _remember_marker(office.config_dir, camera_id.strip(), marker_mm, dictionary)
-    scan = measure_markers(payload, matrix, dist, marker_mm, dictionary)
+    _remember_if_changed(office.config_dir, camera, marker_mm, dictionary)
+    scan = measure_markers(
+        payload,
+        camera.camera_matrix or [],
+        camera.dist_coeffs or [],
+        marker_mm,
+        dictionary,
+    )
     office.audit(
         "aruco_depth",
         user_id=user_id,
@@ -190,26 +197,39 @@ async def aruco_depth(
         entity_id=camera_id.strip(),
         detail=scan.message,
     )
-    preview = None if scan.preview_jpeg is None else base64.b64encode(scan.preview_jpeg).decode()
-    return ArucoOut(
-        camera_id=camera_id.strip(),
-        marker_mm=marker_mm,
-        dictionary=dictionary,
-        markers=[
-            MarkerOut(
-                marker_id=item.marker_id,
-                x_mm=item.x_mm,
-                y_mm=item.y_mm,
-                z_mm=item.z_mm,
-                distance_mm=item.distance_mm,
-                center_u=item.center_u,
-                center_v=item.center_v,
-            )
-            for item in scan.markers
-        ],
-        message=scan.message,
-        preview_jpeg=preview,
-    )
+    return _scan_out(camera_id.strip(), marker_mm, dictionary, scan)
+
+
+@camera.post("/cameras/aruco/live", response_model=ArucoOut)
+def aruco_live(
+    request: Request,
+    role: Annotated[str, Form()],
+    camera_id: Annotated[str, Form()],
+    marker_mm: Annotated[float, Form()],
+    dictionary: Annotated[str, Form()] = DICTIONARY,
+) -> ArucoOut:
+    """Pose marker pada bingkai sumber video yang sedang jalan."""
+    _office, _user_id = _require_writer(request, role)
+    if dictionary not in DICTIONARIES:
+        raise EngineError("API-002", "Kamus marker tidak dikenal.")
+    chosen = camera_id.strip()
+    camera = _load_camera(request.app.state.office.config_dir, chosen)
+    grabbed = request.app.state.runtime.current_frame_jpeg()
+    if grabbed is None:
+        return ArucoOut(
+            camera_id=chosen,
+            marker_mm=marker_mm,
+            dictionary=dictionary,
+            markers=[],
+            message=(
+                "Sumber video belum punya gambar. Buka kamera laptop, berkas video, atau RTSP."
+            ),
+        )
+    payload, width, height = grabbed
+    matrix = _matrix_for_frame(camera, width, height)
+    _remember_if_changed(request.app.state.office.config_dir, camera, marker_mm, dictionary)
+    scan = measure_markers(payload, matrix, camera.dist_coeffs or [], marker_mm, dictionary)
+    return _scan_out(chosen, marker_mm, dictionary, scan)
 
 
 def _png(payload: bytes, name: str) -> Response:
@@ -246,6 +266,44 @@ def _known_roles(request: Request, office: Office) -> dict[str, list[str]]:
     return found
 
 
+def _scan_out(camera_id: str, marker_mm: float, dictionary: str, scan: ArucoScan) -> ArucoOut:
+    preview = None if scan.preview_jpeg is None else base64.b64encode(scan.preview_jpeg).decode()
+    return ArucoOut(
+        camera_id=camera_id,
+        marker_mm=marker_mm,
+        dictionary=dictionary,
+        markers=[
+            MarkerOut(
+                marker_id=item.marker_id,
+                x_mm=item.x_mm,
+                y_mm=item.y_mm,
+                z_mm=item.z_mm,
+                distance_mm=item.distance_mm,
+                center_u=item.center_u,
+                center_v=item.center_v,
+            )
+            for item in scan.markers
+        ],
+        message=scan.message,
+        preview_jpeg=preview,
+    )
+
+
+def _matrix_for_frame(camera: CameraFile, width: int, height: int) -> list[float]:
+    matrix = camera.camera_matrix or []
+    fx, fy, cx, cy = camera_k(matrix, width, height, camera.image_width, camera.image_height)
+    return [fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0]
+
+
+def _remember_if_changed(
+    config_dir: Path, camera: CameraFile, marker_mm: float, dictionary: str
+) -> None:
+    same_length = camera.marker_mm is not None and abs(camera.marker_mm - marker_mm) < 1e-6
+    if same_length and camera.dictionary == dictionary:
+        return
+    _remember_marker(config_dir, camera.id, marker_mm, dictionary)
+
+
 def _remember_marker(config_dir: Path, camera_id: str, marker_mm: float, dictionary: str) -> None:
     path = config_dir / "cameras" / f"{camera_id}.yaml"
     text = path.read_text(encoding="utf-8")
@@ -256,7 +314,7 @@ def _remember_marker(config_dir: Path, camera_id: str, marker_mm: float, diction
     path.write_text(comment + body, encoding="utf-8")
 
 
-def _intrinsics(config_dir: Path, camera_id: str) -> tuple[list[float], list[float]]:
+def _load_camera(config_dir: Path, camera_id: str) -> CameraFile:
     if not valid_camera_id(camera_id):
         raise EngineError("API-002", "ID kamera tidak valid.")
     path = config_dir / "cameras" / f"{camera_id}.yaml"
@@ -271,7 +329,7 @@ def _intrinsics(config_dir: Path, camera_id: str) -> tuple[list[float], list[flo
         raise EngineError("API-002", "Berkas kamera tidak lengkap.") from exc
     if parsed.camera_matrix is None or parsed.dist_coeffs is None:
         raise EngineError("API-002", "Berkas kamera belum berisi matriks.")
-    return parsed.camera_matrix, parsed.dist_coeffs
+    return parsed
 
 
 async def _save(files: list[UploadFile], folder: Path) -> str | None:

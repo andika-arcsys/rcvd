@@ -668,6 +668,66 @@
         }
       }
     },
+    "/cameras/aruco/live": {
+      "post": {
+        "tags": [
+          "kamera"
+        ],
+        "summary": "Aruco Live",
+        "description": "Pose marker pada bingkai sumber video yang sedang jalan.",
+        "operationId": "aruco_live_cameras_aruco_live_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_aruco_live_cameras_aruco_live_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArucoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/models": {
       "get": {
         "tags": [
@@ -4769,6 +4829,34 @@
           "file"
         ],
         "title": "Body_aruco_depth_cameras_aruco_post"
+      },
+      "Body_aruco_live_cameras_aruco_live_post": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "camera_id": {
+            "type": "string",
+            "title": "Camera Id"
+          },
+          "marker_mm": {
+            "type": "number",
+            "title": "Marker Mm"
+          },
+          "dictionary": {
+            "type": "string",
+            "title": "Dictionary",
+            "default": "DICT_4X4_50"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "camera_id",
+          "marker_mm"
+        ],
+        "title": "Body_aruco_live_cameras_aruco_live_post"
       },
       "Body_calibrate_cameras_calibrate_post": {
         "properties": {
