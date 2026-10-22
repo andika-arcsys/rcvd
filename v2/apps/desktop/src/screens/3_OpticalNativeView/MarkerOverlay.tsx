@@ -2,19 +2,64 @@ import { useEffect, useRef } from 'react';
 import { t } from '../../i18n';
 import type { ArucoOut, MarkerOut } from '../2_5_KalibrasiKamera/types';
 
-/** Kotak dan sumbu marker di atas jendela Optical. Koordinat mengikuti foto deteksi. */
+/** X hijau, Y biru, Depth merah, Dist kuning. Ukuran mengikuti tinggi jendela video. */
+const READOUT: { label: string; color: string; field: 'x_mm' | 'y_mm' | 'z_mm' | 'distance_mm' }[] =
+  [
+    { label: 'X', color: '#00FF00', field: 'x_mm' },
+    { label: 'Y', color: '#0000FF', field: 'y_mm' },
+    { label: 'Depth', color: '#FF0000', field: 'z_mm' },
+    { label: 'Dist', color: '#FFFF00', field: 'distance_mm' },
+  ];
+
+const HALO =
+  '0 0 0.16em #000, 0.08em 0 0 #000, -0.08em 0 0 #000, 0 0.08em 0 #000, 0 -0.08em 0 #000';
+
+/** Kotak, sumbu, dan angka pose di atas jendela Optical. */
 export function MarkerOverlay({ scan }: { scan: ArucoOut | null }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     paint(ref.current, scan);
   }, [scan]);
+  const markers = scan?.markers ?? [];
   return (
-    <canvas
-      ref={ref}
-      className="pointer-events-none absolute inset-0 h-full w-full object-contain"
-      aria-label={t('live.tabCalibration')}
-    />
+    <div className="pointer-events-none absolute inset-0" style={{ containerType: 'size' }}>
+      <canvas
+        ref={ref}
+        className="h-full w-full object-contain"
+        aria-label={t('live.tabCalibration')}
+      />
+      {markers.length > 0 ? <PoseReadout markers={markers} /> : null}
+    </div>
   );
+}
+
+function PoseReadout({ markers }: { markers: MarkerOut[] }) {
+  return (
+    <div
+      className="absolute left-[2%] top-[4%] flex flex-col gap-[0.35em] font-sans font-extrabold leading-none"
+      style={{ fontSize: 'clamp(2rem, 8cqh, 5rem)', textShadow: HALO }}
+    >
+      {markers.map((marker) => (
+        <MarkerLines key={marker.marker_id} marker={marker} />
+      ))}
+    </div>
+  );
+}
+
+function MarkerLines({ marker }: { marker: MarkerOut }) {
+  return (
+    <div className="flex flex-col gap-[0.2em]">
+      {READOUT.map((line) => (
+        <span key={line.label} style={{ color: line.color }}>
+          {line.label}={metres(marker[line.field])}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function metres(mm: number): string {
+  return `${(mm / 1000).toFixed(3)} m`;
 }
 
 function paint(node: HTMLCanvasElement | null, scan: ArucoOut | null): void {
