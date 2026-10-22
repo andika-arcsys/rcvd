@@ -285,7 +285,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "default": 8,
+              "default": 9,
               "title": "Cols"
             }
           },
@@ -357,6 +357,16 @@
             }
           },
           {
+            "name": "dictionary",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "DICT_4X4_50",
+              "title": "Dictionary"
+            }
+          },
+          {
             "name": "x-deepinsight-token",
             "in": "header",
             "required": false,
@@ -379,6 +389,151 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cameras/pattern/charuco": {
+      "get": {
+        "tags": [
+          "kamera"
+        ],
+        "summary": "Charuco Pattern",
+        "operationId": "charuco_pattern_cameras_pattern_charuco_get",
+        "parameters": [
+          {
+            "name": "squares_x",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 8,
+              "title": "Squares X"
+            }
+          },
+          {
+            "name": "squares_y",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 6,
+              "title": "Squares Y"
+            }
+          },
+          {
+            "name": "square_mm",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "default": 0,
+              "title": "Square Mm"
+            }
+          },
+          {
+            "name": "marker_mm",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "default": 0,
+              "title": "Marker Mm"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cameras/k3": {
+      "get": {
+        "tags": [
+          "kamera"
+        ],
+        "summary": "K3 Profile",
+        "operationId": "k3_profile_cameras_k3_get",
+        "parameters": [
+          {
+            "name": "camera_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Camera Id"
+            }
+          },
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/K3Out"
+                }
               }
             }
           },
@@ -4599,6 +4754,11 @@
             "type": "string",
             "contentMediaType": "application/octet-stream",
             "title": "File"
+          },
+          "dictionary": {
+            "type": "string",
+            "title": "Dictionary",
+            "default": "DICT_4X4_50"
           }
         },
         "type": "object",
@@ -4639,6 +4799,32 @@
             },
             "type": "array",
             "title": "Files"
+          },
+          "board": {
+            "type": "string",
+            "title": "Board",
+            "default": "chessboard"
+          },
+          "marker_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marker Mm"
+          },
+          "port": {
+            "type": "string",
+            "title": "Port",
+            "default": ""
+          },
+          "water": {
+            "type": "string",
+            "title": "Water",
+            "default": ""
           }
         },
         "type": "object",
@@ -6615,6 +6801,51 @@
         ],
         "title": "IntervalYears"
       },
+      "K3Out": {
+        "properties": {
+          "camera_id": {
+            "type": "string",
+            "title": "Camera Id"
+          },
+          "a": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "A"
+          },
+          "b": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "B"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples"
+          },
+          "ready": {
+            "type": "boolean",
+            "title": "Ready"
+          }
+        },
+        "type": "object",
+        "required": [
+          "camera_id",
+          "samples",
+          "ready"
+        ],
+        "title": "K3Out"
+      },
       "Laser": {
         "properties": {
           "ref_cm": {
@@ -7029,6 +7260,16 @@
           "distance_mm": {
             "type": "number",
             "title": "Distance Mm"
+          },
+          "center_u": {
+            "type": "number",
+            "title": "Center U",
+            "default": 0.0
+          },
+          "center_v": {
+            "type": "number",
+            "title": "Center V",
+            "default": 0.0
           }
         },
         "type": "object",

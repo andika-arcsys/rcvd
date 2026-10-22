@@ -140,6 +140,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cameras/pattern/charuco": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Charuco Pattern */
+        get: operations["charuco_pattern_cameras_pattern_charuco_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras/k3": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** K3 Profile */
+        get: operations["k3_profile_cameras_k3_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/cameras/calibrate": {
         parameters: {
             query?: never;
@@ -1317,6 +1351,11 @@ export interface components {
             marker_mm: number;
             /** File */
             file: string;
+            /**
+             * Dictionary
+             * @default DICT_4X4_50
+             */
+            dictionary: string;
         };
         /** Body_calibrate_cameras_calibrate_post */
         Body_calibrate_cameras_calibrate_post: {
@@ -1332,6 +1371,23 @@ export interface components {
             corners_rows: number;
             /** Files */
             files: string[];
+            /**
+             * Board
+             * @default chessboard
+             */
+            board: string;
+            /** Marker Mm */
+            marker_mm?: number | null;
+            /**
+             * Port
+             * @default
+             */
+            port: string;
+            /**
+             * Water
+             * @default
+             */
+            water: string;
         };
         /** Body_upload_video_video_upload_post */
         Body_upload_video_video_upload_post: {
@@ -2000,6 +2056,19 @@ export interface components {
             /** Moderate And Above */
             moderate_and_above: number;
         };
+        /** K3Out */
+        K3Out: {
+            /** Camera Id */
+            camera_id: string;
+            /** A */
+            a?: number | null;
+            /** B */
+            b?: number | null;
+            /** Samples */
+            samples: number;
+            /** Ready */
+            ready: boolean;
+        };
         /**
          * Laser
          * @description Jarak dua titik laser, sentimeter. Hue mengikuti OpenCV 0–180.
@@ -2145,6 +2214,16 @@ export interface components {
             z_mm: number;
             /** Distance Mm */
             distance_mm: number;
+            /**
+             * Center U
+             * @default 0
+             */
+            center_u: number;
+            /**
+             * Center V
+             * @default 0
+             */
+            center_v: number;
         };
         /** MeasView */
         MeasView: {
@@ -3233,6 +3312,7 @@ export interface operations {
         parameters: {
             query?: {
                 marker_id?: number;
+                dictionary?: string;
             };
             header?: {
                 "x-deepinsight-token"?: string | null;
@@ -3249,6 +3329,75 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    charuco_pattern_cameras_pattern_charuco_get: {
+        parameters: {
+            query?: {
+                squares_x?: number;
+                squares_y?: number;
+                square_mm?: number;
+                marker_mm?: number;
+            };
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    k3_profile_cameras_k3_get: {
+        parameters: {
+            query: {
+                camera_id: string;
+            };
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["K3Out"];
                 };
             };
             /** @description Validation Error */

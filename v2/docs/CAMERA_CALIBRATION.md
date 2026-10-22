@@ -1,6 +1,8 @@
 # Kalibrasi kamera
 
-Berkas ini menjelaskan cara mengisi `config/cameras/<id>.yaml`. Tanpa berkas itu, kalibrasi laser tetap jalan. Status ukur paling tinggi `ESTIMATE_ONLY`.
+Pemakaian di konsol dan alur K1, K2, K3 ada di [PROSEDUR_KALIBRASI.md](PROSEDUR_KALIBRASI.md). Berkas ini tetap menjelaskan perintah baris untuk papan catur.
+
+Tanpa `config/cameras/<id>.yaml`, kalibrasi laser tetap jalan. Status ukur paling tinggi `ESTIMATE_ONLY`.
 
 ## Perintah
 

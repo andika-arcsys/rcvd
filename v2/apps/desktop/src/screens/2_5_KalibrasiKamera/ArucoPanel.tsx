@@ -15,6 +15,7 @@ export function ArucoPanel({
   const [cameraId, setCameraId] = useState('');
   const [markerMm, setMarkerMm] = useState('');
   const [markerId, setMarkerId] = useState('0');
+  const [dictionary, setDictionary] = useState('DICT_4X4_50');
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -23,8 +24,9 @@ export function ArucoPanel({
   const ready = allowed && cameraId !== '' && length !== null && file !== null && !busy;
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-line bg-panel p-4">
-      <h2 className="text-sm font-semibold">{t('calib.arucoTitle')}</h2>
+      <h2 className="text-sm font-semibold">{t('calib.stage3')}</h2>
       <p className="text-xs text-muted">{t('calib.dictNote')}</p>
+      <p className="text-xs text-muted">{t('calib.savedSide')}</p>
       {cameras.length === 0 ? <p className="text-sm">{t('calib.noCamera')}</p> : null}
       <label className="text-xs text-muted">
         {t('calib.camera')}
@@ -52,6 +54,19 @@ export function ArucoPanel({
           disabled={!allowed}
           onChange={(event) => setMarkerMm(event.target.value)}
         />
+      </label>
+      <label className="text-xs text-muted">
+        {t('calib.dictionary')}
+        <select
+          aria-label={t('calib.dictionary')}
+          className={INPUT}
+          value={dictionary}
+          disabled={!allowed}
+          onChange={(event) => setDictionary(event.target.value)}
+        >
+          <option value="DICT_4X4_50">DICT_4X4_50</option>
+          <option value="DICT_6X6_250">DICT_6X6_250</option>
+        </select>
       </label>
       <label className="text-xs text-muted">
         {t('calib.markerId')}
@@ -94,6 +109,7 @@ export function ArucoPanel({
     body.append('role', role);
     body.append('camera_id', cameraId);
     body.append('marker_mm', String(length));
+    body.append('dictionary', dictionary);
     body.append('file', file);
     const response = await postForm('/cameras/aruco', body);
     setBusy(false);
@@ -112,7 +128,9 @@ export function ArucoPanel({
 
   async function pattern() {
     const id = encodeURIComponent(markerId.trim() || '0');
-    setNote(await downloadFile(`/cameras/pattern/aruco?marker_id=${id}`, `aruco-4x4-${id}.png`));
+    const name = dictionary === 'DICT_6X6_250' ? '6x6' : '4x4';
+    const query = `marker_id=${id}&dictionary=${encodeURIComponent(dictionary)}`;
+    setNote(await downloadFile(`/cameras/pattern/aruco?${query}`, `aruco-${name}-${id}.png`));
   }
 }
 
@@ -161,7 +179,7 @@ function MarkerRow({ item }: { item: MarkerOut }) {
 }
 
 function cell(mm: number): string {
-  return `${comma(mm, 1)} (${comma(mm / 1000, 3)} m)`;
+  return `${comma(mm / 1000, 3)} m`;
 }
 
 function asAruco(value: unknown): ArucoOut | null {

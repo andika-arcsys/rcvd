@@ -6,6 +6,7 @@ import { useSession } from '../../session/SessionContext';
 import { ArucoPanel } from './ArucoPanel';
 import { ChessPanel } from './ChessPanel';
 import { comma } from './engineForm';
+import { K3Panel } from './K3Panel';
 import { ARUCO_URL, BOARD_URL, VIDEO_URL } from './types';
 
 const WRITERS = new Set(['ketua_tim', 'pilot_drone', 'ahli_ukur', 'teknisi_program']);
@@ -23,14 +24,17 @@ export default function KalibrasiKameraScreen() {
     <div className="flex flex-col gap-4 p-4">
       <Intro band={band} />
       {WRITERS.has(role) ? null : <p className="text-sm">{t('calib.denied')}</p>}
+      <Stage title={t('calib.stage1')} body={t('calib.stage1body')} />
+      <ChessPanel
+        role={role}
+        allowed={WRITERS.has(role)}
+        onSaved={() => void loadCameras(client, setCameras)}
+      />
       <div className="grid gap-4 xl:grid-cols-2">
-        <ChessPanel
-          role={role}
-          allowed={WRITERS.has(role)}
-          onSaved={() => void loadCameras(client, setCameras)}
-        />
         <ArucoPanel role={role} allowed={WRITERS.has(role)} cameras={cameras} />
+        <K3Panel cameras={cameras} />
       </div>
+      <Stage title={t('calib.stage4')} body={t('calib.stage4body')} />
     </div>
   );
 }
@@ -39,15 +43,7 @@ function Intro({ band }: { band: string | null }) {
   return (
     <section className="flex max-w-5xl flex-col gap-3">
       <p className="text-sm text-muted">{t('calib.intro')}</p>
-      <ol className="list-decimal space-y-1 pl-5 text-sm">
-        <li>{t('calib.step1')}</li>
-        <li>{t('calib.step2')}</li>
-        <li>{t('calib.step3')}</li>
-        <li>{t('calib.step4')}</li>
-        <li>{band ?? t('calib.bandUnknown')}</li>
-        <li>{t('calib.step5')}</li>
-        <li>{t('calib.step6')}</li>
-      </ol>
+      <p className="text-sm">{band ?? t('calib.bandUnknown')}</p>
       <p className="flex flex-wrap gap-4 text-sm">
         <a className="text-info" href={BOARD_URL} target="_blank" rel="noreferrer">
           {t('calib.linkBoard')}
@@ -59,6 +55,15 @@ function Intro({ band }: { band: string | null }) {
           {t('calib.linkVideo')}
         </a>
       </p>
+    </section>
+  );
+}
+
+function Stage({ title, body }: { title: string; body: string }) {
+  return (
+    <section className="max-w-5xl rounded-xl border border-line bg-panel p-4">
+      <h2 className="text-sm font-semibold">{title}</h2>
+      <p className="mt-2 text-sm text-muted">{body}</p>
     </section>
   );
 }

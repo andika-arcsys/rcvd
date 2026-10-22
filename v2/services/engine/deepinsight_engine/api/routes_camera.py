@@ -14,10 +14,11 @@ from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
 
-from ..aruco_depth import DICTIONARY, marker_png, measure_markers
-from ..camera_calib import calibrate_report, chessboard_png, valid_camera_id
+from ..aruco_depth import DICTIONARIES, DICTIONARY, marker_png, measure_markers
+from ..camera_calib import calibrate_report, charuco_png, chessboard_png, valid_camera_id
 from ..core.camera_file import CameraFile
 from ..core.errors import EngineError
+from ..k3_align import alignment_status
 from ..office.service import Office
 from .security import require_token
 
@@ -48,6 +49,16 @@ class MarkerOut(BaseModel):
     y_mm: float
     z_mm: float
     distance_mm: float
+    center_u: float = 0.0
+    center_v: float = 0.0
+
+
+class K3Out(BaseModel):
+    camera_id: str
+    a: float | None = None
+    b: float | None = None
+    samples: int
+    ready: bool
 
 
 class ArucoOut(BaseModel):
@@ -60,7 +71,7 @@ class ArucoOut(BaseModel):
 
 
 @camera.get("/cameras/pattern/chessboard")
-def chessboard_pattern(cols: int = 8, rows: int = 6) -> Response:
+def chessboard_pattern(cols: int = 9, rows: int = 6) -> Response:
     payload = chessboard_png(cols, rows)
     if isinstance(payload, str):
         raise EngineError("API-002", payload)
@@ -68,11 +79,37 @@ def chessboard_pattern(cols: int = 8, rows: int = 6) -> Response:
 
 
 @camera.get("/cameras/pattern/aruco")
-def aruco_pattern(marker_id: int = 0) -> Response:
-    payload = marker_png(marker_id)
+def aruco_pattern(marker_id: int = 0, dictionary: str = DICTIONARY) -> Response:
+    payload = marker_png(marker_id, dictionary_name=dictionary)
     if isinstance(payload, str):
         raise EngineError("API-002", payload)
-    return _png(payload, f"aruco-4x4-{marker_id}.png")
+    slug = "6x6" if dictionary == "DICT_6X6_250" else "4x4"
+    return _png(payload, f"aruco-{slug}-{marker_id}.png")
+
+
+@camera.get("/cameras/pattern/charuco")
+def charuco_pattern(
+    squares_x: int = 8, squares_y: int = 6, square_mm: float = 0, marker_mm: float = 0
+) -> Response:
+    payload = charuco_png(squares_x, squares_y, square_mm, marker_mm)
+    if isinstance(payload, str):
+        raise EngineError("API-002", payload)
+    return _png(payload, "papan-charuco.png")
+
+
+@camera.get("/cameras/k3", response_model=K3Out)
+def k3_profile(request: Request, camera_id: str) -> K3Out:
+    office, _user_id = _actor(request)
+    if not valid_camera_id(camera_id):
+        raise EngineError("API-002", "ID kamera tidak valid.")
+    status = alignment_status(Path(office.config_dir) / "calibration" / f"{camera_id}.json")
+    return K3Out(
+        camera_id=camera_id,
+        a=status.a,
+        b=status.b,
+        samples=status.samples,
+        ready=status.a is not None and status.b is not None,
+    )
 
 
 @camera.post("/cameras/calibrate", response_model=CalibrationOut)
@@ -84,6 +121,10 @@ async def calibrate(
     corners_cols: Annotated[int, Form()],
     corners_rows: Annotated[int, Form()],
     files: Annotated[list[UploadFile], File()],
+    board: Annotated[str, Form()] = "chessboard",
+    marker_mm: Annotated[float | None, Form()] = None,
+    port: Annotated[str, Form()] = "",
+    water: Annotated[str, Form()] = "",
 ) -> CalibrationOut:
     office, user_id = _require_writer(request, role)
     with tempfile.TemporaryDirectory(prefix="kalibrasi-") as tmp:
@@ -97,6 +138,10 @@ async def calibrate(
             square_mm,
             corners_cols,
             corners_rows,
+            board=board,
+            marker_mm=marker_mm,
+            port=port,
+            water=water,
         )
     office.audit(
         "camera_calibrated",
@@ -127,13 +172,17 @@ async def aruco_depth(
     camera_id: Annotated[str, Form()],
     marker_mm: Annotated[float, Form()],
     file: Annotated[UploadFile, File()],
+    dictionary: Annotated[str, Form()] = DICTIONARY,
 ) -> ArucoOut:
     office, user_id = _require_writer(request, role)
+    if dictionary not in DICTIONARIES:
+        raise EngineError("API-002", "Kamus marker tidak dikenal.")
     matrix, dist = _intrinsics(office.config_dir, camera_id.strip())
     payload = await file.read()
     if len(payload) > _MAX_BYTES:
         raise EngineError("API-002", "Foto terlalu besar. Maksimum 20 MB.")
-    scan = measure_markers(payload, matrix, dist, marker_mm)
+    _remember_marker(office.config_dir, camera_id.strip(), marker_mm, dictionary)
+    scan = measure_markers(payload, matrix, dist, marker_mm, dictionary)
     office.audit(
         "aruco_depth",
         user_id=user_id,
@@ -145,7 +194,7 @@ async def aruco_depth(
     return ArucoOut(
         camera_id=camera_id.strip(),
         marker_mm=marker_mm,
-        dictionary=DICTIONARY,
+        dictionary=dictionary,
         markers=[
             MarkerOut(
                 marker_id=item.marker_id,
@@ -153,6 +202,8 @@ async def aruco_depth(
                 y_mm=item.y_mm,
                 z_mm=item.z_mm,
                 distance_mm=item.distance_mm,
+                center_u=item.center_u,
+                center_v=item.center_v,
             )
             for item in scan.markers
         ],
@@ -193,6 +244,16 @@ def _known_roles(request: Request, office: Office) -> dict[str, list[str]]:
             if isinstance(loaded, list):
                 found[str(row["id"])] = [str(item) for item in loaded]
     return found
+
+
+def _remember_marker(config_dir: Path, camera_id: str, marker_mm: float, dictionary: str) -> None:
+    path = config_dir / "cameras" / f"{camera_id}.yaml"
+    text = path.read_text(encoding="utf-8")
+    parsed = CameraFile.model_validate(yaml.safe_load(text))
+    updated = parsed.model_copy(update={"marker_mm": marker_mm, "dictionary": dictionary})
+    comment = "".join(line for line in text.splitlines(True) if line.startswith("#"))
+    body = yaml.safe_dump(updated.model_dump(), sort_keys=False, allow_unicode=True)
+    path.write_text(comment + body, encoding="utf-8")
 
 
 def _intrinsics(config_dir: Path, camera_id: str) -> tuple[list[float], list[float]]:

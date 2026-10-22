@@ -29,6 +29,14 @@ export interface ArucoOut {
   preview_jpeg: string | null;
 }
 
+export interface K3Out {
+  camera_id: string;
+  a: number | null;
+  b: number | null;
+  samples: number;
+  ready: boolean;
+}
+
 export const BOARD_URL = 'https://visionbrick.com/camera-calibration-with-opencv/';
 export const ARUCO_URL =
   'https://visionbrick.com/measuring-depth-from-a-single-camera-using-aruco-markers-in-opencv/';

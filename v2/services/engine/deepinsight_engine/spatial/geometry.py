@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from itertools import pairwise
 from typing import Any
 
-from .band import FLOOR_REL, scored_depth, uncertainty_m
+from .band import FLOOR_REL, GRADIENT_GAIN, scored_depth, uncertainty_m
 
 
 def clockwise_screen_deg(start: tuple[float, float], end: tuple[float, float]) -> float:
@@ -50,6 +50,7 @@ class ScaleCalibration:
     depth_value: float = 0.0
     sample_u: float = 0.0
     sample_v: float = 0.0
+    gradient_gain: float = GRADIENT_GAIN
 
 
 @dataclass(frozen=True)
@@ -229,7 +230,10 @@ def measure_span(
     mid = ((point_a[0] + point_b[0]) // 2, (point_a[1] + point_b[1]) // 2)
     sample = read_window(depth_m, mid, conf=conf, conf_min=conf_min)
     rel_mid = sample.sigma / max(sample.depth, 1e-6)
-    depth = scored_depth(sample.depth, calibration.depth_value) * calibration.scale
+    depth = (
+        scored_depth(sample.depth, calibration.depth_value, calibration.gradient_gain)
+        * calibration.scale
+    )
     p_a = pixel_to_3d(point_a, depth, intrinsics)
     p_b = pixel_to_3d(point_b, depth, intrinsics)
     distance = float(np.linalg.norm(p_a - p_b))
@@ -272,6 +276,7 @@ def calibration_from_reference(
     conf: Any = None,
     conf_min: float = 0.0,
     click_sigma_px: float = 1.5,
+    gradient_gain: float = GRADIENT_GAIN,
 ) -> ScaleCalibration:
     np = importlib.import_module("numpy")
     if known_length_m <= 0:
@@ -307,6 +312,7 @@ def calibration_from_reference(
         depth_value=sample.depth,
         sample_u=float(sample.u),
         sample_v=float(sample.v),
+        gradient_gain=gradient_gain,
     )
 
 
@@ -325,7 +331,7 @@ def calculate_accumulated_path_distance(
     local_mads: list[float] = []
     for point in sampled:
         raw_depth, mad = local_depth(depth_m, point, radius=1)
-        depth = scored_depth(raw_depth, calibration.depth_value)
+        depth = scored_depth(raw_depth, calibration.depth_value, calibration.gradient_gain)
         coordinates.append(pixel_to_3d(point, depth * calibration.scale, intrinsics))
         local_mads.append(mad)
     path = np.asarray(coordinates)

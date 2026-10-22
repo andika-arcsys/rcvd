@@ -25,6 +25,11 @@ class CameraFile(_Strict):
     dist_coeffs: list[float] | None = None
     rms: float | None = None
     calibrated_at: str | None = None
+    board: str | None = None
+    marker_mm: float | None = None
+    port: str | None = None
+    water: str | None = None
+    dictionary: str | None = None
 
     @model_validator(mode="after")
     def _shape(self) -> CameraFile:

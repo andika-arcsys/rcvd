@@ -37,8 +37,11 @@ def test_pinhole_board_is_accepted_and_bad_id_is_not_written(
     assert result.rms is not None and result.rms <= 0.5
     assert result.band == "accept"
     assert result.camera_matrix is not None and len(result.camera_matrix) == 9
+    assert result.camera_matrix[0] == pytest_approx(900, abs=40)
     saved = yaml.safe_load((cfg / "cameras" / "rov01.yaml").read_text(encoding="utf-8"))
     assert saved["id"] == "rov01"
+    assert saved["board"] == "chessboard"
+    assert saved["square_mm"] == SQUARE_MM
     assert saved["corners_cols"] == COLS
     denied = calibrate_report(cfg, photos, "../evil", SQUARE_MM, COLS, ROWS)
     assert denied.code == 2
@@ -122,7 +125,9 @@ def test_api_writes_camera_then_reads_aruco(tmp_path: Path) -> None:
         assert markers[0]["z_mm"] > 0
         assert depth.json()["dictionary"] == "DICT_4X4_50"
         assert depth.json()["preview_jpeg"]
-    assert (cfg / "cameras" / "rov01.yaml").is_file()
+    saved_camera = yaml.safe_load((cfg / "cameras" / "rov01.yaml").read_text(encoding="utf-8"))
+    assert saved_camera["marker_mm"] == 40
+    assert saved_camera["dictionary"] == "DICT_4X4_50"
 
 
 def test_api_rejects_unreadable_photos(tmp_path: Path) -> None:
@@ -142,6 +147,37 @@ def test_api_rejects_unreadable_photos(tmp_path: Path) -> None:
         assert noisy.json()["code"] == 2
         assert noisy.json()["written"] is False
     assert not (cfg / "cameras" / "rov01.yaml").exists()
+
+
+def test_charuco_board_writes_metres_and_port(config_dir: Path, tmp_path: Path) -> None:
+    cfg = tmp_path / "cfg"
+    shutil.copytree(config_dir, cfg)
+    photos = tmp_path / "foto"
+    photos.mkdir()
+    for index, image in enumerate(_charuco_views()):
+        cv2.imwrite(str(photos / f"{index}.png"), image)
+    result = calibrate_report(
+        cfg,
+        photos,
+        "rov01",
+        40.0,
+        5,
+        4,
+        board="charuco",
+        marker_mm=30.0,
+        port="flat",
+        water="laut",
+    )
+    assert result.code == 0, result.message
+    assert result.written is True
+    assert result.rms is not None and result.rms <= 0.5
+    saved = yaml.safe_load((cfg / "cameras" / "rov01.yaml").read_text(encoding="utf-8"))
+    assert saved["board"] == "charuco"
+    assert saved["corners_cols"] == 5
+    assert saved["port"] == "flat"
+    assert saved["water"] == "laut"
+    assert saved["marker_mm"] is None
+    assert saved["square_mm"] == 40.0
 
 
 def _form(role: str, camera_id: str) -> dict[str, str]:
@@ -193,6 +229,45 @@ def _pinhole_boards() -> list[np.ndarray]:
         projected, _ = cv2.projectPoints(obj, rvec, tvec, intrinsics, np.zeros(5))
         homography = cv2.getPerspectiveTransform(src, projected.reshape(4, 2).astype(np.float32))
         images.append(cv2.warpPerspective(board, homography, (800, 600), borderValue=255))
+    return images
+
+
+def _charuco_views() -> list[np.ndarray]:
+    square_m = 0.04
+    dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    board = cv2.aruco.CharucoBoard((5, 4), square_m, 0.03, dictionary)
+    margin = 40
+    src_img = board.generateImage((5 * 100 + 2 * margin, 4 * 100 + 2 * margin), marginSize=margin)
+    height, width = src_img.shape[:2]
+    src = np.float32(
+        [
+            [margin, margin],
+            [width - margin, margin],
+            [width - margin, height - margin],
+            [margin, height - margin],
+        ]
+    )
+    obj = np.array(
+        [
+            [0, 0, 0],
+            [5 * square_m, 0, 0],
+            [5 * square_m, 4 * square_m, 0],
+            [0, 4 * square_m, 0],
+        ],
+        np.float32,
+    )
+    intrinsics = np.array([[900.0, 0, 400.0], [0, 900.0, 300.0], [0, 0, 1]])
+    poses = (
+        (np.array([[0.2], [0.1], [0.0]]), np.array([[-0.05], [-0.02], [0.8]])),
+        (np.array([[-0.25], [0.15], [0.05]]), np.array([[0.04], [0.01], [0.7]])),
+        (np.array([[0.05], [-0.3], [0.1]]), np.array([[-0.02], [0.03], [0.9]])),
+        (np.array([[0.15], [-0.05], [-0.2]]), np.array([[0.02], [-0.03], [0.65]])),
+    )
+    images: list[np.ndarray] = []
+    for rvec, tvec in poses:
+        projected, _ = cv2.projectPoints(obj, rvec, tvec, intrinsics, np.zeros(5))
+        homography = cv2.getPerspectiveTransform(src, projected.reshape(4, 2).astype(np.float32))
+        images.append(cv2.warpPerspective(src_img, homography, (800, 600), borderValue=255))
     return images
 
 
