@@ -59,7 +59,7 @@ export default function OpticalNativeViewScreen() {
     return () => holdLiveStream(false);
   }, [dual, held]);
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 p-4">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden p-4">
       {segment ? (
         <p className="rounded border border-line px-3 py-2 text-sm">
           {t('live.remeasureSegment')} {segment}
@@ -198,12 +198,16 @@ function LiveBody({
     />
   );
   const video = (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex h-full min-h-0 min-w-0 flex-col gap-3">
       <SourcePicker />
       {dual ? (
-        <DualStage featureLabel={t(featureLabel(active))} overlay={overlay} />
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <DualStage featureLabel={t(featureLabel(active))} overlay={overlay} />
+        </div>
       ) : (
-        <VideoStage lost={lost}>{overlay}</VideoStage>
+        <div className="min-h-0 flex-1">
+          <VideoStage lost={lost}>{overlay}</VideoStage>
+        </div>
       )}
     </div>
   );
@@ -221,7 +225,9 @@ function LiveBody({
       <SideColumn status={status} mission={mission} findings={findings} />
     </div>
   );
-  return <WorkColumns main={video} side={side} sideFirst={calibrating} />;
+  return (
+    <WorkColumns main={video} side={side} sideFirst={calibrating} fill className="min-h-0 flex-1" />
+  );
 }
 
 function featureLabel(active: string): string {

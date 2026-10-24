@@ -8,6 +8,7 @@ import { ChessPanel } from './ChessPanel';
 import { comma } from './engineForm';
 import { K3Panel } from './K3Panel';
 import { markerPreset } from './preset';
+import { PipeBench, type PipeTab } from './pipe/PipeBench';
 import { ReferenceCard, asReference, squareHint } from './ReferenceCard';
 import { ARUCO_URL, BOARD_URL, VIDEO_URL, type ReferenceView } from './types';
 
@@ -23,7 +24,8 @@ export default function KalibrasiKameraScreen() {
   useEffect(() => {
     void load(client, setCameras, setBand, setProfile);
   }, [client]);
-  return (
+  const [tab, setTab] = useState<'cal1' | PipeTab>('cal1');
+  const cal1 = (
     <div className="flex flex-col gap-4 p-4">
       <Intro band={band} />
       {WRITERS.has(role) ? null : <p className="text-sm">{t('calib.denied')}</p>}
@@ -45,6 +47,39 @@ export default function KalibrasiKameraScreen() {
         <K3Panel cameras={cameras} />
       </div>
       <Stage title={t('calib.stage4')} body={t('calib.stage4body')} />
+    </div>
+  );
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <TabBar tab={tab} onTab={setTab} />
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <div className={tab === 'cal1' ? 'h-full overflow-auto' : 'hidden'}>{cal1}</div>
+        {tab === 'cal1' ? null : <PipeBench tab={tab} />}
+      </div>
+    </div>
+  );
+}
+
+function TabBar({ tab, onTab }: { tab: string; onTab: (tab: 'cal1' | PipeTab) => void }) {
+  const tabs = ['cal1', 'cal2', 'cal3', 'cal4', 'ukur'] as const;
+  return (
+    <div role="tablist" className="flex gap-1 border-b border-line px-3 pt-2">
+      {tabs.map((id) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={tab === id}
+          className={
+            tab === id
+              ? 'rounded-t border border-b-0 border-action bg-active px-3 py-1.5 text-sm font-semibold'
+              : 'rounded-t border border-b-0 border-line px-3 py-1.5 text-sm text-muted'
+          }
+          onClick={() => onTab(id)}
+        >
+          {t(`pipe.tabs.${id}`)}
+        </button>
+      ))}
     </div>
   );
 }

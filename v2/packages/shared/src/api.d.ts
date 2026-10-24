@@ -245,6 +245,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/pipecal/solve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Solve */
+        post: operations["solve_pipecal_solve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pipecal/measure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Measure */
+        post: operations["measure_pipecal_measure_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pipecal/depth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Depth */
+        post: operations["depth_pipecal_depth_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/models": {
         parameters: {
             query?: never;
@@ -1450,6 +1501,40 @@ export interface components {
              */
             water: string;
         };
+        /** Body_depth_pipecal_depth_post */
+        Body_depth_pipecal_depth_post: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Diameter Cm */
+            diameter_cm: number;
+            /** Top */
+            top: string;
+            /** Bot */
+            bot: string;
+            /** Tensor */
+            tensor: string;
+            /**
+             * Kind
+             * @default disparity
+             */
+            kind: string;
+            /**
+             * D Type
+             * @default baja
+             */
+            d_type: string;
+            /**
+             * Profile Points
+             * @default []
+             */
+            profile_points: string;
+        };
         /** Body_upload_video_video_upload_post */
         Body_upload_video_video_upload_post: {
             /** File */
@@ -1751,6 +1836,26 @@ export interface components {
             status: string;
             /** Version */
             version: number;
+        };
+        /** DepthOut */
+        DepthOut: {
+            /** A */
+            a: number;
+            /** B */
+            b: number;
+            /** Kind */
+            kind: string;
+            /** Err Rel */
+            err_rel: number;
+            /** N Pixels */
+            n_pixels: number;
+            /** Sigma Cm */
+            sigma_cm: number;
+            /** Status */
+            status: string;
+            /** Preview Png */
+            preview_png: string;
+            profile?: components["schemas"]["ProfileOut"] | null;
         };
         /** DepthView */
         DepthView: {
@@ -2341,6 +2446,72 @@ export interface components {
             /** Undistort Iterations */
             undistort_iterations: number;
         };
+        /** MeasureIn */
+        MeasureIn: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Diameter Cm */
+            diameter_cm: number;
+            /**
+             * D Type
+             * @default baja
+             * @enum {string}
+             */
+            d_type: "pi-tape" | "coating" | "baja";
+            /** Top */
+            top: number[][];
+            /** Bot */
+            bot: number[][];
+            /**
+             * Step Px
+             * @default 100
+             */
+            step_px: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "length" | "width" | "area" | "clock";
+            /** Points */
+            points: number[][];
+            /**
+             * Pitch Deg
+             * @default 0
+             */
+            pitch_deg: number;
+            /**
+             * N Mc
+             * @default 300
+             */
+            n_mc: number;
+        };
+        /** MeasureOut */
+        MeasureOut: {
+            /** Kind */
+            kind: string;
+            /** Value */
+            value: number;
+            /** Unit */
+            unit: string;
+            /** P025 */
+            p025: number;
+            /** P975 */
+            p975: number;
+            /** Clock */
+            clock?: number | null;
+            /** Status */
+            status: string;
+            /** Mc Runs */
+            mc_runs: number;
+            /** Approximate */
+            approximate: boolean;
+        };
         /** MetricOut */
         MetricOut: {
             /** Class Name */
@@ -2560,6 +2731,34 @@ export interface components {
         Pipe: {
             nominal_od_mm: components["schemas"]["PipeValues"];
         };
+        /** PipeIn */
+        PipeIn: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Diameter Cm */
+            diameter_cm: number;
+            /**
+             * D Type
+             * @default baja
+             * @enum {string}
+             */
+            d_type: "pi-tape" | "coating" | "baja";
+            /** Top */
+            top: number[][];
+            /** Bot */
+            bot: number[][];
+            /**
+             * Step Px
+             * @default 100
+             */
+            step_px: number;
+        };
         /** PipeValues */
         PipeValues: {
             /** Inch 16 */
@@ -2619,6 +2818,21 @@ export interface components {
             note: string;
             /** Views */
             views: components["schemas"]["PrepareItem"][];
+        };
+        /** ProfileOut */
+        ProfileOut: {
+            /** Z */
+            z: (number | null)[];
+            /** Theory */
+            theory: (number | null)[];
+            /** Delta */
+            delta: (number | null)[];
+            /** Relief Cm */
+            relief_cm: number | null;
+            /** Target Cm */
+            target_cm: number;
+            /** Flagged */
+            flagged: number[];
         };
         /** Px */
         Px: {
@@ -2982,6 +3196,41 @@ export interface components {
             /** Jpeg Path */
             jpeg_path: string;
         };
+        /** SolveOut */
+        SolveOut: {
+            /** Ok */
+            ok: boolean;
+            /** Message */
+            message: string;
+            /** Status */
+            status: string;
+            /** Approximate */
+            approximate: boolean;
+            /** Psi Deg */
+            psi_deg: number;
+            /** Res Top Px */
+            res_top_px: number;
+            /** Res Bot Px */
+            res_bot_px: number;
+            /** Vp */
+            vp: number[];
+            /** Axis Point */
+            axis_point: number[];
+            /** Axis Dir */
+            axis_dir: number[];
+            /** Stations */
+            stations: components["schemas"]["StationOut"][];
+            /** E Max */
+            e_max: number;
+            /** Rel Res Max */
+            rel_res_max: number;
+            /** Angle Deg */
+            angle_deg: number;
+            /** Spread */
+            spread: number;
+            /** Passed */
+            passed: boolean;
+        };
         /** Span */
         Span: {
             /** Rope Tolerance Pct */
@@ -3006,6 +3255,17 @@ export interface components {
         StageIn: {
             /** Role */
             role: string;
+        };
+        /** StationOut */
+        StationOut: {
+            /** Top */
+            top: number[];
+            /** Bot */
+            bot: number[];
+            /** E */
+            e: number;
+            /** Rel Res */
+            rel_res: number;
         };
         /**
          * StudyItem
@@ -3668,6 +3928,111 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArucoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    solve_pipecal_solve_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PipeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SolveOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    measure_pipecal_measure_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeasureIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    depth_pipecal_depth_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_depth_pipecal_depth_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepthOut"];
                 };
             };
             /** @description Validation Error */

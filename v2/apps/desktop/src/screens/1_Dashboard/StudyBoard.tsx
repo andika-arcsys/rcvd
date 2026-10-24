@@ -7,46 +7,38 @@ type Item = components['schemas']['StudyItem'];
 export function StudyBoard({ items }: { items: Item[] }) {
   if (items.length === 0) return null;
   return (
-    <section className="rounded-xl border border-line bg-panel p-4">
+    <section className="h-full overflow-hidden rounded-xl border border-line bg-panel p-3">
       <b>{t('dashboard.study')}</b>
       <p className="mt-1 text-xs text-muted">{t('dashboard.studyHint')}</p>
-      {groups(items).map((group) => (
-        <Group key={group.id} label={group.label} rows={group.rows} />
-      ))}
+      <div className="mt-2 grid grid-cols-2 gap-2 xl:grid-cols-3">
+        {groups(items).map((group) => (
+          <Group key={group.id} label={group.label} rows={group.rows} />
+        ))}
+      </div>
     </section>
   );
 }
 
 function Group({ label, rows }: { label: string; rows: Item[] }) {
   return (
-    <div className="mt-3">
-      <h2 className="text-sm font-semibold">{label}</h2>
-      <table className="mt-1 w-full text-left text-sm">
-        <thead className="text-muted">
-          <tr>
-            <th className="px-2 py-1 font-medium">{t('dashboard.colCode')}</th>
-            <th className="px-2 py-1 font-medium">{t('dashboard.colItem')}</th>
-            <th className="px-2 py-1 font-medium">{t('dashboard.colState')}</th>
-            <th className="px-2 py-1 font-medium">{t('dashboard.colDetail')}</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((item) => (
-            <tr key={item.code} className="border-t border-line">
-              <td className="px-2 py-2 font-mono text-xs">{item.code}</td>
-              <td className="px-2 py-2">{item.title}</td>
-              <td className="px-2 py-2">{stateLabel(item.state)}</td>
-              <td className="px-2 py-2 text-muted">{item.detail}</td>
-              <td className="px-2 py-2">
-                <Link to={item.path} className="text-info">
-                  {t('dashboard.open')}
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="min-w-0 rounded-lg border border-line bg-bg/40 p-2">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</h2>
+      <ul className="mt-1 flex flex-col">
+        {rows.map((item) => (
+          <li key={item.code} className="border-t border-line first:border-t-0">
+            <div title={item.detail} className="flex items-center gap-2 py-1 text-xs">
+              <span className="font-mono text-muted">{item.code}</span>
+              <span className="min-w-0 flex-1 truncate">{item.title}</span>
+              <span className={item.state === 'siap' ? 'text-ok' : 'text-warn'}>
+                {stateLabel(item.state)}
+              </span>
+              <Link to={item.path} className="text-info">
+                {t('dashboard.open')}
+              </Link>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

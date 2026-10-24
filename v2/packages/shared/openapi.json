@@ -777,6 +777,183 @@
         }
       }
     },
+    "/pipecal/solve": {
+      "post": {
+        "tags": [
+          "kalibrasi-pipa"
+        ],
+        "summary": "Solve",
+        "operationId": "solve_pipecal_solve_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PipeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolveOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pipecal/measure": {
+      "post": {
+        "tags": [
+          "kalibrasi-pipa"
+        ],
+        "summary": "Measure",
+        "operationId": "measure_pipecal_measure_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeasureIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasureOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pipecal/depth": {
+      "post": {
+        "tags": [
+          "kalibrasi-pipa"
+        ],
+        "summary": "Depth",
+        "operationId": "depth_pipecal_depth_post",
+        "parameters": [
+          {
+            "name": "x-deepinsight-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Deepinsight-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_depth_pipecal_depth_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepthOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/models": {
       "get": {
         "tags": [
@@ -4985,6 +5162,70 @@
         ],
         "title": "Body_calibrate_cameras_calibrate_post"
       },
+      "Body_depth_pipecal_depth_post": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "camera_id": {
+            "type": "string",
+            "title": "Camera Id"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "diameter_cm": {
+            "type": "number",
+            "title": "Diameter Cm"
+          },
+          "top": {
+            "type": "string",
+            "title": "Top"
+          },
+          "bot": {
+            "type": "string",
+            "title": "Bot"
+          },
+          "tensor": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Tensor"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "disparity"
+          },
+          "d_type": {
+            "type": "string",
+            "title": "D Type",
+            "default": "baja"
+          },
+          "profile_points": {
+            "type": "string",
+            "title": "Profile Points",
+            "default": "[]"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "camera_id",
+          "width",
+          "height",
+          "diameter_cm",
+          "top",
+          "bot",
+          "tensor"
+        ],
+        "title": "Body_depth_pipecal_depth_post"
+      },
       "Body_upload_video_video_upload_post": {
         "properties": {
           "file": {
@@ -5884,6 +6125,64 @@
           "version"
         ],
         "title": "DecisionOut"
+      },
+      "DepthOut": {
+        "properties": {
+          "a": {
+            "type": "number",
+            "title": "A"
+          },
+          "b": {
+            "type": "number",
+            "title": "B"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "err_rel": {
+            "type": "number",
+            "title": "Err Rel"
+          },
+          "n_pixels": {
+            "type": "integer",
+            "title": "N Pixels"
+          },
+          "sigma_cm": {
+            "type": "number",
+            "title": "Sigma Cm"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "preview_png": {
+            "type": "string",
+            "title": "Preview Png"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfileOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "a",
+          "b",
+          "kind",
+          "err_rel",
+          "n_pixels",
+          "sigma_cm",
+          "status",
+          "preview_png"
+        ],
+        "title": "DepthOut"
       },
       "DepthView": {
         "properties": {
@@ -7551,6 +7850,173 @@
         ],
         "title": "Measure"
       },
+      "MeasureIn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "camera_id": {
+            "type": "string",
+            "title": "Camera Id"
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          },
+          "diameter_cm": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Diameter Cm"
+          },
+          "d_type": {
+            "type": "string",
+            "enum": [
+              "pi-tape",
+              "coating",
+              "baja"
+            ],
+            "title": "D Type",
+            "default": "baja"
+          },
+          "top": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Top"
+          },
+          "bot": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Bot"
+          },
+          "step_px": {
+            "type": "number",
+            "exclusiveMinimum": 5.0,
+            "title": "Step Px",
+            "default": 100.0
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "length",
+              "width",
+              "area",
+              "clock"
+            ],
+            "title": "Kind"
+          },
+          "points": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Points"
+          },
+          "pitch_deg": {
+            "type": "number",
+            "title": "Pitch Deg",
+            "default": 0.0
+          },
+          "n_mc": {
+            "type": "integer",
+            "maximum": 2000.0,
+            "minimum": 20.0,
+            "title": "N Mc",
+            "default": 300
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "camera_id",
+          "width",
+          "height",
+          "diameter_cm",
+          "top",
+          "bot",
+          "kind",
+          "points"
+        ],
+        "title": "MeasureIn"
+      },
+      "MeasureOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "p025": {
+            "type": "number",
+            "title": "P025"
+          },
+          "p975": {
+            "type": "number",
+            "title": "P975"
+          },
+          "clock": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clock"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "mc_runs": {
+            "type": "integer",
+            "title": "Mc Runs"
+          },
+          "approximate": {
+            "type": "boolean",
+            "title": "Approximate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "value",
+          "unit",
+          "p025",
+          "p975",
+          "status",
+          "mc_runs",
+          "approximate"
+        ],
+        "title": "MeasureOut"
+      },
       "MetricOut": {
         "properties": {
           "class_name": {
@@ -8235,6 +8701,80 @@
         ],
         "title": "Pipe"
       },
+      "PipeIn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "camera_id": {
+            "type": "string",
+            "title": "Camera Id"
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          },
+          "diameter_cm": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Diameter Cm"
+          },
+          "d_type": {
+            "type": "string",
+            "enum": [
+              "pi-tape",
+              "coating",
+              "baja"
+            ],
+            "title": "D Type",
+            "default": "baja"
+          },
+          "top": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Top"
+          },
+          "bot": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Bot"
+          },
+          "step_px": {
+            "type": "number",
+            "exclusiveMinimum": 5.0,
+            "title": "Step Px",
+            "default": 100.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "camera_id",
+          "width",
+          "height",
+          "diameter_cm",
+          "top",
+          "bot"
+        ],
+        "title": "PipeIn"
+      },
       "PipeValues": {
         "properties": {
           "inch_16": {
@@ -8409,6 +8949,84 @@
           "views"
         ],
         "title": "PrepareOut"
+      },
+      "ProfileOut": {
+        "properties": {
+          "z": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Z"
+          },
+          "theory": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Theory"
+          },
+          "delta": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Delta"
+          },
+          "relief_cm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relief Cm"
+          },
+          "target_cm": {
+            "type": "number",
+            "title": "Target Cm"
+          },
+          "flagged": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Flagged"
+          }
+        },
+        "type": "object",
+        "required": [
+          "z",
+          "theory",
+          "delta",
+          "relief_cm",
+          "target_cm",
+          "flagged"
+        ],
+        "title": "ProfileOut"
       },
       "Px": {
         "properties": {
@@ -9537,6 +10155,106 @@
         ],
         "title": "SnapshotOut"
       },
+      "SolveOut": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "approximate": {
+            "type": "boolean",
+            "title": "Approximate"
+          },
+          "psi_deg": {
+            "type": "number",
+            "title": "Psi Deg"
+          },
+          "res_top_px": {
+            "type": "number",
+            "title": "Res Top Px"
+          },
+          "res_bot_px": {
+            "type": "number",
+            "title": "Res Bot Px"
+          },
+          "vp": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Vp"
+          },
+          "axis_point": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Axis Point"
+          },
+          "axis_dir": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Axis Dir"
+          },
+          "stations": {
+            "items": {
+              "$ref": "#/components/schemas/StationOut"
+            },
+            "type": "array",
+            "title": "Stations"
+          },
+          "e_max": {
+            "type": "number",
+            "title": "E Max"
+          },
+          "rel_res_max": {
+            "type": "number",
+            "title": "Rel Res Max"
+          },
+          "angle_deg": {
+            "type": "number",
+            "title": "Angle Deg"
+          },
+          "spread": {
+            "type": "number",
+            "title": "Spread"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "message",
+          "status",
+          "approximate",
+          "psi_deg",
+          "res_top_px",
+          "res_bot_px",
+          "vp",
+          "axis_point",
+          "axis_dir",
+          "stations",
+          "e_max",
+          "rel_res_max",
+          "angle_deg",
+          "spread",
+          "passed"
+        ],
+        "title": "SolveOut"
+      },
       "Span": {
         "properties": {
           "rope_tolerance_pct": {
@@ -9600,6 +10318,40 @@
           "role"
         ],
         "title": "StageIn"
+      },
+      "StationOut": {
+        "properties": {
+          "top": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Top"
+          },
+          "bot": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Bot"
+          },
+          "e": {
+            "type": "number",
+            "title": "E"
+          },
+          "rel_res": {
+            "type": "number",
+            "title": "Rel Res"
+          }
+        },
+        "type": "object",
+        "required": [
+          "top",
+          "bot",
+          "e",
+          "rel_res"
+        ],
+        "title": "StationOut"
       },
       "StudyItem": {
         "properties": {
