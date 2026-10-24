@@ -22,7 +22,7 @@ const TABS: { label: string; hint: string; to: string; feature: LiveFeature | nu
     to: '/live?fitur=spatialsight',
     feature: 'spatialsight',
   },
-  { label: 'live.tabCanvas', hint: 'F5', to: '/live/canvas', feature: null },
+  { label: 'live.tabCalibration', hint: 'F5', to: '/live?kalibrasi=1', feature: null },
 ];
 
 export function FeatureTabs({
@@ -32,6 +32,7 @@ export function FeatureTabs({
   dual = false,
   onFeature,
   onDual,
+  onCalibrate,
 }: {
   warning: string | null;
   active?: string;
@@ -39,8 +40,9 @@ export function FeatureTabs({
   dual?: boolean;
   onFeature?: (name: LiveFeature) => void;
   onDual?: () => void;
+  onCalibrate?: () => void;
 }) {
-  const canvas = TABS[TABS.length - 1];
+  const calibration = TABS[TABS.length - 1];
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div role="tablist" aria-label={t('live.features')} className="flex flex-wrap gap-1">
@@ -48,8 +50,8 @@ export function FeatureTabs({
           <TabControl key={tab.hint} tab={tab} active={active} busy={busy} onFeature={onFeature} />
         ))}
         {onDual ? <DualTab pressed={dual} onDual={onDual} /> : null}
-        {canvas ? (
-          <TabControl tab={canvas} active={active} busy={busy} onFeature={onFeature} />
+        {calibration ? (
+          <CalibrationTab tab={calibration} active={active} onCalibrate={onCalibrate} />
         ) : null}
       </div>
       <p className="text-xs text-muted">{t('live.oneModel')}</p>
@@ -75,6 +77,43 @@ function DualTab({ pressed, onDual }: { pressed: boolean; onDual: () => void }) 
     >
       {t('live.tabDual')}
     </button>
+  );
+}
+
+function CalibrationTab({
+  tab,
+  active,
+  onCalibrate,
+}: {
+  tab: (typeof TABS)[number];
+  active: string;
+  onCalibrate?: () => void;
+}) {
+  const className = `rounded border px-3 py-1 text-sm ${
+    active === 'F5' ? 'border-action text-action' : 'border-line text-muted'
+  }`;
+  const label = (
+    <>
+      {t(tab.label)} <span className="font-mono text-xs">{tab.hint}</span>
+    </>
+  );
+  if (onCalibrate) {
+    return (
+      <button
+        type="button"
+        role="tab"
+        aria-selected={active === 'F5'}
+        className={className}
+        onClick={onCalibrate}
+      >
+        {label}
+      </button>
+    );
+  }
+  return (
+    <Link role="tab" aria-selected={active === 'F5'} to={tab.to} className={className}>
+      {label}
+    </Link>
   );
 }
 

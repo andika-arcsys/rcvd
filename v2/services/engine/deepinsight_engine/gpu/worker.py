@@ -12,6 +12,7 @@ from typing import Any
 
 from ..core.config import AquaPreset
 from ..core.errors import EngineError
+from ..k3_align import observe_and_record
 from ..spatial.da3_frame import camera_k, scale_prediction_k
 from ..spatial.estimate import scene_from_message
 from ..spatial.geometry import CameraIntrinsics
@@ -45,6 +46,12 @@ from .yolo_seg import decode_yolo_seg
 
 
 def main() -> None:
+    from ..stop import run_until_stopped
+
+    run_until_stopped(_listen, stream=sys.stderr)
+
+
+def _listen() -> None:
     from .tensorflow_mem import enable_memory_growth
 
     enable_memory_growth()
@@ -473,6 +480,7 @@ def _geometry(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
             _attach_observation(message, observed)
             focal = _focal_of(message)
             depth_m = observed.depth
+            _remember_k3(message, depth_m)
             result = scene_from_message(
                 depth_m,
                 focal,
@@ -483,6 +491,7 @@ def _geometry(state: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
             _log_samples(result)
         else:
             depth_m, focal = _predict(state, message)
+            _remember_k3(message, depth_m)
             result = scene_from_message(depth_m, focal, message)
     except EngineError as exc:
         return {"event": "error", "code": exc.spec.code, "detail": exc.detail or ""}
@@ -539,7 +548,46 @@ def _camera_intrinsics(message: dict[str, Any]) -> CameraIntrinsics | None:
         int(calib_w) if isinstance(calib_w, int) else None,
         int(calib_h) if isinstance(calib_h, int) else None,
     )
-    return CameraIntrinsics(fx, fy, cx, cy, calibrated_underwater=True)
+    return CameraIntrinsics(fx, fy, cx, cy, calibrated_underwater=_underwater(message))
+
+
+def _remember_k3(message: dict[str, Any], depth_m: Any) -> None:
+    try:
+        _remember_k3_inner(message, depth_m)
+    except Exception as exc:  # noqa: BLE001 - pasangan K3 tidak boleh menggagalkan ukur
+        sys.stderr.write(f"K3 tidak dicatat: {exc}\n")
+        sys.stderr.flush()
+
+
+def _underwater(message: dict[str, Any]) -> bool:
+    """Origin reference adalah prior, bukan lensa yang diukur di air."""
+    return message.get("camera_origin") != "reference"
+
+
+def _remember_k3_inner(message: dict[str, Any], depth_m: Any) -> None:
+    if message.get("camera_origin") == "reference":
+        return
+    path = message.get("k3_path")
+    camera_id = message.get("k3_camera_id")
+    marker = message.get("marker_mm")
+    dist = message.get("dist_coeffs")
+    if not isinstance(path, str) or not isinstance(camera_id, str):
+        return
+    if isinstance(marker, bool) or not isinstance(marker, int | float) or float(marker) <= 0:
+        return
+    if not isinstance(dist, list) or len(dist) not in {4, 5, 8}:
+        return
+    camera = _camera_intrinsics(message)
+    if camera is None or depth_m is None:
+        return
+    matrix = [camera.fx, 0.0, camera.cx, 0.0, camera.fy, camera.cy, 0.0, 0.0, 1.0]
+    np = importlib.import_module("numpy")
+    width, height = int(message["width"]), int(message["height"])
+    image = np.frombuffer(_read_raw(message), dtype=np.uint8).reshape(height, width, 3)
+    dictionary = message.get("dictionary")
+    name = dictionary if isinstance(dictionary, str) and dictionary else "DICT_4X4_50"
+    coeffs = [float(item) for item in dist]
+    observe_and_record(Path(path), camera_id, image, depth_m, matrix, coeffs, float(marker), name)
 
 
 def _focal_of(message: dict[str, Any]) -> float | None:

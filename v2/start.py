@@ -10,9 +10,14 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "services" / "engine"))
 
 from deepinsight_engine.launch import prepare, serve  # noqa: E402
+from deepinsight_engine.stop import run_until_stopped  # noqa: E402
 
 
 def main() -> None:
+    run_until_stopped(_start)
+
+
+def _start() -> None:
     args = _args()
     settings, _label = prepare(ROOT, lan=args.lan)
     host = "0.0.0.0" if args.lan else settings.app.engine.host

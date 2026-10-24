@@ -15,6 +15,7 @@ from .routes_measure import measure
 from .routes_office import office
 from .routes_phase8 import phase8
 from .routes_phase9 import phase9
+from .routes_pipecal import pipecal
 from .routes_spatial import spatial
 from .routes_stream import stream
 from .routes_vision import vision
@@ -68,6 +69,7 @@ def config_risk(request: Request) -> RiskClasses:
 
 router.include_router(protected)
 router.include_router(camera)
+router.include_router(pipecal)
 router.include_router(live)
 router.include_router(office)
 router.include_router(vision)

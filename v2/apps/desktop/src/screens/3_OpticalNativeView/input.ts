@@ -1,6 +1,5 @@
 import type { components } from '@deepinsight/shared';
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { LiveFeature } from './featureSwitch';
 import { useControls } from './useLive';
 
@@ -13,7 +12,7 @@ const KEY_FEATURE: Record<string, LiveFeature> = {
   tab_spatialsight: 'spatialsight',
 };
 
-const FEATURES = ['optical', 'aquaclear', 'hydrodetect', 'spatialsight', 'canvas'] as const;
+const FEATURES = ['optical', 'aquaclear', 'hydrodetect', 'spatialsight', 'calibration'] as const;
 
 /** Indeks tombol Gamepad API (pemetaan standar), bukan ambang ukur. */
 const GAMEPAD_INDEX: Record<string, number> = { A: 0, LB: 4, RB: 5 };
@@ -22,27 +21,27 @@ export function useLiveInput(
   freeze: () => void,
   mark: () => void,
   onFeature: (name: LiveFeature) => void,
+  onCalibrate: () => void,
 ): void {
   const controls = useControls();
-  const navigate = useNavigate();
-  useKeyboard(controls, freeze, mark, navigate, onFeature);
-  useGamepad(controls, freeze, navigate, onFeature);
+  useKeyboard(controls, freeze, mark, onFeature, onCalibrate);
+  useGamepad(controls, freeze, onFeature, onCalibrate);
 }
 
 function useKeyboard(
   controls: Controls | null,
   freeze: () => void,
   mark: () => void,
-  navigate: (path: string) => void,
   onFeature: (name: LiveFeature) => void,
+  onCalibrate: () => void,
 ): void {
   useEffect(() => {
     if (!controls) return;
     const onKey = (event: KeyboardEvent) =>
-      handleKey(event, controls, freeze, mark, navigate, onFeature);
+      handleKey(event, controls, freeze, mark, onFeature, onCalibrate);
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [controls, freeze, mark, navigate, onFeature]);
+  }, [controls, freeze, mark, onFeature, onCalibrate]);
 }
 
 function handleKey(
@@ -50,8 +49,8 @@ function handleKey(
   controls: Controls,
   freeze: () => void,
   mark: () => void,
-  navigate: (path: string) => void,
   onFeature: (name: LiveFeature) => void,
+  onCalibrate: () => void,
 ): void {
   if (isTyping(event)) return;
   const board = controls.keyboard;
@@ -66,15 +65,15 @@ function handleKey(
     return;
   }
   const tab = tabName(board, event.code);
-  if (tab === 'tab_canvas') navigate('/live/canvas');
+  if (tab === 'tab_calibration' || tab === 'tab_canvas') onCalibrate();
   else if (tab && KEY_FEATURE[tab]) onFeature(KEY_FEATURE[tab]);
 }
 
 function useGamepad(
   controls: Controls | null,
   freeze: () => void,
-  navigate: (path: string) => void,
   onFeature: (name: LiveFeature) => void,
+  onCalibrate: () => void,
 ): void {
   const index = useRef(0);
   useEffect(() => {
@@ -85,24 +84,24 @@ function useGamepad(
       const pad = navigator.getGamepads()[0];
       if (pad)
         applyPad(pad, controls.gamepad, held, freeze, (delta) =>
-          step(index, delta, navigate, onFeature),
+          step(index, delta, onFeature, onCalibrate),
         );
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [controls, freeze, navigate, onFeature]);
+  }, [controls, freeze, onFeature, onCalibrate]);
 }
 
 function step(
   index: { current: number },
   delta: number,
-  navigate: (path: string) => void,
   onFeature: (name: LiveFeature) => void,
+  onCalibrate: () => void,
 ): void {
   index.current = (index.current + delta + FEATURES.length) % FEATURES.length;
   const name = FEATURES[index.current] ?? 'optical';
-  if (name === 'canvas') navigate('/live/canvas');
+  if (name === 'calibration') onCalibrate();
   else onFeature(name);
 }
 

@@ -187,6 +187,8 @@ def test_dashboard_banner_for_leakage_and_span(tmp_path: Path) -> None:
         assert body["snapshots_today"] == 0
         assert body["longest_span_m"] is None
         study = {item["code"]: item for item in body["study"]}
+        assert study["D-04"]["state"] == "kosong"
+        assert study["D-04"]["detail"] == "Belum ada file kamera"
         assert study["D-05"]["state"] == "siap"
         assert study["D-05"]["detail"] == "10 cm"
         assert study["D-21"]["state"] == "siap"

@@ -14,3 +14,9 @@ camera_matrix: null
 dist_coeffs: null
 rms: null
 calibrated_at: null
+board: null
+marker_mm: null
+port: null
+water: null
+dictionary: null
+origin: null

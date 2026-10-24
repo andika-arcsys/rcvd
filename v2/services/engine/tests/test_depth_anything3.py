@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import importlib
 import sys
 import types
 from pathlib import Path
@@ -21,6 +22,7 @@ from deepinsight_engine.gpu.depth_anything3_runtime import (
     _prepare_resolver,
     clamp_res,
     infer_depth,
+    quiet_unused_gsplat,
 )
 from deepinsight_engine.gpu.vision import RELATIVE_LABEL
 from deepinsight_engine.gpu.worker import _da3_depth, _geometry, _infer_da3, _load_spatial
@@ -393,6 +395,86 @@ def test_prepare_resolver_uses_register_resolver(monkeypatch: pytest.MonkeyPatch
     OmegaConf.register_new_resolver("eval", eval)
     assert OmegaConf.names == {"eval"}
     assert OmegaConf.legacy_calls == 0
+
+
+def test_gsplat_warning_is_hidden_and_other_warnings_stay(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+
+    class _Logger:
+        def warn(self, *args: object, **_kwargs: object) -> None:
+            calls.append(" ".join(str(item) for item in args))
+
+    module = types.ModuleType("depth_anything_3.utils.logger")
+    module.logger = _Logger()  # type: ignore[attr-defined]
+    real = importlib.import_module
+
+    def _load(name: str) -> Any:
+        if name == "depth_anything_3.utils.logger":
+            return module
+        return real(name)
+
+    monkeypatch.setattr(
+        "deepinsight_engine.gpu.depth_anything3_runtime.importlib.import_module",
+        _load,
+    )
+    quiet_unused_gsplat()
+    module.logger.warn("Dependency `gsplat` is required for rendering 3DGS.")
+    module.logger.warn("SwiGLU fallback")
+    quiet_unused_gsplat()
+    module.logger.warn("gsplat lagi")
+    assert calls == ["SwiGLU fallback"]
+
+
+def test_open_filters_gsplat_before_the_api_import(monkeypatch: pytest.MonkeyPatch) -> None:
+    order: list[str] = []
+
+    class _Logger:
+        def warn(self, *args: object, **_kwargs: object) -> None:
+            order.append("warn:" + " ".join(str(item) for item in args))
+
+    logger_mod = types.ModuleType("depth_anything_3.utils.logger")
+    logger_mod.logger = _Logger()  # type: ignore[attr-defined]
+
+    class _Placed:
+        def eval(self) -> _Placed:
+            return self
+
+    class _Model:
+        def to(self, _device: object) -> _Placed:
+            return _Placed()
+
+    class _Api:
+        @staticmethod
+        def from_pretrained(_model_id: str) -> _Model:
+            order.append("api")
+            logger_mod.logger.warn("Dependency `gsplat` is required for rendering 3DGS.")
+            logger_mod.logger.warn("catatan lain")
+            return _Model()
+
+    api = types.ModuleType("depth_anything_3.api")
+    api.DepthAnything3 = _Api  # type: ignore[attr-defined]
+
+    def _load(name: str) -> Any:
+        if name == "omegaconf":
+            raise ImportError("omegaconf", name="omegaconf")
+        if name == "depth_anything_3.utils.logger":
+            order.append("logger")
+            return logger_mod
+        if name == "depth_anything_3.api":
+            return api
+        raise ImportError(name)
+
+    monkeypatch.setattr(
+        "deepinsight_engine.gpu.depth_anything3_runtime.importlib.import_module",
+        _load,
+    )
+    _open(types.SimpleNamespace(device=lambda name: name), "depth-anything/DA3METRIC-LARGE")
+    assert order[0] == "logger"
+    assert "api" in order
+    assert "warn:catatan lain" in order
+    assert not any("gsplat" in item for item in order)
 
 
 def _reject(missing: str) -> Any:

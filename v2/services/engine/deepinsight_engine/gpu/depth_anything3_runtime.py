@@ -152,8 +152,39 @@ def _torch() -> Any:
         raise EngineError("MDL-002", "torch belum terpasang") from exc
 
 
+def quiet_unused_gsplat() -> None:
+    """Sembunyikan peringatan cabang 3DGS. Kedalaman metrik tidak memakai gsplat."""
+    module = _logger_module()
+    if module is None:
+        return
+    logger = getattr(module, "logger", None)
+    if logger is None:
+        return
+    original = getattr(logger, "warn", None)
+    if original is None or getattr(original, "_skips_gsplat", False):
+        return
+
+    def warn(*args: Any, **kwargs: Any) -> None:
+        text = " ".join(str(item) for item in args)
+        if "gsplat" in text or "3DGS" in text:
+            return
+        original(*args, **kwargs)
+
+    wrapped: Any = warn
+    wrapped._skips_gsplat = True
+    logger.warn = wrapped
+
+
+def _logger_module() -> Any | None:
+    try:
+        return importlib.import_module("depth_anything_3.utils.logger")
+    except (ImportError, ValueError):
+        return None
+
+
 def _open(torch: Any, model_id: str) -> Any:
     _prepare_resolver()
+    quiet_unused_gsplat()
     try:
         api = importlib.import_module("depth_anything_3.api")
     except ImportError as exc:

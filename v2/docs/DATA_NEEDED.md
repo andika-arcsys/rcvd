@@ -8,7 +8,7 @@ Angka teknis yang belum diisi tim tidak dikarang. Uji kode memakai fixture di `t
 | D-03 | Rekaman lapangan untuk uji sumber berkas | `samples/` | 5 | Tidak ada klip di repositori. Uji menulis AVI pendek dengan OpenCV di folder sementara. |
 | D-07 | Pemetaan akhir kontroler ROV | `config/controls.yaml` | 5 | Usulan keyboard dan gamepad Xbox sudah ada. Tim masih perlu mengonfirmasi kontroler yang dipakai. |
 | D-22 | Ambang kekeruhan (RMS kontras dan varians Laplacian) | `config/video.yaml` → `turbidity` | 5 | Sengaja `null`. Panel kualitas menampilkan "belum diisi", bukan kelas rendah/sedang/tinggi. |
-| D-04 | File kalibrasi kamera (intrinsik + distorsi) | `config/cameras/<id>.yaml` | 4, 7, 8 | Folder ada, berkas yaml tidak ada. Kalibrasi lensa gagal. Status ukur maksimal ESTIMATE_ONLY. |
+| D-04 | File kalibrasi kamera (intrinsik + distorsi) | `config/cameras/<id>.yaml` | 4, 7, 8 | `generic.yaml` adalah prior (`origin: reference`), bukan kalibrasi terukur. D-04 tetap kosong sampai ada berkas tanpa origin itu. Status ukur dengan prior tetap paling tinggi ESTIMATE_ONLY. |
 | D-05 | Jarak sebenarnya dua titik laser (cm) | `config/thresholds.yaml` → `laser.ref_cm` | 4, 7 | Sudah diisi `10` (SUMBER tim). Dua titik laser berjarak 10 cm. Bila dikosongkan lagi, uji batang menolak dengan LASER-001. |
 | D-06 | Foto batang uji 1 m | `samples/rod/` | 4, 7 | Tidak ada di repositori. Bila ring buffer kosong, FREEZE mendorong satu frame sintetis 32×24 dan UI menandainya sebagai frame uji, bukan foto batang. |
 | D-24 | Ambang HSV laser dan Canny tepi | `config/thresholds.yaml` → `laser.hue_*`, `calibration.canny_*` | 7 | USULAN Q-KAL-5, bukan hasil ukur lapangan. Hue OpenCV 0–180. Satu blob tetap minta klik manual. |

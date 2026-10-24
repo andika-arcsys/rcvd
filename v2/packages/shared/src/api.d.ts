@@ -140,6 +140,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cameras/pattern/charuco": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Charuco Pattern */
+        get: operations["charuco_pattern_cameras_pattern_charuco_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras/reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Camera Reference */
+        get: operations["camera_reference_cameras_reference_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras/k3": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** K3 Profile */
+        get: operations["k3_profile_cameras_k3_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/cameras/calibrate": {
         parameters: {
             query?: never;
@@ -168,6 +219,77 @@ export interface paths {
         put?: never;
         /** Aruco Depth */
         post: operations["aruco_depth_cameras_aruco_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/cameras/aruco/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aruco Live
+         * @description Pose marker pada bingkai sumber video yang sedang jalan.
+         */
+        post: operations["aruco_live_cameras_aruco_live_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pipecal/solve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Solve */
+        post: operations["solve_pipecal_solve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pipecal/measure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Measure */
+        post: operations["measure_pipecal_measure_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/pipecal/depth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Depth */
+        post: operations["depth_pipecal_depth_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1221,6 +1343,16 @@ export interface components {
             message: string;
             /** Preview Jpeg */
             preview_jpeg?: string | null;
+            /**
+             * Frame Width
+             * @default 0
+             */
+            frame_width: number;
+            /**
+             * Frame Height
+             * @default 0
+             */
+            frame_height: number;
         };
         /** AssessIn */
         AssessIn: {
@@ -1317,6 +1449,25 @@ export interface components {
             marker_mm: number;
             /** File */
             file: string;
+            /**
+             * Dictionary
+             * @default DICT_4X4_50
+             */
+            dictionary: string;
+        };
+        /** Body_aruco_live_cameras_aruco_live_post */
+        Body_aruco_live_cameras_aruco_live_post: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Marker Mm */
+            marker_mm: number;
+            /**
+             * Dictionary
+             * @default DICT_4X4_50
+             */
+            dictionary: string;
         };
         /** Body_calibrate_cameras_calibrate_post */
         Body_calibrate_cameras_calibrate_post: {
@@ -1332,6 +1483,57 @@ export interface components {
             corners_rows: number;
             /** Files */
             files: string[];
+            /**
+             * Board
+             * @default chessboard
+             */
+            board: string;
+            /** Marker Mm */
+            marker_mm?: number | null;
+            /**
+             * Port
+             * @default
+             */
+            port: string;
+            /**
+             * Water
+             * @default
+             */
+            water: string;
+        };
+        /** Body_depth_pipecal_depth_post */
+        Body_depth_pipecal_depth_post: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Diameter Cm */
+            diameter_cm: number;
+            /** Top */
+            top: string;
+            /** Bot */
+            bot: string;
+            /** Tensor */
+            tensor: string;
+            /**
+             * Kind
+             * @default disparity
+             */
+            kind: string;
+            /**
+             * D Type
+             * @default baja
+             */
+            d_type: string;
+            /**
+             * Profile Points
+             * @default []
+             */
+            profile_points: string;
         };
         /** Body_upload_video_video_upload_post */
         Body_upload_video_video_upload_post: {
@@ -1452,6 +1654,29 @@ export interface components {
             written: boolean;
         };
         /**
+         * CameraReference
+         * @description Contoh papan dan distorsi nol. Bukan pengukuran lensa.
+         */
+        CameraReference: {
+            /** Id */
+            id: string;
+            /**
+             * Board
+             * @constant
+             */
+            board: "chessboard";
+            /** Corners Cols */
+            corners_cols: number;
+            /** Corners Rows */
+            corners_rows: number;
+            /** Square Mm */
+            square_mm: number;
+            /** Dictionary */
+            dictionary: string;
+            /** Dist Coeffs */
+            dist_coeffs: number[];
+        };
+        /**
          * CameraThresholds
          * @description Pita RMS reprojeksi. USULAN, praktik umum OpenCV, bukan angka prosedur JOB Tomori.
          */
@@ -1460,6 +1685,7 @@ export interface components {
             rms_good_px: number;
             /** Rms Max Px */
             rms_max_px: number;
+            reference: components["schemas"]["CameraReference"];
         };
         /** CameraView */
         CameraView: {
@@ -1610,6 +1836,26 @@ export interface components {
             status: string;
             /** Version */
             version: number;
+        };
+        /** DepthOut */
+        DepthOut: {
+            /** A */
+            a: number;
+            /** B */
+            b: number;
+            /** Kind */
+            kind: string;
+            /** Err Rel */
+            err_rel: number;
+            /** N Pixels */
+            n_pixels: number;
+            /** Sigma Cm */
+            sigma_cm: number;
+            /** Status */
+            status: string;
+            /** Preview Png */
+            preview_png: string;
+            profile?: components["schemas"]["ProfileOut"] | null;
         };
         /** DepthView */
         DepthView: {
@@ -2000,6 +2246,19 @@ export interface components {
             /** Moderate And Above */
             moderate_and_above: number;
         };
+        /** K3Out */
+        K3Out: {
+            /** Camera Id */
+            camera_id: string;
+            /** A */
+            a?: number | null;
+            /** B */
+            b?: number | null;
+            /** Samples */
+            samples: number;
+            /** Ready */
+            ready: boolean;
+        };
         /**
          * Laser
          * @description Jarak dua titik laser, sentimeter. Hue mengikuti OpenCV 0–180.
@@ -2145,6 +2404,26 @@ export interface components {
             z_mm: number;
             /** Distance Mm */
             distance_mm: number;
+            /**
+             * Center U
+             * @default 0
+             */
+            center_u: number;
+            /**
+             * Center V
+             * @default 0
+             */
+            center_v: number;
+            /**
+             * Corners
+             * @default []
+             */
+            corners: number[][];
+            /**
+             * Axis
+             * @default []
+             */
+            axis: number[][];
         };
         /** MeasView */
         MeasView: {
@@ -2166,6 +2445,72 @@ export interface components {
             boundary_tol: number;
             /** Undistort Iterations */
             undistort_iterations: number;
+        };
+        /** MeasureIn */
+        MeasureIn: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Diameter Cm */
+            diameter_cm: number;
+            /**
+             * D Type
+             * @default baja
+             * @enum {string}
+             */
+            d_type: "pi-tape" | "coating" | "baja";
+            /** Top */
+            top: number[][];
+            /** Bot */
+            bot: number[][];
+            /**
+             * Step Px
+             * @default 100
+             */
+            step_px: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "length" | "width" | "area" | "clock";
+            /** Points */
+            points: number[][];
+            /**
+             * Pitch Deg
+             * @default 0
+             */
+            pitch_deg: number;
+            /**
+             * N Mc
+             * @default 300
+             */
+            n_mc: number;
+        };
+        /** MeasureOut */
+        MeasureOut: {
+            /** Kind */
+            kind: string;
+            /** Value */
+            value: number;
+            /** Unit */
+            unit: string;
+            /** P025 */
+            p025: number;
+            /** P975 */
+            p975: number;
+            /** Clock */
+            clock?: number | null;
+            /** Status */
+            status: string;
+            /** Mc Runs */
+            mc_runs: number;
+            /** Approximate */
+            approximate: boolean;
         };
         /** MetricOut */
         MetricOut: {
@@ -2386,6 +2731,34 @@ export interface components {
         Pipe: {
             nominal_od_mm: components["schemas"]["PipeValues"];
         };
+        /** PipeIn */
+        PipeIn: {
+            /** Role */
+            role: string;
+            /** Camera Id */
+            camera_id: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Diameter Cm */
+            diameter_cm: number;
+            /**
+             * D Type
+             * @default baja
+             * @enum {string}
+             */
+            d_type: "pi-tape" | "coating" | "baja";
+            /** Top */
+            top: number[][];
+            /** Bot */
+            bot: number[][];
+            /**
+             * Step Px
+             * @default 100
+             */
+            step_px: number;
+        };
         /** PipeValues */
         PipeValues: {
             /** Inch 16 */
@@ -2446,6 +2819,21 @@ export interface components {
             /** Views */
             views: components["schemas"]["PrepareItem"][];
         };
+        /** ProfileOut */
+        ProfileOut: {
+            /** Z */
+            z: (number | null)[];
+            /** Theory */
+            theory: (number | null)[];
+            /** Delta */
+            delta: (number | null)[];
+            /** Relief Cm */
+            relief_cm: number | null;
+            /** Target Cm */
+            target_cm: number;
+            /** Flagged */
+            flagged: number[];
+        };
         /** Px */
         Px: {
             /** X */
@@ -2479,6 +2867,45 @@ export interface components {
             span_m: number | null;
             /** Training */
             training: boolean;
+        };
+        /** ReferenceOut */
+        ReferenceOut: {
+            /** Id */
+            id: string;
+            /** Origin */
+            origin: string;
+            /** Board */
+            board?: string | null;
+            /** Square Mm */
+            square_mm?: number | null;
+            /** Corners Cols */
+            corners_cols?: number | null;
+            /** Corners Rows */
+            corners_rows?: number | null;
+            /** Image Width */
+            image_width?: number | null;
+            /** Image Height */
+            image_height?: number | null;
+            /** Marker Mm */
+            marker_mm?: number | null;
+            /** Dictionary */
+            dictionary?: string | null;
+            /** Camera Matrix */
+            camera_matrix: number[];
+            /** Dist Coeffs */
+            dist_coeffs: number[];
+            /** Focal Px */
+            focal_px: number;
+            /** Principal U */
+            principal_u: number;
+            /** Principal V */
+            principal_v: number;
+            /** Marker Source Cm */
+            marker_source_cm?: number | null;
+            /** Calibrated Underwater */
+            calibrated_underwater: boolean;
+            /** Matches Formula */
+            matches_formula: boolean;
         };
         /** ReleaseIn */
         ReleaseIn: {
@@ -2769,6 +3196,41 @@ export interface components {
             /** Jpeg Path */
             jpeg_path: string;
         };
+        /** SolveOut */
+        SolveOut: {
+            /** Ok */
+            ok: boolean;
+            /** Message */
+            message: string;
+            /** Status */
+            status: string;
+            /** Approximate */
+            approximate: boolean;
+            /** Psi Deg */
+            psi_deg: number;
+            /** Res Top Px */
+            res_top_px: number;
+            /** Res Bot Px */
+            res_bot_px: number;
+            /** Vp */
+            vp: number[];
+            /** Axis Point */
+            axis_point: number[];
+            /** Axis Dir */
+            axis_dir: number[];
+            /** Stations */
+            stations: components["schemas"]["StationOut"][];
+            /** E Max */
+            e_max: number;
+            /** Rel Res Max */
+            rel_res_max: number;
+            /** Angle Deg */
+            angle_deg: number;
+            /** Spread */
+            spread: number;
+            /** Passed */
+            passed: boolean;
+        };
         /** Span */
         Span: {
             /** Rope Tolerance Pct */
@@ -2793,6 +3255,17 @@ export interface components {
         StageIn: {
             /** Role */
             role: string;
+        };
+        /** StationOut */
+        StationOut: {
+            /** Top */
+            top: number[];
+            /** Bot */
+            bot: number[];
+            /** E */
+            e: number;
+            /** Rel Res */
+            rel_res: number;
         };
         /**
          * StudyItem
@@ -3233,6 +3706,7 @@ export interface operations {
         parameters: {
             query?: {
                 marker_id?: number;
+                dictionary?: string;
             };
             header?: {
                 "x-deepinsight-token"?: string | null;
@@ -3249,6 +3723,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    charuco_pattern_cameras_pattern_charuco_get: {
+        parameters: {
+            query?: {
+                squares_x?: number;
+                squares_y?: number;
+                square_mm?: number;
+                marker_mm?: number;
+            };
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    camera_reference_cameras_reference_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    k3_profile_cameras_k3_get: {
+        parameters: {
+            query: {
+                camera_id: string;
+            };
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["K3Out"];
                 };
             };
             /** @description Validation Error */
@@ -3319,6 +3893,146 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ArucoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    aruco_live_cameras_aruco_live_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/x-www-form-urlencoded": components["schemas"]["Body_aruco_live_cameras_aruco_live_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArucoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    solve_pipecal_solve_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PipeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SolveOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    measure_pipecal_measure_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeasureIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    depth_pipecal_depth_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-deepinsight-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_depth_pipecal_depth_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepthOut"];
                 };
             };
             /** @description Validation Error */

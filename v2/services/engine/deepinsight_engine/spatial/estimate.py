@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from .band import gradient_note
+from .band import GRADIENT_GAIN, gradient_note
 from .da3_frame import ProcessGeometry, map_png_to_proc
 from .geometry import (
     CameraIntrinsics,
@@ -52,6 +52,7 @@ def estimate_scene(
     length_kinds: Sequence[str] | None = None,
     length_tags: Sequence[str] | None = None,
     geom: ProcessGeometry | None = None,
+    gradient_gain: float = GRADIENT_GAIN,
 ) -> dict[str, object]:
     height, width = int(depth_m.shape[0]), int(depth_m.shape[1])
     camera, source, shown_focal = _camera(width, height, focal_px, intrinsics, intrinsics_source)
@@ -69,6 +70,7 @@ def estimate_scene(
         conf=conf,
         conf_min=conf_min,
         click_sigma_px=click_sigma_px,
+        gradient_gain=gradient_gain,
     )
     measured = measure_span(
         left, right, depth_m, camera, scale, frame_id=frame_id, conf=conf, conf_min=conf_min
@@ -96,7 +98,9 @@ def estimate_scene(
     path_rows = [_path(item, depth_m, camera, scale, frame_id) for item in paths]
     raw = scale.raw_reference_distance_m or 0.0
     map_u, map_v = _map(scale.sample_u, scale.sample_v, geom)
-    warnings = _warnings(extra_warnings, measured.warnings, length_rows, area_rows, path_rows)
+    warnings = _warnings(
+        gradient_gain, extra_warnings, measured.warnings, length_rows, area_rows, path_rows
+    )
     if source == "longest_side":
         note = "Sumber fokus: sisi terpanjang. Ini cadangan terakhir."
         if note not in warnings:
@@ -147,6 +151,7 @@ def scene_from_message(
     camera = intrinsics if isinstance(intrinsics, CameraIntrinsics) else None
     geom = message.get("geom")
     frame = geom if isinstance(geom, ProcessGeometry) else None
+    depth_m, gain, notes = _with_k3(depth_m, message)
     return estimate_scene(
         depth_m,
         focal_px,
@@ -157,7 +162,7 @@ def scene_from_message(
         [_poly(item) for item in _rows(message.get("areas"))],
         [_poly(item) for item in _rows(message.get("paths"))],
         backend=backend,
-        extra_warnings=extra_warnings,
+        extra_warnings=tuple(extra_warnings) + notes,
         conf=message.get("conf"),
         conf_min=_float(message.get("conf_min"), 0.0),
         click_sigma_px=_float(message.get("click_sigma_px"), 1.5),
@@ -170,6 +175,7 @@ def scene_from_message(
         length_kinds=[item[1] for item in specs],
         length_tags=[item[2] for item in specs],
         geom=frame,
+        gradient_gain=gain,
     )
 
 
@@ -235,8 +241,10 @@ def _path(
     }
 
 
-def _warnings(*groups: object) -> list[str]:
-    found = [HOUSING_WARNING, SPAN_WARNING, gradient_note()]
+def _warnings(gradient_gain: float, *groups: object) -> list[str]:
+    found = [HOUSING_WARNING, SPAN_WARNING]
+    if gradient_gain != 1.0:
+        found.append(gradient_note())
     for group in groups:
         if isinstance(group, tuple):
             found.extend(str(item) for item in group)
@@ -309,6 +317,22 @@ def _length_spec(value: object) -> tuple[Pair, str, str]:
         tag = value.get("tag")
         return pair, kind if kind in {"span", "facing", "length3d"} else "span", _text(tag) or ""
     return _pair(value), "span", ""
+
+
+def _with_k3(depth_m: Any, message: Mapping[str, Any]) -> tuple[Any, float, tuple[str, ...]]:
+    from ..k3_align import alignment_note, apply_alignment
+
+    slope = _number(message.get("k3_a"))
+    bias = _number(message.get("k3_b"))
+    if slope is None or bias is None or slope <= 0:
+        return depth_m, GRADIENT_GAIN, ()
+    return apply_alignment(depth_m, slope, bias), 1.0, (alignment_note(slope, bias),)
+
+
+def _number(value: object) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return None
+    return float(value)
 
 
 def _float(value: object, fallback: float) -> float:

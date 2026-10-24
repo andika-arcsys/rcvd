@@ -24,7 +24,7 @@ function Banner({ title }: { title: string }) {
 
 function Remeasure({ tasks }: { tasks: DashboardView['remeasure'] }) {
   return (
-    <section className="rounded-xl border border-line bg-panel p-4">
+    <section className="rounded-xl border border-line bg-panel p-3">
       <b>{t('dashboard.remeasure')}</b>
       {tasks.length === 0 ? (
         <p className="mt-2 text-sm text-muted">{t('dashboard.noRemeasure')}</p>
@@ -79,16 +79,22 @@ function DashboardBody({
   running: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-4 p-6">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden p-4">
       <ContinueBar name={name} running={running} />
       <KpiRow data={data} />
       {data.banner && <Banner title={data.banner.title} />}
-      <section className="rounded-xl border border-line bg-panel p-4">
-        <b>{t('dashboard.missions')}</b>
-        <MissionTable missions={data.missions} />
-      </section>
-      <StudyBoard items={data.study ?? []} />
-      {role === 'ahli_ukur' && <Remeasure tasks={data.remeasure} />}
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(14rem,1fr)_minmax(0,3fr)] gap-3">
+        <div className="flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden">
+          <section className="min-h-0 overflow-hidden rounded-xl border border-line bg-panel p-3">
+            <b>{t('dashboard.missions')}</b>
+            <MissionTable missions={data.missions} />
+          </section>
+          {role === 'ahli_ukur' && <Remeasure tasks={data.remeasure} />}
+        </div>
+        <div className="min-h-0 min-w-0 overflow-hidden">
+          <StudyBoard items={data.study ?? []} />
+        </div>
+      </div>
     </div>
   );
 }

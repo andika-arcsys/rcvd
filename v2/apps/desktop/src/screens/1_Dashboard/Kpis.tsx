@@ -18,12 +18,14 @@ function Card({
 }) {
   const body = (
     <>
-      <div className="text-sm text-muted">{label}</div>
-      <div className="mt-1 text-3xl font-semibold">{value}</div>
-      {hint && <div className="text-xs text-muted">{hint}</div>}
+      <div className="truncate text-xs text-muted">{label}</div>
+      <div className="flex items-baseline gap-2">
+        <span className="text-2xl font-semibold">{value}</span>
+        {hint && <span className="truncate text-xs text-muted">{hint}</span>}
+      </div>
     </>
   );
-  const box = 'rounded-xl border border-line bg-panel p-4';
+  const box = 'min-w-0 rounded-xl border border-line bg-panel px-3 py-2';
   if (!to) return <div className={box}>{body}</div>;
   return (
     <Link to={to} className={box}>

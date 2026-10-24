@@ -5,20 +5,33 @@ export function WorkColumns({
   main,
   side,
   mainMin = '28rem',
+  sideFirst = false,
   className = '',
+  fill = false,
 }: {
   main: ReactNode;
   side: ReactNode;
   mainMin?: string;
+  sideFirst?: boolean;
   className?: string;
+  fill?: boolean;
 }) {
+  const columns = sideFirst
+    ? `minmax(16rem, 18rem) minmax(${mainMin}, 1fr)`
+    : `minmax(${mainMin}, 1fr) minmax(16rem, 18rem)`;
+  const video = <div className={fill ? 'h-full min-h-0 min-w-0' : 'min-w-0'}>{main}</div>;
+  const panel = (
+    <div className={fill ? 'h-full min-h-0 min-w-[16rem] overflow-y-auto' : 'min-w-[16rem]'}>
+      {side}
+    </div>
+  );
   return (
     <div
-      className={`grid min-h-0 min-w-0 items-start gap-3 overflow-x-auto ${className}`}
-      style={{ gridTemplateColumns: `minmax(${mainMin}, 1fr) minmax(16rem, 18rem)` }}
+      className={`grid min-h-0 min-w-0 gap-3 overflow-x-auto ${fill ? 'h-full flex-1 items-stretch' : 'items-start'} ${className}`}
+      style={{ gridTemplateColumns: columns }}
     >
-      <div className="min-w-0">{main}</div>
-      <div className="min-w-[16rem]">{side}</div>
+      {sideFirst ? panel : video}
+      {sideFirst ? video : panel}
     </div>
   );
 }

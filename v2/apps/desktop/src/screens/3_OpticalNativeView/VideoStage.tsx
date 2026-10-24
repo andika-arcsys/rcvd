@@ -7,7 +7,7 @@ export function VideoStage({ lost, children }: { lost: boolean; children?: React
   const video = useRef<HTMLCanvasElement>(null);
   useVideoStream(video);
   return (
-    <StageFrame>
+    <StageFrame fill>
       <canvas
         ref={video}
         className="absolute inset-0 h-full w-full object-contain"

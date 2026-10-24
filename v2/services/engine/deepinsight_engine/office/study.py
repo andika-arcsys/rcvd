@@ -9,7 +9,7 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-from deepinsight_engine.core.camera_file import camera_ids
+from deepinsight_engine.core.camera_file import measured_camera_ids
 from deepinsight_engine.core.config import Settings
 from deepinsight_engine.video.quality import configured
 
@@ -42,7 +42,7 @@ def study_items(settings: Settings, config_dir: Path, conn: sqlite3.Connection) 
 
 def _evidence(settings: Settings, config_dir: Path) -> list[StudyItem]:
     source = settings.video.source.kind
-    cameras = camera_ids(config_dir / "cameras")
+    cameras = measured_camera_ids(config_dir / "cameras")
     laser = settings.thresholds.laser.ref_cm
     limits = settings.thresholds.span.critical_limit_m
     names = ", ".join(sorted(settings.aquaclear.presets))
